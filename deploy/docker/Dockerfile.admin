@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:24-alpine AS base
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN npm install --global pnpm@11.5.3
+
+WORKDIR /app
+
+FROM base AS dependencies
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/web/package.json apps/web/package.json
+COPY apps/admin/package.json apps/admin/package.json
+COPY packages/api-client/package.json packages/api-client/package.json
+COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/typescript-config/package.json packages/typescript-config/package.json
+COPY packages/ui/package.json packages/ui/package.json
+
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm install --frozen-lockfile
+
+FROM dependencies AS builder
+
+ARG VITE_API_BASE_URL
+ARG APP_VERSION=development
+
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV APP_VERSION=$APP_VERSION
+
+COPY . .
+
+RUN pnpm --filter @rsc/admin build \
+    && printf '{"service":"rsc-central-admin","version":"%s"}\n' "$APP_VERSION" \
+      > apps/admin/dist/build-info.json
+
+FROM nginx:1.29-alpine AS runner
+
+COPY deploy/nginx/admin.conf /etc/nginx/nginx.conf
+COPY --from=builder /app/apps/admin/dist /usr/share/nginx/html
+
+RUN chown -R nginx:nginx /usr/share/nginx/html \
+    && mkdir -p /tmp/nginx \
+    && chown -R nginx:nginx /tmp/nginx
+
+USER nginx
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1:8080/healthz || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

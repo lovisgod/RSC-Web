@@ -28,3 +28,6 @@ Customer web runs at `http://localhost:3000`; central admin runs at
 
 Read [AGENTS.md](./AGENTS.md) before making changes. Product and architecture
 context lives in [`docs/`](./docs/).
+
+Deployment through GitHub Actions and Dokploy is documented in
+[`docs/deployment.md`](./docs/deployment.md).

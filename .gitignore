@@ -10,3 +10,5 @@ coverage
 !.env.example
 .DS_Store
 pnpm-debug.log*
+.env.deploy
+deployment.md

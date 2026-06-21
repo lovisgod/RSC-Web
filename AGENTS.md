@@ -19,8 +19,9 @@ Before coding, read:
 1. `docs/project-context.md`
 2. `docs/architecture.md`
 3. `docs/domain-model.md`
-4. `TODO.md`
-5. The nearest app/package `AGENTS.md`, if present.
+4. `docs/deployment.md` when changing infrastructure or runtime configuration.
+5. `TODO.md`
+6. The nearest app/package `AGENTS.md`, if present.
 
 ## Workspace map
 
@@ -44,6 +45,9 @@ Before coding, read:
 - Represent money in integer minor units in application contracts
   (`amountMinor`); format only at the presentation edge.
 - Never import backend ORM/database entities into a frontend package.
+- Keep deployments image-based. GitHub Actions builds; Dokploy pulls and runs.
+- Never add VPS passwords, SSH private keys, registry tokens, Dokploy API keys,
+  compose IDs, or real `.env` files to the repository.
 - Do not expose payment secret keys, encryption keys, or service credentials to
   browser bundles. Public variables must be intentionally prefixed.
 - Treat order and payment status transitions as server-authoritative.

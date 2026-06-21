@@ -18,7 +18,13 @@ so another agent can safely pick the first unchecked task.
 
 ## P1 — Platform foundation
 
-- [ ] Add CI for format, lint, typecheck, unit tests, and production builds.
+- [x] Add CI for format, lint, typecheck, unit tests, and production builds.
+- [x] Add GHCR image publishing and Dokploy deployments for development,
+      staging, and production.
+- [ ] Configure the three GitHub Environments, secrets, branch restrictions, and
+      required production reviewers.
+- [ ] Configure the three Dokploy compose services, domains, registry access,
+      certificates, and health checks.
 - [ ] Add changesets or an equivalent package versioning policy.
 - [ ] Add environment validation per app.
 - [ ] Generate contracts/client code from OpenAPI while retaining runtime
