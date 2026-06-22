@@ -18,6 +18,9 @@ so another agent can safely pick the first unchecked task.
 
 ## P1 — Platform foundation
 
+- [x] Add NestJS API foundation with validated configuration, OpenAPI,
+      PostgreSQL/PostGIS, Redis, migrations, and health probes.
+- [ ] Implement the first domain vertical slice: outlets and public catalog.
 - [x] Add CI for format, lint, typecheck, unit tests, and production builds.
 - [x] Add GHCR image publishing and Dokploy deployments for development,
       staging, and production.
@@ -25,6 +28,8 @@ so another agent can safely pick the first unchecked task.
       required production reviewers.
 - [ ] Configure the three Dokploy compose services, domains, registry access,
       certificates, and health checks.
+- [ ] Extend GHCR/Dokploy deployment to publish and run `@rsc/api`, PostgreSQL,
+      Redis, and a migration release step after domain access is available.
 - [ ] Add changesets or an equivalent package versioning policy.
 - [ ] Add environment validation per app.
 - [ ] Generate contracts/client code from OpenAPI while retaining runtime

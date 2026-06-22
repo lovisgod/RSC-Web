@@ -10,8 +10,12 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:api": "pnpm --filter @rsc/api dev",
     "dev:admin": "pnpm --filter @rsc/admin dev",
     "dev:web": "pnpm --filter @rsc/web dev",
+    "infra:up": "docker compose -f deploy/local/compose.yaml up -d",
+    "infra:down": "docker compose -f deploy/local/compose.yaml down",
+    "infra:logs": "docker compose -f deploy/local/compose.yaml logs -f",
     "check": "turbo run check",
     "lint": "turbo run lint",
     "test": "turbo run test",

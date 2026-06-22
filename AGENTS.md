@@ -8,6 +8,8 @@ Build the web surfaces for RSC Group's multi-outlet food ordering platform:
    cart, paying once, and tracking the resulting order.
 2. A central admin experience for platform-wide operations, outlets, orders,
    settlement review, reporting, delivery oversight, and system health.
+3. A NestJS API that owns business rules, persistence, authorization,
+   integrations, asynchronous work, and real-time events.
 
 The supplied scope, data model, and technical brief are drafts. Preserve their
 business intent, but challenge unsafe or contradictory implementation details.
@@ -19,15 +21,18 @@ Before coding, read:
 1. `docs/project-context.md`
 2. `docs/architecture.md`
 3. `docs/domain-model.md`
-4. `docs/deployment.md` when changing infrastructure or runtime configuration.
-5. `TODO.md`
-6. The nearest app/package `AGENTS.md`, if present.
+4. `docs/api.md` when changing the backend.
+5. `docs/deployment.md` when changing infrastructure or runtime configuration.
+6. `TODO.md`
+7. The nearest app/package `AGENTS.md`, if present.
 
 ## Workspace map
 
 - `apps/web`: Next.js App Router customer site. Public discovery and
   authenticated checkout/tracking live here.
 - `apps/admin`: Vite SPA for trusted central staff. It is not the outlet POS.
+- `apps/api`: NestJS REST API. Domain modules own their persistence and
+  application logic; database entities never become public contracts.
 - `packages/contracts`: Zod schemas, enums, and API DTOs. This is the web
   contract source of truth.
 - `packages/api-client`: Fetch-based client. No UI imports.
@@ -45,6 +50,9 @@ Before coding, read:
 - Represent money in integer minor units in application contracts
   (`amountMinor`); format only at the presentation edge.
 - Never import backend ORM/database entities into a frontend package.
+- Never enable TypeORM `synchronize`; all schema changes require migrations.
+- API routes use the `/api/v1` namespace. Breaking contracts require a new API
+  version, not silent response changes.
 - Keep deployments image-based. GitHub Actions builds; Dokploy pulls and runs.
 - Never add VPS passwords, SSH private keys, registry tokens, Dokploy API keys,
   compose IDs, or real `.env` files to the repository.

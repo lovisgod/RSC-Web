@@ -25,32 +25,30 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 
 FROM dependencies AS builder
 
-ARG VITE_API_BASE_URL
-ARG APP_VERSION=development
-
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV APP_VERSION=$APP_VERSION
-
 COPY . .
 
-RUN pnpm --filter @rsc/admin build \
-    && printf '{"service":"rsc-central-admin","version":"%s"}\n' "$APP_VERSION" \
-      > apps/admin/dist/build-info.json
+RUN pnpm --filter @rsc/api build \
+    && pnpm --filter @rsc/api deploy --legacy --prod /prod/api
 
-FROM nginx:1.29-alpine AS runner
+FROM node:24-alpine AS runner
 
-COPY deploy/nginx/admin.conf /etc/nginx/nginx.conf
-COPY --from=builder /app/apps/admin/dist /usr/share/nginx/html
+ARG APP_VERSION=development
 
-RUN chown -R nginx:nginx /usr/share/nginx/html \
-    && mkdir -p /tmp/nginx \
-    && chown -R nginx:nginx /tmp/nginx
+ENV NODE_ENV=production
+ENV PORT=4000
+ENV APP_VERSION=$APP_VERSION
 
-USER nginx
+WORKDIR /app
 
-EXPOSE 8080
+COPY --from=builder --chown=node:node /prod/api/node_modules ./node_modules
+COPY --from=builder --chown=node:node /prod/api/package.json ./package.json
+COPY --from=builder --chown=node:node /app/apps/api/dist ./dist
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://127.0.0.1:8080/healthz || exit 1
+USER node
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 4000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:4000/api/v1/health/live').then((response) => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"
+
+CMD ["node", "dist/main.js"]
