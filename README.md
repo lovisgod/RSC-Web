@@ -33,5 +33,5 @@ and central admin at `http://localhost:5173`.
 Read [AGENTS.md](./AGENTS.md) before making changes. Product and architecture
 context lives in [`docs/`](./docs/).
 
-Deployment through GitHub Actions and Dokploy is documented in
+Deployment through Dokploy's native GitHub provider is documented in
 [`docs/deployment.md`](./docs/deployment.md).

@@ -22,14 +22,12 @@ so another agent can safely pick the first unchecked task.
       PostgreSQL/PostGIS, Redis, migrations, and health probes.
 - [ ] Implement the first domain vertical slice: outlets and public catalog.
 - [x] Add CI for format, lint, typecheck, unit tests, and production builds.
-- [x] Add GHCR image publishing and Dokploy deployments for development,
-      staging, and production.
-- [ ] Configure the three GitHub Environments, secrets, branch restrictions, and
-      required production reviewers.
-- [ ] Configure the three Dokploy compose services, domains, registry access,
-      certificates, and health checks.
-- [ ] Extend GHCR/Dokploy deployment to publish and run `@rsc/api`, PostgreSQL,
-      Redis, and a migration release step after domain access is available.
+- [x] Add native Dokploy Compose builds and GitHub-provider autodeploy for the
+      development branch.
+- [ ] Configure staging and production Dokploy environments, domains,
+      certificates, and protected promotion procedures.
+- [ ] Extend Dokploy Compose to run `@rsc/api`, PostgreSQL, Redis, and a
+      migration release step after domain access is available.
 - [ ] Add changesets or an equivalent package versioning policy.
 - [ ] Add environment validation per app.
 - [ ] Generate contracts/client code from OpenAPI while retaining runtime

@@ -3,7 +3,7 @@ packages:
   - packages/*
 
 allowBuilds:
-  '@scarf/scarf': false
+  "@scarf/scarf": false
   sharp: true
   unrs-resolver: true
 

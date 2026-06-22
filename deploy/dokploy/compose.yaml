@@ -2,8 +2,12 @@ name: rsc-web-${DEPLOY_ENV:-development}
 
 services:
   customer-web:
-    image: ${IMAGE_PREFIX}-web:${IMAGE_TAG}
-    pull_policy: always
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-}
+        APP_VERSION: ${APP_VERSION:-dokploy}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -25,8 +29,12 @@ services:
       retries: 3
 
   central-admin:
-    image: ${IMAGE_PREFIX}-admin:${IMAGE_TAG}
-    pull_policy: always
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.admin
+      args:
+        VITE_API_BASE_URL: ${PUBLIC_API_URL:-}
+        APP_VERSION: ${APP_VERSION:-dokploy}
     restart: unless-stopped
     expose:
       - "8080"

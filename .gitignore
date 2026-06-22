@@ -12,4 +12,3 @@ coverage
 pnpm-debug.log*
 .env.deploy
 deploy/local/data
-deployment.md

@@ -1,9 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type Redis from "ioredis";
-import {
-  HealthIndicatorService,
-  type HealthIndicatorResult,
-} from "@nestjs/terminus";
+import { HealthIndicatorService, type HealthIndicatorResult } from "@nestjs/terminus";
 
 import { REDIS_CLIENT } from "../redis/redis.constants";
 
@@ -24,9 +21,7 @@ export class RedisHealthIndicator {
 
       const response = await this.redis.ping();
 
-      return response === "PONG"
-        ? indicator.up()
-        : indicator.down({ response });
+      return response === "PONG" ? indicator.up() : indicator.down({ response });
     } catch (error) {
       return indicator.down({
         message: error instanceof Error ? error.message : "Redis check failed",

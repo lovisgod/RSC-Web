@@ -53,7 +53,9 @@ Before coding, read:
 - Never enable TypeORM `synchronize`; all schema changes require migrations.
 - API routes use the `/api/v1` namespace. Breaking contracts require a new API
   version, not silent response changes.
-- Keep deployments image-based. GitHub Actions builds; Dokploy pulls and runs.
+- Development deployment is repository-based: Dokploy clones `dev` and builds
+  the Compose services. Revisit registry-based immutable releases before
+  production.
 - Never add VPS passwords, SSH private keys, registry tokens, Dokploy API keys,
   compose IDs, or real `.env` files to the repository.
 - Do not expose payment secret keys, encryption keys, or service credentials to

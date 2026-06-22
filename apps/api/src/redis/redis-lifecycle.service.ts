@@ -1,8 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  type OnApplicationShutdown,
-} from "@nestjs/common";
+import { Inject, Injectable, type OnApplicationShutdown } from "@nestjs/common";
 import type Redis from "ioredis";
 
 import { REDIS_CLIENT } from "./redis.constants";

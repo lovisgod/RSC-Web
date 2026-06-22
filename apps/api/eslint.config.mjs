@@ -20,7 +20,7 @@ export default defineConfig([
     },
     rules: {
       "@typescript-eslint/consistent-type-imports": "error",
-      "@typescript-eslint/no-floating-promises": "error"
-    }
-  }
+      "@typescript-eslint/no-floating-promises": "error",
+    },
+  },
 ]);

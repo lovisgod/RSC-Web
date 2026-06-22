@@ -12,8 +12,7 @@ describe("AppController", () => {
         {
           provide: ConfigService,
           useValue: {
-            get: (key: string) =>
-              key === "app.version" ? "test-sha" : "test",
+            get: (key: string) => (key === "app.version" ? "test-sha" : "test"),
           },
         },
       ],

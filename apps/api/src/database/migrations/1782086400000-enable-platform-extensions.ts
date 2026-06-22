@@ -1,8 +1,6 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
 
-export class EnablePlatformExtensions1782086400000
-  implements MigrationInterface
-{
+export class EnablePlatformExtensions1782086400000 implements MigrationInterface {
   name = "EnablePlatformExtensions1782086400000";
 
   async up(queryRunner: QueryRunner): Promise<void> {

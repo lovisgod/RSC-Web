@@ -7,9 +7,7 @@ import type { ApplicationConfig } from "./config/configuration";
 @ApiTags("platform")
 @Controller({ version: "1" })
 export class AppController {
-  constructor(
-    private readonly configService: ConfigService<ApplicationConfig, true>,
-  ) {}
+  constructor(private readonly configService: ConfigService<ApplicationConfig, true>) {}
 
   @Get()
   @ApiOperation({ summary: "API service metadata" })

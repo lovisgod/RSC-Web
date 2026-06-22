@@ -36,14 +36,11 @@ export function configureApplication(app: INestApplication): void {
   if (swaggerEnabled) {
     const swaggerConfig = new DocumentBuilder()
       .setTitle("RSC Platform API")
-      .setDescription(
-        "Backend API for the RSC multi-outlet food ordering platform.",
-      )
+      .setDescription("Backend API for the RSC multi-outlet food ordering platform.")
       .setVersion(version)
       .addBearerAuth()
       .build();
-    const documentFactory = () =>
-      SwaggerModule.createDocument(app, swaggerConfig);
+    const documentFactory = () => SwaggerModule.createDocument(app, swaggerConfig);
 
     SwaggerModule.setup("api/docs", app, documentFactory, {
       jsonDocumentUrl: "api/openapi.json",
