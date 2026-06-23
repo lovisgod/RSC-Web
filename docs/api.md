@@ -20,6 +20,50 @@ Endpoints:
 - Swagger UI: `http://localhost:4000/api/docs`
 - OpenAPI JSON: `http://localhost:4000/api/openapi.json`
 
+## Customer registration and phone verification
+
+The first authentication slice exposes:
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/verify-phone`
+
+Registration accepts a name, Nigerian mobile number, and email address. Phone
+numbers are normalized to `234...` international format. Phone and email values
+are encrypted at rest with AES-256-GCM; deterministic, peppered SHA-256 hashes
+are stored separately for indexed lookup and uniqueness.
+
+The API generates a cryptographically secure six-digit OTP, stores only its
+HMAC-SHA-256 digest in Redis, limits it to five attempts, and expires it after
+ten minutes. Successful verification consumes the OTP and changes the customer
+from `UNVERIFIED` to `ACTIVE`.
+
+Termii delivery uses `POST {TERMII_BASE_URL}/api/sms/send` with an approved
+sender ID. Set:
+
+```dotenv
+SMS_PROVIDER=termii
+TERMII_BASE_URL=https://api.ng.termii.com
+TERMII_API_KEY=replace-with-dashboard-api-key
+TERMII_SENDER_ID=RSC
+TERMII_CHANNEL=dnd
+```
+
+The exact regional base URL comes from the Termii dashboard. `dnd` is the
+recommended transactional route for Nigerian recipients when the sender ID is
+approved for that route.
+
+Generate the security values once per environment:
+
+```bash
+openssl rand -base64 32 # PII_ENCRYPTION_KEY
+openssl rand -hex 32    # PII_HASH_PEPPER
+openssl rand -hex 32    # OTP_PEPPER
+```
+
+Changing `PII_ENCRYPTION_KEY` after customer data exists makes existing
+encrypted values unreadable. Keep it in the environment's secret store and
+back it up securely. Never reuse development values in staging or production.
+
 ## Database policy
 
 - `synchronize` is always disabled.

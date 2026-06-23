@@ -46,11 +46,23 @@ POSTGRES_PASSWORD=replace-with-a-long-random-value
 REDIS_PASSWORD=replace-with-a-different-long-random-value
 CORS_ORIGINS=https://dev.rscapp.xyz,https://admin-dev.rscapp.xyz
 SWAGGER_ENABLED=true
+PII_ENCRYPTION_KEY=replace-with-output-of-openssl-rand-base64-32
+PII_HASH_PEPPER=replace-with-output-of-openssl-rand-hex-32
+OTP_PEPPER=replace-with-another-output-of-openssl-rand-hex-32
+SMS_PROVIDER=termii
+TERMII_BASE_URL=https://api.ng.termii.com
+TERMII_API_KEY=replace-with-termii-dashboard-key
+TERMII_SENDER_ID=RSC
+TERMII_CHANNEL=dnd
+TERMII_TIMEOUT_MS=10000
 ```
 
 Generate the two passwords locally and paste the results into Dokploy:
 
 ```bash
+openssl rand -hex 32
+openssl rand -hex 32
+openssl rand -base64 32
 openssl rand -hex 32
 openssl rand -hex 32
 ```
@@ -59,6 +71,11 @@ Dokploy writes variables to a `.env` file next to the Compose file. The Compose
 configuration explicitly passes `PUBLIC_API_URL` and `APP_VERSION` as Docker
 build arguments. `POSTGRES_PASSWORD` and `REDIS_PASSWORD` remain server-side
 Compose variables and must never use a `NEXT_PUBLIC_` or `VITE_` prefix.
+
+`PII_ENCRYPTION_KEY`, both peppers, and `TERMII_API_KEY` are also server-only
+secrets. Use the regional Termii base URL shown in the Termii dashboard and an
+approved transactional sender ID. Keep `SMS_PROVIDER=noop` only when real SMS
+delivery is intentionally disabled.
 
 Do not put payment keys, database passwords, JWT secrets, or other server
 credentials into browser-prefixed variables.

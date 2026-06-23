@@ -12,7 +12,22 @@ export interface Environment {
   DATABASE_SSL: boolean;
   REDIS_URL: string;
   SWAGGER_ENABLED: boolean;
+  PII_ENCRYPTION_KEY: string;
+  PII_HASH_PEPPER: string;
+  OTP_PEPPER: string;
+  SMS_PROVIDER: "noop" | "termii";
+  TERMII_BASE_URL: string;
+  TERMII_API_KEY?: string;
+  TERMII_SENDER_ID?: string;
+  TERMII_CHANNEL: "generic" | "dnd";
+  TERMII_TIMEOUT_MS: number;
 }
+
+const base64Key = Joi.string().custom((value: string, helpers) => {
+  const decoded = Buffer.from(value, "base64");
+
+  return decoded.length === 32 ? value : helpers.error("string.base64Length");
+}, "32-byte base64 key");
 
 const environmentSchema = Joi.object<Environment>({
   NODE_ENV: Joi.string().valid("development", "test", "production").default("development"),
@@ -28,6 +43,27 @@ const environmentSchema = Joi.object<Environment>({
     .uri({ scheme: ["redis", "rediss"] })
     .required(),
   SWAGGER_ENABLED: Joi.boolean().truthy("true").falsy("false").default(true),
+  PII_ENCRYPTION_KEY: base64Key.required().messages({
+    "string.base64Length": "PII_ENCRYPTION_KEY must decode to exactly 32 bytes",
+  }),
+  PII_HASH_PEPPER: Joi.string().min(32).required(),
+  OTP_PEPPER: Joi.string().min(32).required(),
+  SMS_PROVIDER: Joi.string().valid("noop", "termii").default("noop"),
+  TERMII_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://api.ng.termii.com"),
+  TERMII_API_KEY: Joi.when("SMS_PROVIDER", {
+    is: "termii",
+    then: Joi.string().min(10).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  TERMII_SENDER_ID: Joi.when("SMS_PROVIDER", {
+    is: "termii",
+    then: Joi.string().min(3).max(11).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  TERMII_CHANNEL: Joi.string().valid("generic", "dnd").default("generic"),
+  TERMII_TIMEOUT_MS: Joi.number().integer().min(1_000).max(30_000).default(10_000),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {
