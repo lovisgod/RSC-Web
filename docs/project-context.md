@@ -16,6 +16,7 @@ This repository contains:
 
 - The customer web application.
 - The central admin dashboard.
+- The NestJS API
 - Shared contracts, API client, and UI primitives.
 
 The NestJS API, Android outlet POS, Flutter mobile app, and rider app are

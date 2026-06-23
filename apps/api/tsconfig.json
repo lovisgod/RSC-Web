@@ -1,0 +1,22 @@
+{
+  "extends": "@rsc/typescript-config/base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "incremental": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "outDir": "./dist",
+    "removeComments": true,
+    "sourceMap": true,
+    "strictPropertyInitialization": false,
+    "target": "ES2023",
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
+    "types": ["node"],
+    "verbatimModuleSyntax": false
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
