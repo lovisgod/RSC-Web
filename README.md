@@ -6,6 +6,7 @@ Turborepo workspace for the RSC multi-outlet food ordering platform.
 
 - `apps/web` — customer-facing Next.js application.
 - `apps/admin` — central operations dashboard built with React and Vite.
+- `apps/api` — NestJS API backed by PostgreSQL/PostGIS and Redis.
 
 ## Shared packages
 
@@ -18,13 +19,19 @@ Turborepo workspace for the RSC multi-outlet food ordering platform.
 
 ```bash
 pnpm install
+cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 cp apps/admin/.env.example apps/admin/.env.local
+pnpm infra:up
+pnpm --filter @rsc/api migration:run
 pnpm dev
 ```
 
-Customer web runs at `http://localhost:3000`; central admin runs at
-`http://localhost:5173`.
+API runs at `http://localhost:4000`, customer web at `http://localhost:3000`,
+and central admin at `http://localhost:5173`.
 
 Read [AGENTS.md](./AGENTS.md) before making changes. Product and architecture
 context lives in [`docs/`](./docs/).
+
+Deployment through Dokploy's native GitHub provider is documented in
+[`docs/deployment.md`](./docs/deployment.md).

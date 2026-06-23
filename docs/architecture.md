@@ -3,9 +3,11 @@
 ## Dependency direction
 
 ```text
-apps/web ───┐
-            ├──> packages/api-client ───> packages/contracts
-apps/admin ─┘
+apps/web ────┐
+             ├──> packages/api-client ───> packages/contracts
+apps/admin ──┘
+
+apps/api ────────────────────────────────> packages/contracts
 
 apps/web ───┐
             └──> packages/ui
@@ -14,6 +16,9 @@ apps/admin ─┘
 
 Shared packages never import from applications. `contracts` has no React or
 framework dependency. `api-client` has no UI dependency.
+
+`apps/api` owns persistence and business rules. It may consume shared transport
+contracts but must not publish ORM entities into shared packages.
 
 ## Application responsibilities
 
