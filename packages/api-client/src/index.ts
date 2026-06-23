@@ -4,71 +4,61 @@ import {
   type AdminOverview,
   type OutletSummary,
 } from "@rsc/contracts";
+import type { AxiosInstance } from "axios";
 import { z } from "zod";
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    readonly requestId: string | null,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
+import { createHttpClient } from "./http";
+
+export { ApiError } from "./errors";
+export type { HttpClientOptions as ApiClientOptions } from "./http";
+
+async function request<T>(
+  http: AxiosInstance,
+  path: string,
+  schema: z.ZodType<T>,
+): Promise<T> {
+  const response = await http.get<unknown>(path);
+  return schema.parse(response.data);
 }
 
-export interface ApiClientOptions {
+export function createApiClient(options: {
   baseUrl: string;
-  fetch?: typeof globalThis.fetch;
   getAccessToken?: () => Promise<string | null> | string | null;
-}
-
-export function createApiClient(options: ApiClientOptions) {
-  const requestFetch = options.fetch ?? globalThis.fetch;
-  const baseUrl = options.baseUrl.replace(/\/$/, "");
-
-  async function request<T>(
-    path: string,
-    schema: z.ZodType<T>,
-    init: RequestInit = {},
-  ): Promise<T> {
-    const token = await options.getAccessToken?.();
-    const headers = new Headers(init.headers);
-    headers.set("accept", "application/json");
-
-    if (init.body && !headers.has("content-type")) {
-      headers.set("content-type", "application/json");
-    }
-
-    if (token) {
-      headers.set("authorization", `Bearer ${token}`);
-    }
-
-    const response = await requestFetch(`${baseUrl}${path}`, {
-      ...init,
-      headers,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new ApiError(
-        `API request failed with status ${response.status}`,
-        response.status,
-        response.headers.get("x-request-id"),
-      );
-    }
-
-    return schema.parse(await response.json());
-  }
+}) {
+  const http = createHttpClient(options);
 
   return {
     listOutlets(): Promise<OutletSummary[]> {
-      return request("/v1/outlets", z.array(outletSummarySchema));
+      return request(http, "/api/v1/outlets", z.array(outletSummarySchema));
     },
     getAdminOverview(): Promise<AdminOverview> {
-      return request("/v1/admin/overview", adminOverviewSchema);
+      return request(http, "/api/v1/admin/overview", adminOverviewSchema);
     },
   };
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
+
+// Module-level singleton — call initApiClient once at your app entry point,
+// then use getApiClient() anywhere without passing the client as a parameter.
+let _client: ApiClient | null = null;
+
+export function initApiClient(
+  baseUrl: string,
+  getAccessToken?: () => Promise<string | null> | string | null,
+): ApiClient {
+  _client = createApiClient({
+    baseUrl,
+    ...(getAccessToken && { getAccessToken }),
+  });
+  return _client;
+}
+
+export function getApiClient(): ApiClient {
+  if (!_client) {
+    throw new Error(
+      "[api-client] Client not initialized. Call initApiClient(baseUrl) before use.",
+    );
+  }
+  return _client;
+}

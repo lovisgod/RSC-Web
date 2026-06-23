@@ -1,3 +1,28 @@
+/* packages/ui/src/styles.css */
+@import "tailwindcss";
+
+/* 🎯 THE SECRET SAUCE: Tell Tailwind to aggressively scan this UI folder */
+@source "./**/*.{js,ts,jsx,tsx}";
+
+/* 🎛️ EXTEND TAILWIND WITH YOUR LOCAL TOKENS */
+@theme {
+  --color-rsc-auth: var(--rsc-auth);
+  --color-rsc-auth-strong: var(--rsc-auth-strong);
+  --color-rsc-brand: var(--rsc-brand);
+  --color-rsc-brand-strong: var(--rsc-brand-strong);
+  --color-rsc-accent: var(--rsc-accent);
+  --color-rsc-accent-deep: var(--rsc-accent-deep);
+  --color-rsc-surface: var(--rsc-surface);
+  --color-rsc-panel: var(--rsc-panel);
+  --color-rsc-ink: var(--rsc-ink);
+  --color-rsc-muted: var(--rsc-muted);
+  --color-rsc-line: var(--rsc-line);
+  --color-rsc-danger: var(--rsc-danger);
+  
+  --radius-rsc: var(--rsc-radius);
+  --shadow-rsc: var(--rsc-shadow);
+}
+
 :root {
   --rsc-ink: #171b17;
   --rsc-muted: #667064;
@@ -7,7 +32,10 @@
   --rsc-brand: #175c3a;
   --rsc-brand-strong: #0d4328;
   --rsc-accent: #f4b942;
+  --rsc-accent-deep:#f97316;
   --rsc-danger: #a33a2b;
+  --rsc-auth:#1e4f91;
+  --rsc-auth-strong:#163a6b;
   --rsc-radius: 18px;
   --rsc-shadow: 0 18px 60px rgb(34 48 37 / 10%);
 }
@@ -20,6 +48,7 @@ body {
   margin: 0;
   color: var(--rsc-ink);
   background: var(--rsc-surface);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 button,
@@ -29,10 +58,11 @@ textarea {
   font: inherit;
 }
 
-a {
+/* a {
   color: inherit;
-}
+} */
 
+/* --- Keep all your existing coordinator BEM classes below intact --- */
 .rsc-button {
   min-height: 44px;
   border: 1px solid transparent;

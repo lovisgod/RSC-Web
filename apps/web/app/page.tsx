@@ -1,5 +1,8 @@
+"use client";
+
 import { Button } from "@rsc/ui";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const principles = [
   {
@@ -20,6 +23,11 @@ const principles = [
 ] as const;
 
 export default function HomePage() {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push("/signIn");
+  };
   return (
     <main>
       <header className="site-header">
@@ -31,7 +39,9 @@ export default function HomePage() {
           <Link href="#how-it-works">How it works</Link>
           <Link href="#outlets">Outlets</Link>
         </nav>
-        <Button tone="quiet">Sign in</Button>
+        <Button tone="quiet" onClick={handleClick}>
+          Sign in
+        </Button>
       </header>
 
       <section className="hero">
