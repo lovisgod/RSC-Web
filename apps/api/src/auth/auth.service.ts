@@ -48,23 +48,23 @@ export class AuthService {
 
     if (
       (phoneCustomer && phoneCustomer.status !== CustomerStatus.UNVERIFIED) ||
+      (phoneCustomer && phoneCustomer.emailHash !== emailHash) ||
       (emailCustomer && emailCustomer.id !== phoneCustomer?.id)
     ) {
       throw new ConflictException("An account already exists with that phone or email");
     }
 
-    const customer =
-      phoneCustomer ??
-      this.customers.create({
-        status: CustomerStatus.UNVERIFIED,
-        phoneVerifiedAt: null,
-      });
-
-    customer.name = input.name.trim();
-    customer.phoneEncrypted = this.piiCrypto.encrypt(phone);
-    customer.phoneHash = phoneHash;
-    customer.emailEncrypted = this.piiCrypto.encrypt(email);
-    customer.emailHash = emailHash;
+    const customer = phoneCustomer
+      ? phoneCustomer
+      : this.customers.create({
+          name: input.name.trim(),
+          phoneEncrypted: this.piiCrypto.encrypt(phone),
+          phoneHash,
+          emailEncrypted: this.piiCrypto.encrypt(email),
+          emailHash,
+          status: CustomerStatus.UNVERIFIED,
+          phoneVerifiedAt: null,
+        });
 
     let savedCustomer: Customer;
 

@@ -76,6 +76,26 @@ describe(TermiiSmsSender.name, () => {
     ).rejects.toBeInstanceOf(BadGatewayException);
   });
 
+  it("rejects incomplete success payloads without a Termii message id", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ code: "ok" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+
+    await expect(
+      createSender().sendPhoneVerification({
+        phone: "2348031234567",
+        code: "482901",
+        expiresInMinutes: 10,
+      }),
+    ).rejects.toBeInstanceOf(BadGatewayException);
+  });
+
   it("maps network failures to a safe gateway error", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("socket failed")));
 

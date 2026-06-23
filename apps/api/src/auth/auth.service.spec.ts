@@ -93,6 +93,9 @@ describe(AuthService.name, () => {
   it("resends verification for the same unverified customer", async () => {
     const existing = Object.assign(new Customer(), {
       id: customerId,
+      name: "Ada Okafor",
+      phoneHash: "hash:2348031234567",
+      emailHash: "hash:ada@example.com",
       status: CustomerStatus.UNVERIFIED,
     });
     customers.findOneBy.mockResolvedValueOnce(existing).mockResolvedValueOnce(existing);
@@ -106,6 +109,27 @@ describe(AuthService.name, () => {
     expect(customers.create).not.toHaveBeenCalled();
     expect(customers.save).toHaveBeenCalledWith(existing);
     expect(smsSender.sendPhoneVerification).toHaveBeenCalledOnce();
+  });
+
+  it("does not let a resend replace the pending account email", async () => {
+    const existing = Object.assign(new Customer(), {
+      id: customerId,
+      phoneHash: "hash:2348031234567",
+      emailHash: "hash:original@example.com",
+      status: CustomerStatus.UNVERIFIED,
+    });
+    customers.findOneBy.mockResolvedValueOnce(existing).mockResolvedValueOnce(null);
+
+    await expect(
+      service.register({
+        name: "Ada Okafor",
+        phone: "08031234567",
+        email: "replacement@example.com",
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(customers.save).not.toHaveBeenCalled();
+    expect(smsSender.sendPhoneVerification).not.toHaveBeenCalled();
   });
 
   it("rejects an identity already attached to an active account", async () => {

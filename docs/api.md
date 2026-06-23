@@ -52,6 +52,29 @@ The exact regional base URL comes from the Termii dashboard. `dnd` is the
 recommended transactional route for Nigerian recipients when the sender ID is
 approved for that route.
 
+After configuring Termii, register with a Nigerian number you can receive SMS
+on:
+
+```bash
+curl --request POST https://api-dev.rscapp.xyz/api/v1/auth/register \
+  --header 'content-type: application/json' \
+  --data '{"name":"Ada Okafor","phone":"08031234567","email":"ada@example.com"}'
+```
+
+The response must be `201 Created`, with `status` set to `UNVERIFIED` and
+`otpExpiresInSeconds` set to `600`. Enter the code received by SMS:
+
+```bash
+curl --request POST https://api-dev.rscapp.xyz/api/v1/auth/verify-phone \
+  --header 'content-type: application/json' \
+  --data '{"phone":"08031234567","code":"123456"}'
+```
+
+The verification response must be `200 OK` with `status` set to `ACTIVE`.
+Replace the example identity and OTP before running these commands. Never place
+the Termii API key in either request; it remains a server-only environment
+variable.
+
 Generate the security values once per environment:
 
 ```bash
