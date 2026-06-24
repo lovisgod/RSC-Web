@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import type { ApplicationConfig } from "../config/configuration";
+import { RedisModule } from "../redis/redis.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { Customer } from "./customer.entity";
@@ -12,7 +13,7 @@ import { SMS_SENDER } from "./sms/sms-sender";
 import { TermiiSmsSender } from "./sms/termii-sms.sender";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Customer])],
+  imports: [TypeOrmModule.forFeature([Customer]), RedisModule],
   controllers: [AuthController],
   providers: [
     AuthService,
