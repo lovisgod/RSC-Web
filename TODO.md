@@ -33,6 +33,8 @@ so another agent can safely pick the first unchecked task.
 - [ ] Generate contracts/client code from OpenAPI while retaining runtime
       validation at trust boundaries.
 - [ ] Establish authentication session handling and CSRF protection.
+- [x] Add customer registration and Nigerian phone verification with encrypted
+      PII, Redis OTPs, and Termii SMS delivery.
 - [ ] Add Sentry with privacy-safe scrubbing and release metadata.
 - [ ] Add Storybook or a focused component playground for `@rsc/ui`.
 
