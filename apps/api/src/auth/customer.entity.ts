@@ -39,7 +39,7 @@ export class Customer {
   })
   status!: CustomerStatus;
 
-  @Column({ name: "password_hash", type: "char", length: 128 })
+  @Column({ name: "password_hash", type: "varchar", length: 161 })
   passwordHash!: string;
 
   @Column({ name: "phone_verified_at", type: "timestamptz", nullable: true })

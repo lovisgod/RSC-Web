@@ -21,7 +21,6 @@ export interface Environment {
   TERMII_SENDER_ID?: string;
   TERMII_CHANNEL: "generic" | "dnd";
   TERMII_TIMEOUT_MS: number;
-  TERMII_SANDBOX: boolean;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -65,7 +64,6 @@ const environmentSchema = Joi.object<Environment>({
   }),
   TERMII_CHANNEL: Joi.string().valid("generic", "dnd").default("generic"),
   TERMII_TIMEOUT_MS: Joi.number().integer().min(1_000).max(30_000).default(10_000),
-  TERMII_SANDBOX: Joi.boolean().truthy("true").falsy("false").default(false),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {

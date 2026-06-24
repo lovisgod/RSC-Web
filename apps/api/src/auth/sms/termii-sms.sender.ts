@@ -19,15 +19,6 @@ export class TermiiSmsSender implements SmsSender {
     this.config = configService.get("sms.termii", { infer: true });
   }
 
-  private isSandboxResponse(payload: TermiiSendResponse): boolean {
-    return (
-      this.config.sandbox ||
-      (payload.code === "error" &&
-        typeof payload.message === "string" &&
-        payload.message.toLowerCase().includes("test mode"))
-    );
-  }
-
   async sendPhoneVerification(input: SendPhoneVerificationInput): Promise<void> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.config.timeoutMs);
@@ -54,11 +45,6 @@ export class TermiiSmsSender implements SmsSender {
       }
 
       if (payload.code !== "ok" || !payload.message_id) {
-        if (this.isSandboxResponse(payload)) {
-          this.logger.warn("Termii sandbox: SMS not actually sent (expected in test mode)");
-          return;
-        }
-
         this.logger.error(`Termii rejected SMS request with status ${response.status}`);
         throw new BadGatewayException("Unable to send verification code");
       }

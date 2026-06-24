@@ -26,7 +26,6 @@ export interface ApplicationConfig {
       senderId: string;
       channel: "generic" | "dnd";
       timeoutMs: number;
-      sandbox: boolean;
     };
   };
 }
@@ -69,7 +68,6 @@ export default function configuration(): ApplicationConfig {
         senderId: process.env.TERMII_SENDER_ID ?? "",
         channel: process.env.TERMII_CHANNEL === "dnd" ? "dnd" : "generic",
         timeoutMs: Number(process.env.TERMII_TIMEOUT_MS ?? 10_000),
-        sandbox: process.env.TERMII_SANDBOX === "true",
       },
     },
   };
