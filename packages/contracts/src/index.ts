@@ -125,6 +125,7 @@ export type RegisterCustomerInput = z.infer<typeof registerCustomerInputSchema>;
 export type RegistrationResult = z.infer<typeof registrationResultSchema>;
 export type VerifyPhoneInput = z.infer<typeof verifyPhoneInputSchema>;
 export type PhoneVerificationResult = z.infer<typeof phoneVerificationResultSchema>;
+export type Promos = z.infer<typeof promotions>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
