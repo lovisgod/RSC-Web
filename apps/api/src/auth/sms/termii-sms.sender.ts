@@ -39,7 +39,17 @@ export class TermiiSmsSender implements SmsSender {
       });
       const payload = (await response.json().catch(() => ({}))) as TermiiSendResponse;
 
-      if (!response.ok || payload.code !== "ok" || !payload.message_id) {
+      if (!response.ok) {
+        this.logger.error(`Termii rejected SMS request with status ${response.status}`);
+        throw new BadGatewayException("Unable to send verification code");
+      }
+
+      if (this.config.sandbox && payload.code !== "ok" && !payload.message_id) {
+        this.logger.warn("Termii sandbox: SMS not actually sent (expected in test mode)");
+        return;
+      }
+
+      if (payload.code !== "ok" || !payload.message_id) {
         this.logger.error(`Termii rejected SMS request with status ${response.status}`);
         throw new BadGatewayException("Unable to send verification code");
       }

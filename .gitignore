@@ -12,3 +12,5 @@ coverage
 pnpm-debug.log*
 .env.deploy
 deploy/local/data
+appendonlydir/
+dump.rdb

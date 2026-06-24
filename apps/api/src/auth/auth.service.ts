@@ -1,3 +1,5 @@
+import { scryptSync, randomBytes } from "node:crypto";
+
 import { ConflictException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -12,6 +14,15 @@ import { OTP_TTL_SECONDS } from "./otp/otp.constants";
 import { PhoneOtpService } from "./otp/phone-otp.service";
 import { normalizeNigerianPhoneNumber } from "./phone-number";
 import { SMS_SENDER, type SmsSender } from "./sms/sms-sender";
+
+const SALT_LENGTH = 16;
+const KEY_LENGTH = 64;
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(SALT_LENGTH).toString("hex");
+  const derivedKey = scryptSync(password, salt, KEY_LENGTH);
+  return `${salt}:${derivedKey.toString("hex")}`;
+}
 
 export interface RegistrationResult {
   customerId: string;
@@ -62,6 +73,7 @@ export class AuthService {
           phoneHash,
           emailEncrypted: this.piiCrypto.encrypt(email),
           emailHash,
+          passwordHash: hashPassword(input.password),
           status: CustomerStatus.UNVERIFIED,
           phoneVerifiedAt: null,
         });

@@ -65,6 +65,7 @@ describe(AuthService.name, () => {
       name: "Ada Okafor",
       phone: "08031234567",
       email: "ADA@EXAMPLE.COM",
+      password: "SecureP@ss1",
     });
 
     expect(customers.save).toHaveBeenCalledWith(
@@ -74,6 +75,7 @@ describe(AuthService.name, () => {
         phoneHash: "hash:2348031234567",
         emailEncrypted: "encrypted:ada@example.com",
         emailHash: "hash:ada@example.com",
+        passwordHash: expect.stringContaining(":"),
         status: CustomerStatus.UNVERIFIED,
       }),
     );
@@ -96,6 +98,7 @@ describe(AuthService.name, () => {
       name: "Ada Okafor",
       phoneHash: "hash:2348031234567",
       emailHash: "hash:ada@example.com",
+      passwordHash: "salt:key",
       status: CustomerStatus.UNVERIFIED,
     });
     customers.findOneBy.mockResolvedValueOnce(existing).mockResolvedValueOnce(existing);
@@ -104,6 +107,7 @@ describe(AuthService.name, () => {
       name: "Ada Updated",
       phone: "08031234567",
       email: "ada@example.com",
+      password: "SecureP@ss1",
     });
 
     expect(customers.create).not.toHaveBeenCalled();
@@ -116,6 +120,7 @@ describe(AuthService.name, () => {
       id: customerId,
       phoneHash: "hash:2348031234567",
       emailHash: "hash:original@example.com",
+      passwordHash: "salt:key",
       status: CustomerStatus.UNVERIFIED,
     });
     customers.findOneBy.mockResolvedValueOnce(existing).mockResolvedValueOnce(null);
@@ -125,6 +130,7 @@ describe(AuthService.name, () => {
         name: "Ada Okafor",
         phone: "08031234567",
         email: "replacement@example.com",
+        password: "SecureP@ss1",
       }),
     ).rejects.toBeInstanceOf(ConflictException);
 
@@ -145,6 +151,7 @@ describe(AuthService.name, () => {
         name: "Ada Okafor",
         phone: "08031234567",
         email: "ada@example.com",
+        password: "SecureP@ss1",
       }),
     ).rejects.toBeInstanceOf(ConflictException);
   });
@@ -159,6 +166,7 @@ describe(AuthService.name, () => {
         name: "Ada Okafor",
         phone: "08031234567",
         email: "ada@example.com",
+        password: "SecureP@ss1",
       }),
     ).rejects.toBeInstanceOf(BadGatewayException);
     expect(phoneOtp.revoke).toHaveBeenCalledWith(customerId);

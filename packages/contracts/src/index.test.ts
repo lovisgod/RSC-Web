@@ -29,12 +29,25 @@ describe("customer registration contracts", () => {
         name: "  Ada Okafor  ",
         phone: " 08031234567 ",
         email: " ADA@EXAMPLE.COM ",
+        password: "SecureP@ss1",
       }),
     ).toEqual({
       name: "Ada Okafor",
       phone: "08031234567",
       email: "ada@example.com",
+      password: "SecureP@ss1",
     });
+  });
+
+  it("requires a password of at least 8 characters", () => {
+    expect(() =>
+      registerCustomerInputSchema.parse({
+        name: "Ada Okafor",
+        phone: "08031234567",
+        email: "ada@example.com",
+        password: "Abc123",
+      }),
+    ).toThrow();
   });
 
   it("rejects extra registration fields", () => {
@@ -43,6 +56,7 @@ describe("customer registration contracts", () => {
         name: "Ada Okafor",
         phone: "08031234567",
         email: "ada@example.com",
+        password: "SecureP@ss1",
         role: "SUPER_ADMIN",
       }),
     ).toThrow();

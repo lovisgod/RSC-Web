@@ -30,4 +30,9 @@ export class RegisterCustomerDto {
   @IsEmail()
   @MaxLength(254)
   email!: string;
+
+  @ApiProperty({ example: "SecureP@ss1", minLength: 8, maxLength: 128 })
+  @IsString()
+  @Length(8, 128)
+  password!: string;
 }

@@ -107,4 +107,37 @@ describe(TermiiSmsSender.name, () => {
       }),
     ).rejects.toBeInstanceOf(BadGatewayException);
   });
+
+  it("accepts sandbox responses when sandbox mode is enabled", async () => {
+    const config = {
+      get: () => ({
+        baseUrl: "https://api.ng.termii.com",
+        apiKey: "test-sandbox-key",
+        senderId: "RSC",
+        channel: "dnd",
+        timeoutMs: 5_000,
+        sandbox: true,
+      }),
+    } as unknown as ConfigService<ApplicationConfig, true>;
+
+    const sender = new TermiiSmsSender(config);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ code: "error", message: "Test mode: SMS not sent" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+
+    await expect(
+      sender.sendPhoneVerification({
+        phone: "2348031234567",
+        code: "482901",
+        expiresInMinutes: 10,
+      }),
+    ).resolves.toBeUndefined();
+  });
 });

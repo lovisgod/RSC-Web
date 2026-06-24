@@ -39,6 +39,9 @@ export class Customer {
   })
   status!: CustomerStatus;
 
+  @Column({ name: "password_hash", type: "char", length: 128 })
+  passwordHash!: string;
+
   @Column({ name: "phone_verified_at", type: "timestamptz", nullable: true })
   phoneVerifiedAt!: Date | null;
 
