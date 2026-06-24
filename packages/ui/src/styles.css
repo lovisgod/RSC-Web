@@ -1,5 +1,6 @@
 :root {
   --rsc-ink: #171b17;
+  --rsc-main: #1e4f91;
   --rsc-muted: #667064;
   --rsc-surface: #fffdf7;
   --rsc-panel: #ffffff;
@@ -8,6 +9,7 @@
   --rsc-brand-strong: #0d4328;
   --rsc-accent: #f4b942;
   --rsc-danger: #a33a2b;
+  --rsc-dark: #e06e15;
   --rsc-radius: 18px;
   --rsc-shadow: 0 18px 60px rgb(34 48 37 / 10%);
 }

@@ -12,12 +12,17 @@
     "clean": "rm -rf .next coverage"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
     "@rsc/api-client": "workspace:*",
     "@rsc/contracts": "workspace:*",
     "@rsc/ui": "workspace:*",
+    "@tanstack/react-query": "5.101.0",
+    "@tanstack/react-query-devtools": "^5.101.1",
     "next": "16.2.9",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "react-hook-form": "^7.80.0",
+    "zod": "4.4.3",
     "zustand": "5.0.14"
   },
   "devDependencies": {
@@ -25,8 +30,11 @@
     "@types/node": "24.10.4",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "autoprefixer": "^10.5.0",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.9",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
     "typescript": "5.9.3",
     "vitest": "4.1.9"
   }
