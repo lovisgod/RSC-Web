@@ -68,17 +68,17 @@ describe(AuthService.name, () => {
       password: "SecureP@ss1",
     });
 
-    expect(customers.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: "Ada Okafor",
-        phoneEncrypted: "encrypted:2348031234567",
-        phoneHash: "hash:2348031234567",
-        emailEncrypted: "encrypted:ada@example.com",
-        emailHash: "hash:ada@example.com",
-        passwordHash: expect.stringContaining(":"),
-        status: CustomerStatus.UNVERIFIED,
-      }),
-    );
+    const saved = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
+
+    expect(saved).toMatchObject({
+      name: "Ada Okafor",
+      phoneEncrypted: "encrypted:2348031234567",
+      phoneHash: "hash:2348031234567",
+      emailEncrypted: "encrypted:ada@example.com",
+      emailHash: "hash:ada@example.com",
+      status: CustomerStatus.UNVERIFIED,
+    });
+    expect(saved?.passwordHash).toContain(":");
     expect(phoneOtp.store).toHaveBeenCalledWith(customerId, "482901");
     expect(smsSender.sendPhoneVerification).toHaveBeenCalledWith({
       phone: "2348031234567",
