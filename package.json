@@ -23,7 +23,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepush": "sh scripts/pre-push.sh",
-    "prepare": "sh scripts/install-git-hooks.sh",
+    "prepare": "if [ -f scripts/install-git-hooks.sh ]; then sh scripts/install-git-hooks.sh; fi",
     "clean": "turbo run clean && rm -rf .turbo"
   },
   "devDependencies": {
