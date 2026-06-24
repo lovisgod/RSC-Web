@@ -27,6 +27,7 @@ describe("registration API client", () => {
       name: "Ada Okafor",
       phone: "08031234567",
       email: "ADA@EXAMPLE.COM",
+      password: "SecureP@ss1",
     });
 
     expect(requestFetch).toHaveBeenCalledWith(
@@ -37,6 +38,7 @@ describe("registration API client", () => {
           name: "Ada Okafor",
           phone: "08031234567",
           email: "ada@example.com",
+          password: "SecureP@ss1",
         }),
       }),
     );
