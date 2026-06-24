@@ -88,6 +88,7 @@ Before coding, read:
 ## Session context (2026-06-24)
 
 ### Local dev environment
+
 - **OS:** macOS (no Homebrew, no Docker for dev — user prefers native services)
 - **PostgreSQL:** running natively on port 5432, credentials in `apps/api/.env`
 - **Redis:** installed from source (`/tmp/redis-7.4.2`) to `~/.local/bin`, started as daemon (`redis-server --daemonize yes --appendonly yes --logfile /tmp/redis.log`)
@@ -102,6 +103,7 @@ Before coding, read:
   - `redis-cli ping` — verify Redis
 
 ### Auth module (apps/api/src/auth/)
+
 - **POST /api/v1/auth/register** flow:
   1. DTO validated (class-validator with `@Matches` for phone, `@IsEmail`, `@Length(8,128)` for password)
   2. Phone normalized to `234…` format via `normalizeNigerianPhoneNumber()`
@@ -119,9 +121,11 @@ Before coding, read:
 - **Password:** scrypt with salt, stored as hash in `password_hash` column (char(128)), no login endpoint yet
 
 ### Key errors and fixes
+
 - **500 on register** = Redis not running. The `phoneOtp.store()` call throws a plain `Error` (not `HttpException`) when Redis is unreachable. The `ApiExceptionFilter` catches it and returns 500 "Internal server error". **Fix:** start Redis.
 
 ### Architecture notes
+
 - NestJS global pipes: `ValidationPipe` with `transform: true, whitelist: true, forbidNonWhitelisted: true`
 - Global interceptor: `ApiResponseInterceptor` wraps all responses in `{ data, message, status }` envelope
 - Global filter: `ApiExceptionFilter` — catches all, formats non-HttpException as 500 with `["Internal server error"]`
@@ -135,4 +139,5 @@ Before coding, read:
 - Health: `/api/v1/health/live` (process only), `/api/v1/health/ready` (PostgreSQL + Redis)
 
 ### Backlog priority
+
 Next unchecked P1 task: **Implement the first domain vertical slice: outlets and public catalog** (see TODO.md)
