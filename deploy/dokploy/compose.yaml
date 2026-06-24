@@ -75,6 +75,15 @@ services:
       DATABASE_SSL: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:?PII_ENCRYPTION_KEY is required}
+      PII_HASH_PEPPER: ${PII_HASH_PEPPER:?PII_HASH_PEPPER is required}
+      OTP_PEPPER: ${OTP_PEPPER:?OTP_PEPPER is required}
+      SMS_PROVIDER: ${SMS_PROVIDER:-noop}
+      TERMII_BASE_URL: ${TERMII_BASE_URL:-https://api.ng.termii.com}
+      TERMII_API_KEY: ${TERMII_API_KEY:-}
+      TERMII_SENDER_ID: ${TERMII_SENDER_ID:-}
+      TERMII_CHANNEL: ${TERMII_CHANNEL:-dnd}
+      TERMII_TIMEOUT_MS: ${TERMII_TIMEOUT_MS:-10000}
     expose:
       - "4000"
     depends_on:

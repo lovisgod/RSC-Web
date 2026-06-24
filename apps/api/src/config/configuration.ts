@@ -13,6 +13,21 @@ export interface ApplicationConfig {
   redis: {
     url: string;
   };
+  security: {
+    piiEncryptionKey: string;
+    piiHashPepper: string;
+    otpPepper: string;
+  };
+  sms: {
+    provider: "noop" | "termii";
+    termii: {
+      baseUrl: string;
+      apiKey: string;
+      senderId: string;
+      channel: "generic" | "dnd";
+      timeoutMs: number;
+    };
+  };
 }
 
 function parseOrigins(value: string): string[] {
@@ -39,6 +54,21 @@ export default function configuration(): ApplicationConfig {
     },
     redis: {
       url: process.env.REDIS_URL ?? "",
+    },
+    security: {
+      piiEncryptionKey: process.env.PII_ENCRYPTION_KEY ?? "",
+      piiHashPepper: process.env.PII_HASH_PEPPER ?? "",
+      otpPepper: process.env.OTP_PEPPER ?? "",
+    },
+    sms: {
+      provider: process.env.SMS_PROVIDER === "termii" ? "termii" : "noop",
+      termii: {
+        baseUrl: (process.env.TERMII_BASE_URL ?? "https://api.ng.termii.com").replace(/\/$/, ""),
+        apiKey: process.env.TERMII_API_KEY ?? "",
+        senderId: process.env.TERMII_SENDER_ID ?? "",
+        channel: process.env.TERMII_CHANNEL === "dnd" ? "dnd" : "generic",
+        timeoutMs: Number(process.env.TERMII_TIMEOUT_MS ?? 10_000),
+      },
     },
   };
 }
