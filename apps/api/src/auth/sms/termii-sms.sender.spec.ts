@@ -140,4 +140,26 @@ describe(TermiiSmsSender.name, () => {
       }),
     ).resolves.toBeUndefined();
   });
+
+  it("auto-detects sandbox test mode responses without the config flag", async () => {
+    const sender = createSender();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ code: "error", message: "Test mode: SMS not sent" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+
+    await expect(
+      sender.sendPhoneVerification({
+        phone: "2348031234567",
+        code: "482901",
+        expiresInMinutes: 10,
+      }),
+    ).resolves.toBeUndefined();
+  });
 });
