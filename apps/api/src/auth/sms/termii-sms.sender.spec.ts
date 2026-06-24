@@ -1,5 +1,5 @@
 import { BadGatewayException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import type { ConfigService } from "@nestjs/config";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ApplicationConfig } from "../../config/configuration";

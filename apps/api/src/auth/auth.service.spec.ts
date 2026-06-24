@@ -2,11 +2,11 @@ import { BadGatewayException, ConflictException, UnauthorizedException } from "@
 import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { PiiCryptoService } from "../common/security/pii-crypto.service";
+import type { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { AuthService } from "./auth.service";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
-import { PhoneOtpService } from "./otp/phone-otp.service";
+import type { PhoneOtpService } from "./otp/phone-otp.service";
 import type { SmsSender } from "./sms/sms-sender";
 
 describe(AuthService.name, () => {
@@ -33,9 +33,9 @@ describe(AuthService.name, () => {
     customers = {
       findOneBy: vi.fn().mockResolvedValue(null),
       create: vi.fn((value: Partial<Customer>) => Object.assign(new Customer(), value)),
-      save: vi.fn(async (customer: Customer) => {
+      save: vi.fn((customer: Customer) => {
         customer.id ||= customerId;
-        return customer;
+        return Promise.resolve(customer);
       }),
     };
     piiCrypto = {
@@ -178,12 +178,10 @@ describe(AuthService.name, () => {
     });
 
     expect(phoneOtp.verify).toHaveBeenCalledWith(customerId, "482901");
-    expect(customers.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: CustomerStatus.ACTIVE,
-        phoneVerifiedAt: expect.any(Date),
-      }),
-    );
+    const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
+
+    expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
+    expect(savedCustomer?.phoneVerifiedAt).toBeInstanceOf(Date);
     expect(result.status).toBe(CustomerStatus.ACTIVE);
     expect(result.phoneVerifiedAt).toBeTypeOf("string");
   });

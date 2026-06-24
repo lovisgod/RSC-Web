@@ -4,6 +4,22 @@ export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
 export const customerStatusSchema = z.enum(["UNVERIFIED", "ACTIVE", "SUSPENDED"]);
 
+export const apiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
+  z.object({
+    data: dataSchema,
+    message: z.string().min(1),
+    status: z.int().min(100).max(599),
+  });
+
+export const apiErrorDataSchema = z.object({
+  errors: z.array(z.string()),
+  path: z.string(),
+  requestId: z.string().nullable(),
+  timestamp: z.iso.datetime(),
+});
+
+export const apiErrorResponseSchema = apiResponseSchema(apiErrorDataSchema);
+
 export const registerCustomerInputSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
@@ -30,6 +46,9 @@ export const phoneVerificationResultSchema = z.object({
   status: z.literal("ACTIVE"),
   phoneVerifiedAt: z.iso.datetime(),
 });
+
+export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
+export const phoneVerificationResponseSchema = apiResponseSchema(phoneVerificationResultSchema);
 
 export const currencySchema = z.literal("NGN");
 
@@ -77,6 +96,13 @@ export const adminOverviewSchema = z.object({
 });
 
 export type Money = z.infer<typeof moneySchema>;
+export type ApiResponse<T> = {
+  data: T;
+  message: string;
+  status: number;
+};
+export type ApiErrorData = z.infer<typeof apiErrorDataSchema>;
+export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;
 export type CustomerStatus = z.infer<typeof customerStatusSchema>;
 export type RegisterCustomerInput = z.infer<typeof registerCustomerInputSchema>;
 export type RegistrationResult = z.infer<typeof registrationResultSchema>;

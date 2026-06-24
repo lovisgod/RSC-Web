@@ -2,6 +2,7 @@ import { Controller, Get } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { HealthCheck, HealthCheckService, TypeOrmHealthIndicator } from "@nestjs/terminus";
 
+import { ApiMessage } from "../common/http/api-message.decorator";
 import { RedisHealthIndicator } from "./redis.health";
 
 @ApiTags("health")
@@ -14,6 +15,7 @@ export class HealthController {
   ) {}
 
   @Get("live")
+  @ApiMessage("API is live")
   @ApiOperation({ summary: "Process liveness probe" })
   @HealthCheck()
   live() {
@@ -21,6 +23,7 @@ export class HealthController {
   }
 
   @Get("ready")
+  @ApiMessage("API dependencies are ready")
   @ApiOperation({ summary: "PostgreSQL and Redis readiness probe" })
   @HealthCheck()
   ready() {

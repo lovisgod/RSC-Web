@@ -1,5 +1,7 @@
 import {
   adminOverviewSchema,
+  apiErrorResponseSchema,
+  apiResponseSchema,
   outletSummarySchema,
   phoneVerificationResultSchema,
   registerCustomerInputSchema,
@@ -59,14 +61,21 @@ export function createApiClient(options: ApiClientOptions) {
     });
 
     if (!response.ok) {
+      const errorPayload: unknown = await response.json().catch(() => null);
+      const parsedError = apiErrorResponseSchema.safeParse(errorPayload);
+
       throw new ApiError(
-        `API request failed with status ${response.status}`,
+        parsedError.success
+          ? parsedError.data.message
+          : `API request failed with status ${response.status}`,
         response.status,
         response.headers.get("x-request-id"),
       );
     }
 
-    return schema.parse(await response.json());
+    const envelope = apiResponseSchema(schema).parse(await response.json());
+
+    return envelope.data;
   }
 
   return {

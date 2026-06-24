@@ -7,9 +7,13 @@ describe("registration API client", () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
-          customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
-          status: "UNVERIFIED",
-          otpExpiresInSeconds: 600,
+          data: {
+            customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+            status: "UNVERIFIED",
+            otpExpiresInSeconds: 600,
+          },
+          message: "Customer registered; verification code sent",
+          status: 201,
         }),
         { status: 201, headers: { "content-type": "application/json" } },
       ),

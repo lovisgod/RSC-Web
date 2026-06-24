@@ -2,6 +2,7 @@ import type { Server } from "node:http";
 
 import type { INestApplication } from "@nestjs/common";
 import { ValidationPipe, VersioningType } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -9,6 +10,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { AuthController } from "../src/auth/auth.controller";
 import { AuthService } from "../src/auth/auth.service";
 import { CustomerStatus } from "../src/auth/customer-status.enum";
+import { ApiExceptionFilter } from "../src/common/http/api-exception.filter";
+import { ApiResponseInterceptor } from "../src/common/http/api-response.interceptor";
 
 describe("Customer registration HTTP contract", () => {
   let app: INestApplication;
@@ -41,6 +44,8 @@ describe("Customer registration HTTP contract", () => {
         whitelist: true,
       }),
     );
+    app.useGlobalInterceptors(new ApiResponseInterceptor(app.get(Reflector)));
+    app.useGlobalFilters(new ApiExceptionFilter());
     await app.init();
   });
 
@@ -59,9 +64,13 @@ describe("Customer registration HTTP contract", () => {
       .expect(201);
 
     expect(response.body).toEqual({
-      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
-      status: "UNVERIFIED",
-      otpExpiresInSeconds: 600,
+      data: {
+        customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+        status: "UNVERIFIED",
+        otpExpiresInSeconds: 600,
+      },
+      message: "Customer registered; verification code sent",
+      status: 201,
     });
     expect(authService.register).toHaveBeenCalledWith({
       name: "Ada Okafor",
@@ -71,7 +80,7 @@ describe("Customer registration HTTP contract", () => {
   });
 
   it("rejects invalid or unexpected registration fields", async () => {
-    await request(app.getHttpServer() as Server)
+    const response = await request(app.getHttpServer() as Server)
       .post("/api/v1/auth/register")
       .send({
         name: "A",
@@ -80,6 +89,16 @@ describe("Customer registration HTTP contract", () => {
         role: "SUPER_ADMIN",
       })
       .expect(400);
+    const body = response.body as {
+      data?: { errors?: unknown; path?: unknown };
+      message?: unknown;
+      status?: unknown;
+    };
+
+    expect(body.data?.errors).toBeInstanceOf(Array);
+    expect(body.data?.path).toBe("/api/v1/auth/register");
+    expect(body.message).toBeTypeOf("string");
+    expect(body.status).toBe(400);
   });
 
   it("verifies a six-digit phone OTP", async () => {
@@ -88,9 +107,13 @@ describe("Customer registration HTTP contract", () => {
       .send({ phone: "+2348031234567", code: "482901" })
       .expect(200)
       .expect({
-        customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
-        status: "ACTIVE",
-        phoneVerifiedAt: "2026-06-23T10:00:00.000Z",
+        data: {
+          customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+          status: "ACTIVE",
+          phoneVerifiedAt: "2026-06-23T10:00:00.000Z",
+        },
+        message: "Phone verified successfully",
+        status: 200,
       });
   });
 

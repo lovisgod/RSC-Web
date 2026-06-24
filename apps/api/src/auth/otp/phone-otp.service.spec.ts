@@ -1,4 +1,4 @@
-import { ConfigService } from "@nestjs/config";
+import type { ConfigService } from "@nestjs/config";
 import type Redis from "ioredis";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

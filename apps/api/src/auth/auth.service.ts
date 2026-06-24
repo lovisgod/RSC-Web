@@ -126,12 +126,17 @@ export class AuthService {
   }
 
   private isUniqueViolation(error: unknown): boolean {
+    if (!(error instanceof QueryFailedError)) {
+      return false;
+    }
+
+    const driverError: unknown = error.driverError;
+
     return (
-      error instanceof QueryFailedError &&
-      typeof error.driverError === "object" &&
-      error.driverError !== null &&
-      "code" in error.driverError &&
-      error.driverError.code === "23505"
+      typeof driverError === "object" &&
+      driverError !== null &&
+      "code" in driverError &&
+      driverError.code === "23505"
     );
   }
 }

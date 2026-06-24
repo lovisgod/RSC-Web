@@ -46,9 +46,13 @@ Successful `201 Created` response:
 
 ```json
 {
-  "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
-  "status": "UNVERIFIED",
-  "otpExpiresInSeconds": 600
+  "data": {
+    "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
+    "status": "UNVERIFIED",
+    "otpExpiresInSeconds": 600
+  },
+  "message": "Customer registered; verification code sent",
+  "status": 201
 }
 ```
 
@@ -63,11 +67,25 @@ Successful `200 OK` response:
 
 ```json
 {
-  "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
-  "status": "ACTIVE",
-  "phoneVerifiedAt": "2026-06-23T10:00:00.000Z"
+  "data": {
+    "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
+    "status": "ACTIVE",
+    "phoneVerifiedAt": "2026-06-23T10:00:00.000Z"
+  },
+  "message": "Phone verified successfully",
+  "status": 200
 }
 ```
+
+All API controller responses use the same top-level envelope:
+
+- `data` — the endpoint payload, or structured error details.
+- `message` — a human-readable result message.
+- `status` — the numeric HTTP status code.
+
+Errors retain the same envelope and put `errors`, `path`, `requestId`, and
+`timestamp` inside `data`. The shared API client validates the envelope and
+returns its typed `data` payload to application code.
 
 The machine-readable sources of truth are:
 

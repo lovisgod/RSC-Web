@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   moneySchema,
   phoneVerificationResultSchema,
+  registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
   verifyPhoneInputSchema,
@@ -53,6 +54,17 @@ describe("customer registration contracts", () => {
         customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
         status: "UNVERIFIED",
         otpExpiresInSeconds: 600,
+      }),
+    ).toBeTruthy();
+    expect(
+      registrationResponseSchema.parse({
+        data: {
+          customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+          status: "UNVERIFIED",
+          otpExpiresInSeconds: 600,
+        },
+        message: "Customer registered; verification code sent",
+        status: 201,
       }),
     ).toBeTruthy();
     expect(
