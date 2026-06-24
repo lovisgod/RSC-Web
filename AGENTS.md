@@ -84,3 +84,60 @@ Before coding, read:
 - Loading/error/empty states are deliberate.
 - Relevant docs and `TODO.md` are current.
 - Workspace checks pass.
+
+## Session context (2026-06-24)
+
+### Local dev environment
+
+- **OS:** macOS (no Homebrew, no Docker for dev — user prefers native services)
+- **PostgreSQL:** running natively on port 5432, credentials in `apps/api/.env`
+- **Redis:** installed from source (`/tmp/redis-7.4.2`) to `~/.local/bin`, started as daemon (`redis-server --daemonize yes --appendonly yes --logfile /tmp/redis.log`)
+- **API:** NestJS 11 on port 4000, started via `pnpm --filter @rsc/api dev`
+- **Package manager:** pnpm (workspaces monorepo)
+- **Commands:**
+  - `pnpm dev:api` — start API in watch mode
+  - `pnpm --filter @rsc/api test` — run unit tests
+  - `pnpm --filter @rsc/api test:e2e` — run e2e tests
+  - `pnpm --filter @rsc/api check` — typecheck
+  - `redis-server --daemonize yes` — start Redis
+  - `redis-cli ping` — verify Redis
+
+### Auth module (apps/api/src/auth/)
+
+- **POST /api/v1/auth/register** flow:
+  1. DTO validated (class-validator with `@Matches` for phone, `@IsEmail`, `@Length(8,128)` for password)
+  2. Phone normalized to `234…` format via `normalizeNigerianPhoneNumber()`
+  3. Email trimmed + lowercased
+  4. Password hashed using Node.js `crypto.scryptSync` with random 16-byte salt (stored as `salt:derivedKey`)
+  5. PII encrypted via `PiiCryptoService` (AES-256-GCM), hashed for lookup (SHA-256 with pepper)
+  6. Existing customer check (phone and email hash lookups)
+  7. Customer saved to PostgreSQL (encrypted PII, password hash, status `UNVERIFIED`)
+  8. 6-digit OTP generated and stored in Redis (HMAC-SHA-256 digest, 5 attempts, 10 min TTL)
+  9. SMS sent via `SmsSender` interface (NoopSmsSender when `SMS_PROVIDER=noop`)
+- **POST /api/v1/auth/verify-phone** flow:
+  1. Phone normalized, customer looked up by hash
+  2. OTP verified against Redis via Lua script (atomically checks hash, decrements attempts)
+  3. On success: status → `ACTIVE`, `phoneVerifiedAt` set, customer saved
+- **Password:** scrypt with salt, stored as hash in `password_hash` column (char(128)), no login endpoint yet
+
+### Key errors and fixes
+
+- **500 on register** = Redis not running. The `phoneOtp.store()` call throws a plain `Error` (not `HttpException`) when Redis is unreachable. The `ApiExceptionFilter` catches it and returns 500 "Internal server error". **Fix:** start Redis.
+
+### Architecture notes
+
+- NestJS global pipes: `ValidationPipe` with `transform: true, whitelist: true, forbidNonWhitelisted: true`
+- Global interceptor: `ApiResponseInterceptor` wraps all responses in `{ data, message, status }` envelope
+- Global filter: `ApiExceptionFilter` — catches all, formats non-HttpException as 500 with `["Internal server error"]`
+- Request ID middleware adds `x-request-id` header
+- `@rsc/contracts` is source of truth for shared Zod schemas/DTOs
+- `@rsc/api-client` provides typed fetch functions that validate at runtime
+- Security: `PiiCryptoService` in `SecurityModule` (global) for encrypting PII
+- Database: TypeORM with `synchronize: false`, migrations in `apps/api/src/database/migrations/`
+- Redis: `RedisModule` provides `REDIS_CLIENT` token for ioredis, with `lazyConnect: true`
+- Config: Joi-validated env vars in `environment.ts`, typed config in `configuration.ts`
+- Health: `/api/v1/health/live` (process only), `/api/v1/health/ready` (PostgreSQL + Redis)
+
+### Backlog priority
+
+Next unchecked P1 task: **Implement the first domain vertical slice: outlets and public catalog** (see TODO.md)

@@ -2,7 +2,9 @@ import { MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
 import { AppController } from "./app.controller";
+import { AuthModule } from "./auth/auth.module";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
+import { SecurityModule } from "./common/security/security.module";
 import configuration from "./config/configuration";
 import { validateEnvironment } from "./config/environment";
 import { DatabaseModule } from "./database/database.module";
@@ -19,6 +21,8 @@ import { RedisModule } from "./redis/redis.module";
     }),
     DatabaseModule,
     RedisModule,
+    SecurityModule,
+    AuthModule,
     HealthModule,
   ],
   controllers: [AppController],

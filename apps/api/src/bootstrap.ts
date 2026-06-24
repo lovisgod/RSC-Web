@@ -1,11 +1,14 @@
 import { Logger, ValidationPipe, VersioningType } from "@nestjs/common";
 import type { INestApplication } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Reflector } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import compression from "compression";
 import helmet from "helmet";
 
 import type { ApplicationConfig } from "./config/configuration";
+import { ApiExceptionFilter } from "./common/http/api-exception.filter";
+import { ApiResponseInterceptor } from "./common/http/api-response.interceptor";
 
 export function configureApplication(app: INestApplication): void {
   const configService = app.get(ConfigService<ApplicationConfig, true>);
@@ -31,6 +34,8 @@ export function configureApplication(app: INestApplication): void {
       whitelist: true,
     }),
   );
+  app.useGlobalInterceptors(new ApiResponseInterceptor(app.get(Reflector)));
+  app.useGlobalFilters(new ApiExceptionFilter());
   app.enableShutdownHooks();
 
   if (swaggerEnabled) {

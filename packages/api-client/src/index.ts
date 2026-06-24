@@ -1,8 +1,18 @@
 import {
   adminOverviewSchema,
+  apiErrorResponseSchema,
+  apiResponseSchema,
   outletSummarySchema,
+  phoneVerificationResultSchema,
+  registerCustomerInputSchema,
+  registrationResultSchema,
+  verifyPhoneInputSchema,
   type AdminOverview,
   type OutletSummary,
+  type PhoneVerificationResult,
+  type RegisterCustomerInput,
+  type RegistrationResult,
+  type VerifyPhoneInput,
 } from "@rsc/contracts";
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
@@ -24,6 +34,22 @@ export function createApiClient(options: {
   const http = createHttpClient(options);
 
   return {
+    registerCustomer(input: RegisterCustomerInput): Promise<RegistrationResult> {
+      const body = registerCustomerInputSchema.parse(input);
+
+      return request("/api/v1/auth/register", registrationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    verifyPhone(input: VerifyPhoneInput): Promise<PhoneVerificationResult> {
+      const body = verifyPhoneInputSchema.parse(input);
+
+      return request("/api/v1/auth/verify-phone", phoneVerificationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     listOutlets(): Promise<OutletSummary[]> {
       return request(http, "/api/v1/outlets", z.array(outletSummarySchema));
     },
