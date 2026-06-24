@@ -9,7 +9,7 @@ import {
 
 import { CustomerStatus } from "./customer-status.enum";
 
-@Entity({ name: "customers" })
+@Entity({ name: "users" })
 export class Customer {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -20,14 +20,14 @@ export class Customer {
   @Column({ name: "phone_encrypted", type: "text" })
   phoneEncrypted!: string;
 
-  @Index("uq_customers_phone_hash", { unique: true })
+  @Index("uq_users_phone_hash", { unique: true })
   @Column({ name: "phone_hash", type: "char", length: 64 })
   phoneHash!: string;
 
   @Column({ name: "email_encrypted", type: "text" })
   emailEncrypted!: string;
 
-  @Index("uq_customers_email_hash", { unique: true })
+  @Index("uq_users_email_hash", { unique: true })
   @Column({ name: "email_hash", type: "char", length: 64 })
   emailHash!: string;
 

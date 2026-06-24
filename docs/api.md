@@ -163,8 +163,10 @@ back it up securely. Never reuse development values in staging or production.
 - Each domain module will own its entities, repositories, and migrations.
 - API DTOs/contracts must not expose entities.
 
-Customer registration is persisted in the `customers` table. It is created by
-`apps/api/src/database/migrations/1782172800000-create-customers.ts` and mapped
+Customer registration is persisted in the `users` table. It is created by
+`apps/api/src/database/migrations/1782172800000-create-customers.ts`, renamed
+for existing deployments by
+`apps/api/src/database/migrations/1782429300000-rename-customers-to-users.ts`, and mapped
 inside the API by `apps/api/src/auth/customer.entity.ts`. The public fields do
 not map one-to-one to columns: phone and email are encrypted before storage and
 have separate deterministic hash columns for lookup and uniqueness.

@@ -8,7 +8,7 @@ export class CreateCustomers1782172800000 implements MigrationInterface {
       `CREATE TYPE "customer_status" AS ENUM ('UNVERIFIED', 'ACTIVE', 'SUSPENDED')`,
     );
     await queryRunner.query(`
-      CREATE TABLE "customers" (
+      CREATE TABLE "users" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "name" varchar(120) NOT NULL,
         "phone_encrypted" text NOT NULL,
@@ -19,15 +19,15 @@ export class CreateCustomers1782172800000 implements MigrationInterface {
         "phone_verified_at" timestamptz,
         "created_at" timestamptz NOT NULL DEFAULT now(),
         "updated_at" timestamptz NOT NULL DEFAULT now(),
-        CONSTRAINT "pk_customers" PRIMARY KEY ("id"),
-        CONSTRAINT "uq_customers_phone_hash" UNIQUE ("phone_hash"),
-        CONSTRAINT "uq_customers_email_hash" UNIQUE ("email_hash")
+        CONSTRAINT "pk_users" PRIMARY KEY ("id"),
+        CONSTRAINT "uq_users_phone_hash" UNIQUE ("phone_hash"),
+        CONSTRAINT "uq_users_email_hash" UNIQUE ("email_hash")
       )
     `);
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE "customers"`);
+    await queryRunner.query(`DROP TABLE "users"`);
     await queryRunner.query(`DROP TYPE "customer_status"`);
   }
 }

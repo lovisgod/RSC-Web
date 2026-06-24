@@ -5,9 +5,10 @@ import type { ApplicationConfig } from "../../config/configuration";
 import type { SendPhoneVerificationInput, SmsSender } from "./sms-sender";
 
 interface TermiiSendResponse {
-  code?: string;
+  code?: string | number;
   message?: string;
   message_id?: string;
+  link?: string;
 }
 
 @Injectable()
@@ -17,6 +18,16 @@ export class TermiiSmsSender implements SmsSender {
 
   constructor(configService: ConfigService<ApplicationConfig, true>) {
     this.config = configService.get("sms.termii", { infer: true });
+  }
+
+  private describePayload(payload: TermiiSendResponse): string {
+    const summary = {
+      code: payload.code ?? null,
+      message: payload.message ?? null,
+      link: payload.link ?? null,
+    };
+
+    return JSON.stringify(summary);
   }
 
   async sendPhoneVerification(input: SendPhoneVerificationInput): Promise<void> {
@@ -40,12 +51,16 @@ export class TermiiSmsSender implements SmsSender {
       const payload = (await response.json().catch(() => ({}))) as TermiiSendResponse;
 
       if (!response.ok) {
-        this.logger.error(`Termii rejected SMS request with status ${response.status}`);
+        this.logger.error(
+          `Termii rejected SMS request with status ${response.status}: ${this.describePayload(payload)}`,
+        );
         throw new BadGatewayException("Unable to send verification code");
       }
 
       if (payload.code !== "ok" || !payload.message_id) {
-        this.logger.error(`Termii rejected SMS request with status ${response.status}`);
+        this.logger.error(
+          `Termii rejected SMS request with status ${response.status}: ${this.describePayload(payload)}`,
+        );
         throw new BadGatewayException("Unable to send verification code");
       }
     } catch (error) {

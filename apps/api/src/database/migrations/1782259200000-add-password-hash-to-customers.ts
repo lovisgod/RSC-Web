@@ -5,11 +5,11 @@ export class AddPasswordHashToCustomers1782259200000 implements MigrationInterfa
 
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "customers" ADD "password_hash" varchar(161) NOT NULL DEFAULT ''`,
+      `ALTER TABLE "users" ADD "password_hash" varchar(161) NOT NULL DEFAULT ''`,
     );
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "customers" DROP COLUMN "password_hash"`);
+    await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "password_hash"`);
   }
 }
