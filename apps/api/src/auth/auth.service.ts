@@ -15,13 +15,13 @@ import { SMS_SENDER, type SmsSender } from "./sms/sms-sender";
 
 export interface RegistrationResult {
   customerId: string;
-  status: CustomerStatus;
+  status: CustomerStatus.UNVERIFIED;
   otpExpiresInSeconds: number;
 }
 
 export interface PhoneVerificationResult {
   customerId: string;
-  status: CustomerStatus;
+  status: CustomerStatus.ACTIVE;
   phoneVerifiedAt: string;
 }
 
@@ -94,7 +94,7 @@ export class AuthService {
 
     return {
       customerId: savedCustomer.id,
-      status: savedCustomer.status,
+      status: CustomerStatus.UNVERIFIED,
       otpExpiresInSeconds: OTP_TTL_SECONDS,
     };
   }
@@ -120,7 +120,7 @@ export class AuthService {
 
     return {
       customerId: savedCustomer.id,
-      status: savedCustomer.status,
+      status: CustomerStatus.ACTIVE,
       phoneVerifiedAt: savedCustomer.phoneVerifiedAt!.toISOString(),
     };
   }

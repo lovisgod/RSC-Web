@@ -190,31 +190,45 @@ The development Compose stack contains:
 Do not publish ports `5432` or `6379` to the internet. The API reaches both
 services through the private Compose network.
 
-### API DNS
+### Development DNS and domains
 
-In Namecheap **Advanced DNS**, add:
+In Namecheap **Advanced DNS**, add all three development records:
 
-| Type     | Host      | Value          | TTL       |
-| -------- | --------- | -------------- | --------- |
-| A Record | `api-dev` | `72.61.202.26` | Automatic |
+| Type     | Host        | Value          | TTL       |
+| -------- | ----------- | -------------- | --------- |
+| A Record | `dev`       | `72.61.202.26` | Automatic |
+| A Record | `admin-dev` | `72.61.202.26` | Automatic |
+| A Record | `api-dev`   | `72.61.202.26` | Automatic |
 
-In Dokploy **Domains**, add:
+Remove conflicting parking, URL redirect, CNAME, or duplicate A records for
+these hosts. In Dokploy **Domains**, add all three routes:
 
-| Setting        | Value                |
-| -------------- | -------------------- |
-| Service        | `api`                |
-| Domain         | `api-dev.rscapp.xyz` |
-| External path  | `/`                  |
-| Internal path  | `/`                  |
-| Strip path     | Off                  |
-| Container port | `4000`               |
-| HTTPS          | On                   |
-| Certificate    | Let's Encrypt        |
+| Service         | Domain                 | Port   |
+| --------------- | ---------------------- | ------ |
+| `customer-web`  | `dev.rscapp.xyz`       | `3000` |
+| `central-admin` | `admin-dev.rscapp.xyz` | `8080` |
+| `api`           | `api-dev.rscapp.xyz`   | `4000` |
 
-Redeploy the Compose service after adding the domain. Then verify:
+For every route use external path `/`, internal path `/`, **Strip path Off**,
+HTTPS **On**, and a Let's Encrypt certificate.
+
+Save the domain configuration and redeploy the Compose service. DNS can resolve
+while a Dokploy route is still missing; in that case Traefik returns a plain
+`404 page not found` before the request ever reaches NestJS.
+
+Verify DNS:
+
+```bash
+dig +short dev.rscapp.xyz
+dig +short admin-dev.rscapp.xyz
+dig +short api-dev.rscapp.xyz
+```
+
+All three must return `72.61.202.26`. Then verify the applications:
 
 ```text
-https://api-dev.rscapp.xyz/api/v1
+https://dev.rscapp.xyz
+https://admin-dev.rscapp.xyz
 https://api-dev.rscapp.xyz/api/v1/health/live
 https://api-dev.rscapp.xyz/api/v1/health/ready
 https://api-dev.rscapp.xyz/api/docs

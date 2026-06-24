@@ -27,6 +27,56 @@ The first authentication slice exposes:
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/verify-phone`
 
+Frontend applications must import the request and response types (or their Zod
+schemas) from `@rsc/contracts`; they must not import the API's TypeORM entity.
+`@rsc/api-client` exposes `registerCustomer(input)` and `verifyPhone(input)` and
+validates both outgoing input and incoming responses at runtime.
+
+### Registration contract
+
+`POST /api/v1/auth/register`
+
+| Request field | Type     | Rules                                               |
+| ------------- | -------- | --------------------------------------------------- |
+| `name`        | `string` | Trimmed; 2–120 characters                           |
+| `phone`       | `string` | Nigerian mobile: `080…`, `23480…`, or `+23480…`     |
+| `email`       | `string` | Valid email; trimmed, lowercased; maximum 254 chars |
+
+Successful `201 Created` response:
+
+```json
+{
+  "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
+  "status": "UNVERIFIED",
+  "otpExpiresInSeconds": 600
+}
+```
+
+`POST /api/v1/auth/verify-phone`
+
+| Request field | Type     | Rules                                        |
+| ------------- | -------- | -------------------------------------------- |
+| `phone`       | `string` | Same Nigerian mobile formats as registration |
+| `code`        | `string` | Exactly six numeric digits                   |
+
+Successful `200 OK` response:
+
+```json
+{
+  "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
+  "status": "ACTIVE",
+  "phoneVerifiedAt": "2026-06-23T10:00:00.000Z"
+}
+```
+
+The machine-readable sources of truth are:
+
+- `packages/contracts/src/index.ts` — shared Zod schemas and inferred
+  TypeScript types.
+- `packages/api-client/src/index.ts` — ready-to-use typed frontend calls.
+- `/api/docs` and `/api/openapi.json` — interactive Swagger and OpenAPI when
+  `SWAGGER_ENABLED=true`.
+
 Registration accepts a name, Nigerian mobile number, and email address. Phone
 numbers are normalized to `234...` international format. Phone and email values
 are encrypted at rest with AES-256-GCM; deterministic, peppered SHA-256 hashes
@@ -94,6 +144,25 @@ back it up securely. Never reuse development values in staging or production.
 - The first migration enables `pgcrypto` and `postgis`.
 - Each domain module will own its entities, repositories, and migrations.
 - API DTOs/contracts must not expose entities.
+
+Customer registration is persisted in the `customers` table. It is created by
+`apps/api/src/database/migrations/1782172800000-create-customers.ts` and mapped
+inside the API by `apps/api/src/auth/customer.entity.ts`. The public fields do
+not map one-to-one to columns: phone and email are encrypted before storage and
+have separate deterministic hash columns for lookup and uniqueness.
+
+| Database column     | Purpose                                       |
+| ------------------- | --------------------------------------------- |
+| `id`                | UUID primary key                              |
+| `name`              | Customer display name                         |
+| `phone_encrypted`   | Encrypted normalized phone number             |
+| `phone_hash`        | Unique lookup hash; never returned to clients |
+| `email_encrypted`   | Encrypted normalized email address            |
+| `email_hash`        | Unique lookup hash; never returned to clients |
+| `status`            | `UNVERIFIED`, `ACTIVE`, or `SUSPENDED`        |
+| `phone_verified_at` | Verification timestamp, nullable              |
+| `created_at`        | Creation timestamp                            |
+| `updated_at`        | Last update timestamp                         |
 
 Create a blank migration:
 

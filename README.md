@@ -30,6 +30,9 @@ pnpm dev
 API runs at `http://localhost:4000`, customer web at `http://localhost:3000`,
 and central admin at `http://localhost:5173`.
 
+Deployed development URLs are `https://dev.rscapp.xyz`,
+`https://admin-dev.rscapp.xyz`, and `https://api-dev.rscapp.xyz`.
+
 Read [AGENTS.md](./AGENTS.md) before making changes. Product and architecture
 context lives in [`docs/`](./docs/).
 

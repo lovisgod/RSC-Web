@@ -9,7 +9,8 @@ import {
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
-import { AuthService, type PhoneVerificationResult, type RegistrationResult } from "./auth.service";
+import { AuthService } from "./auth.service";
+import { PhoneVerificationResponseDto, RegistrationResponseDto } from "./dto/auth-response.dto";
 import { RegisterCustomerDto } from "./dto/register-customer.dto";
 import { VerifyPhoneDto } from "./dto/verify-phone.dto";
 
@@ -20,19 +21,25 @@ export class AuthController {
 
   @Post("register")
   @ApiOperation({ summary: "Register a customer and send a phone verification OTP" })
-  @ApiCreatedResponse({ description: "Customer created in UNVERIFIED state" })
+  @ApiCreatedResponse({
+    description: "Customer created in UNVERIFIED state",
+    type: RegistrationResponseDto,
+  })
   @ApiConflictResponse({ description: "Phone or email already belongs to an account" })
   @ApiBadGatewayResponse({ description: "The SMS provider could not dispatch the OTP" })
-  register(@Body() input: RegisterCustomerDto): Promise<RegistrationResult> {
+  register(@Body() input: RegisterCustomerDto): Promise<RegistrationResponseDto> {
     return this.authService.register(input);
   }
 
   @Post("verify-phone")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Verify a customer phone number using the SMS OTP" })
-  @ApiOkResponse({ description: "Phone verified and customer account activated" })
+  @ApiOkResponse({
+    description: "Phone verified and customer account activated",
+    type: PhoneVerificationResponseDto,
+  })
   @ApiUnauthorizedResponse({ description: "OTP is incorrect, expired, or already consumed" })
-  verifyPhone(@Body() input: VerifyPhoneDto): Promise<PhoneVerificationResult> {
+  verifyPhone(@Body() input: VerifyPhoneDto): Promise<PhoneVerificationResponseDto> {
     return this.authService.verifyPhone(input);
   }
 }
