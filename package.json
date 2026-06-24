@@ -24,7 +24,7 @@
     "format:check": "prettier --check .",
     "db:reset:api": "sh scripts/reset-api-db.sh",
     "prepush": "sh scripts/pre-push.sh",
-    "prepare": "if [ -f scripts/install-git-hooks.sh ]; then sh scripts/install-git-hooks.sh; fi",
+    "prepare": "node -e \"const{existsSync}=require('fs');const{execSync}=require('child_process');if(existsSync('scripts/install-git-hooks.sh')){try{execSync('sh scripts/install-git-hooks.sh',{stdio:'inherit'})}catch(_){}}\"",
     "clean": "turbo run clean && rm -rf .turbo"
   },
   "devDependencies": {
