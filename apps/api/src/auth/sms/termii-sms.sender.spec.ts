@@ -1,18 +1,23 @@
 import { BadGatewayException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { ApplicationConfig } from "../../config/configuration";
 import { TermiiSmsSender } from "./termii-sms.sender";
 
 function createSender(): TermiiSmsSender {
-  const config = {
-    get: () => ({
-      baseUrl: "https://api.ng.termii.com",
-      apiKey: "termii-secret",
-      senderId: "RSC",
-      channel: "dnd",
-      timeoutMs: 5_000,
-    }),
-  } as unknown as ConfigService<ApplicationConfig, true>;
+  const config = new ConfigService<ApplicationConfig, true>({
+    sms: {
+      provider: "termii",
+      termii: {
+        baseUrl: "https://api.ng.termii.com",
+        apiKey: "termii-secret",
+        senderId: "RSC",
+        channel: "dnd",
+        timeoutMs: 5_000,
+      },
+    },
+  } as ApplicationConfig);
 
   return new TermiiSmsSender(config);
 }
@@ -105,5 +110,4 @@ describe(TermiiSmsSender.name, () => {
       }),
     ).rejects.toBeInstanceOf(BadGatewayException);
   });
-
 });
