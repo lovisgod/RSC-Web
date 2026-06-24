@@ -12,11 +12,7 @@ import { createHttpClient } from "./http";
 export { ApiError } from "./errors";
 export type { HttpClientOptions as ApiClientOptions } from "./http";
 
-async function request<T>(
-  http: AxiosInstance,
-  path: string,
-  schema: z.ZodType<T>,
-): Promise<T> {
+async function request<T>(http: AxiosInstance, path: string, schema: z.ZodType<T>): Promise<T> {
   const response = await http.get<unknown>(path);
   return schema.parse(response.data);
 }
@@ -56,9 +52,7 @@ export function initApiClient(
 
 export function getApiClient(): ApiClient {
   if (!_client) {
-    throw new Error(
-      "[api-client] Client not initialized. Call initApiClient(baseUrl) before use.",
-    );
+    throw new Error("[api-client] Client not initialized. Call initApiClient(baseUrl) before use.");
   }
   return _client;
 }

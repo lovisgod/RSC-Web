@@ -17,15 +17,15 @@ server-side repository clone are not required for this development path.
 
 In the `rsc-web-development` Compose service:
 
-| Setting | Value |
-| --- | --- |
-| Provider | GitHub |
-| GitHub account | `RSC-Dokploy` |
-| Repository | `lovisgod/RSC-Web` |
-| Branch | `dev` |
-| Compose path | `deploy/dokploy/compose.yaml` |
-| Trigger type | `On Push` |
-| Compose type | Docker Compose |
+| Setting        | Value                         |
+| -------------- | ----------------------------- |
+| Provider       | GitHub                        |
+| GitHub account | `RSC-Dokploy`                 |
+| Repository     | `lovisgod/RSC-Web`            |
+| Branch         | `dev`                         |
+| Compose path   | `deploy/dokploy/compose.yaml` |
+| Trigger type   | `On Push`                     |
+| Compose type   | Docker Compose                |
 
 Click **Save**, then enable **Autodeploy**.
 

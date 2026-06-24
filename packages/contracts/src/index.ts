@@ -45,7 +45,6 @@ export const adminOverviewSchema = z.object({
   pendingSettlements: moneySchema,
 });
 
-
 export const promotions = z.object({
   id: z.uuid(),
   offerMessage: z.string().min(1),
@@ -62,9 +61,8 @@ export const UserSession = {
 };
 export * from "./auth";
 
-
 export type Money = z.infer<typeof moneySchema>;
-export type Promos = z.infer<typeof promotions>
+export type Promos = z.infer<typeof promotions>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
