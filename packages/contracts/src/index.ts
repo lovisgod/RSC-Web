@@ -33,6 +33,10 @@ export const registrationResultSchema = z.object({
   customerId: z.uuid(),
   status: z.literal("UNVERIFIED"),
   otpExpiresInSeconds: z.int().positive(),
+  verificationChannels: z.object({
+    email: z.boolean(),
+    phone: z.boolean(),
+  }),
 });
 
 export const verifyPhoneInputSchema = z
@@ -46,10 +50,32 @@ export const phoneVerificationResultSchema = z.object({
   customerId: z.uuid(),
   status: z.literal("ACTIVE"),
   phoneVerifiedAt: z.iso.datetime(),
+  verificationChannels: z.object({
+    email: z.boolean(),
+    phone: z.boolean(),
+  }),
+});
+
+export const verifyEmailInputSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    code: z.string().regex(/^\d{6}$/),
+  })
+  .strict();
+
+export const emailVerificationResultSchema = z.object({
+  customerId: z.uuid(),
+  status: customerStatusSchema,
+  emailVerifiedAt: z.iso.datetime(),
+  verificationChannels: z.object({
+    email: z.boolean(),
+    phone: z.boolean(),
+  }),
 });
 
 export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
 export const phoneVerificationResponseSchema = apiResponseSchema(phoneVerificationResultSchema);
+export const emailVerificationResponseSchema = apiResponseSchema(emailVerificationResultSchema);
 
 export const currencySchema = z.literal("NGN");
 
@@ -109,6 +135,8 @@ export type RegisterCustomerInput = z.infer<typeof registerCustomerInputSchema>;
 export type RegistrationResult = z.infer<typeof registrationResultSchema>;
 export type VerifyPhoneInput = z.infer<typeof verifyPhoneInputSchema>;
 export type PhoneVerificationResult = z.infer<typeof phoneVerificationResultSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailInputSchema>;
+export type EmailVerificationResult = z.infer<typeof emailVerificationResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;

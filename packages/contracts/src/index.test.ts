@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  emailVerificationResultSchema,
   moneySchema,
   phoneVerificationResultSchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
+  verifyEmailInputSchema,
   verifyPhoneInputSchema,
 } from "./index";
 
@@ -68,6 +70,7 @@ describe("customer registration contracts", () => {
         customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
         status: "UNVERIFIED",
         otpExpiresInSeconds: 600,
+        verificationChannels: { email: false, phone: false },
       }),
     ).toBeTruthy();
     expect(
@@ -76,8 +79,9 @@ describe("customer registration contracts", () => {
           customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
           status: "UNVERIFIED",
           otpExpiresInSeconds: 600,
+          verificationChannels: { email: false, phone: false },
         },
-        message: "Customer registered; verification code sent",
+        message: "Customer registered; verification codes sent",
         status: 201,
       }),
     ).toBeTruthy();
@@ -86,11 +90,23 @@ describe("customer registration contracts", () => {
         customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
         status: "ACTIVE",
         phoneVerifiedAt: "2026-06-23T10:00:00.000Z",
+        verificationChannels: { email: false, phone: true },
+      }),
+    ).toBeTruthy();
+    expect(
+      emailVerificationResultSchema.parse({
+        customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+        status: "UNVERIFIED",
+        emailVerifiedAt: "2026-06-23T10:00:00.000Z",
+        verificationChannels: { email: true, phone: false },
       }),
     ).toBeTruthy();
   });
 
   it("requires a six-digit verification code", () => {
     expect(() => verifyPhoneInputSchema.parse({ phone: "08031234567", code: "12345" })).toThrow();
+    expect(() =>
+      verifyEmailInputSchema.parse({ email: "ada@example.com", code: "12345" }),
+    ).toThrow();
   });
 });

@@ -3,15 +3,19 @@ import {
   apiErrorResponseSchema,
   apiResponseSchema,
   outletSummarySchema,
+  emailVerificationResultSchema,
   phoneVerificationResultSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
+  verifyEmailInputSchema,
   verifyPhoneInputSchema,
   type AdminOverview,
+  type EmailVerificationResult,
   type OutletSummary,
   type PhoneVerificationResult,
   type RegisterCustomerInput,
   type RegistrationResult,
+  type VerifyEmailInput,
   type VerifyPhoneInput,
 } from "@rsc/contracts";
 import { z } from "zod";
@@ -91,6 +95,14 @@ export function createApiClient(options: ApiClientOptions) {
       const body = verifyPhoneInputSchema.parse(input);
 
       return request("/api/v1/auth/verify-phone", phoneVerificationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    verifyEmail(input: VerifyEmailInput): Promise<EmailVerificationResult> {
+      const body = verifyEmailInputSchema.parse(input);
+
+      return request("/api/v1/auth/verify-email", emailVerificationResultSchema, {
         method: "POST",
         body: JSON.stringify(body),
       });
