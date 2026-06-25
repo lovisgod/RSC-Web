@@ -3,6 +3,7 @@ import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PiiCryptoService } from "../common/security/pii-crypto.service";
+import { Outlet } from "../outlets/outlet.entity";
 import type { AuthSessionService } from "./auth-session.service";
 import { AuthService } from "./auth.service";
 import { Customer } from "./customer.entity";
@@ -19,6 +20,9 @@ describe(AuthService.name, () => {
     findOneBy: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
+  };
+  let outlets: {
+    findOneBy: ReturnType<typeof vi.fn>;
   };
   let piiCrypto: {
     searchHash: ReturnType<typeof vi.fn>;
@@ -46,6 +50,13 @@ describe(AuthService.name, () => {
         customer.id ||= customerId;
         return Promise.resolve(customer);
       }),
+    };
+    outlets = {
+      findOneBy: vi.fn().mockResolvedValue(
+        Object.assign(new Outlet(), {
+          id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        }),
+      ),
     };
     piiCrypto = {
       searchHash: vi.fn((value: string) => `hash:${value}`),
@@ -78,6 +89,7 @@ describe(AuthService.name, () => {
 
     service = new AuthService(
       customers as unknown as Repository<Customer>,
+      outlets as unknown as Repository<Outlet>,
       piiCrypto as unknown as PiiCryptoService,
       phoneOtp as unknown as PhoneOtpService,
       sessions as unknown as AuthSessionService,
@@ -165,6 +177,36 @@ describe(AuthService.name, () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
     expect(sessions.issueSession).not.toHaveBeenCalled();
+  });
+
+  it("creates an outlet admin for an existing outlet", async () => {
+    const result = await service.createAdmin({
+      name: "Outlet Manager",
+      email: "MANAGER@EXAMPLE.COM",
+      phone: "08031234567",
+      password: "SecureP@ss1",
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+
+    const saved = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
+
+    expect(outlets.findOneBy).toHaveBeenCalledWith({
+      id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+    expect(saved).toMatchObject({
+      name: "Outlet Manager",
+      emailHash: "hash:manager@example.com",
+      phoneHash: "hash:2348031234567",
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+    expect(result).toEqual({
+      id: customerId,
+      name: "Outlet Manager",
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
   });
 
   it("resends verification for the same unverified customer", async () => {

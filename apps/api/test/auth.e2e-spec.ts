@@ -8,9 +8,11 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { AuthController } from "../src/auth/auth.controller";
+import { AuthGuard } from "../src/auth/auth.guard";
 import { AuthSessionService } from "../src/auth/auth-session.service";
 import { AuthService } from "../src/auth/auth.service";
 import { CustomerStatus } from "../src/auth/customer-status.enum";
+import { RolesGuard } from "../src/auth/roles.guard";
 import { UserRole } from "../src/auth/user-role.enum";
 import { ApiExceptionFilter } from "../src/common/http/api-exception.filter";
 import { ApiResponseInterceptor } from "../src/common/http/api-response.interceptor";
@@ -38,6 +40,12 @@ describe("Customer registration HTTP contract", () => {
       refreshTokenExpiresInSeconds: 604800,
       user: { id: "2abf9577-027c-4936-83a8-e004fd56a46e", role: UserRole.CUSTOMER },
     }),
+    createAdmin: vi.fn().mockResolvedValue({
+      id: "b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+      name: "Outlet Manager",
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    }),
   };
   const sessions = {
     revokeSession: vi.fn().mockResolvedValue(undefined),
@@ -49,6 +57,8 @@ describe("Customer registration HTTP contract", () => {
       providers: [
         { provide: AuthService, useValue: authService },
         { provide: AuthSessionService, useValue: sessions },
+        { provide: AuthGuard, useValue: { canActivate: () => true } },
+        { provide: RolesGuard, useValue: { canActivate: () => true } },
       ],
     }).compile();
 
@@ -185,6 +195,37 @@ describe("Customer registration HTTP contract", () => {
         expect.stringContaining("refreshToken=;"),
       ]),
     );
+  });
+
+  it("creates an outlet admin", async () => {
+    await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/admins")
+      .send({
+        name: "Outlet Manager",
+        email: "MANAGER@EXAMPLE.COM",
+        phone: "08031234567",
+        password: "SecureP@ss1",
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      })
+      .expect(201)
+      .expect({
+        data: {
+          id: "b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+          name: "Outlet Manager",
+          role: "ADMIN",
+          outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        },
+        message: "Admin created successfully",
+        status: 201,
+      });
+
+    expect(authService.createAdmin).toHaveBeenCalledWith({
+      name: "Outlet Manager",
+      email: "manager@example.com",
+      phone: "08031234567",
+      password: "SecureP@ss1",
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
   });
 
   it("verifies a six-digit email OTP", async () => {

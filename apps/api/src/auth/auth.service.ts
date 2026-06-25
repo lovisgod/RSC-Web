@@ -10,9 +10,11 @@ import { Repository } from "typeorm";
 import { QueryFailedError } from "typeorm";
 
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
+import { Outlet } from "../outlets/outlet.entity";
 import { AuthSessionService, type IssuedSession } from "./auth-session.service";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
+import type { CreateAdminDto } from "./dto/create-admin.dto";
 import type { LoginDto } from "./dto/login.dto";
 import type { RegisterCustomerDto } from "./dto/register-customer.dto";
 import type { VerificationChannel, VerifyUserDto } from "./dto/verify-user.dto";
@@ -45,11 +47,20 @@ export interface UserVerificationResult {
   };
 }
 
+export interface AdminResult {
+  id: string;
+  name: string;
+  role: UserRole.ADMIN;
+  outletId: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(Customer)
     private readonly customers: Repository<Customer>,
+    @InjectRepository(Outlet)
+    private readonly outlets: Repository<Outlet>,
     private readonly piiCrypto: PiiCryptoService,
     private readonly phoneOtp: PhoneOtpService,
     private readonly sessions: AuthSessionService,
@@ -155,6 +166,60 @@ export class AuthService {
     }
 
     return this.sessions.issueSession(customer);
+  }
+
+  async createAdmin(input: CreateAdminDto): Promise<AdminResult> {
+    const outlet = await this.outlets.findOneBy({ id: input.outletId });
+
+    if (!outlet) {
+      throw new BadRequestException("Outlet does not exist");
+    }
+
+    const phone = normalizeNigerianPhoneNumber(input.phone);
+    const email = input.email.trim().toLowerCase();
+    const phoneHash = this.piiCrypto.searchHash(phone);
+    const emailHash = this.piiCrypto.searchHash(email);
+
+    const [phoneCustomer, emailCustomer] = await Promise.all([
+      this.customers.findOneBy({ phoneHash }),
+      this.customers.findOneBy({ emailHash }),
+    ]);
+
+    if (phoneCustomer || emailCustomer) {
+      throw new ConflictException("An account already exists with that phone or email");
+    }
+
+    const now = new Date();
+    const admin = this.customers.create({
+      name: input.name.trim(),
+      phoneEncrypted: this.piiCrypto.encrypt(phone),
+      phoneHash,
+      emailEncrypted: this.piiCrypto.encrypt(email),
+      emailHash,
+      passwordHash: await hashPassword(input.password),
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.ADMIN,
+      outletId: outlet.id,
+      phoneVerifiedAt: now,
+      emailVerifiedAt: now,
+    });
+
+    try {
+      const savedAdmin = await this.customers.save(admin);
+
+      return {
+        id: savedAdmin.id,
+        name: savedAdmin.name,
+        role: UserRole.ADMIN,
+        outletId: savedAdmin.outletId!,
+      };
+    } catch (error) {
+      if (this.isUniqueViolation(error)) {
+        throw new ConflictException("An account already exists with that phone or email");
+      }
+
+      throw error;
+    }
   }
 
   async verifyUser(input: VerifyUserDto): Promise<UserVerificationResult> {

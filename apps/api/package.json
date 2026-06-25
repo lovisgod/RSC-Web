@@ -17,6 +17,8 @@
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts",
+    "seed:super-admin": "ts-node src/auth/seed-super-admin.ts",
+    "seed:super-admin:prod": "node dist/src/auth/seed-super-admin.js",
     "db:reset": "sh ../../scripts/reset-api-db.sh"
   },
   "dependencies": {
