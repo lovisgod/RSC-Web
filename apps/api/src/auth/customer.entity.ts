@@ -48,6 +48,9 @@ export class Customer {
   })
   role!: UserRole;
 
+  @Column({ name: "outlet_id", type: "uuid", nullable: true })
+  outletId!: string | null;
+
   @Column({ name: "password_hash", type: "varchar", length: 161 })
   passwordHash!: string;
 

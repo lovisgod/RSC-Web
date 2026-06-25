@@ -4,6 +4,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 
 import type { ApplicationConfig } from "../config/configuration";
 import { RedisModule } from "../redis/redis.module";
+import { Outlet } from "../outlets/outlet.entity";
 import { AuthGuard } from "./auth.guard";
 import { AuthController } from "./auth.controller";
 import { AuthSessionService } from "./auth-session.service";
@@ -19,7 +20,7 @@ import { TermiiSmsSender } from "./sms/termii-sms.sender";
 import { RolesGuard } from "./roles.guard";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Customer]), RedisModule],
+  imports: [TypeOrmModule.forFeature([Customer, Outlet]), RedisModule],
   controllers: [AuthController],
   providers: [
     AuthService,

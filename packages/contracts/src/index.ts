@@ -3,7 +3,7 @@ import { z } from "zod";
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
 export const customerStatusSchema = z.enum(["UNVERIFIED", "ACTIVE", "SUSPENDED"]);
-export const userRoleSchema = z.enum(["CUSTOMER", "ADMIN", "RIDER"]);
+export const userRoleSchema = z.enum(["SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"]);
 
 export const apiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
   z.object({
@@ -90,10 +90,28 @@ export const logoutResultSchema = z.object({
   loggedOut: z.literal(true),
 });
 
+export const createAdminInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+    password: z.string().min(8).max(128),
+    outletId: z.uuid(),
+  })
+  .strict();
+
+export const adminResultSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  role: z.literal("ADMIN"),
+  outletId: z.uuid(),
+});
+
 export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
 export const userVerificationResponseSchema = apiResponseSchema(userVerificationResultSchema);
 export const loginResponseSchema = apiResponseSchema(loginResultSchema);
 export const logoutResponseSchema = apiResponseSchema(logoutResultSchema);
+export const adminResponseSchema = apiResponseSchema(adminResultSchema);
 
 export const currencySchema = z.literal("NGN");
 
@@ -158,6 +176,8 @@ export type UserVerificationResult = z.infer<typeof userVerificationResultSchema
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type LoginResult = z.infer<typeof loginResultSchema>;
 export type LogoutResult = z.infer<typeof logoutResultSchema>;
+export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
+export type AdminResult = z.infer<typeof adminResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;

@@ -35,8 +35,8 @@ export class LoginUserDto {
   @ApiProperty({ example: "2abf9577-027c-4936-83a8-e004fd56a46e", format: "uuid" })
   id!: string;
 
-  @ApiProperty({ enum: ["CUSTOMER", "ADMIN", "RIDER"], example: "CUSTOMER" })
-  role!: "CUSTOMER" | "ADMIN" | "RIDER";
+  @ApiProperty({ enum: ["SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"], example: "CUSTOMER" })
+  role!: "SUPER_ADMIN" | "CUSTOMER" | "ADMIN" | "RIDER";
 }
 
 export class LoginDataDto {
@@ -53,6 +53,20 @@ export class LoginDataDto {
 export class LogoutDataDto {
   @ApiProperty({ example: true })
   loggedOut!: boolean;
+}
+
+export class AdminDataDto {
+  @ApiProperty({ example: "2abf9577-027c-4936-83a8-e004fd56a46e", format: "uuid" })
+  id!: string;
+
+  @ApiProperty({ example: "Outlet Manager" })
+  name!: string;
+
+  @ApiProperty({ enum: ["ADMIN"], example: "ADMIN" })
+  role!: "ADMIN";
+
+  @ApiProperty({ format: "uuid" })
+  outletId!: string;
 }
 
 export class RegistrationResponseDto {
@@ -96,5 +110,16 @@ export class LogoutResponseDto {
   message!: string;
 
   @ApiProperty({ example: 200 })
+  status!: number;
+}
+
+export class AdminResponseDto {
+  @ApiProperty({ type: AdminDataDto })
+  data!: AdminDataDto;
+
+  @ApiProperty({ example: "Admin created successfully" })
+  message!: string;
+
+  @ApiProperty({ example: 201 })
   status!: number;
 }

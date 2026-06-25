@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBadGatewayResponse,
   ApiConflictResponse,
@@ -10,9 +19,12 @@ import {
 } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 
+import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import {
+  AdminDataDto,
+  AdminResponseDto,
   LoginDataDto,
   LoginResponseDto,
   LogoutDataDto,
@@ -22,12 +34,16 @@ import {
   UserVerificationDataDto,
   UserVerificationResponseDto,
 } from "./dto/auth-response.dto";
+import { CreateAdminDto } from "./dto/create-admin.dto";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterCustomerDto } from "./dto/register-customer.dto";
 import { VerifyUserDto } from "./dto/verify-user.dto";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "./auth.constants";
 import { AuthSessionService } from "./auth-session.service";
 import { clearAuthCookies, readCookie, setAuthCookies } from "./cookies";
+import { Roles } from "./roles.decorator";
+import { RolesGuard } from "./roles.guard";
+import { UserRole } from "./user-role.enum";
 
 @ApiTags("Authentication")
 @Controller({ path: "auth", version: "1" })
@@ -111,5 +127,18 @@ export class AuthController {
     clearAuthCookies(response);
 
     return { loggedOut: true };
+  }
+
+  @Post("admins")
+  @ApiMessage("Admin created successfully")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: "Create an outlet admin account" })
+  @ApiCreatedResponse({
+    description: "Outlet admin account created",
+    type: AdminResponseDto,
+  })
+  createAdmin(@Body() input: CreateAdminDto): Promise<AdminDataDto> {
+    return this.authService.createAdmin(input);
   }
 }

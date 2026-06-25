@@ -4,7 +4,9 @@ export class AddUserRole1782604800000 implements MigrationInterface {
   name = "AddUserRole1782604800000";
 
   async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`CREATE TYPE "user_role" AS ENUM ('CUSTOMER', 'ADMIN', 'RIDER')`);
+    await queryRunner.query(
+      `CREATE TYPE "user_role" AS ENUM ('SUPER_ADMIN', 'CUSTOMER', 'ADMIN', 'RIDER')`,
+    );
     await queryRunner.query(
       `ALTER TABLE "users" ADD "role" "user_role" NOT NULL DEFAULT 'CUSTOMER'`,
     );

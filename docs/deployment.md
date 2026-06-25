@@ -180,6 +180,10 @@ configuration explicitly passes `PUBLIC_API_URL` and `APP_VERSION` as Docker
 build arguments. `POSTGRES_PASSWORD` and `REDIS_PASSWORD` remain server-side
 Compose variables and must never use a `NEXT_PUBLIC_` or `VITE_` prefix.
 
+After deploying auth/session changes, confirm `JWT_SECRET` and the token TTL
+variables are present in the Compose service Environment tab and redeploy. The
+Dokploy Compose file passes them through to both `api` and `api-migrate`.
+
 `PII_ENCRYPTION_KEY`, both peppers, and `TERMII_API_KEY` are also server-only
 secrets. Use the regional Termii base URL shown in the Termii dashboard and an
 approved transactional sender ID. Keep `SMS_PROVIDER=noop` only when real SMS

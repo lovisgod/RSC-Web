@@ -129,7 +129,7 @@ export class AuthSessionService {
     const now = nowSeconds();
 
     if (
-      session.role === UserRole.ADMIN &&
+      (session.role === UserRole.ADMIN || session.role === UserRole.SUPER_ADMIN) &&
       now - session.lastActivityAt > this.adminInactivityTimeoutSeconds
     ) {
       await this.redis.del(this.sessionKey(payload.sid));

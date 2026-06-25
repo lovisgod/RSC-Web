@@ -28,6 +28,7 @@ The first authentication slice exposes:
 - `POST /api/v1/auth/verify-user`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/admins`
 
 Frontend applications must import the request and response types (or their Zod
 schemas) from `@rsc/contracts`; they must not import the API's TypeORM entity.
@@ -131,6 +132,32 @@ server-side session, and clears both cookies.
 }
 ```
 
+`POST /api/v1/auth/admins`
+
+Requires a valid `SUPER_ADMIN` session. Creates an outlet admin assigned to
+exactly one outlet.
+
+| Request field | Type     | Rules                                  |
+| ------------- | -------- | -------------------------------------- |
+| `name`        | `string` | Trimmed; 2-120 characters              |
+| `email`       | `string` | Valid email; trimmed and lowercased    |
+| `phone`       | `string` | Nigerian mobile number                 |
+| `password`    | `string` | 8-128 characters; stored with bcrypt   |
+| `outletId`    | `uuid`   | Existing outlet the admin belongs to   |
+
+```json
+{
+  "data": {
+    "id": "b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+    "name": "Outlet Manager",
+    "role": "ADMIN",
+    "outletId": "4273e96c-2887-49a5-a6d5-269f007f04f0"
+  },
+  "message": "Admin created successfully",
+  "status": 201
+}
+```
+
 All API controller responses use the same top-level envelope:
 
 - `data` — the endpoint payload, or structured error details.
@@ -162,6 +189,19 @@ from `UNVERIFIED` to `ACTIVE`.
 Login stores a Redis-backed session and signs short-lived access tokens plus
 long-lived refresh tokens with an HS256 secret of at least 256 bits. Admin
 sessions expire after 30 minutes of inactivity.
+
+Seed the first super admin after migrations:
+
+```bash
+SUPER_ADMIN_NAME="RSC Super Admin" \
+SUPER_ADMIN_EMAIL="admin@example.com" \
+SUPER_ADMIN_PHONE="08031234567" \
+SUPER_ADMIN_PASSWORD="replace-with-a-strong-password" \
+pnpm --filter @rsc/api seed:super-admin
+```
+
+Inside a built production container, run `node dist/src/auth/seed-super-admin.js`
+with the same environment variables.
 
 Termii delivery uses `POST {TERMII_BASE_URL}/api/sms/send` with an approved
 sender ID. Set:

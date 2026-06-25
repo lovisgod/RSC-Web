@@ -2,6 +2,8 @@ import {
   adminOverviewSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
+  adminResultSchema,
+  createAdminInputSchema,
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
@@ -11,6 +13,8 @@ import {
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminOverview,
+  type AdminResult,
+  type CreateAdminInput,
   type LoginInput,
   type LoginResult,
   type LogoutResult,
@@ -104,6 +108,14 @@ export function createApiClient(options: ApiClientOptions) {
     logout(): Promise<LogoutResult> {
       return request("/api/v1/auth/logout", logoutResultSchema, {
         method: "POST",
+      });
+    },
+    createAdmin(input: CreateAdminInput): Promise<AdminResult> {
+      const body = createAdminInputSchema.parse(input);
+
+      return request("/api/v1/auth/admins", adminResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
       });
     },
     verifyUser(input: VerifyUserInput): Promise<UserVerificationResult> {
