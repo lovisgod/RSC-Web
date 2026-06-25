@@ -1,10 +1,9 @@
 body {
   font-family: var(--font-sans), sans-serif;
   background:
-    radial-gradient(circle at 90% 10%, rgb(244 185 66 / 18%), transparent 28rem), var(--rsc-surface);
+    radial-gradient(circle at 90% 10%, rgb(30 49 96 / 7%), transparent 28rem), var(--rsc-surface);
 }
 
-.site-header,
 .hero,
 .principles,
 .outlet-callout {
@@ -18,6 +17,12 @@ body {
   align-items: center;
   min-height: 84px;
   gap: 1rem;
+  /* background: var(--rsc-main); */
+  padding-inline: 1.5rem;
+  border-radius: 0 0 20px 20px;
+  width: 100% !important;
+  max-width: 100%;
+  margin-inline: 0;
 }
 
 .site-header nav {
@@ -29,6 +34,18 @@ body {
 .hero__actions a {
   text-decoration: none;
   font-weight: 700;
+}
+
+.hero__actions a {
+  color: var(--rsc-brand);
+}
+
+.site-header nav a {
+  color: var(--rsc-main);
+}
+
+.site-header nav a:hover {
+  color: var(--rsc-brand);
 }
 
 .site-header > :last-child {
@@ -49,7 +66,7 @@ body {
   height: 36px;
   place-items: center;
   border-radius: 12px 12px 12px 4px;
-  color: white;
+  color: var(--rsc-main);
   background: var(--rsc-brand);
 }
 
@@ -98,11 +115,11 @@ body {
   position: relative;
   padding: clamp(1.5rem, 4vw, 2.25rem);
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 65%);
+  border: 1px solid rgb(255 255 255 / 20%);
   border-radius: 34px;
   color: white;
-  background: var(--rsc-brand-strong);
-  box-shadow: 0 30px 90px rgb(23 92 58 / 25%);
+  background: var(--rsc-main);
+  box-shadow: 0 30px 90px rgb(30 49 96 / 30%);
   transform: rotate(1.5deg);
 }
 
@@ -113,7 +130,7 @@ body {
   right: -60px;
   bottom: -80px;
   border-radius: 50%;
-  background: var(--rsc-accent);
+  background: var(--rsc-brand);
   content: "";
   opacity: 0.85;
 }
@@ -162,7 +179,7 @@ body {
 
 .principles article {
   padding: 2rem;
-  border-top: 1px solid var(--rsc-line);
+  border-top: 2px solid var(--rsc-navy-light);
 }
 
 .principles h2 {
@@ -182,7 +199,8 @@ body {
   margin-bottom: 4rem;
   padding: clamp(2rem, 5vw, 4rem);
   border-radius: 30px;
-  background: #f0eadc;
+  background: var(--rsc-main);
+  color: white;
 }
 
 .outlet-callout h2 {
@@ -190,6 +208,11 @@ body {
   margin: 0;
   font-size: clamp(2rem, 4vw, 3.6rem);
   letter-spacing: -0.045em;
+  color: white;
+}
+
+.outlet-callout .eyebrow {
+  color: var(--rsc-brand);
 }
 
 @media (max-width: 760px) {
