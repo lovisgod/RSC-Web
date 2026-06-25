@@ -37,7 +37,7 @@ export function ForgotPasswordForm() {
           <span style={{ color: "var(--rsc-dark)" }}>Food</span>
         </h1>
         <p className="text-sm text-gray-500">
-          Enter your phone or email and we'll send a reset code.
+          Enter your phone or email and we&apos;ll send a reset code.
         </p>
       </div>
 
