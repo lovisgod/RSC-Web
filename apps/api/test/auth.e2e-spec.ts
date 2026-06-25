@@ -30,7 +30,7 @@ describe("Customer registration HTTP contract", () => {
     }),
     verifyEmail: vi.fn().mockResolvedValue({
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
-      status: CustomerStatus.UNVERIFIED,
+      status: CustomerStatus.ACTIVE,
       emailVerifiedAt: "2026-06-23T10:00:00.000Z",
       verificationChannels: { email: true, phone: false },
     }),
@@ -137,7 +137,7 @@ describe("Customer registration HTTP contract", () => {
       .expect({
         data: {
           customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
-          status: "UNVERIFIED",
+          status: "ACTIVE",
           emailVerifiedAt: "2026-06-23T10:00:00.000Z",
           verificationChannels: { email: true, phone: false },
         },

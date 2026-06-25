@@ -48,7 +48,7 @@ export interface PhoneVerificationResult {
 
 export interface EmailVerificationResult {
   customerId: string;
-  status: CustomerStatus;
+  status: CustomerStatus.ACTIVE;
   emailVerifiedAt: string;
   verificationChannels: {
     email: boolean;
@@ -150,7 +150,7 @@ export class AuthService {
     const phoneHash = this.piiCrypto.searchHash(phone);
     const customer = await this.customers.findOneBy({ phoneHash });
 
-    if (!customer || customer.status !== CustomerStatus.UNVERIFIED) {
+    if (!customer || customer.status === CustomerStatus.SUSPENDED) {
       throw new UnauthorizedException("Invalid or expired verification code");
     }
 
@@ -187,12 +187,13 @@ export class AuthService {
       throw new UnauthorizedException("Invalid or expired verification code");
     }
 
+    customer.status = CustomerStatus.ACTIVE;
     customer.emailVerifiedAt = new Date();
     const savedCustomer = await this.customers.save(customer);
 
     return {
       customerId: savedCustomer.id,
-      status: savedCustomer.status,
+      status: CustomerStatus.ACTIVE,
       emailVerifiedAt: savedCustomer.emailVerifiedAt!.toISOString(),
       verificationChannels: this.verificationChannels(savedCustomer),
     };

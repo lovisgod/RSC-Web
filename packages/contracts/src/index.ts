@@ -65,7 +65,7 @@ export const verifyEmailInputSchema = z
 
 export const emailVerificationResultSchema = z.object({
   customerId: z.uuid(),
-  status: customerStatusSchema,
+  status: z.literal("ACTIVE"),
   emailVerifiedAt: z.iso.datetime(),
   verificationChannels: z.object({
     email: z.boolean(),

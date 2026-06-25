@@ -96,7 +96,7 @@ describe("customer registration contracts", () => {
     expect(
       emailVerificationResultSchema.parse({
         customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
-        status: "UNVERIFIED",
+        status: "ACTIVE",
         emailVerifiedAt: "2026-06-23T10:00:00.000Z",
         verificationChannels: { email: true, phone: false },
       }),
