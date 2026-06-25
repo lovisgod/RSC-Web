@@ -3,6 +3,7 @@ import { z } from "zod";
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
 export const customerStatusSchema = z.enum(["UNVERIFIED", "ACTIVE", "SUSPENDED"]);
+export const userRoleSchema = z.enum(["CUSTOMER", "ADMIN", "RIDER"]);
 
 export const apiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
   z.object({
@@ -69,8 +70,30 @@ export const userVerificationResultSchema = z.object({
   }),
 });
 
+export const loginInputSchema = z
+  .object({
+    identifier: z.string().trim().toLowerCase().min(1),
+    password: z.string().min(8).max(128),
+  })
+  .strict();
+
+export const loginResultSchema = z.object({
+  user: z.object({
+    id: z.uuid(),
+    role: userRoleSchema,
+  }),
+  accessTokenExpiresInSeconds: z.int().positive(),
+  refreshTokenExpiresInSeconds: z.int().positive(),
+});
+
+export const logoutResultSchema = z.object({
+  loggedOut: z.literal(true),
+});
+
 export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
 export const userVerificationResponseSchema = apiResponseSchema(userVerificationResultSchema);
+export const loginResponseSchema = apiResponseSchema(loginResultSchema);
+export const logoutResponseSchema = apiResponseSchema(logoutResultSchema);
 
 export const currencySchema = z.literal("NGN");
 
@@ -126,11 +149,15 @@ export type ApiResponse<T> = {
 export type ApiErrorData = z.infer<typeof apiErrorDataSchema>;
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;
 export type CustomerStatus = z.infer<typeof customerStatusSchema>;
+export type UserRole = z.infer<typeof userRoleSchema>;
 export type RegisterCustomerInput = z.infer<typeof registerCustomerInputSchema>;
 export type RegistrationResult = z.infer<typeof registrationResultSchema>;
 export type VerificationChannel = z.infer<typeof verificationChannelSchema>;
 export type VerifyUserInput = z.infer<typeof verifyUserInputSchema>;
 export type UserVerificationResult = z.infer<typeof userVerificationResultSchema>;
+export type LoginInput = z.infer<typeof loginInputSchema>;
+export type LoginResult = z.infer<typeof loginResultSchema>;
+export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;

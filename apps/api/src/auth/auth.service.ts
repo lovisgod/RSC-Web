@@ -1,5 +1,3 @@
-import { scryptSync, randomBytes } from "node:crypto";
-
 import {
   BadRequestException,
   ConflictException,
@@ -12,24 +10,19 @@ import { Repository } from "typeorm";
 import { QueryFailedError } from "typeorm";
 
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
+import { AuthSessionService, type IssuedSession } from "./auth-session.service";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
+import type { LoginDto } from "./dto/login.dto";
 import type { RegisterCustomerDto } from "./dto/register-customer.dto";
 import type { VerificationChannel, VerifyUserDto } from "./dto/verify-user.dto";
 import { EMAIL_SENDER, type EmailSender } from "./email/email-sender";
 import { OTP_TTL_SECONDS } from "./otp/otp.constants";
 import { PhoneOtpService } from "./otp/phone-otp.service";
+import { hashPassword, isBcryptHash, verifyPassword } from "./password";
 import { normalizeNigerianPhoneNumber } from "./phone-number";
 import { SMS_SENDER, type SmsSender } from "./sms/sms-sender";
-
-const SALT_LENGTH = 16;
-const KEY_LENGTH = 64;
-
-function hashPassword(password: string): string {
-  const salt = randomBytes(SALT_LENGTH).toString("hex");
-  const derivedKey = scryptSync(password, salt, KEY_LENGTH);
-  return `${salt}:${derivedKey.toString("hex")}`;
-}
+import { UserRole } from "./user-role.enum";
 
 export interface RegistrationResult {
   customerId: string;
@@ -59,6 +52,7 @@ export class AuthService {
     private readonly customers: Repository<Customer>,
     private readonly piiCrypto: PiiCryptoService,
     private readonly phoneOtp: PhoneOtpService,
+    private readonly sessions: AuthSessionService,
     @Inject(SMS_SENDER) private readonly smsSender: SmsSender,
     @Inject(EMAIL_SENDER) private readonly emailSender: EmailSender,
   ) {}
@@ -90,8 +84,9 @@ export class AuthService {
           phoneHash,
           emailEncrypted: this.piiCrypto.encrypt(email),
           emailHash,
-          passwordHash: hashPassword(input.password),
+          passwordHash: await hashPassword(input.password),
           status: CustomerStatus.UNVERIFIED,
+          role: UserRole.CUSTOMER,
           phoneVerifiedAt: null,
           emailVerifiedAt: null,
         });
@@ -139,6 +134,27 @@ export class AuthService {
       otpExpiresInSeconds: OTP_TTL_SECONDS,
       verificationChannels: this.verificationChannels(savedCustomer),
     };
+  }
+
+  async login(input: LoginDto): Promise<IssuedSession> {
+    const customer = await this.findCustomerByIdentifier(input.identifier);
+
+    if (!customer || customer.status !== CustomerStatus.ACTIVE) {
+      throw new UnauthorizedException("Invalid email, phone, or password");
+    }
+
+    const passwordMatches = await verifyPassword(input.password, customer.passwordHash);
+
+    if (!passwordMatches) {
+      throw new UnauthorizedException("Invalid email, phone, or password");
+    }
+
+    if (!isBcryptHash(customer.passwordHash)) {
+      customer.passwordHash = await hashPassword(input.password);
+      await this.customers.save(customer);
+    }
+
+    return this.sessions.issueSession(customer);
   }
 
   async verifyUser(input: VerifyUserDto): Promise<UserVerificationResult> {
@@ -198,6 +214,14 @@ export class AuthService {
     const emailHash = this.piiCrypto.searchHash(normalizedEmail);
 
     return this.customers.findOneBy({ emailHash });
+  }
+
+  private async findCustomerByIdentifier(identifier: string): Promise<Customer | null> {
+    if (identifier.includes("@")) {
+      return this.findCustomerByEmail(identifier);
+    }
+
+    return this.findCustomerByPhone(identifier);
   }
 
   private verificationChannels(customer: Customer): { email: boolean; phone: boolean } {

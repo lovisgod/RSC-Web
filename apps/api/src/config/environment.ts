@@ -15,6 +15,10 @@ export interface Environment {
   PII_ENCRYPTION_KEY: string;
   PII_HASH_PEPPER: string;
   OTP_PEPPER: string;
+  JWT_SECRET: string;
+  ACCESS_TOKEN_TTL_SECONDS: number;
+  REFRESH_TOKEN_TTL_SECONDS: number;
+  ADMIN_INACTIVITY_TIMEOUT_SECONDS: number;
   SMS_PROVIDER: "noop" | "termii";
   TERMII_BASE_URL: string;
   TERMII_API_KEY?: string;
@@ -57,6 +61,10 @@ const environmentSchema = Joi.object<Environment>({
   }),
   PII_HASH_PEPPER: Joi.string().min(32).required(),
   OTP_PEPPER: Joi.string().min(32).required(),
+  JWT_SECRET: Joi.string().min(32).required(),
+  ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).default(900),
+  REFRESH_TOKEN_TTL_SECONDS: Joi.number().integer().min(3_600).default(604_800),
+  ADMIN_INACTIVITY_TIMEOUT_SECONDS: Joi.number().integer().min(60).default(1_800),
   SMS_PROVIDER: Joi.string().valid("noop", "termii").default("noop"),
   TERMII_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
