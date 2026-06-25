@@ -28,6 +28,17 @@ export interface ApplicationConfig {
       timeoutMs: number;
     };
   };
+  email: {
+    provider: "noop" | "smtp";
+    smtp: {
+      host: string;
+      port: number;
+      secure: boolean;
+      user: string;
+      pass: string;
+      from: string;
+    };
+  };
 }
 
 function parseOrigins(value: string): string[] {
@@ -63,11 +74,22 @@ export default function configuration(): ApplicationConfig {
     sms: {
       provider: process.env.SMS_PROVIDER === "termii" ? "termii" : "noop",
       termii: {
-        baseUrl: (process.env.TERMII_BASE_URL ?? "https://api.ng.termii.com").replace(/\/$/, ""),
+        baseUrl: (process.env.TERMII_BASE_URL ?? "https://v3.api.termii.com").replace(/\/$/, ""),
         apiKey: process.env.TERMII_API_KEY ?? "",
         senderId: process.env.TERMII_SENDER_ID ?? "",
         channel: process.env.TERMII_CHANNEL === "dnd" ? "dnd" : "generic",
         timeoutMs: Number(process.env.TERMII_TIMEOUT_MS ?? 10_000),
+      },
+    },
+    email: {
+      provider: process.env.EMAIL_PROVIDER === "smtp" ? "smtp" : "noop",
+      smtp: {
+        host: process.env.SMTP_HOST ?? "smtp.gmail.com",
+        port: Number(process.env.SMTP_PORT ?? 587),
+        secure: process.env.SMTP_SECURE === "true",
+        user: process.env.SMTP_USER ?? "",
+        pass: process.env.SMTP_PASS ?? "",
+        from: process.env.SMTP_FROM ?? "RSC <noreply@rscapp.xyz>",
       },
     },
   };

@@ -58,23 +58,47 @@ export class PhoneOtpService {
   }
 
   async store(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.key(customerId), customerId, code);
+  }
+
+  async storeEmail(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.emailKey(customerId), customerId, code);
+  }
+
+  private async storeWithKey(key: string, customerId: string, code: string): Promise<void> {
     const value: StoredOtp = {
       hash: this.hash(customerId, code),
       attemptsRemaining: OTP_MAX_ATTEMPTS,
     };
 
-    await this.redis.set(this.key(customerId), JSON.stringify(value), "EX", OTP_TTL_SECONDS);
+    await this.redis.set(key, JSON.stringify(value), "EX", OTP_TTL_SECONDS);
   }
 
   async revoke(customerId: string): Promise<void> {
     await this.redis.del(this.key(customerId));
   }
 
+  async revokeEmail(customerId: string): Promise<void> {
+    await this.redis.del(this.emailKey(customerId));
+  }
+
   async verify(customerId: string, code: string): Promise<OtpVerificationResult> {
+    return this.verifyWithKey(this.key(customerId), customerId, code);
+  }
+
+  async verifyEmail(customerId: string, code: string): Promise<OtpVerificationResult> {
+    return this.verifyWithKey(this.emailKey(customerId), customerId, code);
+  }
+
+  private async verifyWithKey(
+    key: string,
+    customerId: string,
+    code: string,
+  ): Promise<OtpVerificationResult> {
     const result: unknown = await this.redis.eval(
       VERIFY_OTP_SCRIPT,
       1,
-      this.key(customerId),
+      key,
       this.hash(customerId, code),
     );
 
@@ -95,5 +119,9 @@ export class PhoneOtpService {
 
   private key(customerId: string): string {
     return `auth:phone-otp:${customerId}`;
+  }
+
+  private emailKey(customerId: string): string {
+    return `auth:email-otp:${customerId}`;
   }
 }
