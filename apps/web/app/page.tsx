@@ -33,7 +33,9 @@ export default function HomePage() {
           <Link href="#how-it-works">How it works</Link>
           <Link href="#outlets">Outlets</Link>
         </nav>
-        <Button tone="quiet">Sign in</Button>
+        <Link href="/sign-in" className="rsc-button--quiet">
+          Sign in
+        </Link>
       </header>
 
       <section className="hero">
