@@ -77,4 +77,26 @@ describe(PhoneOtpService.name, () => {
 
     expect(redis.del).toHaveBeenCalledWith(`auth:phone-otp:${customerId}`);
   });
+
+  it("stores and verifies email OTPs on a separate Redis key", async () => {
+    redis.eval.mockResolvedValue("VERIFIED");
+
+    await service.storeEmail(customerId, "193847");
+    await expect(service.verifyEmail(customerId, "193847")).resolves.toBe("VERIFIED");
+    await service.revokeEmail(customerId);
+
+    expect(redis.set).toHaveBeenCalledWith(
+      `auth:email-otp:${customerId}`,
+      expect.any(String),
+      "EX",
+      OTP_TTL_SECONDS,
+    );
+    expect(redis.eval).toHaveBeenCalledWith(
+      expect.any(String),
+      1,
+      `auth:email-otp:${customerId}`,
+      expect.stringMatching(/^[a-f0-9]{64}$/),
+    );
+    expect(redis.del).toHaveBeenCalledWith(`auth:email-otp:${customerId}`);
+  });
 });

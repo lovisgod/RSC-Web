@@ -45,6 +45,9 @@ export class Customer {
   @Column({ name: "phone_verified_at", type: "timestamptz", nullable: true })
   phoneVerifiedAt!: Date | null;
 
+  @Column({ name: "email_verified_at", type: "timestamptz", nullable: true })
+  emailVerifiedAt!: Date | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

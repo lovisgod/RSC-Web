@@ -20,11 +20,14 @@ describe("Customer registration HTTP contract", () => {
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
       status: CustomerStatus.UNVERIFIED,
       otpExpiresInSeconds: 600,
+      verificationChannels: { email: false, phone: false },
     }),
-    verifyPhone: vi.fn().mockResolvedValue({
+    verifyUser: vi.fn().mockResolvedValue({
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
       status: CustomerStatus.ACTIVE,
-      phoneVerifiedAt: "2026-06-23T10:00:00.000Z",
+      channel: "phone",
+      verifiedAt: "2026-06-23T10:00:00.000Z",
+      verificationChannels: { email: false, phone: true },
     }),
   };
 
@@ -69,8 +72,9 @@ describe("Customer registration HTTP contract", () => {
         customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
         status: "UNVERIFIED",
         otpExpiresInSeconds: 600,
+        verificationChannels: { email: false, phone: false },
       },
-      message: "Customer registered; verification code sent",
+      message: "Customer registered; verification codes sent",
       status: 201,
     });
     expect(authService.register).toHaveBeenCalledWith({
@@ -105,24 +109,58 @@ describe("Customer registration HTTP contract", () => {
 
   it("verifies a six-digit phone OTP", async () => {
     await request(app.getHttpServer() as Server)
-      .post("/api/v1/auth/verify-phone")
-      .send({ phone: "+2348031234567", code: "482901" })
+      .post("/api/v1/auth/verify-user")
+      .send({ channel: "phone", phone: "+2348031234567", code: "482901" })
       .expect(200)
       .expect({
         data: {
           customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
           status: "ACTIVE",
-          phoneVerifiedAt: "2026-06-23T10:00:00.000Z",
+          channel: "phone",
+          verifiedAt: "2026-06-23T10:00:00.000Z",
+          verificationChannels: { email: false, phone: true },
         },
-        message: "Phone verified successfully",
+        message: "User verified successfully",
         status: 200,
       });
   });
 
+  it("verifies a six-digit email OTP", async () => {
+    authService.verifyUser.mockResolvedValueOnce({
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      status: CustomerStatus.ACTIVE,
+      channel: "email",
+      verifiedAt: "2026-06-23T10:00:00.000Z",
+      verificationChannels: { email: true, phone: false },
+    });
+
+    await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/verify-user")
+      .send({ channel: "email", email: "ADA@EXAMPLE.COM", code: "193847" })
+      .expect(200)
+      .expect({
+        data: {
+          customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+          status: "ACTIVE",
+          channel: "email",
+          verifiedAt: "2026-06-23T10:00:00.000Z",
+          verificationChannels: { email: true, phone: false },
+        },
+        message: "User verified successfully",
+        status: 200,
+      });
+
+    expect(authService.verifyUser).toHaveBeenCalledWith({
+      channel: "email",
+      email: "ada@example.com",
+      code: "193847",
+    });
+  });
+
   it("rejects non-six-digit OTP values", async () => {
     await request(app.getHttpServer() as Server)
-      .post("/api/v1/auth/verify-phone")
-      .send({ phone: "08031234567", code: "12345" })
+      .post("/api/v1/auth/verify-user")
+      .send({ channel: "phone", phone: "08031234567", code: "12345" })
       .expect(400);
   });
 });
