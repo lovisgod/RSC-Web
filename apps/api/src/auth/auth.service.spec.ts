@@ -235,7 +235,7 @@ describe(AuthService.name, () => {
     expect(result.verificationChannels).toEqual({ email: false, phone: true });
   });
 
-  it("records email verification independently", async () => {
+  it("activates the account after a correct email OTP", async () => {
     const customer = Object.assign(new Customer(), {
       id: customerId,
       status: CustomerStatus.UNVERIFIED,
@@ -252,10 +252,34 @@ describe(AuthService.name, () => {
     expect(phoneOtp.verifyEmail).toHaveBeenCalledWith(customerId, "193847");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
-    expect(savedCustomer?.status).toBe(CustomerStatus.UNVERIFIED);
+    expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
     expect(savedCustomer?.emailVerifiedAt).toBeInstanceOf(Date);
+    expect(result.status).toBe(CustomerStatus.ACTIVE);
     expect(result.emailVerifiedAt).toBeTypeOf("string");
     expect(result.verificationChannels).toEqual({ email: true, phone: false });
+  });
+
+  it("allows phone verification after email activation", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      phoneVerifiedAt: null,
+      emailVerifiedAt: new Date("2026-06-23T10:00:00.000Z"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.verifyPhone({
+      phone: "08031234567",
+      code: "482901",
+    });
+
+    expect(phoneOtp.verify).toHaveBeenCalledWith(customerId, "482901");
+    const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
+
+    expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
+    expect(savedCustomer?.phoneVerifiedAt).toBeInstanceOf(Date);
+    expect(result.status).toBe(CustomerStatus.ACTIVE);
+    expect(result.verificationChannels).toEqual({ email: true, phone: true });
   });
 
   it.each(["INVALID", "EXPIRED"] as const)("rejects an %s OTP", async (result) => {
