@@ -37,7 +37,7 @@ const base64Key = Joi.string().custom((value: string, helpers) => {
 }, "32-byte base64 key");
 
 const environmentSchema = Joi.object<Environment>({
-  NODE_ENV: Joi.string().valid("development", "test", "production").default("development"),
+  NODE_ENV: Joi.string().valid("development", "staging", "test", "production").default("development"),
   PORT: Joi.number().port().default(4000),
   APP_VERSION: Joi.string().default("development"),
   LOG_LEVEL: Joi.string().valid("fatal", "error", "warn", "log", "debug", "verbose").default("log"),
