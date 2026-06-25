@@ -2,7 +2,11 @@
   "extends": "@rsc/typescript-config/react-library.json",
   "compilerOptions": {
     "incremental": true,
-    "plugins": [{ "name": "next" }]
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": [
     "next-env.d.ts",

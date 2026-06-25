@@ -7,6 +7,8 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { AppController } from "../src/app.controller";
+import { AuthController } from "../src/auth/auth.controller";
+import { AuthService } from "../src/auth/auth.service";
 import { configureApplication } from "../src/bootstrap";
 import { RequestIdMiddleware } from "../src/common/middleware/request-id.middleware";
 
@@ -15,8 +17,12 @@ describe("API bootstrap", () => {
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
-      controllers: [AppController],
+      controllers: [AppController, AuthController],
       providers: [
+        {
+          provide: AuthService,
+          useValue: { register: () => undefined, verifyPhone: () => undefined },
+        },
         {
           provide: ConfigService,
           useValue: {
@@ -24,7 +30,7 @@ describe("API bootstrap", () => {
               const values: Record<string, unknown> = {
                 app: {
                   corsOrigins: ["http://localhost:3000"],
-                  swaggerEnabled: false,
+                  swaggerEnabled: true,
                   version: "test-sha",
                 },
                 "app.version": "test-sha",
@@ -56,9 +62,48 @@ describe("API bootstrap", () => {
 
     expect(response.headers["x-request-id"]).toBeTypeOf("string");
     expect(responseBody).toEqual({
-      service: "rsc-api",
-      version: "test-sha",
-      environment: "test",
+      data: {
+        service: "rsc-api",
+        version: "test-sha",
+        environment: "test",
+      },
+      message: "API metadata retrieved",
+      status: 200,
     });
+  });
+
+  it("serves Swagger UI and a valid OpenAPI document", async () => {
+    const server = app.getHttpServer() as Server;
+
+    await request(server).get("/api/docs").expect(200).expect("content-type", /html/);
+
+    const response = await request(server).get("/api/openapi.json").expect(200);
+    const document = response.body as {
+      info?: { title?: unknown; version?: unknown };
+      openapi?: unknown;
+      paths?: Record<string, unknown>;
+    };
+
+    expect(document.info).toMatchObject({ title: "RSC Platform API", version: "test-sha" });
+    expect(document.openapi).toMatch(/^3\./);
+    expect(document.paths?.["/api/v1"]).toBeTypeOf("object");
+    expect(document.paths?.["/api/v1/auth/register"]).toBeTypeOf("object");
+  });
+
+  it("uses the standard response envelope for errors", async () => {
+    const server = app.getHttpServer() as Server;
+    const response = await request(server).get("/api/v1/not-found").expect(404);
+    const body = response.body as {
+      data?: { errors?: unknown; path?: unknown; requestId?: unknown; timestamp?: unknown };
+      message?: unknown;
+      status?: unknown;
+    };
+
+    expect(body.data?.errors).toEqual(["Cannot GET /api/v1/not-found"]);
+    expect(body.data?.path).toBe("/api/v1/not-found");
+    expect(body.data?.requestId).toBeTypeOf("string");
+    expect(body.data?.timestamp).toBeTypeOf("string");
+    expect(body.message).toBe("Cannot GET /api/v1/not-found");
+    expect(body.status).toBe(404);
   });
 });

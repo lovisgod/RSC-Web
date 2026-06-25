@@ -30,6 +30,19 @@ pnpm dev
 API runs at `http://localhost:4000`, customer web at `http://localhost:3000`,
 and central admin at `http://localhost:5173`.
 
+Deployed development URLs are `https://dev.rscapp.xyz`,
+`https://admin-dev.rscapp.xyz`, and `https://api-dev.rscapp.xyz`.
+
+## Before pushing
+
+`pnpm install` configures the tracked pre-push hook. Every push runs formatting,
+linting, type checks, unit/contract tests, API e2e tests (including Swagger and
+OpenAPI smoke tests), and all production builds. Run the same gate manually:
+
+```bash
+pnpm prepush
+```
+
 Read [AGENTS.md](./AGENTS.md) before making changes. Product and architecture
 context lives in [`docs/`](./docs/).
 
