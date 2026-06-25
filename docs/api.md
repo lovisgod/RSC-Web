@@ -20,17 +20,18 @@ Endpoints:
 - Swagger UI: `http://localhost:4000/api/docs`
 - OpenAPI JSON: `http://localhost:4000/api/openapi.json`
 
-## Customer registration and phone verification
+## Customer registration and verification
 
 The first authentication slice exposes:
 
 - `POST /api/v1/auth/register`
-- `POST /api/v1/auth/verify-phone`
+- `POST /api/v1/auth/verify-user`
 
 Frontend applications must import the request and response types (or their Zod
 schemas) from `@rsc/contracts`; they must not import the API's TypeORM entity.
-`@rsc/api-client` exposes `registerCustomer(input)` and `verifyPhone(input)` and
-validates both outgoing input and incoming responses at runtime.
+`@rsc/api-client` exposes `registerCustomer(input)` and `verifyUser(input)` and
+validates both outgoing input and incoming responses at
+runtime.
 
 ### Registration contract
 
@@ -49,19 +50,25 @@ Successful `201 Created` response:
   "data": {
     "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
     "status": "UNVERIFIED",
-    "otpExpiresInSeconds": 600
+    "otpExpiresInSeconds": 600,
+    "verificationChannels": {
+      "phone": false,
+      "email": false
+    }
   },
-  "message": "Customer registered; verification code sent",
+  "message": "Customer registered; verification codes sent",
   "status": 201
 }
 ```
 
-`POST /api/v1/auth/verify-phone`
+`POST /api/v1/auth/verify-user`
 
-| Request field | Type     | Rules                                        |
-| ------------- | -------- | -------------------------------------------- |
-| `phone`       | `string` | Same Nigerian mobile formats as registration |
-| `code`        | `string` | Exactly six numeric digits                   |
+| Request field | Type     | Rules                                                  |
+| ------------- | -------- | ------------------------------------------------------ | ------------------------------------------------ |
+| `channel`     | `"phone" | "email"`                                               | Selects which identifier and OTP store to verify |
+| `phone`       | `string` | Required when `channel` is `phone`; same phone formats |
+| `email`       | `string` | Required when `channel` is `email`; same email rules   |
+| `code`        | `string` | Exactly six numeric digits                             |
 
 Successful `200 OK` response:
 
@@ -70,9 +77,14 @@ Successful `200 OK` response:
   "data": {
     "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
     "status": "ACTIVE",
-    "phoneVerifiedAt": "2026-06-23T10:00:00.000Z"
+    "channel": "phone",
+    "verifiedAt": "2026-06-23T10:00:00.000Z",
+    "verificationChannels": {
+      "phone": true,
+      "email": false
+    }
   },
-  "message": "Phone verified successfully",
+  "message": "User verified successfully",
   "status": 200
 }
 ```
@@ -110,9 +122,9 @@ sender ID. Set:
 
 ```dotenv
 SMS_PROVIDER=termii
-TERMII_BASE_URL=https://api.ng.termii.com
+TERMII_BASE_URL=https://v3.api.termii.com
 TERMII_API_KEY=replace-with-dashboard-api-key
-TERMII_SENDER_ID=RSC
+TERMII_SENDER_ID=RSCApp
 TERMII_CHANNEL=dnd
 ```
 
@@ -133,9 +145,9 @@ The response must be `201 Created`, with `status` set to `UNVERIFIED` and
 `otpExpiresInSeconds` set to `600`. Enter the code received by SMS:
 
 ```bash
-curl --request POST https://api-dev.rscapp.xyz/api/v1/auth/verify-phone \
+curl --request POST https://api-dev.rscapp.xyz/api/v1/auth/verify-user \
   --header 'content-type: application/json' \
-  --data '{"phone":"08031234567","code":"123456"}'
+  --data '{"channel":"phone","phone":"08031234567","code":"123456"}'
 ```
 
 The verification response must be `200 OK` with `status` set to `ACTIVE`.
@@ -181,6 +193,7 @@ have separate deterministic hash columns for lookup and uniqueness.
 | `email_hash`        | Unique lookup hash; never returned to clients |
 | `status`            | `UNVERIFIED`, `ACTIVE`, or `SUSPENDED`        |
 | `phone_verified_at` | Verification timestamp, nullable              |
+| `email_verified_at` | Email verification timestamp, nullable        |
 | `created_at`        | Creation timestamp                            |
 | `updated_at`        | Last update timestamp                         |
 
