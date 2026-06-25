@@ -53,9 +53,9 @@ async function bootstrap(): Promise<void> {
       termiiChannel: sms.termii.channel,
       termiiApiKeySet: sms.termii.apiKey.length > 0,
       emailProvider: configService.get("email.provider", { infer: true }),
-      resendFrom: configService.get("email.resend.from", { infer: true }),
-      resendReplyTo: configService.get("email.resend.replyTo", { infer: true }) || null,
-      resendApiKeySet: configService.get("email.resend.apiKey", { infer: true }).length > 0,
+      smtpHost: configService.get("email.smtp.host", { infer: true }),
+      smtpPort: configService.get("email.smtp.port", { infer: true }),
+      smtpUserSet: configService.get("email.smtp.user", { infer: true }).length > 0,
     })}`,
     "Bootstrap",
   );
