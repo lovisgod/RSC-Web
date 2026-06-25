@@ -150,6 +150,10 @@ TERMII_API_KEY=replace-with-termii-dashboard-key
 TERMII_SENDER_ID=RSCApp
 TERMII_CHANNEL=dnd
 TERMII_TIMEOUT_MS=10000
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=replace-with-resend-api-key
+RESEND_FROM=RSC <onboarding@resend.dev>
+RESEND_REPLY_TO=
 ```
 
 Generate the two passwords locally and paste the results into Dokploy:

@@ -28,6 +28,14 @@ export interface ApplicationConfig {
       timeoutMs: number;
     };
   };
+  email: {
+    provider: "noop" | "resend";
+    resend: {
+      apiKey: string;
+      from: string;
+      replyTo: string;
+    };
+  };
 }
 
 function parseOrigins(value: string): string[] {
@@ -68,6 +76,14 @@ export default function configuration(): ApplicationConfig {
         senderId: process.env.TERMII_SENDER_ID ?? "",
         channel: process.env.TERMII_CHANNEL === "dnd" ? "dnd" : "generic",
         timeoutMs: Number(process.env.TERMII_TIMEOUT_MS ?? 10_000),
+      },
+    },
+    email: {
+      provider: process.env.EMAIL_PROVIDER === "resend" ? "resend" : "noop",
+      resend: {
+        apiKey: process.env.RESEND_API_KEY ?? "",
+        from: process.env.RESEND_FROM ?? "RSC <onboarding@resend.dev>",
+        replyTo: process.env.RESEND_REPLY_TO ?? "",
       },
     },
   };

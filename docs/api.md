@@ -20,17 +20,19 @@ Endpoints:
 - Swagger UI: `http://localhost:4000/api/docs`
 - OpenAPI JSON: `http://localhost:4000/api/openapi.json`
 
-## Customer registration and phone verification
+## Customer registration and verification
 
 The first authentication slice exposes:
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/verify-phone`
+- `POST /api/v1/auth/verify-email`
 
 Frontend applications must import the request and response types (or their Zod
 schemas) from `@rsc/contracts`; they must not import the API's TypeORM entity.
-`@rsc/api-client` exposes `registerCustomer(input)` and `verifyPhone(input)` and
-validates both outgoing input and incoming responses at runtime.
+`@rsc/api-client` exposes `registerCustomer(input)`, `verifyPhone(input)`, and
+`verifyEmail(input)` and validates both outgoing input and incoming responses at
+runtime.
 
 ### Registration contract
 
@@ -49,9 +51,13 @@ Successful `201 Created` response:
   "data": {
     "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
     "status": "UNVERIFIED",
-    "otpExpiresInSeconds": 600
+    "otpExpiresInSeconds": 600,
+    "verificationChannels": {
+      "phone": false,
+      "email": false
+    }
   },
-  "message": "Customer registered; verification code sent",
+  "message": "Customer registered; verification codes sent",
   "status": 201
 }
 ```
@@ -70,9 +76,38 @@ Successful `200 OK` response:
   "data": {
     "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
     "status": "ACTIVE",
-    "phoneVerifiedAt": "2026-06-23T10:00:00.000Z"
+    "phoneVerifiedAt": "2026-06-23T10:00:00.000Z",
+    "verificationChannels": {
+      "phone": true,
+      "email": false
+    }
   },
   "message": "Phone verified successfully",
+  "status": 200
+}
+```
+
+`POST /api/v1/auth/verify-email`
+
+| Request field | Type     | Rules                      |
+| ------------- | -------- | -------------------------- |
+| `email`       | `string` | Same email as registration |
+| `code`        | `string` | Exactly six numeric digits |
+
+Successful `200 OK` response:
+
+```json
+{
+  "data": {
+    "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
+    "status": "UNVERIFIED",
+    "emailVerifiedAt": "2026-06-23T10:00:00.000Z",
+    "verificationChannels": {
+      "phone": false,
+      "email": true
+    }
+  },
+  "message": "Email verified successfully",
   "status": 200
 }
 ```
@@ -181,6 +216,7 @@ have separate deterministic hash columns for lookup and uniqueness.
 | `email_hash`        | Unique lookup hash; never returned to clients |
 | `status`            | `UNVERIFIED`, `ACTIVE`, or `SUSPENDED`        |
 | `phone_verified_at` | Verification timestamp, nullable              |
+| `email_verified_at` | Email verification timestamp, nullable        |
 | `created_at`        | Creation timestamp                            |
 | `updated_at`        | Last update timestamp                         |
 

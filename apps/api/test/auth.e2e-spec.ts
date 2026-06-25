@@ -20,11 +20,19 @@ describe("Customer registration HTTP contract", () => {
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
       status: CustomerStatus.UNVERIFIED,
       otpExpiresInSeconds: 600,
+      verificationChannels: { email: false, phone: false },
     }),
     verifyPhone: vi.fn().mockResolvedValue({
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
       status: CustomerStatus.ACTIVE,
       phoneVerifiedAt: "2026-06-23T10:00:00.000Z",
+      verificationChannels: { email: false, phone: true },
+    }),
+    verifyEmail: vi.fn().mockResolvedValue({
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      status: CustomerStatus.UNVERIFIED,
+      emailVerifiedAt: "2026-06-23T10:00:00.000Z",
+      verificationChannels: { email: true, phone: false },
     }),
   };
 
@@ -69,8 +77,9 @@ describe("Customer registration HTTP contract", () => {
         customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
         status: "UNVERIFIED",
         otpExpiresInSeconds: 600,
+        verificationChannels: { email: false, phone: false },
       },
-      message: "Customer registered; verification code sent",
+      message: "Customer registered; verification codes sent",
       status: 201,
     });
     expect(authService.register).toHaveBeenCalledWith({
@@ -113,10 +122,33 @@ describe("Customer registration HTTP contract", () => {
           customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
           status: "ACTIVE",
           phoneVerifiedAt: "2026-06-23T10:00:00.000Z",
+          verificationChannels: { email: false, phone: true },
         },
         message: "Phone verified successfully",
         status: 200,
       });
+  });
+
+  it("verifies a six-digit email OTP", async () => {
+    await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/verify-email")
+      .send({ email: "ADA@EXAMPLE.COM", code: "193847" })
+      .expect(200)
+      .expect({
+        data: {
+          customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+          status: "UNVERIFIED",
+          emailVerifiedAt: "2026-06-23T10:00:00.000Z",
+          verificationChannels: { email: true, phone: false },
+        },
+        message: "Email verified successfully",
+        status: 200,
+      });
+
+    expect(authService.verifyEmail).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      code: "193847",
+    });
   });
 
   it("rejects non-six-digit OTP values", async () => {

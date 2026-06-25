@@ -84,6 +84,10 @@ services:
       TERMII_SENDER_ID: ${TERMII_SENDER_ID:-}
       TERMII_CHANNEL: ${TERMII_CHANNEL:-dnd}
       TERMII_TIMEOUT_MS: ${TERMII_TIMEOUT_MS:-10000}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-noop}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-RSC <onboarding@resend.dev>}
+      RESEND_REPLY_TO: ${RESEND_REPLY_TO:-}
     expose:
       - "4000"
     depends_on:

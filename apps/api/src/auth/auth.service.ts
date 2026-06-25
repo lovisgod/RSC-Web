@@ -9,7 +9,9 @@ import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
 import type { RegisterCustomerDto } from "./dto/register-customer.dto";
+import type { VerifyEmailDto } from "./dto/verify-email.dto";
 import type { VerifyPhoneDto } from "./dto/verify-phone.dto";
+import { EMAIL_SENDER, type EmailSender } from "./email/email-sender";
 import { OTP_TTL_SECONDS } from "./otp/otp.constants";
 import { PhoneOtpService } from "./otp/phone-otp.service";
 import { normalizeNigerianPhoneNumber } from "./phone-number";
@@ -28,12 +30,30 @@ export interface RegistrationResult {
   customerId: string;
   status: CustomerStatus.UNVERIFIED;
   otpExpiresInSeconds: number;
+  verificationChannels: {
+    email: boolean;
+    phone: boolean;
+  };
 }
 
 export interface PhoneVerificationResult {
   customerId: string;
   status: CustomerStatus.ACTIVE;
   phoneVerifiedAt: string;
+  verificationChannels: {
+    email: boolean;
+    phone: boolean;
+  };
+}
+
+export interface EmailVerificationResult {
+  customerId: string;
+  status: CustomerStatus;
+  emailVerifiedAt: string;
+  verificationChannels: {
+    email: boolean;
+    phone: boolean;
+  };
 }
 
 @Injectable()
@@ -44,6 +64,7 @@ export class AuthService {
     private readonly piiCrypto: PiiCryptoService,
     private readonly phoneOtp: PhoneOtpService,
     @Inject(SMS_SENDER) private readonly smsSender: SmsSender,
+    @Inject(EMAIL_SENDER) private readonly emailSender: EmailSender,
   ) {}
 
   async register(input: RegisterCustomerDto): Promise<RegistrationResult> {
@@ -76,6 +97,7 @@ export class AuthService {
           passwordHash: hashPassword(input.password),
           status: CustomerStatus.UNVERIFIED,
           phoneVerifiedAt: null,
+          emailVerifiedAt: null,
         });
 
     let savedCustomer: Customer;
@@ -89,18 +111,29 @@ export class AuthService {
 
       throw error;
     }
-    const code = this.phoneOtp.generateCode();
+    const phoneCode = this.phoneOtp.generateCode();
+    const emailCode = this.phoneOtp.generateCode();
 
-    await this.phoneOtp.store(savedCustomer.id, code);
+    await this.phoneOtp.store(savedCustomer.id, phoneCode);
+    await this.phoneOtp.storeEmail(savedCustomer.id, emailCode);
 
     try {
-      await this.smsSender.sendPhoneVerification({
-        phone,
-        code,
-        expiresInMinutes: OTP_TTL_SECONDS / 60,
-      });
+      await Promise.all([
+        this.smsSender.sendPhoneVerification({
+          phone,
+          code: phoneCode,
+          expiresInMinutes: OTP_TTL_SECONDS / 60,
+        }),
+        this.emailSender.sendWelcomeVerification({
+          email,
+          name: savedCustomer.name,
+          code: emailCode,
+          expiresInMinutes: OTP_TTL_SECONDS / 60,
+        }),
+      ]);
     } catch (error) {
       await this.phoneOtp.revoke(savedCustomer.id);
+      await this.phoneOtp.revokeEmail(savedCustomer.id);
       throw error;
     }
 
@@ -108,6 +141,7 @@ export class AuthService {
       customerId: savedCustomer.id,
       status: CustomerStatus.UNVERIFIED,
       otpExpiresInSeconds: OTP_TTL_SECONDS,
+      verificationChannels: this.verificationChannels(savedCustomer),
     };
   }
 
@@ -134,6 +168,40 @@ export class AuthService {
       customerId: savedCustomer.id,
       status: CustomerStatus.ACTIVE,
       phoneVerifiedAt: savedCustomer.phoneVerifiedAt!.toISOString(),
+      verificationChannels: this.verificationChannels(savedCustomer),
+    };
+  }
+
+  async verifyEmail(input: VerifyEmailDto): Promise<EmailVerificationResult> {
+    const email = input.email.trim().toLowerCase();
+    const emailHash = this.piiCrypto.searchHash(email);
+    const customer = await this.customers.findOneBy({ emailHash });
+
+    if (!customer || customer.status === CustomerStatus.SUSPENDED) {
+      throw new UnauthorizedException("Invalid or expired verification code");
+    }
+
+    const verification = await this.phoneOtp.verifyEmail(customer.id, input.code);
+
+    if (verification !== "VERIFIED") {
+      throw new UnauthorizedException("Invalid or expired verification code");
+    }
+
+    customer.emailVerifiedAt = new Date();
+    const savedCustomer = await this.customers.save(customer);
+
+    return {
+      customerId: savedCustomer.id,
+      status: savedCustomer.status,
+      emailVerifiedAt: savedCustomer.emailVerifiedAt!.toISOString(),
+      verificationChannels: this.verificationChannels(savedCustomer),
+    };
+  }
+
+  private verificationChannels(customer: Customer): { email: boolean; phone: boolean } {
+    return {
+      email: Boolean(customer.emailVerifiedAt),
+      phone: Boolean(customer.phoneVerifiedAt),
     };
   }
 

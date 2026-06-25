@@ -21,6 +21,10 @@ export interface Environment {
   TERMII_SENDER_ID?: string;
   TERMII_CHANNEL: "generic" | "dnd";
   TERMII_TIMEOUT_MS: number;
+  EMAIL_PROVIDER: "noop" | "resend";
+  RESEND_API_KEY?: string;
+  RESEND_FROM?: string;
+  RESEND_REPLY_TO?: string;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -64,6 +68,18 @@ const environmentSchema = Joi.object<Environment>({
   }),
   TERMII_CHANNEL: Joi.string().valid("generic", "dnd").default("generic"),
   TERMII_TIMEOUT_MS: Joi.number().integer().min(1_000).max(30_000).default(10_000),
+  EMAIL_PROVIDER: Joi.string().valid("noop", "resend").default("noop"),
+  RESEND_API_KEY: Joi.when("EMAIL_PROVIDER", {
+    is: "resend",
+    then: Joi.string().min(10).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  RESEND_FROM: Joi.when("EMAIL_PROVIDER", {
+    is: "resend",
+    then: Joi.string().min(3).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  RESEND_REPLY_TO: Joi.string().email().optional().allow(""),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {
