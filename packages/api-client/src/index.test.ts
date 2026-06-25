@@ -45,17 +45,18 @@ describe("registration API client", () => {
     );
   });
 
-  it("posts email verification to the versioned API", async () => {
+  it("posts user verification to the versioned API", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
           data: {
             customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
-            status: "UNVERIFIED",
-            emailVerifiedAt: "2026-06-23T10:00:00.000Z",
+            status: "ACTIVE",
+            channel: "email",
+            verifiedAt: "2026-06-23T10:00:00.000Z",
             verificationChannels: { email: true, phone: false },
           },
-          message: "Email verified successfully",
+          message: "User verified successfully",
           status: 200,
         }),
         { status: 200, headers: { "content-type": "application/json" } },
@@ -66,16 +67,18 @@ describe("registration API client", () => {
       fetch: requestFetch,
     });
 
-    await client.verifyEmail({
+    await client.verifyUser({
+      channel: "email",
       email: "ADA@EXAMPLE.COM",
       code: "193847",
     });
 
     expect(requestFetch).toHaveBeenCalledWith(
-      "https://api-dev.rscapp.xyz/api/v1/auth/verify-email",
+      "https://api-dev.rscapp.xyz/api/v1/auth/verify-user",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
+          channel: "email",
           email: "ada@example.com",
           code: "193847",
         }),

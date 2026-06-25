@@ -1,6 +1,12 @@
 import { scryptSync, randomBytes } from "node:crypto";
 
-import { ConflictException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { QueryFailedError } from "typeorm";
@@ -9,8 +15,7 @@ import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
 import type { RegisterCustomerDto } from "./dto/register-customer.dto";
-import type { VerifyEmailDto } from "./dto/verify-email.dto";
-import type { VerifyPhoneDto } from "./dto/verify-phone.dto";
+import type { VerificationChannel, VerifyUserDto } from "./dto/verify-user.dto";
 import { EMAIL_SENDER, type EmailSender } from "./email/email-sender";
 import { OTP_TTL_SECONDS } from "./otp/otp.constants";
 import { PhoneOtpService } from "./otp/phone-otp.service";
@@ -36,20 +41,11 @@ export interface RegistrationResult {
   };
 }
 
-export interface PhoneVerificationResult {
+export interface UserVerificationResult {
   customerId: string;
   status: CustomerStatus.ACTIVE;
-  phoneVerifiedAt: string;
-  verificationChannels: {
-    email: boolean;
-    phone: boolean;
-  };
-}
-
-export interface EmailVerificationResult {
-  customerId: string;
-  status: CustomerStatus.ACTIVE;
-  emailVerifiedAt: string;
+  channel: VerificationChannel;
+  verifiedAt: string;
   verificationChannels: {
     email: boolean;
     phone: boolean;
@@ -145,58 +141,63 @@ export class AuthService {
     };
   }
 
-  async verifyPhone(input: VerifyPhoneDto): Promise<PhoneVerificationResult> {
-    const phone = normalizeNigerianPhoneNumber(input.phone);
-    const phoneHash = this.piiCrypto.searchHash(phone);
-    const customer = await this.customers.findOneBy({ phoneHash });
+  async verifyUser(input: VerifyUserDto): Promise<UserVerificationResult> {
+    const customer =
+      input.channel === "phone"
+        ? await this.findCustomerByPhone(input.phone)
+        : await this.findCustomerByEmail(input.email);
 
     if (!customer || customer.status === CustomerStatus.SUSPENDED) {
       throw new UnauthorizedException("Invalid or expired verification code");
     }
 
-    const verification = await this.phoneOtp.verify(customer.id, input.code);
+    const verification =
+      input.channel === "phone"
+        ? await this.phoneOtp.verify(customer.id, input.code)
+        : await this.phoneOtp.verifyEmail(customer.id, input.code);
 
     if (verification !== "VERIFIED") {
       throw new UnauthorizedException("Invalid or expired verification code");
     }
 
+    const verifiedAt = new Date();
     customer.status = CustomerStatus.ACTIVE;
-    customer.phoneVerifiedAt = new Date();
+    if (input.channel === "phone") {
+      customer.phoneVerifiedAt = verifiedAt;
+    } else {
+      customer.emailVerifiedAt = verifiedAt;
+    }
     const savedCustomer = await this.customers.save(customer);
 
     return {
       customerId: savedCustomer.id,
       status: CustomerStatus.ACTIVE,
-      phoneVerifiedAt: savedCustomer.phoneVerifiedAt!.toISOString(),
+      channel: input.channel,
+      verifiedAt: verifiedAt.toISOString(),
       verificationChannels: this.verificationChannels(savedCustomer),
     };
   }
 
-  async verifyEmail(input: VerifyEmailDto): Promise<EmailVerificationResult> {
-    const email = input.email.trim().toLowerCase();
-    const emailHash = this.piiCrypto.searchHash(email);
-    const customer = await this.customers.findOneBy({ emailHash });
-
-    if (!customer || customer.status === CustomerStatus.SUSPENDED) {
-      throw new UnauthorizedException("Invalid or expired verification code");
+  private async findCustomerByPhone(phone: string | undefined): Promise<Customer | null> {
+    if (!phone) {
+      throw new BadRequestException("Phone is required when channel is phone");
     }
 
-    const verification = await this.phoneOtp.verifyEmail(customer.id, input.code);
+    const normalizedPhone = normalizeNigerianPhoneNumber(phone);
+    const phoneHash = this.piiCrypto.searchHash(normalizedPhone);
 
-    if (verification !== "VERIFIED") {
-      throw new UnauthorizedException("Invalid or expired verification code");
+    return this.customers.findOneBy({ phoneHash });
+  }
+
+  private async findCustomerByEmail(email: string | undefined): Promise<Customer | null> {
+    if (!email) {
+      throw new BadRequestException("Email is required when channel is email");
     }
 
-    customer.status = CustomerStatus.ACTIVE;
-    customer.emailVerifiedAt = new Date();
-    const savedCustomer = await this.customers.save(customer);
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailHash = this.piiCrypto.searchHash(normalizedEmail);
 
-    return {
-      customerId: savedCustomer.id,
-      status: CustomerStatus.ACTIVE,
-      emailVerifiedAt: savedCustomer.emailVerifiedAt!.toISOString(),
-      verificationChannels: this.verificationChannels(savedCustomer),
-    };
+    return this.customers.findOneBy({ emailHash });
   }
 
   private verificationChannels(customer: Customer): { email: boolean; phone: boolean } {

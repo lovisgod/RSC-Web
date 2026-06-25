@@ -12,16 +12,13 @@ import {
 import { AuthService } from "./auth.service";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import {
-  PhoneVerificationDataDto,
-  PhoneVerificationResponseDto,
-  EmailVerificationDataDto,
-  EmailVerificationResponseDto,
   RegistrationDataDto,
   RegistrationResponseDto,
+  UserVerificationDataDto,
+  UserVerificationResponseDto,
 } from "./dto/auth-response.dto";
 import { RegisterCustomerDto } from "./dto/register-customer.dto";
-import { VerifyEmailDto } from "./dto/verify-email.dto";
-import { VerifyPhoneDto } from "./dto/verify-phone.dto";
+import { VerifyUserDto } from "./dto/verify-user.dto";
 
 @ApiTags("Authentication")
 @Controller({ path: "auth", version: "1" })
@@ -41,29 +38,16 @@ export class AuthController {
     return this.authService.register(input);
   }
 
-  @Post("verify-phone")
-  @ApiMessage("Phone verified successfully")
+  @Post("verify-user")
+  @ApiMessage("User verified successfully")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Verify a customer phone number using the SMS OTP" })
+  @ApiOperation({ summary: "Verify a customer using a phone or email OTP" })
   @ApiOkResponse({
-    description: "Phone verified and customer account activated",
-    type: PhoneVerificationResponseDto,
+    description: "Selected channel verified and customer account activated",
+    type: UserVerificationResponseDto,
   })
   @ApiUnauthorizedResponse({ description: "OTP is incorrect, expired, or already consumed" })
-  verifyPhone(@Body() input: VerifyPhoneDto): Promise<PhoneVerificationDataDto> {
-    return this.authService.verifyPhone(input);
-  }
-
-  @Post("verify-email")
-  @ApiMessage("Email verified successfully")
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Verify a customer email address using the email OTP" })
-  @ApiOkResponse({
-    description: "Email verified for the customer account",
-    type: EmailVerificationResponseDto,
-  })
-  @ApiUnauthorizedResponse({ description: "OTP is incorrect, expired, or already consumed" })
-  verifyEmail(@Body() input: VerifyEmailDto): Promise<EmailVerificationDataDto> {
-    return this.authService.verifyEmail(input);
+  verifyUser(@Body() input: VerifyUserDto): Promise<UserVerificationDataDto> {
+    return this.authService.verifyUser(input);
   }
 }

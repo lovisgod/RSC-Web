@@ -39,34 +39,30 @@ export const registrationResultSchema = z.object({
   }),
 });
 
-export const verifyPhoneInputSchema = z
-  .object({
-    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
-    code: z.string().regex(/^\d{6}$/),
-  })
-  .strict();
+export const verificationChannelSchema = z.enum(["phone", "email"]);
 
-export const phoneVerificationResultSchema = z.object({
+export const verifyUserInputSchema = z.discriminatedUnion("channel", [
+  z
+    .object({
+      channel: z.literal("phone"),
+      phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+      code: z.string().regex(/^\d{6}$/),
+    })
+    .strict(),
+  z
+    .object({
+      channel: z.literal("email"),
+      email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+      code: z.string().regex(/^\d{6}$/),
+    })
+    .strict(),
+]);
+
+export const userVerificationResultSchema = z.object({
   customerId: z.uuid(),
   status: z.literal("ACTIVE"),
-  phoneVerifiedAt: z.iso.datetime(),
-  verificationChannels: z.object({
-    email: z.boolean(),
-    phone: z.boolean(),
-  }),
-});
-
-export const verifyEmailInputSchema = z
-  .object({
-    email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
-    code: z.string().regex(/^\d{6}$/),
-  })
-  .strict();
-
-export const emailVerificationResultSchema = z.object({
-  customerId: z.uuid(),
-  status: z.literal("ACTIVE"),
-  emailVerifiedAt: z.iso.datetime(),
+  channel: verificationChannelSchema,
+  verifiedAt: z.iso.datetime(),
   verificationChannels: z.object({
     email: z.boolean(),
     phone: z.boolean(),
@@ -74,8 +70,7 @@ export const emailVerificationResultSchema = z.object({
 });
 
 export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
-export const phoneVerificationResponseSchema = apiResponseSchema(phoneVerificationResultSchema);
-export const emailVerificationResponseSchema = apiResponseSchema(emailVerificationResultSchema);
+export const userVerificationResponseSchema = apiResponseSchema(userVerificationResultSchema);
 
 export const currencySchema = z.literal("NGN");
 
@@ -133,10 +128,9 @@ export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;
 export type CustomerStatus = z.infer<typeof customerStatusSchema>;
 export type RegisterCustomerInput = z.infer<typeof registerCustomerInputSchema>;
 export type RegistrationResult = z.infer<typeof registrationResultSchema>;
-export type VerifyPhoneInput = z.infer<typeof verifyPhoneInputSchema>;
-export type PhoneVerificationResult = z.infer<typeof phoneVerificationResultSchema>;
-export type VerifyEmailInput = z.infer<typeof verifyEmailInputSchema>;
-export type EmailVerificationResult = z.infer<typeof emailVerificationResultSchema>;
+export type VerificationChannel = z.infer<typeof verificationChannelSchema>;
+export type VerifyUserInput = z.infer<typeof verifyUserInputSchema>;
+export type UserVerificationResult = z.infer<typeof userVerificationResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
