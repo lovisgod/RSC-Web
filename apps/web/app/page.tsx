@@ -24,14 +24,18 @@ export default function HomePage() {
     <main>
       <header className="site-header">
         <Link className="brand" href="/" aria-label="RSC Kitchens home">
-          <span className="brand__mark">R</span>
-          <span>RSC Kitchens</span>
+          {/* <span className="brand__mark">R</span> */}
+          <span className="text-[var(--rsc-brand)] text-xl">
+            <span className="text-[var(--rsc-main)]">RSC</span> Food
+          </span>
         </Link>
-        <nav aria-label="Primary navigation">
+        <nav className="text-[var(--rsc-main)]" aria-label="Primary navigation">
           <Link href="#how-it-works">How it works</Link>
           <Link href="#outlets">Outlets</Link>
         </nav>
-        <Button tone="quiet">Sign in</Button>
+        <Link href="/sign-in" className="rsc-button--quiet">
+          Sign in
+        </Link>
       </header>
 
       <section className="hero">
@@ -43,14 +47,14 @@ export default function HomePage() {
             from kitchen to doorstep.
           </p>
           <div className="hero__actions">
-            <Button>Explore menus</Button>
+            <Button>Explore Kitchens</Button>
             <Link href="#how-it-works">See how multi-outlet orders work</Link>
           </div>
         </div>
 
         <div className="order-preview" aria-label="Illustrative multi-outlet order">
           <p className="order-preview__label">Tonight&apos;s table</p>
-          <h2>3 kitchens, one checkout</h2>
+          <h2>4 kitchens, one checkout</h2>
           <ul>
             <li>
               <span>RSC Fire &amp; Spice</span>
@@ -63,6 +67,10 @@ export default function HomePage() {
             <li>
               <span>RSC Sweet Room</span>
               <strong>2 items</strong>
+            </li>
+            <li>
+              <span>RSC Hot Pot</span>
+              <strong>1 item</strong>
             </li>
           </ul>
           <div className="order-preview__total">

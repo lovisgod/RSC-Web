@@ -1,17 +1,27 @@
 :root {
+  /* ── Neutrals ─────────────────────────────────────────── */
   --rsc-ink: #171b17;
-  --rsc-main: #1e4f91;
   --rsc-muted: #667064;
-  --rsc-surface: #fffdf7;
+  --rsc-surface: #f8f7f4;
   --rsc-panel: #ffffff;
   --rsc-line: #e6e2d6;
-  --rsc-brand: #175c3a;
-  --rsc-brand-strong: #0d4328;
-  --rsc-accent: #f4b942;
   --rsc-danger: #a33a2b;
-  --rsc-dark: #e06e15;
   --rsc-radius: 18px;
-  --rsc-shadow: 0 18px 60px rgb(34 48 37 / 10%);
+  --rsc-shadow: 0 18px 60px rgb(30 49 96 / 10%);
+
+  /* ── Navy scale ───────────────────────────────────────── */
+  --rsc-main: #1e3160; /* Primary Navy  — login buttons, headings, primary actions */
+  --rsc-navy-light: #253972; /* Navy Light    — secondary surfaces, accents              */
+  --rsc-navy-dark: #141f3d; /* Navy Dark     — dark backgrounds, pressed states         */
+
+  /* ── Orange / Brand scale ─────────────────────────────── */
+  --rsc-brand: #d4832a; /* Primary Orange — CTAs, rating stars, active nav          */
+  --rsc-brand-light: #e09a4a; /* Orange Light   — hover states                            */
+  --rsc-brand-strong: #b86e1a; /* Orange Dark    — pressed states, darker accents           */
+
+  /* ── Legacy aliases (kept for backwards compat) ──────── */
+  --rsc-dark: var(--rsc-brand); /* was orange-ish; now maps to brand orange     */
+  --rsc-accent: var(--rsc-brand-light); /* was yellow; maps to orange-light             */
 }
 
 * {
@@ -54,9 +64,13 @@ a {
 }
 
 .rsc-button--quiet {
-  color: var(--rsc-brand-strong);
+  color: var(--rsc-main);
   background: transparent;
   border-color: var(--rsc-line);
+}
+
+.rsc-button--quiet:hover {
+  border-color: var(--rsc-main);
 }
 
 .rsc-button:focus-visible {
