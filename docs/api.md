@@ -110,9 +110,9 @@ sender ID. Set:
 
 ```dotenv
 SMS_PROVIDER=termii
-TERMII_BASE_URL=https://api.ng.termii.com
+TERMII_BASE_URL=https://v3.api.termii.com
 TERMII_API_KEY=replace-with-dashboard-api-key
-TERMII_SENDER_ID=RSC
+TERMII_SENDER_ID=RSCApp
 TERMII_CHANNEL=dnd
 ```
 

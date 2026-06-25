@@ -63,7 +63,7 @@ export default function configuration(): ApplicationConfig {
     sms: {
       provider: process.env.SMS_PROVIDER === "termii" ? "termii" : "noop",
       termii: {
-        baseUrl: (process.env.TERMII_BASE_URL ?? "https://api.ng.termii.com").replace(/\/$/, ""),
+        baseUrl: (process.env.TERMII_BASE_URL ?? "https://v3.api.termii.com").replace(/\/$/, ""),
         apiKey: process.env.TERMII_API_KEY ?? "",
         senderId: process.env.TERMII_SENDER_ID ?? "",
         channel: process.env.TERMII_CHANNEL === "dnd" ? "dnd" : "generic",
