@@ -19,8 +19,12 @@
     "check": "turbo run check",
     "lint": "turbo run lint",
     "test": "turbo run test",
+    "test:e2e": "pnpm --filter @rsc/api test:e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "db:reset:api": "sh scripts/reset-api-db.sh",
+    "prepush": "sh scripts/pre-push.sh",
+    "prepare": "node -e \"const{existsSync}=require('fs');const{execSync}=require('child_process');if(existsSync('scripts/install-git-hooks.sh')){try{execSync('sh scripts/install-git-hooks.sh',{stdio:'inherit'})}catch(_){}}\"",
     "clean": "turbo run clean && rm -rf .turbo"
   },
   "devDependencies": {

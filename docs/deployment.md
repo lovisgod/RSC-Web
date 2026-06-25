@@ -34,6 +34,101 @@ Click **Save**, then enable **Autodeploy**.
 Use **Preview Compose** before deployment. It should show `api`, `api-migrate`,
 `postgres`, `redis`, `customer-web`, and `central-admin`.
 
+## Staging environment
+
+Create staging as a second Dokploy Compose service. Do not edit or duplicate the
+development service in place. Both services can use
+`deploy/dokploy/compose.yaml`; `DEPLOY_ENV=staging` gives the staging Compose
+project its own service names, network, PostgreSQL volume, and Redis volume.
+
+Create or select a Dokploy project environment named `staging`, then create a
+Docker Compose service named `rsc-web-staging` with:
+
+| Setting        | Value                         |
+| -------------- | ----------------------------- |
+| Provider       | GitHub                        |
+| GitHub account | `RSC-Dokploy`                 |
+| Repository     | `lovisgod/RSC-Web`            |
+| Branch         | `staging`                     |
+| Compose path   | `deploy/dokploy/compose.yaml` |
+| Trigger type   | `On Push`                     |
+| Compose type   | Docker Compose                |
+
+The promotion path is:
+
+```text
+feature branch -> pull request to dev -> pull request from dev to staging
+  -> push/merge on staging -> Dokploy staging autodeploy
+```
+
+Paste the contents of `deploy/dokploy/staging.env.example` into the staging
+service's **Environment** tab, replacing every placeholder. Generate new values
+for staging rather than copying development secrets:
+
+```bash
+openssl rand -hex 32
+openssl rand -hex 32
+openssl rand -base64 32
+openssl rand -hex 32
+openssl rand -hex 32
+```
+
+Use a separate Termii API key for staging when the Termii account supports it.
+Keep its balance and sending limits low. The staging registration endpoint is a
+public SMS-triggering endpoint, so do not enable real Termii delivery until the
+staging domains are access-restricted or API rate limiting is in place.
+
+### Staging DNS
+
+In Namecheap **Advanced DNS**, add these records. They point to the same Dokploy
+server; Traefik routes each hostname to the correct staging container.
+
+| Type     | Host            | Value          | TTL       |
+| -------- | --------------- | -------------- | --------- |
+| A Record | `staging`       | `72.61.202.26` | Automatic |
+| A Record | `admin-staging` | `72.61.202.26` | Automatic |
+| A Record | `api-staging`   | `72.61.202.26` | Automatic |
+
+Remove conflicting parking, URL redirect, CNAME, or duplicate A records for
+these three hosts.
+
+### Staging domains
+
+In the staging Compose service's **Domains** tab, add:
+
+| Service         | Domain                     | Port   |
+| --------------- | -------------------------- | ------ |
+| `customer-web`  | `staging.rscapp.xyz`       | `3000` |
+| `central-admin` | `admin-staging.rscapp.xyz` | `8080` |
+| `api`           | `api-staging.rscapp.xyz`   | `4000` |
+
+For every domain use external path `/`, internal path `/`, **Strip path Off**,
+HTTPS **On**, and a Let's Encrypt certificate. Save the domains, then redeploy
+the staging Compose service so Dokploy applies the routing configuration.
+
+Verify DNS before requesting certificates:
+
+```bash
+dig +short staging.rscapp.xyz
+dig +short admin-staging.rscapp.xyz
+dig +short api-staging.rscapp.xyz
+```
+
+All three commands must return `72.61.202.26`. After deployment, verify:
+
+```text
+https://staging.rscapp.xyz
+https://admin-staging.rscapp.xyz
+https://api-staging.rscapp.xyz/api/v1/health/live
+https://api-staging.rscapp.xyz/api/v1/health/ready
+https://api-staging.rscapp.xyz/api/docs
+```
+
+In **Containers**, staging names should begin with `rsc-web-staging`. In
+**Volumes**, confirm staging has separate PostgreSQL and Redis volumes before
+creating test customer data. Configure a staging PostgreSQL volume backup on a
+different schedule from development.
+
 ## Dokploy environment variables
 
 Open the Compose service's **Environment** tab and add:
@@ -46,11 +141,23 @@ POSTGRES_PASSWORD=replace-with-a-long-random-value
 REDIS_PASSWORD=replace-with-a-different-long-random-value
 CORS_ORIGINS=https://dev.rscapp.xyz,https://admin-dev.rscapp.xyz
 SWAGGER_ENABLED=true
+PII_ENCRYPTION_KEY=replace-with-output-of-openssl-rand-base64-32
+PII_HASH_PEPPER=replace-with-output-of-openssl-rand-hex-32
+OTP_PEPPER=replace-with-another-output-of-openssl-rand-hex-32
+SMS_PROVIDER=termii
+TERMII_BASE_URL=https://api.ng.termii.com
+TERMII_API_KEY=replace-with-termii-dashboard-key
+TERMII_SENDER_ID=RSC
+TERMII_CHANNEL=dnd
+TERMII_TIMEOUT_MS=10000
 ```
 
 Generate the two passwords locally and paste the results into Dokploy:
 
 ```bash
+openssl rand -hex 32
+openssl rand -hex 32
+openssl rand -base64 32
 openssl rand -hex 32
 openssl rand -hex 32
 ```
@@ -59,6 +166,11 @@ Dokploy writes variables to a `.env` file next to the Compose file. The Compose
 configuration explicitly passes `PUBLIC_API_URL` and `APP_VERSION` as Docker
 build arguments. `POSTGRES_PASSWORD` and `REDIS_PASSWORD` remain server-side
 Compose variables and must never use a `NEXT_PUBLIC_` or `VITE_` prefix.
+
+`PII_ENCRYPTION_KEY`, both peppers, and `TERMII_API_KEY` are also server-only
+secrets. Use the regional Termii base URL shown in the Termii dashboard and an
+approved transactional sender ID. Keep `SMS_PROVIDER=noop` only when real SMS
+delivery is intentionally disabled.
 
 Do not put payment keys, database passwords, JWT secrets, or other server
 credentials into browser-prefixed variables.
@@ -78,31 +190,45 @@ The development Compose stack contains:
 Do not publish ports `5432` or `6379` to the internet. The API reaches both
 services through the private Compose network.
 
-### API DNS
+### Development DNS and domains
 
-In Namecheap **Advanced DNS**, add:
+In Namecheap **Advanced DNS**, add all three development records:
 
-| Type     | Host      | Value          | TTL       |
-| -------- | --------- | -------------- | --------- |
-| A Record | `api-dev` | `72.61.202.26` | Automatic |
+| Type     | Host        | Value          | TTL       |
+| -------- | ----------- | -------------- | --------- |
+| A Record | `dev`       | `72.61.202.26` | Automatic |
+| A Record | `admin-dev` | `72.61.202.26` | Automatic |
+| A Record | `api-dev`   | `72.61.202.26` | Automatic |
 
-In Dokploy **Domains**, add:
+Remove conflicting parking, URL redirect, CNAME, or duplicate A records for
+these hosts. In Dokploy **Domains**, add all three routes:
 
-| Setting        | Value                |
-| -------------- | -------------------- |
-| Service        | `api`                |
-| Domain         | `api-dev.rscapp.xyz` |
-| External path  | `/`                  |
-| Internal path  | `/`                  |
-| Strip path     | Off                  |
-| Container port | `4000`               |
-| HTTPS          | On                   |
-| Certificate    | Let's Encrypt        |
+| Service         | Domain                 | Port   |
+| --------------- | ---------------------- | ------ |
+| `customer-web`  | `dev.rscapp.xyz`       | `3000` |
+| `central-admin` | `admin-dev.rscapp.xyz` | `8080` |
+| `api`           | `api-dev.rscapp.xyz`   | `4000` |
 
-Redeploy the Compose service after adding the domain. Then verify:
+For every route use external path `/`, internal path `/`, **Strip path Off**,
+HTTPS **On**, and a Let's Encrypt certificate.
+
+Save the domain configuration and redeploy the Compose service. DNS can resolve
+while a Dokploy route is still missing; in that case Traefik returns a plain
+`404 page not found` before the request ever reaches NestJS.
+
+Verify DNS:
+
+```bash
+dig +short dev.rscapp.xyz
+dig +short admin-dev.rscapp.xyz
+dig +short api-dev.rscapp.xyz
+```
+
+All three must return `72.61.202.26`. Then verify the applications:
 
 ```text
-https://api-dev.rscapp.xyz/api/v1
+https://dev.rscapp.xyz
+https://admin-dev.rscapp.xyz
 https://api-dev.rscapp.xyz/api/v1/health/live
 https://api-dev.rscapp.xyz/api/v1/health/ready
 https://api-dev.rscapp.xyz/api/docs

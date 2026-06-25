@@ -1,8 +1,18 @@
 import {
   adminOverviewSchema,
+  apiErrorResponseSchema,
+  apiResponseSchema,
   outletSummarySchema,
+  phoneVerificationResultSchema,
+  registerCustomerInputSchema,
+  registrationResultSchema,
+  verifyPhoneInputSchema,
   type AdminOverview,
   type OutletSummary,
+  type PhoneVerificationResult,
+  type RegisterCustomerInput,
+  type RegistrationResult,
+  type VerifyPhoneInput,
 } from "@rsc/contracts";
 import { z } from "zod";
 
@@ -51,22 +61,45 @@ export function createApiClient(options: ApiClientOptions) {
     });
 
     if (!response.ok) {
+      const errorPayload: unknown = await response.json().catch(() => null);
+      const parsedError = apiErrorResponseSchema.safeParse(errorPayload);
+
       throw new ApiError(
-        `API request failed with status ${response.status}`,
+        parsedError.success
+          ? parsedError.data.message
+          : `API request failed with status ${response.status}`,
         response.status,
         response.headers.get("x-request-id"),
       );
     }
 
-    return schema.parse(await response.json());
+    const envelope = apiResponseSchema(schema).parse(await response.json());
+
+    return envelope.data;
   }
 
   return {
+    registerCustomer(input: RegisterCustomerInput): Promise<RegistrationResult> {
+      const body = registerCustomerInputSchema.parse(input);
+
+      return request("/api/v1/auth/register", registrationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    verifyPhone(input: VerifyPhoneInput): Promise<PhoneVerificationResult> {
+      const body = verifyPhoneInputSchema.parse(input);
+
+      return request("/api/v1/auth/verify-phone", phoneVerificationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     listOutlets(): Promise<OutletSummary[]> {
-      return request("/v1/outlets", z.array(outletSummarySchema));
+      return request("/api/v1/outlets", z.array(outletSummarySchema));
     },
     getAdminOverview(): Promise<AdminOverview> {
-      return request("/v1/admin/overview", adminOverviewSchema);
+      return request("/api/v1/admin/overview", adminOverviewSchema);
     },
   };
 }

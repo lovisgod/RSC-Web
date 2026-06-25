@@ -1,19 +1,17 @@
 import "@rsc/ui/styles.css";
+import "./globals.css";
 import "./styles.css";
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Roboto } from "next/font/google";
 import type { ReactNode } from "react";
 
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
+import { QueryProvider } from "@/src/components/providers/query-provider";
 
-const geistMono = Geist_Mono({
+const roboto = Roboto({
   subsets: ["latin"],
-  variable: "--font-mono",
+  weight: ["300", "400", "500", "700"],
+  variable: "--font-sans",
   display: "swap",
 });
 
@@ -27,8 +25,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={roboto.variable}>
+      <body>
+        <QueryProvider>{children}</QueryProvider>
+      </body>
     </html>
   );
 }
