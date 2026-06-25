@@ -85,9 +85,12 @@ services:
       TERMII_CHANNEL: ${TERMII_CHANNEL:-dnd}
       TERMII_TIMEOUT_MS: ${TERMII_TIMEOUT_MS:-10000}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-noop}
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
-      RESEND_FROM: ${RESEND_FROM:-RSC <onboarding@resend.dev>}
-      RESEND_REPLY_TO: ${RESEND_REPLY_TO:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-RSC <noreply@rscapp.xyz>}
     expose:
       - "4000"
     depends_on:
