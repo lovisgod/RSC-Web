@@ -11,6 +11,11 @@ import { ApiError } from "@rsc/api-client";
 import { signInSchema, type SignInFormData } from "@/src/lib/schemas/auth";
 import { apiClient } from "@/src/lib/api";
 
+const inputClass =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
+
+const labelClass = "block text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1.5";
+
 export function SignInForm() {
   const router = useRouter();
   const {
@@ -27,22 +32,24 @@ export function SignInForm() {
   return (
     <form
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
-      className="w-full max-w-sm space-y-4"
+      className="w-full max-w-sm space-y-6"
     >
-      <div className="flex flex-col items-center justify-center gap-2">
+      <div className="flex flex-col items-center justify-center gap-1 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          <span className="text-[var(--rsc-dark)]">RSC</span> Food
+          <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
+          <span style={{ color: "var(--rsc-dark)" }}>Food</span>
         </h1>
-        <p className="mt-2 text-sm text-gray-600">Welcome back! Log in to order delicious meals.</p>
+        <p className="text-sm text-gray-500">Welcome back! Log in to order delicious meals.</p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-4">
         <div>
+          <label className={labelClass}>Email or phone number</label>
           <input
             {...register("identifier")}
             type="text"
-            placeholder="Email or phone number"
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+            placeholder="you@example.com or 0803…"
+            className={inputClass}
           />
           {errors.identifier && (
             <p className="mt-1 text-xs text-red-500">{errors.identifier.message}</p>
@@ -50,11 +57,12 @@ export function SignInForm() {
         </div>
 
         <div>
+          <label className={labelClass}>Password</label>
           <input
             {...register("password")}
             type="password"
-            placeholder="Password"
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+            placeholder="••••••••"
+            className={inputClass}
           />
           {errors.password && (
             <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
@@ -85,7 +93,11 @@ export function SignInForm() {
         <Link href="/forgot-password" className="hover:underline">
           Forgot password?
         </Link>{" "}
-        <Link href="/sign-up" className="hover:underline text-[var(--rsc-dark)] font-semibold">
+        <Link
+          href="/sign-up"
+          className="font-semibold hover:underline"
+          style={{ color: "var(--rsc-dark)" }}
+        >
           Register
         </Link>
       </p>
