@@ -26,11 +26,13 @@ The first authentication slice exposes:
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/verify-user`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
 
 Frontend applications must import the request and response types (or their Zod
 schemas) from `@rsc/contracts`; they must not import the API's TypeORM entity.
-`@rsc/api-client` exposes `registerCustomer(input)` and `verifyUser(input)` and
-validates both outgoing input and incoming responses at
+`@rsc/api-client` exposes `registerCustomer(input)`, `verifyUser(input)`,
+`login(input)`, and `logout()` and validates outgoing input and responses at
 runtime.
 
 ### Registration contract
@@ -63,12 +65,12 @@ Successful `201 Created` response:
 
 `POST /api/v1/auth/verify-user`
 
-| Request field | Type     | Rules                                                  |
-| ------------- | -------- | ------------------------------------------------------ | ------------------------------------------------ |
-| `channel`     | `"phone" | "email"`                                               | Selects which identifier and OTP store to verify |
-| `phone`       | `string` | Required when `channel` is `phone`; same phone formats |
-| `email`       | `string` | Required when `channel` is `email`; same email rules   |
-| `code`        | `string` | Exactly six numeric digits                             |
+| Request field | Type              | Rules                                                  |
+| ------------- | ----------------- | ------------------------------------------------------ |
+| `channel`     | `"phone"|"email"` | Selects which identifier and OTP store to verify       |
+| `phone`       | `string`          | Required when `channel` is `phone`; same phone formats |
+| `email`       | `string`          | Required when `channel` is `email`; same email rules   |
+| `code`        | `string`          | Exactly six numeric digits                             |
 
 Successful `200 OK` response:
 
@@ -85,6 +87,46 @@ Successful `200 OK` response:
     }
   },
   "message": "User verified successfully",
+  "status": 200
+}
+```
+
+`POST /api/v1/auth/login`
+
+| Request field | Type     | Rules                                  |
+| ------------- | -------- | -------------------------------------- |
+| `identifier`  | `string` | Registered email or Nigerian phone     |
+| `password`    | `string` | 8-128 characters; verified with bcrypt |
+
+Successful login sets `accessToken` and `refreshToken` as HttpOnly cookies and
+returns role context for routing:
+
+```json
+{
+  "data": {
+    "user": {
+      "id": "2abf9577-027c-4936-83a8-e004fd56a46e",
+      "role": "CUSTOMER"
+    },
+    "accessTokenExpiresInSeconds": 900,
+    "refreshTokenExpiresInSeconds": 604800
+  },
+  "message": "Login successful",
+  "status": 200
+}
+```
+
+`POST /api/v1/auth/logout`
+
+Logout reads the active auth cookies, blacklists token IDs in Redis, deletes the
+server-side session, and clears both cookies.
+
+```json
+{
+  "data": {
+    "loggedOut": true
+  },
+  "message": "Logged out successfully",
   "status": 200
 }
 ```
@@ -116,6 +158,10 @@ The API generates a cryptographically secure six-digit OTP, stores only its
 HMAC-SHA-256 digest in Redis, limits it to five attempts, and expires it after
 ten minutes. Successful verification consumes the OTP and changes the customer
 from `UNVERIFIED` to `ACTIVE`.
+
+Login stores a Redis-backed session and signs short-lived access tokens plus
+long-lived refresh tokens with an HS256 secret of at least 256 bits. Admin
+sessions expire after 30 minutes of inactivity.
 
 Termii delivery uses `POST {TERMII_BASE_URL}/api/sms/send` with an approved
 sender ID. Set:

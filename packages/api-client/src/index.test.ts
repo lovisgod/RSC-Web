@@ -85,4 +85,44 @@ describe("registration API client", () => {
       }),
     );
   });
+
+  it("posts login credentials to the versioned API", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            user: {
+              id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+              role: "CUSTOMER",
+            },
+            accessTokenExpiresInSeconds: 900,
+            refreshTokenExpiresInSeconds: 604800,
+          },
+          message: "Login successful",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await client.login({
+      identifier: "ADA@EXAMPLE.COM",
+      password: "SecureP@ss1",
+    });
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/auth/login",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          identifier: "ada@example.com",
+          password: "SecureP@ss1",
+        }),
+      }),
+    );
+  });
 });

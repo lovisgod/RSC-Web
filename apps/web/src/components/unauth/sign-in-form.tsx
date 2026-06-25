@@ -3,11 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
+import { ApiError } from "@rsc/api-client";
+
 import { signInSchema, type SignInFormData } from "@/src/lib/schemas/auth";
+import { apiClient } from "@/src/lib/api";
 
 export function SignInForm() {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -15,10 +20,8 @@ export function SignInForm() {
   } = useForm<SignInFormData>({ resolver: zodResolver(signInSchema) });
 
   const mutation = useMutation({
-    mutationFn: async (_data: SignInFormData) => {
-      // TODO: replace with apiClient.auth.signIn(_data)
-      await new Promise((r) => setTimeout(r, 1000));
-    },
+    mutationFn: (data: SignInFormData) => apiClient.login(data),
+    onSuccess: () => router.push("/"),
   });
 
   return (
@@ -62,7 +65,9 @@ export function SignInForm() {
       {mutation.isError && (
         <p className="text-center text-sm text-red-500">
           {mutation.error instanceof Error
-            ? mutation.error.message
+            ? mutation.error instanceof ApiError && mutation.error.status === 401
+              ? "Email, phone, or password is incorrect."
+              : mutation.error.message
             : "Something went wrong. Please try again."}
         </p>
       )}

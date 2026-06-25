@@ -17,6 +17,10 @@ export interface ApplicationConfig {
     piiEncryptionKey: string;
     piiHashPepper: string;
     otpPepper: string;
+    jwtSecret: string;
+    accessTokenTtlSeconds: number;
+    refreshTokenTtlSeconds: number;
+    adminInactivityTimeoutSeconds: number;
   };
   sms: {
     provider: "noop" | "termii";
@@ -70,6 +74,10 @@ export default function configuration(): ApplicationConfig {
       piiEncryptionKey: process.env.PII_ENCRYPTION_KEY ?? "",
       piiHashPepper: process.env.PII_HASH_PEPPER ?? "",
       otpPepper: process.env.OTP_PEPPER ?? "",
+      jwtSecret: process.env.JWT_SECRET ?? "",
+      accessTokenTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 900),
+      refreshTokenTtlSeconds: Number(process.env.REFRESH_TOKEN_TTL_SECONDS ?? 604_800),
+      adminInactivityTimeoutSeconds: Number(process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 1_800),
     },
     sms: {
       provider: process.env.SMS_PROVIDER === "termii" ? "termii" : "noop",

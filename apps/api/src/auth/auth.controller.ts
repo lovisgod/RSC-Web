@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res } from "@nestjs/common";
 import {
   ApiBadGatewayResponse,
   ApiConflictResponse,
@@ -8,22 +8,34 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
+import type { Request, Response } from "express";
 
 import { AuthService } from "./auth.service";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import {
+  LoginDataDto,
+  LoginResponseDto,
+  LogoutDataDto,
+  LogoutResponseDto,
   RegistrationDataDto,
   RegistrationResponseDto,
   UserVerificationDataDto,
   UserVerificationResponseDto,
 } from "./dto/auth-response.dto";
+import { LoginDto } from "./dto/login.dto";
 import { RegisterCustomerDto } from "./dto/register-customer.dto";
 import { VerifyUserDto } from "./dto/verify-user.dto";
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "./auth.constants";
+import { AuthSessionService } from "./auth-session.service";
+import { clearAuthCookies, readCookie, setAuthCookies } from "./cookies";
 
 @ApiTags("Authentication")
 @Controller({ path: "auth", version: "1" })
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly sessions: AuthSessionService,
+  ) {}
 
   @Post("register")
   @ApiMessage("Customer registered; verification codes sent")
@@ -49,5 +61,55 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: "OTP is incorrect, expired, or already consumed" })
   verifyUser(@Body() input: VerifyUserDto): Promise<UserVerificationDataDto> {
     return this.authService.verifyUser(input);
+  }
+
+  @Post("login")
+  @ApiMessage("Login successful")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Log in with email or phone and password" })
+  @ApiOkResponse({
+    description: "Login accepted and HttpOnly auth cookies issued",
+    type: LoginResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: "Credentials are invalid or account is inactive" })
+  async login(
+    @Body() input: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LoginDataDto> {
+    const session = await this.authService.login(input);
+
+    setAuthCookies(response, {
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      accessTokenMaxAgeSeconds: session.accessTokenExpiresInSeconds,
+      refreshTokenMaxAgeSeconds: session.refreshTokenExpiresInSeconds,
+    });
+
+    return {
+      user: session.user,
+      accessTokenExpiresInSeconds: session.accessTokenExpiresInSeconds,
+      refreshTokenExpiresInSeconds: session.refreshTokenExpiresInSeconds,
+    };
+  }
+
+  @Post("logout")
+  @ApiMessage("Logged out successfully")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Log out and invalidate the active auth session" })
+  @ApiOkResponse({
+    description: "Active session token blacklisted and auth cookies cleared",
+    type: LogoutResponseDto,
+  })
+  async logout(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LogoutDataDto> {
+    await this.sessions.revokeSession(
+      readCookie(request.headers.cookie, ACCESS_TOKEN_COOKIE),
+      readCookie(request.headers.cookie, REFRESH_TOKEN_COOKIE),
+    );
+    clearAuthCookies(response);
+
+    return { loggedOut: true };
   }
 }

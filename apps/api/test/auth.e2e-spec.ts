@@ -8,8 +8,10 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { AuthController } from "../src/auth/auth.controller";
+import { AuthSessionService } from "../src/auth/auth-session.service";
 import { AuthService } from "../src/auth/auth.service";
 import { CustomerStatus } from "../src/auth/customer-status.enum";
+import { UserRole } from "../src/auth/user-role.enum";
 import { ApiExceptionFilter } from "../src/common/http/api-exception.filter";
 import { ApiResponseInterceptor } from "../src/common/http/api-response.interceptor";
 
@@ -29,12 +31,25 @@ describe("Customer registration HTTP contract", () => {
       verifiedAt: "2026-06-23T10:00:00.000Z",
       verificationChannels: { email: false, phone: true },
     }),
+    login: vi.fn().mockResolvedValue({
+      accessToken: "access.jwt",
+      refreshToken: "refresh.jwt",
+      accessTokenExpiresInSeconds: 900,
+      refreshTokenExpiresInSeconds: 604800,
+      user: { id: "2abf9577-027c-4936-83a8-e004fd56a46e", role: UserRole.CUSTOMER },
+    }),
+  };
+  const sessions = {
+    revokeSession: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: authService }],
+      providers: [
+        { provide: AuthService, useValue: authService },
+        { provide: AuthSessionService, useValue: sessions },
+      ],
     }).compile();
 
     app = module.createNestApplication();
@@ -123,6 +138,53 @@ describe("Customer registration HTTP contract", () => {
         message: "User verified successfully",
         status: 200,
       });
+  });
+
+  it("logs in and writes HttpOnly auth cookies", async () => {
+    const response = await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/login")
+      .send({ identifier: "ADA@EXAMPLE.COM", password: "SecureP@ss1" })
+      .expect(200);
+
+    expect(response.body).toEqual({
+      data: {
+        user: { id: "2abf9577-027c-4936-83a8-e004fd56a46e", role: "CUSTOMER" },
+        accessTokenExpiresInSeconds: 900,
+        refreshTokenExpiresInSeconds: 604800,
+      },
+      message: "Login successful",
+      status: 200,
+    });
+    expect(response.headers["set-cookie"]).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("accessToken=access.jwt"),
+        expect.stringContaining("refreshToken=refresh.jwt"),
+      ]),
+    );
+    expect(authService.login).toHaveBeenCalledWith({
+      identifier: "ada@example.com",
+      password: "SecureP@ss1",
+    });
+  });
+
+  it("logs out and revokes the active cookie tokens", async () => {
+    const response = await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/logout")
+      .set("Cookie", ["accessToken=access.jwt; refreshToken=refresh.jwt"])
+      .expect(200);
+
+    expect(response.body).toEqual({
+      data: { loggedOut: true },
+      message: "Logged out successfully",
+      status: 200,
+    });
+    expect(sessions.revokeSession).toHaveBeenCalledWith("access.jwt", "refresh.jwt");
+    expect(response.headers["set-cookie"]).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("accessToken=;"),
+        expect.stringContaining("refreshToken=;"),
+      ]),
+    );
   });
 
   it("verifies a six-digit email OTP", async () => {

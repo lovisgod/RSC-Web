@@ -3,12 +3,15 @@ import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PiiCryptoService } from "../common/security/pii-crypto.service";
+import type { AuthSessionService } from "./auth-session.service";
 import { AuthService } from "./auth.service";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
 import type { EmailSender } from "./email/email-sender";
 import type { PhoneOtpService } from "./otp/phone-otp.service";
+import { hashPassword } from "./password";
 import type { SmsSender } from "./sms/sms-sender";
+import { UserRole } from "./user-role.enum";
 
 describe(AuthService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
@@ -32,6 +35,7 @@ describe(AuthService.name, () => {
   };
   let smsSender: { sendPhoneVerification: ReturnType<typeof vi.fn> };
   let emailSender: { sendWelcomeVerification: ReturnType<typeof vi.fn> };
+  let sessions: { issueSession: ReturnType<typeof vi.fn> };
   let service: AuthService;
 
   beforeEach(() => {
@@ -62,11 +66,21 @@ describe(AuthService.name, () => {
     emailSender = {
       sendWelcomeVerification: vi.fn().mockResolvedValue(undefined),
     };
+    sessions = {
+      issueSession: vi.fn().mockResolvedValue({
+        accessToken: "access.jwt",
+        refreshToken: "refresh.jwt",
+        accessTokenExpiresInSeconds: 900,
+        refreshTokenExpiresInSeconds: 604800,
+        user: { id: customerId, role: UserRole.CUSTOMER },
+      }),
+    };
 
     service = new AuthService(
       customers as unknown as Repository<Customer>,
       piiCrypto as unknown as PiiCryptoService,
       phoneOtp as unknown as PhoneOtpService,
+      sessions as unknown as AuthSessionService,
       smsSender as SmsSender,
       emailSender as EmailSender,
     );
@@ -89,8 +103,9 @@ describe(AuthService.name, () => {
       emailEncrypted: "encrypted:ada@example.com",
       emailHash: "hash:ada@example.com",
       status: CustomerStatus.UNVERIFIED,
+      role: UserRole.CUSTOMER,
     });
-    expect(saved?.passwordHash).toContain(":");
+    expect(saved?.passwordHash).toMatch(/^\$2[aby]\$/);
     expect(phoneOtp.store).toHaveBeenCalledWith(customerId, "482901");
     expect(phoneOtp.storeEmail).toHaveBeenCalledWith(customerId, "193847");
     expect(smsSender.sendPhoneVerification).toHaveBeenCalledWith({
@@ -110,6 +125,46 @@ describe(AuthService.name, () => {
       otpExpiresInSeconds: 600,
       verificationChannels: { email: false, phone: false },
     });
+  });
+
+  it("logs in an active customer and issues a session", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.CUSTOMER,
+      emailHash: "hash:ada@example.com",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.login({
+      identifier: "ADA@EXAMPLE.COM",
+      password: "SecureP@ss1",
+    });
+
+    expect(customers.findOneBy).toHaveBeenCalledWith({ emailHash: "hash:ada@example.com" });
+    expect(sessions.issueSession).toHaveBeenCalledWith(customer);
+    expect(result.accessToken).toBe("access.jwt");
+  });
+
+  it("rejects login for invalid credentials", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.CUSTOMER,
+      phoneHash: "hash:2348031234567",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    await expect(
+      service.login({
+        identifier: "08031234567",
+        password: "WrongP@ss1",
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+
+    expect(sessions.issueSession).not.toHaveBeenCalled();
   });
 
   it("resends verification for the same unverified customer", async () => {

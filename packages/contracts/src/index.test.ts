@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  loginInputSchema,
+  loginResultSchema,
   moneySchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
@@ -110,5 +112,21 @@ describe("customer registration contracts", () => {
     expect(() =>
       verifyUserInputSchema.parse({ channel: "email", phone: "08031234567", code: "123456" }),
     ).toThrow();
+  });
+
+  it("documents login contracts", () => {
+    expect(
+      loginInputSchema.parse({ identifier: " ADA@EXAMPLE.COM ", password: "SecureP@ss1" }),
+    ).toEqual({ identifier: "ada@example.com", password: "SecureP@ss1" });
+    expect(
+      loginResultSchema.parse({
+        user: {
+          id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+          role: "CUSTOMER",
+        },
+        accessTokenExpiresInSeconds: 900,
+        refreshTokenExpiresInSeconds: 604800,
+      }),
+    ).toBeTruthy();
   });
 });

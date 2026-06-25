@@ -31,6 +31,30 @@ export class UserVerificationDataDto {
   verificationChannels!: { phone: boolean; email: boolean };
 }
 
+export class LoginUserDto {
+  @ApiProperty({ example: "2abf9577-027c-4936-83a8-e004fd56a46e", format: "uuid" })
+  id!: string;
+
+  @ApiProperty({ enum: ["CUSTOMER", "ADMIN", "RIDER"], example: "CUSTOMER" })
+  role!: "CUSTOMER" | "ADMIN" | "RIDER";
+}
+
+export class LoginDataDto {
+  @ApiProperty({ type: LoginUserDto })
+  user!: LoginUserDto;
+
+  @ApiProperty({ example: 900 })
+  accessTokenExpiresInSeconds!: number;
+
+  @ApiProperty({ example: 604800 })
+  refreshTokenExpiresInSeconds!: number;
+}
+
+export class LogoutDataDto {
+  @ApiProperty({ example: true })
+  loggedOut!: boolean;
+}
+
 export class RegistrationResponseDto {
   @ApiProperty({ type: RegistrationDataDto })
   data!: RegistrationDataDto;
@@ -47,6 +71,28 @@ export class UserVerificationResponseDto {
   data!: UserVerificationDataDto;
 
   @ApiProperty({ example: "User verified successfully" })
+  message!: string;
+
+  @ApiProperty({ example: 200 })
+  status!: number;
+}
+
+export class LoginResponseDto {
+  @ApiProperty({ type: LoginDataDto })
+  data!: LoginDataDto;
+
+  @ApiProperty({ example: "Login successful" })
+  message!: string;
+
+  @ApiProperty({ example: 200 })
+  status!: number;
+}
+
+export class LogoutResponseDto {
+  @ApiProperty({ type: LogoutDataDto })
+  data!: LogoutDataDto;
+
+  @ApiProperty({ example: "Logged out successfully" })
   message!: string;
 
   @ApiProperty({ example: 200 })
