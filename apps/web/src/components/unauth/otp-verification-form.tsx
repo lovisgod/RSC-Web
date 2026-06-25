@@ -13,6 +13,11 @@ import { apiClient } from "@/src/lib/api";
 
 const OTP_RESEND_SECONDS = 60;
 
+const inputClass =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm tracking-widest placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
+
+const labelClass = "block text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1.5";
+
 export function OtpVerificationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -33,7 +38,8 @@ export function OtpVerificationForm() {
   } = useForm<OtpFormData>({ resolver: zodResolver(otpSchema) });
 
   const mutation = useMutation({
-    mutationFn: (data: OtpFormData) => apiClient.verifyPhone({ phone, code: data.code }),
+    mutationFn: (data: OtpFormData) =>
+      apiClient.verifyPhone({ phone, code: data.code }),
     onSuccess: () => router.push("/sign-in"),
   });
 
@@ -50,24 +56,25 @@ export function OtpVerificationForm() {
   return (
     <form
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
-      className="w-full max-w-sm space-y-4"
+      className="w-full max-w-sm space-y-6"
     >
-      <div className="flex flex-col items-center justify-center">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Verify OTP</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Enter the 6-digit OTP
-          {/* {phone && <span className="font-medium text-gray-600"> {phone}</span>} */}
-        </p>
+      <div className="flex flex-col items-center justify-center gap-1 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
+          <span style={{ color: "var(--rsc-dark)" }}>Food</span>
+        </h1>
+        <p className="text-sm text-gray-500">Enter the 6-digit OTP sent to your phone.</p>
       </div>
 
       <div>
+        <label className={labelClass}>OTP code</label>
         <input
           {...register("code")}
           type="text"
           inputMode="numeric"
           maxLength={6}
-          placeholder="OTP code 4 8 2 9 1 6"
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm tracking-widest placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+          placeholder="• • • • • •"
+          className={inputClass}
         />
         {errors.code && <p className="mt-1 text-xs text-red-500">{errors.code.message}</p>}
       </div>
@@ -99,8 +106,8 @@ export function OtpVerificationForm() {
             type="button"
             onClick={() => resendMutation.mutate()}
             disabled={resendMutation.isPending}
-            className="font-medium hover:underline disabled:opacity-50"
-            style={{ color: "var(--rsc-main)" }}
+            className="font-semibold hover:underline disabled:opacity-50"
+            style={{ color: "var(--rsc-dark)" }}
           >
             {resendMutation.isPending ? "Sending…" : "Resend code"}
           </button>

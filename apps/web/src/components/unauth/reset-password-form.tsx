@@ -6,6 +6,11 @@ import { useForm } from "react-hook-form";
 
 import { resetPasswordSchema, type ResetPasswordFormData } from "@/src/lib/schemas/auth";
 
+const inputClass =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
+
+const labelClass = "block text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1.5";
+
 export function ResetPasswordForm() {
   const {
     register,
@@ -23,22 +28,24 @@ export function ResetPasswordForm() {
   return (
     <form
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
-      className="w-full max-w-sm space-y-4"
+      className="w-full max-w-sm space-y-6"
     >
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Reset Password</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Secure account flow with inline validation and OTP-ready protection.
-        </p>
+      <div className="flex flex-col items-center justify-center gap-1 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
+          <span style={{ color: "var(--rsc-dark)" }}>Food</span>
+        </h1>
+        <p className="text-sm text-gray-500">Choose a new password for your account.</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
+          <label className={labelClass}>New password</label>
           <input
             {...register("password")}
             type="password"
-            placeholder="New password"
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+            placeholder="••••••••"
+            className={inputClass}
           />
           {errors.password && (
             <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
@@ -46,11 +53,12 @@ export function ResetPasswordForm() {
         </div>
 
         <div>
+          <label className={labelClass}>Confirm password</label>
           <input
             {...register("confirmPassword")}
             type="password"
-            placeholder="Confirm password"
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+            placeholder="••••••••"
+            className={inputClass}
           />
           {errors.confirmPassword && (
             <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
