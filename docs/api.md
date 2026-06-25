@@ -137,13 +137,13 @@ server-side session, and clears both cookies.
 Requires a valid `SUPER_ADMIN` session. Creates an outlet admin assigned to
 exactly one outlet.
 
-| Request field | Type     | Rules                                  |
-| ------------- | -------- | -------------------------------------- |
-| `name`        | `string` | Trimmed; 2-120 characters              |
-| `email`       | `string` | Valid email; trimmed and lowercased    |
-| `phone`       | `string` | Nigerian mobile number                 |
-| `password`    | `string` | 8-128 characters; stored with bcrypt   |
-| `outletId`    | `uuid`   | Existing outlet the admin belongs to   |
+| Request field | Type     | Rules                                |
+| ------------- | -------- | ------------------------------------ |
+| `name`        | `string` | Trimmed; 2-120 characters            |
+| `email`       | `string` | Valid email; trimmed and lowercased  |
+| `phone`       | `string` | Nigerian mobile number               |
+| `password`    | `string` | 8-128 characters; stored with bcrypt |
+| `outletId`    | `uuid`   | Existing outlet the admin belongs to |
 
 ```json
 {

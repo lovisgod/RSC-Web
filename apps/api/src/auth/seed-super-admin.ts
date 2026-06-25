@@ -8,7 +8,12 @@ import { hashPassword } from "./password";
 import { normalizeNigerianPhoneNumber } from "./phone-number";
 import { UserRole } from "./user-role.enum";
 
-const requiredEnv = ["SUPER_ADMIN_NAME", "SUPER_ADMIN_EMAIL", "SUPER_ADMIN_PHONE", "SUPER_ADMIN_PASSWORD"];
+const requiredEnv = [
+  "SUPER_ADMIN_NAME",
+  "SUPER_ADMIN_EMAIL",
+  "SUPER_ADMIN_PHONE",
+  "SUPER_ADMIN_PASSWORD",
+];
 
 async function main(): Promise<void> {
   for (const key of requiredEnv) {
@@ -28,7 +33,9 @@ async function main(): Promise<void> {
         jwtSecret: process.env.JWT_SECRET ?? "",
         accessTokenTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 900),
         refreshTokenTtlSeconds: Number(process.env.REFRESH_TOKEN_TTL_SECONDS ?? 604_800),
-        adminInactivityTimeoutSeconds: Number(process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 1_800),
+        adminInactivityTimeoutSeconds: Number(
+          process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 1_800,
+        ),
       }),
     } as never);
     const users = dataSource.getRepository(Customer);
