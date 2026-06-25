@@ -33,7 +33,8 @@ export function OtpVerificationForm() {
   } = useForm<OtpFormData>({ resolver: zodResolver(otpSchema) });
 
   const mutation = useMutation({
-    mutationFn: (data: OtpFormData) => apiClient.verifyPhone({ phone, code: data.code }),
+    mutationFn: (data: OtpFormData) =>
+      apiClient.verifyUser({ channel: "phone", phone, code: data.code }),
     onSuccess: () => router.push("/sign-in"),
   });
 

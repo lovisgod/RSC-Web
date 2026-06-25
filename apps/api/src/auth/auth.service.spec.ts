@@ -220,7 +220,8 @@ describe(AuthService.name, () => {
     });
     customers.findOneBy.mockResolvedValue(customer);
 
-    const result = await service.verifyPhone({
+    const result = await service.verifyUser({
+      channel: "phone",
       phone: "08031234567",
       code: "482901",
     });
@@ -231,7 +232,8 @@ describe(AuthService.name, () => {
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
     expect(savedCustomer?.phoneVerifiedAt).toBeInstanceOf(Date);
     expect(result.status).toBe(CustomerStatus.ACTIVE);
-    expect(result.phoneVerifiedAt).toBeTypeOf("string");
+    expect(result.channel).toBe("phone");
+    expect(result.verifiedAt).toBeTypeOf("string");
     expect(result.verificationChannels).toEqual({ email: false, phone: true });
   });
 
@@ -244,7 +246,8 @@ describe(AuthService.name, () => {
     });
     customers.findOneBy.mockResolvedValue(customer);
 
-    const result = await service.verifyEmail({
+    const result = await service.verifyUser({
+      channel: "email",
       email: "ADA@EXAMPLE.COM",
       code: "193847",
     });
@@ -255,7 +258,8 @@ describe(AuthService.name, () => {
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
     expect(savedCustomer?.emailVerifiedAt).toBeInstanceOf(Date);
     expect(result.status).toBe(CustomerStatus.ACTIVE);
-    expect(result.emailVerifiedAt).toBeTypeOf("string");
+    expect(result.channel).toBe("email");
+    expect(result.verifiedAt).toBeTypeOf("string");
     expect(result.verificationChannels).toEqual({ email: true, phone: false });
   });
 
@@ -268,7 +272,8 @@ describe(AuthService.name, () => {
     });
     customers.findOneBy.mockResolvedValue(customer);
 
-    const result = await service.verifyPhone({
+    const result = await service.verifyUser({
+      channel: "phone",
       phone: "08031234567",
       code: "482901",
     });
@@ -279,6 +284,7 @@ describe(AuthService.name, () => {
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
     expect(savedCustomer?.phoneVerifiedAt).toBeInstanceOf(Date);
     expect(result.status).toBe(CustomerStatus.ACTIVE);
+    expect(result.channel).toBe("phone");
     expect(result.verificationChannels).toEqual({ email: true, phone: true });
   });
 
@@ -292,7 +298,7 @@ describe(AuthService.name, () => {
     phoneOtp.verify.mockResolvedValue(result);
 
     await expect(
-      service.verifyPhone({ phone: "08031234567", code: "000000" }),
+      service.verifyUser({ channel: "phone", phone: "08031234567", code: "000000" }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(customers.save).not.toHaveBeenCalled();
   });

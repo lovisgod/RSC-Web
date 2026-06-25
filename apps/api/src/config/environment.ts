@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-export type NodeEnvironment = "development" | "test" | "production";
+export type NodeEnvironment = "development" | "staging" | "production";
 
 export interface Environment {
   NODE_ENV: NodeEnvironment;

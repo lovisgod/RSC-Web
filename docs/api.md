@@ -25,13 +25,12 @@ Endpoints:
 The first authentication slice exposes:
 
 - `POST /api/v1/auth/register`
-- `POST /api/v1/auth/verify-phone`
-- `POST /api/v1/auth/verify-email`
+- `POST /api/v1/auth/verify-user`
 
 Frontend applications must import the request and response types (or their Zod
 schemas) from `@rsc/contracts`; they must not import the API's TypeORM entity.
-`@rsc/api-client` exposes `registerCustomer(input)`, `verifyPhone(input)`, and
-`verifyEmail(input)` and validates both outgoing input and incoming responses at
+`@rsc/api-client` exposes `registerCustomer(input)` and `verifyUser(input)` and
+validates both outgoing input and incoming responses at
 runtime.
 
 ### Registration contract
@@ -62,12 +61,14 @@ Successful `201 Created` response:
 }
 ```
 
-`POST /api/v1/auth/verify-phone`
+`POST /api/v1/auth/verify-user`
 
-| Request field | Type     | Rules                                        |
-| ------------- | -------- | -------------------------------------------- |
-| `phone`       | `string` | Same Nigerian mobile formats as registration |
-| `code`        | `string` | Exactly six numeric digits                   |
+| Request field | Type               | Rules                                                   |
+| ------------- | ------------------ | ------------------------------------------------------- |
+| `channel`     | `"phone"|"email"`  | Selects which identifier and OTP store to verify        |
+| `phone`       | `string`           | Required when `channel` is `phone`; same phone formats  |
+| `email`       | `string`           | Required when `channel` is `email`; same email rules    |
+| `code`        | `string`           | Exactly six numeric digits                             |
 
 Successful `200 OK` response:
 
@@ -76,38 +77,14 @@ Successful `200 OK` response:
   "data": {
     "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
     "status": "ACTIVE",
-    "phoneVerifiedAt": "2026-06-23T10:00:00.000Z",
+    "channel": "phone",
+    "verifiedAt": "2026-06-23T10:00:00.000Z",
     "verificationChannels": {
       "phone": true,
       "email": false
     }
   },
-  "message": "Phone verified successfully",
-  "status": 200
-}
-```
-
-`POST /api/v1/auth/verify-email`
-
-| Request field | Type     | Rules                      |
-| ------------- | -------- | -------------------------- |
-| `email`       | `string` | Same email as registration |
-| `code`        | `string` | Exactly six numeric digits |
-
-Successful `200 OK` response:
-
-```json
-{
-  "data": {
-    "customerId": "2abf9577-027c-4936-83a8-e004fd56a46e",
-    "status": "UNVERIFIED",
-    "emailVerifiedAt": "2026-06-23T10:00:00.000Z",
-    "verificationChannels": {
-      "phone": false,
-      "email": true
-    }
-  },
-  "message": "Email verified successfully",
+  "message": "User verified successfully",
   "status": 200
 }
 ```
@@ -168,9 +145,9 @@ The response must be `201 Created`, with `status` set to `UNVERIFIED` and
 `otpExpiresInSeconds` set to `600`. Enter the code received by SMS:
 
 ```bash
-curl --request POST https://api-dev.rscapp.xyz/api/v1/auth/verify-phone \
+curl --request POST https://api-dev.rscapp.xyz/api/v1/auth/verify-user \
   --header 'content-type: application/json' \
-  --data '{"phone":"08031234567","code":"123456"}'
+  --data '{"channel":"phone","phone":"08031234567","code":"123456"}'
 ```
 
 The verification response must be `200 OK` with `status` set to `ACTIVE`.

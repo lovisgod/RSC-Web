@@ -114,10 +114,11 @@ Before coding, read:
   7. Customer saved to PostgreSQL (encrypted PII, password hash, status `UNVERIFIED`)
   8. 6-digit OTP generated and stored in Redis (HMAC-SHA-256 digest, 5 attempts, 10 min TTL)
   9. SMS sent via `SmsSender` interface (NoopSmsSender when `SMS_PROVIDER=noop`)
-- **POST /api/v1/auth/verify-phone** flow:
-  1. Phone normalized, customer looked up by hash
-  2. OTP verified against Redis via Lua script (atomically checks hash, decrements attempts)
-  3. On success: status → `ACTIVE`, `phoneVerifiedAt` set, customer saved
+- **POST /api/v1/auth/verify-user** flow:
+  1. `channel` selects `phone` or `email`
+  2. Matching identifier normalized, customer looked up by hash
+  3. OTP verified against the channel's Redis store via Lua script (atomically checks hash, decrements attempts)
+  4. On success: status → `ACTIVE`, matching `*VerifiedAt` timestamp set, customer saved
 - **Password:** scrypt with salt, stored as hash in `password_hash` column (char(128)), no login endpoint yet
 
 ### Key errors and fixes

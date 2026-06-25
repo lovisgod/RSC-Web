@@ -23,8 +23,7 @@ describe("API bootstrap", () => {
           provide: AuthService,
           useValue: {
             register: () => undefined,
-            verifyPhone: () => undefined,
-            verifyEmail: () => undefined,
+            verifyUser: () => undefined,
           },
         },
         {
@@ -92,7 +91,7 @@ describe("API bootstrap", () => {
     expect(document.openapi).toMatch(/^3\./);
     expect(document.paths?.["/api/v1"]).toBeTypeOf("object");
     expect(document.paths?.["/api/v1/auth/register"]).toBeTypeOf("object");
-    expect(document.paths?.["/api/v1/auth/verify-email"]).toBeTypeOf("object");
+    expect(document.paths?.["/api/v1/auth/verify-user"]).toBeTypeOf("object");
   });
 
   it("uses the standard response envelope for errors", async () => {
