@@ -63,12 +63,12 @@ Successful `201 Created` response:
 
 `POST /api/v1/auth/verify-user`
 
-| Request field | Type               | Rules                                                   |
-| ------------- | ------------------ | ------------------------------------------------------- |
-| `channel`     | `"phone"|"email"`  | Selects which identifier and OTP store to verify        |
-| `phone`       | `string`           | Required when `channel` is `phone`; same phone formats  |
-| `email`       | `string`           | Required when `channel` is `email`; same email rules    |
-| `code`        | `string`           | Exactly six numeric digits                             |
+| Request field | Type     | Rules                                                  |
+| ------------- | -------- | ------------------------------------------------------ | ------------------------------------------------ |
+| `channel`     | `"phone" | "email"`                                               | Selects which identifier and OTP store to verify |
+| `phone`       | `string` | Required when `channel` is `phone`; same phone formats |
+| `email`       | `string` | Required when `channel` is `email`; same email rules   |
+| `code`        | `string` | Exactly six numeric digits                             |
 
 Successful `200 OK` response:
 
