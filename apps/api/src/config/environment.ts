@@ -51,7 +51,7 @@ const environmentSchema = Joi.object<Environment>({
   SMS_PROVIDER: Joi.string().valid("noop", "termii").default("noop"),
   TERMII_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
-    .default("https://api.ng.termii.com"),
+    .default("https://v3.api.termii.com"),
   TERMII_API_KEY: Joi.when("SMS_PROVIDER", {
     is: "termii",
     then: Joi.string().min(10).required(),

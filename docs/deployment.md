@@ -145,9 +145,9 @@ PII_ENCRYPTION_KEY=replace-with-output-of-openssl-rand-base64-32
 PII_HASH_PEPPER=replace-with-output-of-openssl-rand-hex-32
 OTP_PEPPER=replace-with-another-output-of-openssl-rand-hex-32
 SMS_PROVIDER=termii
-TERMII_BASE_URL=https://api.ng.termii.com
+TERMII_BASE_URL=https://v3.api.termii.com
 TERMII_API_KEY=replace-with-termii-dashboard-key
-TERMII_SENDER_ID=RSC
+TERMII_SENDER_ID=RSCApp
 TERMII_CHANNEL=dnd
 TERMII_TIMEOUT_MS=10000
 ```

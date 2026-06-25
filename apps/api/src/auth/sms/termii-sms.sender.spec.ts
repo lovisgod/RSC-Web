@@ -10,9 +10,9 @@ function createSender(): TermiiSmsSender {
     sms: {
       provider: "termii",
       termii: {
-        baseUrl: "https://api.ng.termii.com",
+        baseUrl: "https://v3.api.termii.com",
         apiKey: "termii-secret",
-        senderId: "RSC",
+        senderId: "RSCApp",
         channel: "dnd",
         timeoutMs: 5_000,
       },
@@ -43,7 +43,7 @@ describe(TermiiSmsSender.name, () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.ng.termii.com/api/sms/send",
+      "https://v3.api.termii.com/api/sms/send",
       expect.objectContaining({
         method: "POST",
         headers: { "content-type": "application/json" },
