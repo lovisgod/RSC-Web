@@ -79,11 +79,18 @@ services:
       PII_HASH_PEPPER: ${PII_HASH_PEPPER:?PII_HASH_PEPPER is required}
       OTP_PEPPER: ${OTP_PEPPER:?OTP_PEPPER is required}
       SMS_PROVIDER: ${SMS_PROVIDER:-noop}
-      TERMII_BASE_URL: ${TERMII_BASE_URL:-https://api.ng.termii.com}
+      TERMII_BASE_URL: ${TERMII_BASE_URL:-https://v3.api.termii.com}
       TERMII_API_KEY: ${TERMII_API_KEY:-}
       TERMII_SENDER_ID: ${TERMII_SENDER_ID:-}
       TERMII_CHANNEL: ${TERMII_CHANNEL:-dnd}
       TERMII_TIMEOUT_MS: ${TERMII_TIMEOUT_MS:-10000}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-noop}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-RSC <noreply@rscapp.xyz>}
     expose:
       - "4000"
     depends_on:

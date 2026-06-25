@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   moneySchema,
-  phoneVerificationResultSchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
-  verifyPhoneInputSchema,
+  userVerificationResultSchema,
+  verifyUserInputSchema,
 } from "./index";
 
 describe("moneySchema", () => {
@@ -68,6 +68,7 @@ describe("customer registration contracts", () => {
         customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
         status: "UNVERIFIED",
         otpExpiresInSeconds: 600,
+        verificationChannels: { email: false, phone: false },
       }),
     ).toBeTruthy();
     expect(
@@ -76,21 +77,38 @@ describe("customer registration contracts", () => {
           customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
           status: "UNVERIFIED",
           otpExpiresInSeconds: 600,
+          verificationChannels: { email: false, phone: false },
         },
-        message: "Customer registered; verification code sent",
+        message: "Customer registered; verification codes sent",
         status: 201,
       }),
     ).toBeTruthy();
     expect(
-      phoneVerificationResultSchema.parse({
+      userVerificationResultSchema.parse({
         customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
         status: "ACTIVE",
-        phoneVerifiedAt: "2026-06-23T10:00:00.000Z",
+        channel: "email",
+        verifiedAt: "2026-06-23T10:00:00.000Z",
+        verificationChannels: { email: true, phone: false },
       }),
     ).toBeTruthy();
   });
 
   it("requires a six-digit verification code", () => {
-    expect(() => verifyPhoneInputSchema.parse({ phone: "08031234567", code: "12345" })).toThrow();
+    expect(() =>
+      verifyUserInputSchema.parse({ channel: "phone", phone: "08031234567", code: "12345" }),
+    ).toThrow();
+    expect(() =>
+      verifyUserInputSchema.parse({ channel: "email", email: "ada@example.com", code: "12345" }),
+    ).toThrow();
+  });
+
+  it("requires the identifier that matches the verification channel", () => {
+    expect(() =>
+      verifyUserInputSchema.parse({ channel: "phone", email: "ada@example.com", code: "123456" }),
+    ).toThrow();
+    expect(() =>
+      verifyUserInputSchema.parse({ channel: "email", phone: "08031234567", code: "123456" }),
+    ).toThrow();
   });
 });

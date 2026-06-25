@@ -6,6 +6,7 @@ import type { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { AuthService } from "./auth.service";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
+import type { EmailSender } from "./email/email-sender";
 import type { PhoneOtpService } from "./otp/phone-otp.service";
 import type { SmsSender } from "./sms/sms-sender";
 
@@ -23,10 +24,14 @@ describe(AuthService.name, () => {
   let phoneOtp: {
     generateCode: ReturnType<typeof vi.fn>;
     store: ReturnType<typeof vi.fn>;
+    storeEmail: ReturnType<typeof vi.fn>;
     revoke: ReturnType<typeof vi.fn>;
+    revokeEmail: ReturnType<typeof vi.fn>;
     verify: ReturnType<typeof vi.fn>;
+    verifyEmail: ReturnType<typeof vi.fn>;
   };
   let smsSender: { sendPhoneVerification: ReturnType<typeof vi.fn> };
+  let emailSender: { sendWelcomeVerification: ReturnType<typeof vi.fn> };
   let service: AuthService;
 
   beforeEach(() => {
@@ -43,13 +48,19 @@ describe(AuthService.name, () => {
       encrypt: vi.fn((value: string) => `encrypted:${value}`),
     };
     phoneOtp = {
-      generateCode: vi.fn(() => "482901"),
+      generateCode: vi.fn().mockReturnValueOnce("482901").mockReturnValue("193847"),
       store: vi.fn().mockResolvedValue(undefined),
+      storeEmail: vi.fn().mockResolvedValue(undefined),
       revoke: vi.fn().mockResolvedValue(undefined),
+      revokeEmail: vi.fn().mockResolvedValue(undefined),
       verify: vi.fn().mockResolvedValue("VERIFIED"),
+      verifyEmail: vi.fn().mockResolvedValue("VERIFIED"),
     };
     smsSender = {
       sendPhoneVerification: vi.fn().mockResolvedValue(undefined),
+    };
+    emailSender = {
+      sendWelcomeVerification: vi.fn().mockResolvedValue(undefined),
     };
 
     service = new AuthService(
@@ -57,10 +68,11 @@ describe(AuthService.name, () => {
       piiCrypto as unknown as PiiCryptoService,
       phoneOtp as unknown as PhoneOtpService,
       smsSender as SmsSender,
+      emailSender as EmailSender,
     );
   });
 
-  it("creates an unverified encrypted customer and sends a six-digit OTP", async () => {
+  it("creates an unverified encrypted customer and sends phone and email OTPs", async () => {
     const result = await service.register({
       name: "Ada Okafor",
       phone: "08031234567",
@@ -80,15 +92,23 @@ describe(AuthService.name, () => {
     });
     expect(saved?.passwordHash).toContain(":");
     expect(phoneOtp.store).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.storeEmail).toHaveBeenCalledWith(customerId, "193847");
     expect(smsSender.sendPhoneVerification).toHaveBeenCalledWith({
       phone: "2348031234567",
       code: "482901",
+      expiresInMinutes: 10,
+    });
+    expect(emailSender.sendWelcomeVerification).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      name: "Ada Okafor",
+      code: "193847",
       expiresInMinutes: 10,
     });
     expect(result).toEqual({
       customerId,
       status: CustomerStatus.UNVERIFIED,
       otpExpiresInSeconds: 600,
+      verificationChannels: { email: false, phone: false },
     });
   });
 
@@ -113,6 +133,7 @@ describe(AuthService.name, () => {
     expect(customers.create).not.toHaveBeenCalled();
     expect(customers.save).toHaveBeenCalledWith(existing);
     expect(smsSender.sendPhoneVerification).toHaveBeenCalledOnce();
+    expect(emailSender.sendWelcomeVerification).toHaveBeenCalledOnce();
   });
 
   it("does not let a resend replace the pending account email", async () => {
@@ -136,6 +157,7 @@ describe(AuthService.name, () => {
 
     expect(customers.save).not.toHaveBeenCalled();
     expect(smsSender.sendPhoneVerification).not.toHaveBeenCalled();
+    expect(emailSender.sendWelcomeVerification).not.toHaveBeenCalled();
   });
 
   it("rejects an identity already attached to an active account", async () => {
@@ -156,7 +178,7 @@ describe(AuthService.name, () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it("revokes the OTP when Termii delivery fails", async () => {
+  it("revokes OTPs when Termii delivery fails", async () => {
     smsSender.sendPhoneVerification.mockRejectedValue(
       new BadGatewayException("Unable to send verification code"),
     );
@@ -170,6 +192,24 @@ describe(AuthService.name, () => {
       }),
     ).rejects.toBeInstanceOf(BadGatewayException);
     expect(phoneOtp.revoke).toHaveBeenCalledWith(customerId);
+    expect(phoneOtp.revokeEmail).toHaveBeenCalledWith(customerId);
+  });
+
+  it("revokes OTPs when Resend delivery fails", async () => {
+    emailSender.sendWelcomeVerification.mockRejectedValue(
+      new BadGatewayException("Unable to send email verification code"),
+    );
+
+    await expect(
+      service.register({
+        name: "Ada Okafor",
+        phone: "08031234567",
+        email: "ada@example.com",
+        password: "SecureP@ss1",
+      }),
+    ).rejects.toBeInstanceOf(BadGatewayException);
+    expect(phoneOtp.revoke).toHaveBeenCalledWith(customerId);
+    expect(phoneOtp.revokeEmail).toHaveBeenCalledWith(customerId);
   });
 
   it("activates the account after a correct OTP", async () => {
@@ -180,7 +220,8 @@ describe(AuthService.name, () => {
     });
     customers.findOneBy.mockResolvedValue(customer);
 
-    const result = await service.verifyPhone({
+    const result = await service.verifyUser({
+      channel: "phone",
       phone: "08031234567",
       code: "482901",
     });
@@ -191,7 +232,60 @@ describe(AuthService.name, () => {
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
     expect(savedCustomer?.phoneVerifiedAt).toBeInstanceOf(Date);
     expect(result.status).toBe(CustomerStatus.ACTIVE);
-    expect(result.phoneVerifiedAt).toBeTypeOf("string");
+    expect(result.channel).toBe("phone");
+    expect(result.verifiedAt).toBeTypeOf("string");
+    expect(result.verificationChannels).toEqual({ email: false, phone: true });
+  });
+
+  it("activates the account after a correct email OTP", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.UNVERIFIED,
+      phoneVerifiedAt: null,
+      emailVerifiedAt: null,
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.verifyUser({
+      channel: "email",
+      email: "ADA@EXAMPLE.COM",
+      code: "193847",
+    });
+
+    expect(phoneOtp.verifyEmail).toHaveBeenCalledWith(customerId, "193847");
+    const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
+
+    expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
+    expect(savedCustomer?.emailVerifiedAt).toBeInstanceOf(Date);
+    expect(result.status).toBe(CustomerStatus.ACTIVE);
+    expect(result.channel).toBe("email");
+    expect(result.verifiedAt).toBeTypeOf("string");
+    expect(result.verificationChannels).toEqual({ email: true, phone: false });
+  });
+
+  it("allows phone verification after email activation", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      phoneVerifiedAt: null,
+      emailVerifiedAt: new Date("2026-06-23T10:00:00.000Z"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.verifyUser({
+      channel: "phone",
+      phone: "08031234567",
+      code: "482901",
+    });
+
+    expect(phoneOtp.verify).toHaveBeenCalledWith(customerId, "482901");
+    const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
+
+    expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
+    expect(savedCustomer?.phoneVerifiedAt).toBeInstanceOf(Date);
+    expect(result.status).toBe(CustomerStatus.ACTIVE);
+    expect(result.channel).toBe("phone");
+    expect(result.verificationChannels).toEqual({ email: true, phone: true });
   });
 
   it.each(["INVALID", "EXPIRED"] as const)("rejects an %s OTP", async (result) => {
@@ -204,7 +298,7 @@ describe(AuthService.name, () => {
     phoneOtp.verify.mockResolvedValue(result);
 
     await expect(
-      service.verifyPhone({ phone: "08031234567", code: "000000" }),
+      service.verifyUser({ channel: "phone", phone: "08031234567", code: "000000" }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(customers.save).not.toHaveBeenCalled();
   });
