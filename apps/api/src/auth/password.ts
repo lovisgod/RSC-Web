@@ -10,7 +10,11 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(password: string, passwordHash: string): Promise<boolean> {
-  if (passwordHash.startsWith("$2a$") || passwordHash.startsWith("$2b$") || passwordHash.startsWith("$2y$")) {
+  if (
+    passwordHash.startsWith("$2a$") ||
+    passwordHash.startsWith("$2b$") ||
+    passwordHash.startsWith("$2y$")
+  ) {
     return bcrypt.compare(password, passwordHash);
   }
 
@@ -18,7 +22,11 @@ export async function verifyPassword(password: string, passwordHash: string): Pr
 }
 
 export function isBcryptHash(passwordHash: string): boolean {
-  return passwordHash.startsWith("$2a$") || passwordHash.startsWith("$2b$") || passwordHash.startsWith("$2y$");
+  return (
+    passwordHash.startsWith("$2a$") ||
+    passwordHash.startsWith("$2b$") ||
+    passwordHash.startsWith("$2y$")
+  );
 }
 
 function verifyLegacyScryptPassword(password: string, passwordHash: string): boolean {

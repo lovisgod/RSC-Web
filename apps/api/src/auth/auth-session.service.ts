@@ -117,7 +117,12 @@ export class AuthSessionService {
       this.getSession(payload.sid),
     ]);
 
-    if (isBlacklisted || !session || session.userId !== payload.sub || session.role !== payload.role) {
+    if (
+      isBlacklisted ||
+      !session ||
+      session.userId !== payload.sub ||
+      session.role !== payload.role
+    ) {
       throw new UnauthorizedException("Authentication required");
     }
 
@@ -144,11 +149,18 @@ export class AuthSessionService {
 
   async revokeSession(accessToken?: string, refreshToken?: string): Promise<void> {
     const tokens = [accessToken, refreshToken].filter((token): token is string => Boolean(token));
-    const payloads = tokens.map((token) => this.verifyTokenWithoutThrow(token)).filter(isTokenPayload);
+    const payloads = tokens
+      .map((token) => this.verifyTokenWithoutThrow(token))
+      .filter(isTokenPayload);
 
     await Promise.all(
       payloads.flatMap((payload) => [
-        this.redis.set(this.blacklistKey(payload.jti), "1", "EX", Math.max(payload.exp - nowSeconds(), 1)),
+        this.redis.set(
+          this.blacklistKey(payload.jti),
+          "1",
+          "EX",
+          Math.max(payload.exp - nowSeconds(), 1),
+        ),
         this.redis.del(this.sessionKey(payload.sid)),
       ]),
     );
