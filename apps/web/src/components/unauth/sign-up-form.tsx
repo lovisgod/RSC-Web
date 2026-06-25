@@ -72,7 +72,9 @@ export function SignUpForm() {
           <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
           <span style={{ color: "var(--rsc-dark)" }}>Food</span>
         </h1>
-        <p className="text-sm text-gray-500">Create an account to discover restaurants around you.</p>
+        <p className="text-sm text-gray-500">
+          Create an account to discover restaurants around you.
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -85,9 +87,7 @@ export function SignUpForm() {
               placeholder={placeholder}
               className={inputClass}
             />
-            {errors[name] && (
-              <p className="mt-1 text-xs text-red-500">{errors[name]?.message}</p>
-            )}
+            {errors[name] && <p className="mt-1 text-xs text-red-500">{errors[name]?.message}</p>}
           </div>
         ))}
 
@@ -126,7 +126,11 @@ export function SignUpForm() {
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{" "}
-        <Link href="/sign-in" className="font-semibold hover:underline" style={{ color: "var(--rsc-dark)" }}>
+        <Link
+          href="/sign-in"
+          className="font-semibold hover:underline"
+          style={{ color: "var(--rsc-dark)" }}
+        >
           Sign in
         </Link>
       </p>

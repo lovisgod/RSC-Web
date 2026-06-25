@@ -52,6 +52,19 @@ body {
   justify-self: end;
 }
 
+.site-header .rsc-button--quiet {
+  color: white;
+  background: var(--rsc-dark);
+  border: 2px solid var(--rsc-dark);
+  padding:4px 6px;
+  border-radius: 16px;
+}
+
+.site-header .rsc-button--quiet:hover {
+  background: var(--rsc-brand-strong);
+  border-color: var(--rsc-brand-strong);
+}
+
 .brand {
   display: inline-flex;
   align-items: center;

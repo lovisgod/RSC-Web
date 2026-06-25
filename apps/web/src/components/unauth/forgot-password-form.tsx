@@ -78,7 +78,11 @@ export function ForgotPasswordForm() {
       </button>
 
       <p className="text-center text-sm text-gray-500">
-        <Link href="/sign-in" className="font-semibold hover:underline" style={{ color: "var(--rsc-dark)" }}>
+        <Link
+          href="/sign-in"
+          className="font-semibold hover:underline"
+          style={{ color: "var(--rsc-dark)" }}
+        >
           Return to sign in
         </Link>
       </p>

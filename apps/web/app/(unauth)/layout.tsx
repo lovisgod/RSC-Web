@@ -7,7 +7,6 @@ export default function UnauthLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-white md:bg-[#f0ede8] md:p-8 flex flex-col">
       <div className="flex-1 flex items-center md:justify-center">
         <div className="w-full md:max-w-4xl bg-white md:rounded-3xl overflow-hidden flex md:shadow-sm min-h-screen md:min-h-[640px]">
-
           {/* ── Left panel (desktop only) ── */}
           <div
             className="hidden md:flex w-[42%] flex-col p-8"
@@ -32,7 +31,6 @@ export default function UnauthLayout({ children }: { children: ReactNode }) {
           <div className="flex-1 flex items-start md:items-center justify-center px-6 pt-16 pb-10 md:p-12">
             {children}
           </div>
-
         </div>
       </div>
     </div>

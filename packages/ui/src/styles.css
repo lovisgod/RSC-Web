@@ -10,18 +10,18 @@
   --rsc-shadow: 0 18px 60px rgb(30 49 96 / 10%);
 
   /* ── Navy scale ───────────────────────────────────────── */
-  --rsc-main: #1e3160;        /* Primary Navy  — login buttons, headings, primary actions */
-  --rsc-navy-light: #253972;  /* Navy Light    — secondary surfaces, accents              */
-  --rsc-navy-dark: #141f3d;   /* Navy Dark     — dark backgrounds, pressed states         */
+  --rsc-main: #1e3160; /* Primary Navy  — login buttons, headings, primary actions */
+  --rsc-navy-light: #253972; /* Navy Light    — secondary surfaces, accents              */
+  --rsc-navy-dark: #141f3d; /* Navy Dark     — dark backgrounds, pressed states         */
 
   /* ── Orange / Brand scale ─────────────────────────────── */
-  --rsc-brand: #d4832a;       /* Primary Orange — CTAs, rating stars, active nav          */
+  --rsc-brand: #d4832a; /* Primary Orange — CTAs, rating stars, active nav          */
   --rsc-brand-light: #e09a4a; /* Orange Light   — hover states                            */
-  --rsc-brand-strong: #b86e1a;/* Orange Dark    — pressed states, darker accents           */
+  --rsc-brand-strong: #b86e1a; /* Orange Dark    — pressed states, darker accents           */
 
   /* ── Legacy aliases (kept for backwards compat) ──────── */
-  --rsc-dark: var(--rsc-brand);            /* was orange-ish; now maps to brand orange     */
-  --rsc-accent: var(--rsc-brand-light);    /* was yellow; maps to orange-light             */
+  --rsc-dark: var(--rsc-brand); /* was orange-ish; now maps to brand orange     */
+  --rsc-accent: var(--rsc-brand-light); /* was yellow; maps to orange-light             */
 }
 
 * {
