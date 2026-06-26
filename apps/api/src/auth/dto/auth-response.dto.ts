@@ -67,6 +67,12 @@ export class AdminDataDto {
 
   @ApiProperty({ format: "uuid" })
   outletId!: string;
+
+  @ApiProperty({
+    description: "System-generated temporary password for first login",
+    example: "e9FPuxWz3zRaAa1!",
+  })
+  temporaryPassword!: string;
 }
 
 export class RegistrationResponseDto {

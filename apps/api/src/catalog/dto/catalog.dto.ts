@@ -59,6 +59,12 @@ export class CreateOutletDto {
 
 export class UpdateOutletDto extends PartialType(CreateOutletDto) {}
 
+export class UpdateOutletOnlineStatusDto {
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isOnline!: boolean;
+}
+
 export class CreateMenuCategoryDto {
   @ApiPropertyOptional({
     format: "uuid",

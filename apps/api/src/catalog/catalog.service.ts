@@ -22,6 +22,7 @@ import type {
   UpdateMenuCategoryDto,
   UpdateMenuItemAvailabilityDto,
   UpdateMenuItemDto,
+  UpdateOutletOnlineStatusDto,
   UpdateOutletDto,
 } from "./dto/catalog.dto";
 
@@ -70,11 +71,25 @@ export class CatalogService {
     await this.ensureOutletAccess(user, id);
     const outlet = await this.requireOutlet(id);
 
+    if (user.role !== UserRole.SUPER_ADMIN && input.isOnline !== undefined) {
+      throw new ForbiddenException("Only super admins can change outlet online status");
+    }
+
     Object.assign(outlet, {
       ...input,
       description: input.description === undefined ? outlet.description : input.description,
       imageUrl: input.imageUrl === undefined ? outlet.imageUrl : input.imageUrl,
     });
+
+    return this.outlets.save(outlet);
+  }
+
+  async updateOutletOnlineStatus(
+    id: string,
+    input: UpdateOutletOnlineStatusDto,
+  ): Promise<Outlet> {
+    const outlet = await this.requireOutlet(id);
+    outlet.isOnline = input.isOnline;
 
     return this.outlets.save(outlet);
   }

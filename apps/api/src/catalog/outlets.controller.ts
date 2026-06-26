@@ -8,7 +8,11 @@ import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import { CatalogService } from "./catalog.service";
-import { CreateOutletDto, UpdateOutletDto } from "./dto/catalog.dto";
+import {
+  CreateOutletDto,
+  UpdateOutletDto,
+  UpdateOutletOnlineStatusDto,
+} from "./dto/catalog.dto";
 
 @ApiTags("Outlets")
 @ApiBearerAuth()
@@ -47,6 +51,13 @@ export class OutletsController {
     @Body() input: UpdateOutletDto,
   ) {
     return this.catalog.updateOutlet(request.user!, id, input);
+  }
+
+  @Patch(":id/online-status")
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("Outlet online status updated successfully")
+  updateOnlineStatus(@Param("id") id: string, @Body() input: UpdateOutletOnlineStatusDto) {
+    return this.catalog.updateOutletOnlineStatus(id, input);
   }
 
   @Delete(":id")

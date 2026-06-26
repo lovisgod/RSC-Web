@@ -95,7 +95,6 @@ export const createAdminInputSchema = z
     name: z.string().trim().min(2).max(120),
     email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
     phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
-    password: z.string().min(8).max(128),
     outletId: z.uuid(),
   })
   .strict();
@@ -105,6 +104,7 @@ export const adminResultSchema = z.object({
   name: z.string().min(1),
   role: z.literal("ADMIN"),
   outletId: z.uuid(),
+  temporaryPassword: z.string().min(8),
 });
 
 export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);

@@ -179,4 +179,17 @@ describe(CatalogService.name, () => {
     expect(result.isAvailable).toBe(false);
     expect(items.save).toHaveBeenCalledWith(expect.objectContaining({ isAvailable: false }));
   });
+
+  it("blocks outlet admins from changing outlet online status through generic updates", async () => {
+    await expect(
+      service.updateOutlet(adminUser, outletId, { isOnline: false }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it("updates outlet online status for the super admin path", async () => {
+    const result = await service.updateOutletOnlineStatus(outletId, { isOnline: false });
+
+    expect(result.isOnline).toBe(false);
+    expect(outlets.save).toHaveBeenCalledWith(expect.objectContaining({ isOnline: false }));
+  });
 });

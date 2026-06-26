@@ -45,6 +45,7 @@ describe("Customer registration HTTP contract", () => {
       name: "Outlet Manager",
       role: UserRole.ADMIN,
       outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      temporaryPassword: "e9FPuxWz3zRaAa1!",
     }),
   };
   const sessions = {
@@ -207,7 +208,6 @@ describe("Customer registration HTTP contract", () => {
         name: "Outlet Manager",
         email: "MANAGER@EXAMPLE.COM",
         phone: "08031234567",
-        password: "SecureP@ss1",
         outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
       })
       .expect(201)
@@ -217,6 +217,7 @@ describe("Customer registration HTTP contract", () => {
           name: "Outlet Manager",
           role: "ADMIN",
           outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+          temporaryPassword: "e9FPuxWz3zRaAa1!",
         },
         message: "Admin created successfully",
         status: 201,
@@ -226,7 +227,6 @@ describe("Customer registration HTTP contract", () => {
       name: "Outlet Manager",
       email: "manager@example.com",
       phone: "08031234567",
-      password: "SecureP@ss1",
       outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
     });
   });
