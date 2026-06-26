@@ -2,7 +2,11 @@ import { BadGatewayException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import type { ApplicationConfig } from "../../config/configuration";
-import type { SendPasswordResetSmsInput, SendPhoneVerificationInput, SmsSender } from "./sms-sender";
+import type {
+  SendPasswordResetSmsInput,
+  SendPhoneVerificationInput,
+  SmsSender,
+} from "./sms-sender";
 
 interface TermiiSendResponse {
   code?: string | number;

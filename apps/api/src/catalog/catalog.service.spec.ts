@@ -67,7 +67,9 @@ describe(CatalogService.name, () => {
 
   beforeEach(() => {
     users = {
-      findOne: vi.fn().mockResolvedValue(Object.assign(new Customer(), { id: adminUser.id, outletId })),
+      findOne: vi
+        .fn()
+        .mockResolvedValue(Object.assign(new Customer(), { id: adminUser.id, outletId })),
     };
     outlets = {
       find: vi.fn().mockResolvedValue([]),

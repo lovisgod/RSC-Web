@@ -95,7 +95,10 @@ export class CatalogService {
     });
   }
 
-  async createCategory(user: AuthenticatedUser, input: CreateMenuCategoryDto): Promise<MenuCategory> {
+  async createCategory(
+    user: AuthenticatedUser,
+    input: CreateMenuCategoryDto,
+  ): Promise<MenuCategory> {
     const outletId = await this.resolveOutletId(user, input.outletId);
 
     return this.categories.save(
@@ -177,7 +180,11 @@ export class CatalogService {
     return item;
   }
 
-  async updateItem(user: AuthenticatedUser, id: string, input: UpdateMenuItemDto): Promise<MenuItem> {
+  async updateItem(
+    user: AuthenticatedUser,
+    id: string,
+    input: UpdateMenuItemDto,
+  ): Promise<MenuItem> {
     const item = await this.getItem(user, id);
 
     if (input.outletId && input.outletId !== item.outletId) {
@@ -287,7 +294,10 @@ export class CatalogService {
     });
   }
 
-  async createModifier(user: AuthenticatedUser, input: CreateItemModifierDto): Promise<ItemModifier> {
+  async createModifier(
+    user: AuthenticatedUser,
+    input: CreateItemModifierDto,
+  ): Promise<ItemModifier> {
     const outletId = await this.resolveOutletId(user, input.outletId);
     await this.ensureGroupInOutlet(input.groupId, outletId);
 

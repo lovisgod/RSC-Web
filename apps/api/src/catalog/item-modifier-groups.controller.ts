@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
@@ -8,10 +19,7 @@ import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import { CatalogService } from "./catalog.service";
-import {
-  CreateItemModifierGroupDto,
-  UpdateItemModifierGroupDto,
-} from "./dto/catalog.dto";
+import { CreateItemModifierGroupDto, UpdateItemModifierGroupDto } from "./dto/catalog.dto";
 
 @ApiTags("Item Modifier Groups")
 @ApiBearerAuth()

@@ -48,7 +48,9 @@ export class AddMenuAndOrderCatalog1782777600000 implements MigrationInterface {
         CONSTRAINT "fk_menu_categories_outlet" FOREIGN KEY ("outlet_id") REFERENCES "outlets"("id") ON DELETE RESTRICT
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_menu_categories_outlet" ON "menu_categories" ("outlet_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_menu_categories_outlet" ON "menu_categories" ("outlet_id")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "menu_items" (
@@ -71,8 +73,12 @@ export class AddMenuAndOrderCatalog1782777600000 implements MigrationInterface {
         CONSTRAINT "ck_menu_items_price_nonnegative" CHECK ("price_minor" >= 0)
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_menu_items_outlet" ON "menu_items" ("outlet_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_menu_items_category" ON "menu_items" ("category_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_menu_items_outlet" ON "menu_items" ("outlet_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_menu_items_category" ON "menu_items" ("category_id")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "item_modifier_groups" (
@@ -91,7 +97,9 @@ export class AddMenuAndOrderCatalog1782777600000 implements MigrationInterface {
         CONSTRAINT "ck_item_modifier_groups_selection_bounds" CHECK ("min_selections" >= 0 AND "max_selections" >= "min_selections")
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_item_modifier_groups_outlet" ON "item_modifier_groups" ("outlet_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_item_modifier_groups_outlet" ON "item_modifier_groups" ("outlet_id")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "item_modifiers" (
@@ -111,8 +119,12 @@ export class AddMenuAndOrderCatalog1782777600000 implements MigrationInterface {
         CONSTRAINT "fk_item_modifiers_group" FOREIGN KEY ("group_id") REFERENCES "item_modifier_groups"("id") ON DELETE RESTRICT
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_item_modifiers_group" ON "item_modifiers" ("group_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_item_modifiers_outlet" ON "item_modifiers" ("outlet_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_item_modifiers_group" ON "item_modifiers" ("group_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_item_modifiers_outlet" ON "item_modifiers" ("outlet_id")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "menu_item_modifier_groups" (
@@ -149,7 +161,9 @@ export class AddMenuAndOrderCatalog1782777600000 implements MigrationInterface {
         )
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_master_orders_customer" ON "master_orders" ("customer_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_master_orders_customer" ON "master_orders" ("customer_id")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "sub_orders" (
@@ -168,8 +182,12 @@ export class AddMenuAndOrderCatalog1782777600000 implements MigrationInterface {
         CONSTRAINT "ck_sub_orders_subtotal_nonnegative" CHECK ("subtotal_minor" >= 0)
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_sub_orders_master" ON "sub_orders" ("master_order_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_sub_orders_outlet" ON "sub_orders" ("outlet_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_sub_orders_master" ON "sub_orders" ("master_order_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_sub_orders_outlet" ON "sub_orders" ("outlet_id")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "order_line_items" (
@@ -195,8 +213,12 @@ export class AddMenuAndOrderCatalog1782777600000 implements MigrationInterface {
         CONSTRAINT "ck_order_line_items_amounts_nonnegative" CHECK ("unit_price_minor" >= 0 AND "quantity" > 0 AND "line_total_minor" >= 0)
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_order_line_items_master" ON "order_line_items" ("master_order_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "ix_order_line_items_sub_order" ON "order_line_items" ("sub_order_id")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_order_line_items_master" ON "order_line_items" ("master_order_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "ix_order_line_items_sub_order" ON "order_line_items" ("sub_order_id")`,
+    );
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
