@@ -79,7 +79,7 @@ export function SignInForm() {
       {mutation.isError && (
         <p className="text-center text-sm text-red-500">
           {getMutationErrorMessage(mutation.error, {
-            401: "Incorrect email/phone or password, or account is not yet active.",
+            401: "Incorrect email/phone or password.",
           })}
         </p>
       )}
