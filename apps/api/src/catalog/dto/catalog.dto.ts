@@ -60,7 +60,10 @@ export class CreateOutletDto {
 export class UpdateOutletDto extends PartialType(CreateOutletDto) {}
 
 export class CreateMenuCategoryDto {
-  @ApiPropertyOptional({ format: "uuid", description: "Required for SUPER_ADMIN; ignored for outlet admins" })
+  @ApiPropertyOptional({
+    format: "uuid",
+    description: "Required for SUPER_ADMIN; ignored for outlet admins",
+  })
   @IsOptional()
   @IsUUID()
   outletId?: string;
@@ -86,7 +89,10 @@ export class CreateMenuCategoryDto {
 export class UpdateMenuCategoryDto extends PartialType(CreateMenuCategoryDto) {}
 
 export class CreateMenuItemDto {
-  @ApiPropertyOptional({ format: "uuid", description: "Required for SUPER_ADMIN; ignored for outlet admins" })
+  @ApiPropertyOptional({
+    format: "uuid",
+    description: "Required for SUPER_ADMIN; ignored for outlet admins",
+  })
   @IsOptional()
   @IsUUID()
   outletId?: string;
@@ -148,7 +154,10 @@ export class UpdateMenuItemAvailabilityDto {
 }
 
 export class CreateItemModifierGroupDto {
-  @ApiPropertyOptional({ format: "uuid", description: "Required for SUPER_ADMIN; ignored for outlet admins" })
+  @ApiPropertyOptional({
+    format: "uuid",
+    description: "Required for SUPER_ADMIN; ignored for outlet admins",
+  })
   @IsOptional()
   @IsUUID()
   outletId?: string;
@@ -186,7 +195,10 @@ export class CreateItemModifierGroupDto {
 export class UpdateItemModifierGroupDto extends PartialType(CreateItemModifierGroupDto) {}
 
 export class CreateItemModifierDto {
-  @ApiPropertyOptional({ format: "uuid", description: "Required for SUPER_ADMIN; ignored for outlet admins" })
+  @ApiPropertyOptional({
+    format: "uuid",
+    description: "Required for SUPER_ADMIN; ignored for outlet admins",
+  })
   @IsOptional()
   @IsUUID()
   outletId?: string;
