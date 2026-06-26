@@ -72,6 +72,22 @@ export const userVerificationResultSchema = z.object({
 export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
 export const userVerificationResponseSchema = apiResponseSchema(userVerificationResultSchema);
 
+export const loginInputSchema = z
+  .object({
+    identifier: z.string().min(1),
+    password: z.string().min(1),
+  })
+  .strict();
+
+export const loginResultSchema = z.object({
+  user: z.object({
+    id: z.uuid(),
+    role: z.string(),
+  }),
+  accessTokenExpiresInSeconds: z.int().positive(),
+  refreshTokenExpiresInSeconds: z.int().positive(),
+});
+
 export const currencySchema = z.literal("NGN");
 
 export const moneySchema = z.object({
@@ -126,6 +142,8 @@ export type ApiResponse<T> = {
 export type ApiErrorData = z.infer<typeof apiErrorDataSchema>;
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;
 export type CustomerStatus = z.infer<typeof customerStatusSchema>;
+export type LoginInput = z.infer<typeof loginInputSchema>;
+export type LoginResult = z.infer<typeof loginResultSchema>;
 export type RegisterCustomerInput = z.infer<typeof registerCustomerInputSchema>;
 export type RegistrationResult = z.infer<typeof registrationResultSchema>;
 export type VerificationChannel = z.infer<typeof verificationChannelSchema>;
