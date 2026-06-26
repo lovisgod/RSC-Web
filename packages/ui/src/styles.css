@@ -46,12 +46,29 @@ a {
 }
 
 .rsc-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   border: 1px solid transparent;
   border-radius: 999px;
-  padding: 0.7rem 1.1rem;
-  font-weight: 750;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.rsc-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.rsc-button--full {
+  width: 100%;
 }
 
 .rsc-button--primary {
@@ -73,9 +90,91 @@ a {
   border-color: var(--rsc-main);
 }
 
+.rsc-button--navy {
+  color: white;
+  background: var(--rsc-main);
+}
+
+.rsc-button--navy:hover:not(:disabled) {
+  background: var(--rsc-navy-dark);
+}
+
+.rsc-button--danger {
+  color: white;
+  background: var(--rsc-danger);
+}
+
+.rsc-button--danger:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
 .rsc-button:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--rsc-accent) 80%, white);
   outline-offset: 3px;
+}
+
+/* ── Card ──────────────────────────────────────────────── */
+
+.rsc-card {
+  background: var(--rsc-panel);
+  border: 1px solid #f1f1f1;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+  padding: 1.5rem;
+}
+
+/* ── Page header ───────────────────────────────────────── */
+
+.rsc-page-header {
+  margin-bottom: 2rem;
+}
+
+.rsc-page-header__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+  color: var(--rsc-ink);
+  letter-spacing: -0.02em;
+}
+
+.rsc-page-header__subtitle {
+  margin: 0.4rem 0 0;
+  font-size: 0.875rem;
+  color: var(--rsc-muted);
+}
+
+/* ── Empty state ───────────────────────────────────────── */
+
+.rsc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 4rem 1rem;
+  text-align: center;
+}
+
+.rsc-empty-state__icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.rsc-empty-state__heading {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--rsc-ink);
+}
+
+.rsc-empty-state__body {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--rsc-muted);
+}
+
+.rsc-empty-state__action {
+  margin-top: 0.5rem;
 }
 
 .rsc-metric {

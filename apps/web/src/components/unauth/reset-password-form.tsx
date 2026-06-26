@@ -4,12 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
+import { Button } from "@rsc/ui";
+
 import { resetPasswordSchema, type ResetPasswordFormData } from "@/src/lib/schemas/auth";
-
-const inputClass =
-  "w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
-
-const labelClass = "block text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1.5";
+import { inputClass, labelClass } from "@/src/lib/form-styles";
 
 export function ResetPasswordForm() {
   const {
@@ -78,14 +76,14 @@ export function ResetPasswordForm() {
         <p className="text-center text-sm text-green-600">Password updated! You can now sign in.</p>
       )}
 
-      <button
+      <Button
+        tone="navy"
+        fullWidth
         type="submit"
         disabled={mutation.isPending || mutation.isSuccess}
-        className="w-full rounded-full py-4 text-sm font-semibold text-white transition-opacity disabled:opacity-70"
-        style={{ backgroundColor: "var(--rsc-main)" }}
       >
         {mutation.isPending ? "Updating…" : "Update password"}
-      </button>
+      </Button>
 
       <p className="text-center text-sm text-gray-400">Password must be at least 8 characters</p>
     </form>

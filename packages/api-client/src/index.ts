@@ -2,12 +2,16 @@ import {
   adminOverviewSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
+  loginInputSchema,
+  loginResultSchema,
   outletSummarySchema,
   registerCustomerInputSchema,
   registrationResultSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminOverview,
+  type LoginInput,
+  type LoginResult,
   type OutletSummary,
   type RegisterCustomerInput,
   type RegistrationResult,
@@ -79,6 +83,19 @@ export function createApiClient(options: ApiClientOptions) {
   }
 
   return {
+    login(input: LoginInput): Promise<LoginResult> {
+      const body = loginInputSchema.parse(input);
+
+      return request("/api/v1/auth/login", loginResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    logout(): Promise<{ loggedOut: boolean }> {
+      return request("/api/v1/auth/logout", z.object({ loggedOut: z.boolean() }), {
+        method: "POST",
+      });
+    },
     registerCustomer(input: RegisterCustomerInput): Promise<RegistrationResult> {
       const body = registerCustomerInputSchema.parse(input);
 

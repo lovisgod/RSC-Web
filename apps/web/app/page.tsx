@@ -31,7 +31,7 @@ export default function HomePage() {
         </Link>
         <nav className="text-[var(--rsc-main)]" aria-label="Primary navigation">
           <Link href="#how-it-works">How it works</Link>
-          <Link href="#outlets">Outlets</Link>
+          <Link href="/outlets">Outlets</Link>
         </nav>
         <Link href="/sign-in" className="rsc-button--quiet">
           Sign in
@@ -47,7 +47,9 @@ export default function HomePage() {
             from kitchen to doorstep.
           </p>
           <div className="hero__actions">
-            <Button>Explore Kitchens</Button>
+            <Link href="/outlets">
+              <Button>Explore Kitchens</Button>
+            </Link>
             <Link href="#how-it-works">See how multi-outlet orders work</Link>
           </div>
         </div>

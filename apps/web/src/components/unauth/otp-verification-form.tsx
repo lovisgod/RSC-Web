@@ -6,22 +6,22 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { ApiError } from "@rsc/api-client";
+import { Button } from "@rsc/ui";
 
 import { otpSchema, type OtpFormData } from "@/src/lib/schemas/auth";
 import { apiClient } from "@/src/lib/api";
+import { getMutationErrorMessage } from "@/src/lib/api-error";
+import { labelClass } from "@/src/lib/form-styles";
 
 const OTP_RESEND_SECONDS = 60;
 
 const inputClass =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm tracking-widest placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
 
-const labelClass = "block text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1.5";
-
 export function OtpVerificationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const phone = searchParams.get("phone") ?? "";
+  const email = searchParams.get("email") ?? "";
 
   const [seconds, setSeconds] = useState(OTP_RESEND_SECONDS);
 
@@ -39,7 +39,7 @@ export function OtpVerificationForm() {
 
   const mutation = useMutation({
     mutationFn: (data: OtpFormData) =>
-      apiClient.verifyUser({ channel: "phone", phone, code: data.code }),
+      apiClient.verifyUser({ channel: "email", email, code: data.code }),
     onSuccess: () => router.push("/sign-in"),
   });
 
@@ -53,6 +53,25 @@ export function OtpVerificationForm() {
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
+  // if (!email) {
+  //   return (
+  //     <div className="w-full max-w-sm space-y-4 text-center">
+  //       <p className="text-2xl">⚠️</p>
+  //       <p className="font-semibold text-gray-700">Session expired</p>
+  //       <p className="text-sm text-gray-400">
+  //         We couldn&apos;t find your email. Please go back and sign up again.
+  //       </p>
+  //       <a
+  //         href="/sign-up"
+  //         className="inline-block mt-2 text-sm font-semibold hover:underline"
+  //         style={{ color: "var(--rsc-dark)" }}
+  //       >
+  //         Back to sign up
+  //       </a>
+  //     </div>
+  //   );
+  // }
+
   return (
     <form
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
@@ -63,7 +82,9 @@ export function OtpVerificationForm() {
           <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
           <span style={{ color: "var(--rsc-dark)" }}>Food</span>
         </h1>
-        <p className="text-sm text-gray-500">Enter the 6-digit OTP sent to your phone.</p>
+        <p className="text-sm text-gray-500">
+          Enter the 6-digit OTP sent to <span className="font-medium text-gray-700">{email}</span>.
+        </p>
       </div>
 
       <div>
@@ -81,20 +102,15 @@ export function OtpVerificationForm() {
 
       {mutation.isError && (
         <p className="text-center text-sm text-red-500">
-          {mutation.error instanceof ApiError && mutation.error.status === 401
-            ? "Code is incorrect, expired, or already used."
-            : "Something went wrong. Please try again."}
+          {getMutationErrorMessage(mutation.error, {
+            401: "Code is incorrect, expired, or already used.",
+          })}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={mutation.isPending || !phone}
-        className="w-full rounded-full py-4 text-sm font-semibold text-white transition-opacity disabled:opacity-70"
-        style={{ backgroundColor: "var(--rsc-main)" }}
-      >
+      <Button tone="navy" fullWidth type="submit" disabled={mutation.isPending}>
         {mutation.isPending ? "Verifying…" : "Verify Account"}
-      </button>
+      </Button>
 
       <p className="text-center text-sm text-gray-500">
         {seconds > 0 ? (
