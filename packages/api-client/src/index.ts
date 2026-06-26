@@ -7,9 +7,11 @@ import {
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
+  menuItemSchema,
   outletSummarySchema,
   registerCustomerInputSchema,
   registrationResultSchema,
+  updateMenuItemAvailabilityInputSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminOverview,
@@ -18,9 +20,11 @@ import {
   type LoginInput,
   type LoginResult,
   type LogoutResult,
+  type MenuItem,
   type OutletSummary,
   type RegisterCustomerInput,
   type RegistrationResult,
+  type UpdateMenuItemAvailabilityInput,
   type UserVerificationResult,
   type VerifyUserInput,
 } from "@rsc/contracts";
@@ -128,6 +132,22 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listOutlets(): Promise<OutletSummary[]> {
       return request("/api/v1/outlets", z.array(outletSummarySchema));
+    },
+    listMenuItems(input: { outletId?: string } = {}): Promise<MenuItem[]> {
+      const query = input.outletId ? `?outletId=${encodeURIComponent(input.outletId)}` : "";
+
+      return request(`/api/v1/menu-items${query}`, z.array(menuItemSchema));
+    },
+    updateMenuItemAvailability(
+      id: string,
+      input: UpdateMenuItemAvailabilityInput,
+    ): Promise<MenuItem> {
+      const body = updateMenuItemAvailabilityInputSchema.parse(input);
+
+      return request(`/api/v1/menu-items/${id}/availability`, menuItemSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
     },
     getAdminOverview(): Promise<AdminOverview> {
       return request("/api/v1/admin/overview", adminOverviewSchema);

@@ -123,12 +123,34 @@ export const moneySchema = z.object({
 export const outletSummarySchema = z.object({
   id: z.uuid(),
   name: z.string().min(1),
-  slug: z.string().min(1),
+  slug: z.string().min(1).optional(),
   cuisineType: z.string().min(1),
   description: z.string().nullable(),
   imageUrl: z.url().nullable(),
   isOnline: z.boolean(),
 });
+
+export const menuItemSchema = z.object({
+  id: z.uuid(),
+  outletId: z.uuid(),
+  categoryId: z.uuid(),
+  name: z.string().min(1),
+  description: z.string().nullable(),
+  imageUrl: z.url().nullable(),
+  priceMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  isAvailable: z.boolean(),
+  sortOrder: z.int().nonnegative(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
+
+export const updateMenuItemAvailabilityInputSchema = z
+  .object({
+    isAvailable: z.boolean(),
+  })
+  .strict();
 
 export const masterOrderStatusSchema = z.enum([
   "PENDING_PAYMENT",
@@ -179,6 +201,8 @@ export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
+export type MenuItem = z.infer<typeof menuItemSchema>;
+export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
 export type AdminOverview = z.infer<typeof adminOverviewSchema>;
