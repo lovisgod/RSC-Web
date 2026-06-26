@@ -25,7 +25,7 @@ export interface Environment {
   TERMII_SENDER_ID?: string;
   TERMII_CHANNEL: "generic" | "dnd";
   TERMII_TIMEOUT_MS: number;
-  EMAIL_PROVIDER: "noop" | "smtp";
+  EMAIL_PROVIDER: "noop" | "smtp" | "resend";
   SMTP_HOST?: string;
   SMTP_PORT?: number;
   SMTP_SECURE?: boolean;
@@ -81,7 +81,7 @@ const environmentSchema = Joi.object<Environment>({
   }),
   TERMII_CHANNEL: Joi.string().valid("generic", "dnd").default("generic"),
   TERMII_TIMEOUT_MS: Joi.number().integer().min(1_000).max(30_000).default(10_000),
-  EMAIL_PROVIDER: Joi.string().valid("noop", "smtp").default("noop"),
+  EMAIL_PROVIDER: Joi.string().valid("noop", "smtp", "resend").default("noop"),
   SMTP_HOST: Joi.when("EMAIL_PROVIDER", {
     is: "smtp",
     then: Joi.string().min(3).required(),

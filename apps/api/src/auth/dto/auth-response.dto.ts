@@ -31,6 +31,17 @@ export class UserVerificationDataDto {
   verificationChannels!: { phone: boolean; email: boolean };
 }
 
+export class ResendVerificationCodeDataDto {
+  @ApiProperty({ example: true })
+  sent!: true;
+
+  @ApiProperty({ enum: ["phone", "email"], example: "phone" })
+  channel!: "phone" | "email";
+
+  @ApiProperty({ example: 600 })
+  otpExpiresInSeconds!: number;
+}
+
 export class LoginUserDto {
   @ApiProperty({ example: "2abf9577-027c-4936-83a8-e004fd56a46e", format: "uuid" })
   id!: string;
@@ -91,6 +102,17 @@ export class UserVerificationResponseDto {
   data!: UserVerificationDataDto;
 
   @ApiProperty({ example: "User verified successfully" })
+  message!: string;
+
+  @ApiProperty({ example: 200 })
+  status!: number;
+}
+
+export class ResendVerificationCodeResponseDto {
+  @ApiProperty({ type: ResendVerificationCodeDataDto })
+  data!: ResendVerificationCodeDataDto;
+
+  @ApiProperty({ example: "Verification code resent" })
   message!: string;
 
   @ApiProperty({ example: 200 })

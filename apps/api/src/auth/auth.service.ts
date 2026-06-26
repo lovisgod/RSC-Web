@@ -20,7 +20,11 @@ import type { CreateAdminDto } from "./dto/create-admin.dto";
 import type { LoginDto } from "./dto/login.dto";
 import type { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from "./dto/password.dto";
 import type { RegisterCustomerDto } from "./dto/register-customer.dto";
-import type { VerificationChannel, VerifyUserDto } from "./dto/verify-user.dto";
+import type {
+  ResendVerificationCodeDto,
+  VerificationChannel,
+  VerifyUserDto,
+} from "./dto/verify-user.dto";
 import { EMAIL_SENDER, type EmailSender } from "./email/email-sender";
 import { OTP_TTL_SECONDS } from "./otp/otp.constants";
 import { PhoneOtpService } from "./otp/phone-otp.service";
@@ -48,6 +52,12 @@ export interface UserVerificationResult {
     email: boolean;
     phone: boolean;
   };
+}
+
+export interface ResendVerificationCodeResult {
+  sent: true;
+  channel: VerificationChannel;
+  otpExpiresInSeconds: number;
 }
 
 export interface AdminResult {
@@ -271,6 +281,77 @@ export class AuthService {
       channel: input.channel,
       verifiedAt: verifiedAt.toISOString(),
       verificationChannels: this.verificationChannels(savedCustomer),
+    };
+  }
+
+  async resendVerificationCode(
+    input: ResendVerificationCodeDto,
+  ): Promise<ResendVerificationCodeResult> {
+    const customer =
+      input.channel === "phone"
+        ? await this.findCustomerByPhone(input.phone)
+        : await this.findCustomerByEmail(input.email);
+
+    if (!customer || customer.status === CustomerStatus.SUSPENDED) {
+      return {
+        sent: true,
+        channel: input.channel,
+        otpExpiresInSeconds: OTP_TTL_SECONDS,
+      };
+    }
+
+    if (
+      (input.channel === "phone" && customer.phoneVerifiedAt) ||
+      (input.channel === "email" && customer.emailVerifiedAt)
+    ) {
+      return {
+        sent: true,
+        channel: input.channel,
+        otpExpiresInSeconds: OTP_TTL_SECONDS,
+      };
+    }
+
+    const code = this.phoneOtp.generateCode();
+
+    if (input.channel === "phone") {
+      const phone = this.piiCrypto.decrypt(customer.phoneEncrypted);
+
+      await this.phoneOtp.revoke(customer.id);
+      await this.phoneOtp.store(customer.id, code);
+
+      try {
+        await this.smsSender.sendPhoneVerification({
+          phone,
+          code,
+          expiresInMinutes: OTP_TTL_SECONDS / 60,
+        });
+      } catch (error) {
+        await this.phoneOtp.revoke(customer.id);
+        throw error;
+      }
+    } else {
+      const email = this.piiCrypto.decrypt(customer.emailEncrypted);
+
+      await this.phoneOtp.revokeEmail(customer.id);
+      await this.phoneOtp.storeEmail(customer.id, code);
+
+      try {
+        await this.emailSender.sendWelcomeVerification({
+          email,
+          name: customer.name,
+          code,
+          expiresInMinutes: OTP_TTL_SECONDS / 60,
+        });
+      } catch (error) {
+        await this.phoneOtp.revokeEmail(customer.id);
+        throw error;
+      }
+    }
+
+    return {
+      sent: true,
+      channel: input.channel,
+      otpExpiresInSeconds: OTP_TTL_SECONDS,
     };
   }
 
