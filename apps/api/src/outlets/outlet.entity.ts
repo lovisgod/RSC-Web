@@ -21,7 +21,7 @@ export class Outlet {
   @Column({ name: "cuisine_type", length: 100 })
   cuisineType!: string;
 
-  @Column({ name: "image_url", length: 512, nullable: true })
+  @Column({ name: "image_url", type: "varchar", length: 512, nullable: true })
   imageUrl!: string | null;
 
   @Column({ name: "is_online", type: "boolean", default: true })

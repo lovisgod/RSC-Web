@@ -37,8 +37,6 @@ describe("API bootstrap", () => {
             revokeSession: () => undefined,
           },
         },
-        { provide: AuthGuard, useValue: { canActivate: () => true } },
-        { provide: RolesGuard, useValue: { canActivate: () => true } },
         {
           provide: ConfigService,
           useValue: {
@@ -58,7 +56,12 @@ describe("API bootstrap", () => {
           },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = module.createNestApplication();
     const requestIdMiddleware = new RequestIdMiddleware();

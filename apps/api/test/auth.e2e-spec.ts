@@ -57,10 +57,13 @@ describe("Customer registration HTTP contract", () => {
       providers: [
         { provide: AuthService, useValue: authService },
         { provide: AuthSessionService, useValue: sessions },
-        { provide: AuthGuard, useValue: { canActivate: () => true } },
-        { provide: RolesGuard, useValue: { canActivate: () => true } },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = module.createNestApplication();
     app.setGlobalPrefix("api");
