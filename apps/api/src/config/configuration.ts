@@ -42,6 +42,11 @@ export interface ApplicationConfig {
       pass: string;
       from: string;
     };
+    resend: {
+      apiKey: string;
+      from: string;
+      replyTo: string;
+    };
   };
 }
 
@@ -90,14 +95,24 @@ export default function configuration(): ApplicationConfig {
       },
     },
     email: {
-      provider: process.env.EMAIL_PROVIDER === "smtp" ? "smtp" : "noop",
+      provider:
+        process.env.EMAIL_PROVIDER === "smtp"
+          ? "smtp"
+          : process.env.EMAIL_PROVIDER === "resend"
+            ? "resend"
+            : "noop",
       smtp: {
         host: process.env.SMTP_HOST ?? "smtp.gmail.com",
         port: Number(process.env.SMTP_PORT ?? 587),
         secure: process.env.SMTP_SECURE === "true",
         user: process.env.SMTP_USER ?? "",
         pass: process.env.SMTP_PASS ?? "",
-        from: process.env.SMTP_FROM ?? "RSC <noreply@rscapp.xyz>",
+        from: process.env.SMTP_FROM ?? "RSC <noreply@rscdev.tech>",
+      },
+      resend: {
+        apiKey: process.env.RESEND_API_KEY ?? "",
+        from: process.env.RESEND_FROM ?? "RSC <onboarding@resend.dev>",
+        replyTo: process.env.RESEND_REPLY_TO ?? "",
       },
     },
   };
