@@ -5,12 +5,14 @@ export const signInSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-const passwordSchema = z
-  .string()
-  .min(8, "Password must be at least 8 characters")
-  .regex(/[A-Z]/, "Password must include at least one uppercase letter")
-  .regex(/[0-9]/, "Password must include at least one number")
-  .regex(/[^A-Za-z0-9]/, "Password must include at least one symbol");
+const passwordSchema = z.string().min(8, "Password must be at least 8 characters");
+// Uncomment below to enforce strong password rules:
+// const passwordSchema = z
+//   .string()
+//   .min(8, "Password must be at least 8 characters")
+//   .regex(/[A-Z]/, "Password must include at least one uppercase letter")
+//   .regex(/[0-9]/, "Password must include at least one number")
+//   .regex(/[^A-Za-z0-9]/, "Password must include at least one symbol");
 
 export const signUpSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -29,6 +31,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z
   .object({
+    code: z.string().length(6, "Enter the 6-digit reset code"),
     password: passwordSchema,
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })

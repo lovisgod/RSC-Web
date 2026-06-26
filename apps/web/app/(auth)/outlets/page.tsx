@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
-import { OutletCard } from "@/src/components/outlets/outlet-card";
-import { OUTLETS } from "@/src/lib/data/outlets";
+import { OutletsView } from "@/src/components/outlets/outlets-view";
 
 export const metadata: Metadata = { title: "RSC Food Kitchens" };
 
@@ -17,11 +16,7 @@ export default function OutletsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {OUTLETS.map((outlet) => (
-          <OutletCard key={outlet.id} outlet={outlet} />
-        ))}
-      </div>
+      <OutletsView />
     </div>
   );
 }

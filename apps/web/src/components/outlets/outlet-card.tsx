@@ -40,10 +40,14 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
 
           <div className="flex items-center justify-between mt-auto pt-2">
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-                ★ {outlet.rating}
-              </span>
-              <span className="text-gray-400 hidden sm:inline">⏱ {outlet.deliveryTime}</span>
+              {outlet.rating != null && (
+                <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
+                  ★ {outlet.rating}
+                </span>
+              )}
+              {outlet.deliveryTime && (
+                <span className="text-gray-400 hidden sm:inline">⏱ {outlet.deliveryTime}</span>
+              )}
             </div>
 
             <span className="text-xs sm:text-sm font-semibold" style={{ color: "var(--rsc-dark)" }}>
