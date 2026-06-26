@@ -33,7 +33,7 @@ export interface ApplicationConfig {
     };
   };
   email: {
-    provider: "noop" | "smtp";
+    provider: "noop" | "smtp" | "resend";
     smtp: {
       host: string;
       port: number;
