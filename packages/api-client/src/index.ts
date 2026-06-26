@@ -11,6 +11,8 @@ import {
   outletSummarySchema,
   registerCustomerInputSchema,
   registrationResultSchema,
+  resendVerificationCodeInputSchema,
+  resendVerificationCodeResultSchema,
   updateMenuItemAvailabilityInputSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
@@ -24,6 +26,8 @@ import {
   type OutletSummary,
   type RegisterCustomerInput,
   type RegistrationResult,
+  type ResendVerificationCodeInput,
+  type ResendVerificationCodeResult,
   type UpdateMenuItemAvailabilityInput,
   type UserVerificationResult,
   type VerifyUserInput,
@@ -126,6 +130,16 @@ export function createApiClient(options: ApiClientOptions) {
       const body = verifyUserInputSchema.parse(input);
 
       return request("/api/v1/auth/verify-user", userVerificationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    resendVerificationCode(
+      input: ResendVerificationCodeInput,
+    ): Promise<ResendVerificationCodeResult> {
+      const body = resendVerificationCodeInputSchema.parse(input);
+
+      return request("/api/v1/auth/resend-verification-code", resendVerificationCodeResultSchema, {
         method: "POST",
         body: JSON.stringify(body),
       });

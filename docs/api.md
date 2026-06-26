@@ -36,6 +36,35 @@ schemas) from `@rsc/contracts`; they must not import the API's TypeORM entity.
 `login(input)`, and `logout()` and validates outgoing input and responses at
 runtime.
 
+### Resend verification code
+
+`POST /api/v1/auth/resend-verification-code`
+
+| Request field | Type     | Rules                                                  |
+| ------------- | -------- | ------------------------------------------------------ | ------------------------------------------ |
+| `channel`     | `"phone" | "email"`                                               | Selects which channel to resend the OTP to |
+| `phone`       | `string` | Required when `channel` is `phone`; same phone formats |
+| `email`       | `string` | Required when `channel` is `email`; same email rules   |
+
+This endpoint is idempotent: it returns `200 OK` with `sent: true` even if the
+account does not exist or the channel is already verified, to avoid leaking
+account status. A fresh OTP is generated and dispatched only when the account
+exists and the channel is unverified.
+
+Successful `200 OK` response:
+
+```json
+{
+  "data": {
+    "sent": true,
+    "channel": "phone",
+    "otpExpiresInSeconds": 600
+  },
+  "message": "Verification code resent",
+  "status": 200
+}
+```
+
 ### Registration contract
 
 `POST /api/v1/auth/register`
