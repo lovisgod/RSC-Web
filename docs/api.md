@@ -331,6 +331,22 @@ pnpm --filter @rsc/api migration:run
 pnpm --filter @rsc/api migration:revert
 ```
 
+### Seeding on the server
+
+**Postgres container:**
+
+```bash
+psql -U rsc -d rsc -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+```
+
+**API container:**
+
+```bash
+node node_modules/typeorm/cli.js migration:run -d dist/src/database/data-source.js
+node dist/src/auth/seed-super-admin.js
+node dist/src/database/seed-demo-data.js
+```
+
 ## Health semantics
 
 - Liveness does not depend on external services.
