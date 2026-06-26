@@ -84,10 +84,7 @@ export class CatalogService {
     return this.outlets.save(outlet);
   }
 
-  async updateOutletOnlineStatus(
-    id: string,
-    input: UpdateOutletOnlineStatusDto,
-  ): Promise<Outlet> {
+  async updateOutletOnlineStatus(id: string, input: UpdateOutletOnlineStatusDto): Promise<Outlet> {
     const outlet = await this.requireOutlet(id);
     outlet.isOnline = input.isOnline;
 
