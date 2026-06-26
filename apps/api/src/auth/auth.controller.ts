@@ -27,9 +27,11 @@ import {
 } from "./dto/auth-response.dto";
 import { CreateAdminDto } from "./dto/create-admin.dto";
 import { LoginDto } from "./dto/login.dto";
+import { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from "./dto/password.dto";
 import { RegisterCustomerDto } from "./dto/register-customer.dto";
 import { VerifyUserDto } from "./dto/verify-user.dto";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "./auth.constants";
+import type { AuthenticatedRequest } from "./auth-request";
 import { AuthSessionService } from "./auth-session.service";
 import { clearAuthCookies, readCookie, setAuthCookies } from "./cookies";
 import { Roles } from "./roles.decorator";
@@ -118,6 +120,31 @@ export class AuthController {
     clearAuthCookies(response);
 
     return { loggedOut: true };
+  }
+
+  @Post("change-password")
+  @ApiMessage("Password changed successfully")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: "Change the active user's password" })
+  changePassword(@Req() request: AuthenticatedRequest, @Body() input: ChangePasswordDto) {
+    return this.authService.changePassword(request.user!, input);
+  }
+
+  @Post("forgot-password")
+  @ApiMessage("Password reset codes sent if the account exists")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Send password reset OTPs to the user's phone and email" })
+  forgotPassword(@Body() input: ForgotPasswordDto) {
+    return this.authService.forgotPassword(input);
+  }
+
+  @Post("reset-password")
+  @ApiMessage("Password reset successfully")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Reset a password using both phone and email OTPs" })
+  resetPassword(@Body() input: ResetPasswordDto) {
+    return this.authService.resetPassword(input);
   }
 
   @Post("admins")

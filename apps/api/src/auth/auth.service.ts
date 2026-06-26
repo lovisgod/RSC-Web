@@ -12,8 +12,10 @@ import { QueryFailedError } from "typeorm";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { Outlet } from "../outlets/outlet.entity";
 import { AuthSessionService, type IssuedSession } from "./auth-session.service";
+import type { AuthenticatedUser } from "./authenticated-user";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
+import type { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from "./dto/password.dto";
 import type { CreateAdminDto } from "./dto/create-admin.dto";
 import type { LoginDto } from "./dto/login.dto";
 import type { RegisterCustomerDto } from "./dto/register-customer.dto";
@@ -52,6 +54,15 @@ export interface AdminResult {
   name: string;
   role: UserRole.ADMIN;
   outletId: string;
+}
+
+export interface PasswordResetDispatchResult {
+  sent: true;
+  otpExpiresInSeconds: number;
+}
+
+export interface PasswordChangeResult {
+  passwordChanged: true;
 }
 
 @Injectable()
@@ -257,6 +268,90 @@ export class AuthService {
       verifiedAt: verifiedAt.toISOString(),
       verificationChannels: this.verificationChannels(savedCustomer),
     };
+  }
+
+  async changePassword(
+    user: AuthenticatedUser,
+    input: ChangePasswordDto,
+  ): Promise<PasswordChangeResult> {
+    const customer = await this.customers.findOneBy({ id: user.id });
+
+    if (!customer) {
+      throw new UnauthorizedException("Authentication required");
+    }
+
+    const passwordMatches = await verifyPassword(input.currentPassword, customer.passwordHash);
+
+    if (!passwordMatches) {
+      throw new UnauthorizedException("Current password is incorrect");
+    }
+
+    customer.passwordHash = await hashPassword(input.newPassword);
+    await this.customers.save(customer);
+
+    return { passwordChanged: true };
+  }
+
+  async forgotPassword(input: ForgotPasswordDto): Promise<PasswordResetDispatchResult> {
+    const customer = await this.findCustomerByIdentifier(input.identifier);
+
+    if (!customer || customer.status !== CustomerStatus.ACTIVE) {
+      return { sent: true, otpExpiresInSeconds: OTP_TTL_SECONDS };
+    }
+
+    const phoneCode = this.phoneOtp.generateCode();
+    const emailCode = this.phoneOtp.generateCode();
+    const phone = this.piiCrypto.decrypt(customer.phoneEncrypted);
+    const email = this.piiCrypto.decrypt(customer.emailEncrypted);
+
+    await Promise.all([
+      this.phoneOtp.storePasswordResetPhone(customer.id, phoneCode),
+      this.phoneOtp.storePasswordResetEmail(customer.id, emailCode),
+    ]);
+
+    try {
+      await Promise.all([
+        this.smsSender.sendPasswordReset({
+          phone,
+          code: phoneCode,
+          expiresInMinutes: OTP_TTL_SECONDS / 60,
+        }),
+        this.emailSender.sendPasswordReset({
+          email,
+          name: customer.name,
+          code: emailCode,
+          expiresInMinutes: OTP_TTL_SECONDS / 60,
+        }),
+      ]);
+    } catch (error) {
+      await this.phoneOtp.revokePasswordReset(customer.id);
+      throw error;
+    }
+
+    return { sent: true, otpExpiresInSeconds: OTP_TTL_SECONDS };
+  }
+
+  async resetPassword(input: ResetPasswordDto): Promise<PasswordChangeResult> {
+    const customer = await this.findCustomerByIdentifier(input.identifier);
+
+    if (!customer || customer.status !== CustomerStatus.ACTIVE) {
+      throw new UnauthorizedException("Invalid or expired password reset code");
+    }
+
+    const [phoneVerification, emailVerification] = await Promise.all([
+      this.phoneOtp.verifyPasswordResetPhone(customer.id, input.phoneCode),
+      this.phoneOtp.verifyPasswordResetEmail(customer.id, input.emailCode),
+    ]);
+
+    if (phoneVerification !== "VERIFIED" || emailVerification !== "VERIFIED") {
+      await this.phoneOtp.revokePasswordReset(customer.id);
+      throw new UnauthorizedException("Invalid or expired password reset code");
+    }
+
+    customer.passwordHash = await hashPassword(input.newPassword);
+    await this.customers.save(customer);
+
+    return { passwordChanged: true };
   }
 
   private async findCustomerByPhone(phone: string | undefined): Promise<Customer | null> {

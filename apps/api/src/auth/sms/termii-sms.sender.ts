@@ -2,7 +2,7 @@ import { BadGatewayException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import type { ApplicationConfig } from "../../config/configuration";
-import type { SendPhoneVerificationInput, SmsSender } from "./sms-sender";
+import type { SendPasswordResetSmsInput, SendPhoneVerificationInput, SmsSender } from "./sms-sender";
 
 interface TermiiSendResponse {
   code?: string | number;
@@ -47,14 +47,28 @@ export class TermiiSmsSender implements SmsSender {
   }
 
   async sendPhoneVerification(input: SendPhoneVerificationInput): Promise<void> {
+    await this.sendSms(
+      input.phone,
+      `Your RSC verification code is ${input.code}. It expires in ${input.expiresInMinutes} minutes.`,
+    );
+  }
+
+  async sendPasswordReset(input: SendPasswordResetSmsInput): Promise<void> {
+    await this.sendSms(
+      input.phone,
+      `Your RSC password reset code is ${input.code}. It expires in ${input.expiresInMinutes} minutes.`,
+    );
+  }
+
+  private async sendSms(phone: string, sms: string): Promise<void> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.config.timeoutMs);
     const requestUrl = `${this.config.baseUrl}/api/sms/send`;
     const requestBody = {
       api_key: this.config.apiKey,
-      to: input.phone,
+      to: phone,
       from: this.config.senderId,
-      sms: `Your RSC verification code is ${input.code}. It expires in ${input.expiresInMinutes} minutes.`,
+      sms,
       type: "plain" as const,
       channel: this.config.channel,
     };
