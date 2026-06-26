@@ -7,10 +7,12 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { ApiError } from "@rsc/api-client";
+import { Button } from "@rsc/ui";
 
 import { signUpSchema, type SignUpFormData } from "@/src/lib/schemas/auth";
 import { apiClient } from "@/src/lib/api";
+import { getMutationErrorMessage } from "@/src/lib/api-error";
+import { inputClass, labelClass } from "@/src/lib/form-styles";
 
 const signUpFormSchema = signUpSchema
   .extend({
@@ -22,11 +24,6 @@ const signUpFormSchema = signUpSchema
   });
 
 type SignUpFormValues = z.infer<typeof signUpFormSchema>;
-
-const inputClass =
-  "w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
-
-const labelClass = "block text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1.5";
 
 export function SignUpForm() {
   const router = useRouter();
@@ -48,10 +45,7 @@ export function SignUpForm() {
         password: data.password,
       }),
     onSuccess: (_, variables) =>
-      router.push(`/otp-verification?phone=${encodeURIComponent(variables.phone)}`),
-    onError: (err) => {
-      if (err instanceof ApiError && err.status === 409) return;
-    },
+      router.push(`/otp-verification?email=${encodeURIComponent(variables.email)}`),
   });
 
   const fields: { name: keyof SignUpFormData; type: string; label: string; placeholder: string }[] =
@@ -107,22 +101,16 @@ export function SignUpForm() {
 
       {mutation.isError && (
         <p className="text-center text-sm text-red-500">
-          {mutation.error instanceof ApiError && mutation.error.status === 409
-            ? "An account with this phone or email already exists."
-            : mutation.error instanceof ApiError && mutation.error.status === 502
-              ? "We couldn't send the OTP. Please try again."
-              : "Something went wrong. Please try again."}
+          {getMutationErrorMessage(mutation.error, {
+            409: "An account with this phone or email already exists.",
+            502: "We couldn't send the OTP. Please try again.",
+          })}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={mutation.isPending}
-        className="w-full rounded-full py-4 text-sm font-semibold text-white transition-opacity disabled:opacity-70"
-        style={{ backgroundColor: "var(--rsc-main)" }}
-      >
+      <Button tone="navy" fullWidth type="submit" disabled={mutation.isPending}>
         {mutation.isPending ? "Creating account…" : "Sign Up"}
-      </button>
+      </Button>
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{" "}
