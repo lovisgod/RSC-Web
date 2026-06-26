@@ -275,6 +275,65 @@ describe(AuthService.name, () => {
     expect(await verifyPassword("BetterP@ss1", customer.passwordHash)).toBe(true);
   });
 
+  it("resends a phone verification code and invalidates the previous code first", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.UNVERIFIED,
+      phoneHash: "hash:2348031234567",
+      phoneEncrypted: "encrypted:2348031234567",
+      phoneVerifiedAt: null,
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.resendVerificationCode({
+      channel: "phone",
+      phone: "08031234567",
+    });
+
+    expect(result).toEqual({ sent: true, channel: "phone", otpExpiresInSeconds: 600 });
+    expect(phoneOtp.revoke).toHaveBeenCalledWith(customerId);
+    expect(phoneOtp.store).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.revoke.mock.invocationCallOrder[0]!).toBeLessThan(
+      phoneOtp.store.mock.invocationCallOrder[0]!,
+    );
+    expect(smsSender.sendPhoneVerification).toHaveBeenCalledWith({
+      phone: "2348031234567",
+      code: "482901",
+      expiresInMinutes: 10,
+    });
+  });
+
+  it("resends an email verification code and invalidates the previous code first", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.UNVERIFIED,
+      emailHash: "hash:ada@example.com",
+      emailEncrypted: "encrypted:ada@example.com",
+      emailVerifiedAt: null,
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.resendVerificationCode({
+      channel: "email",
+      email: "ADA@EXAMPLE.COM",
+    });
+
+    expect(result).toEqual({ sent: true, channel: "email", otpExpiresInSeconds: 600 });
+    expect(phoneOtp.revokeEmail).toHaveBeenCalledWith(customerId);
+    expect(phoneOtp.storeEmail).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.revokeEmail.mock.invocationCallOrder[0]!).toBeLessThan(
+      phoneOtp.storeEmail.mock.invocationCallOrder[0]!,
+    );
+    expect(emailSender.sendWelcomeVerification).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      name: "Ada Okafor",
+      code: "482901",
+      expiresInMinutes: 10,
+    });
+  });
+
   it("creates an outlet admin for an existing outlet", async () => {
     const result = await service.createAdmin({
       name: "Outlet Manager",

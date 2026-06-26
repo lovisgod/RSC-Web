@@ -102,6 +102,43 @@ describe("registration API client", () => {
     );
   });
 
+  it("posts resend verification code requests to the versioned API", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            sent: true,
+            channel: "email",
+            otpExpiresInSeconds: 600,
+          },
+          message: "Verification code resent",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await client.resendVerificationCode({
+      channel: "email",
+      email: "ADA@EXAMPLE.COM",
+    });
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/auth/resend-verification-code",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          channel: "email",
+          email: "ada@example.com",
+        }),
+      }),
+    );
+  });
+
   it("posts login credentials to the versioned API", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(

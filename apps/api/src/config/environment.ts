@@ -84,7 +84,7 @@ const environmentSchema = Joi.object<Environment>({
   }),
   TERMII_CHANNEL: Joi.string().valid("generic", "dnd").default("generic"),
   TERMII_TIMEOUT_MS: Joi.number().integer().min(1_000).max(30_000).default(10_000),
-  EMAIL_PROVIDER: Joi.string().valid("noop", "smtp", "resend").default("resend"),
+  EMAIL_PROVIDER: Joi.string().valid("noop", "smtp", "resend").default("noop"),
   SMTP_HOST: Joi.when("EMAIL_PROVIDER", {
     is: "smtp",
     then: Joi.string().min(3).required(),

@@ -33,6 +33,11 @@ describe("Customer registration HTTP contract", () => {
       verifiedAt: "2026-06-23T10:00:00.000Z",
       verificationChannels: { email: false, phone: true },
     }),
+    resendVerificationCode: vi.fn().mockResolvedValue({
+      sent: true,
+      channel: "phone",
+      otpExpiresInSeconds: 600,
+    }),
     login: vi.fn().mockResolvedValue({
       accessToken: "access.jwt",
       refreshToken: "refresh.jwt",
@@ -152,6 +157,27 @@ describe("Customer registration HTTP contract", () => {
         message: "User verified successfully",
         status: 200,
       });
+  });
+
+  it("resends a verification code", async () => {
+    await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/resend-verification-code")
+      .send({ channel: "phone", phone: "+2348031234567" })
+      .expect(200)
+      .expect({
+        data: {
+          sent: true,
+          channel: "phone",
+          otpExpiresInSeconds: 600,
+        },
+        message: "Verification code resent",
+        status: 200,
+      });
+
+    expect(authService.resendVerificationCode).toHaveBeenCalledWith({
+      channel: "phone",
+      phone: "+2348031234567",
+    });
   });
 
   it("logs in and writes HttpOnly auth cookies", async () => {
