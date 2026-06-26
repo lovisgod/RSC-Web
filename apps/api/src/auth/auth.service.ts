@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import {
   BadRequestException,
   ConflictException,
@@ -6,8 +8,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { QueryFailedError } from "typeorm";
+import { QueryFailedError, Repository } from "typeorm";
 
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { Outlet } from "../outlets/outlet.entity";
@@ -15,9 +16,9 @@ import { AuthSessionService, type IssuedSession } from "./auth-session.service";
 import type { AuthenticatedUser } from "./authenticated-user";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
-import type { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from "./dto/password.dto";
 import type { CreateAdminDto } from "./dto/create-admin.dto";
 import type { LoginDto } from "./dto/login.dto";
+import type { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from "./dto/password.dto";
 import type { RegisterCustomerDto } from "./dto/register-customer.dto";
 import type { VerificationChannel, VerifyUserDto } from "./dto/verify-user.dto";
 import { EMAIL_SENDER, type EmailSender } from "./email/email-sender";
@@ -54,6 +55,7 @@ export interface AdminResult {
   name: string;
   role: UserRole.ADMIN;
   outletId: string;
+  temporaryPassword: string;
 }
 
 export interface PasswordResetDispatchResult {
@@ -201,13 +203,14 @@ export class AuthService {
     }
 
     const now = new Date();
+    const temporaryPassword = generateTemporaryPassword();
     const admin = this.customers.create({
       name: input.name.trim(),
       phoneEncrypted: this.piiCrypto.encrypt(phone),
       phoneHash,
       emailEncrypted: this.piiCrypto.encrypt(email),
       emailHash,
-      passwordHash: await hashPassword(input.password),
+      passwordHash: await hashPassword(temporaryPassword),
       status: CustomerStatus.ACTIVE,
       role: UserRole.ADMIN,
       outletId: outlet.id,
@@ -223,6 +226,7 @@ export class AuthService {
         name: savedAdmin.name,
         role: UserRole.ADMIN,
         outletId: savedAdmin.outletId!,
+        temporaryPassword,
       };
     } catch (error) {
       if (this.isUniqueViolation(error)) {
@@ -405,4 +409,8 @@ export class AuthService {
       driverError.code === "23505"
     );
   }
+}
+
+function generateTemporaryPassword(): string {
+  return `${randomBytes(12).toString("base64url")}Aa1!`;
 }

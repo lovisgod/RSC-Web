@@ -280,7 +280,6 @@ describe(AuthService.name, () => {
       name: "Outlet Manager",
       email: "MANAGER@EXAMPLE.COM",
       phone: "08031234567",
-      password: "SecureP@ss1",
       outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
     });
 
@@ -297,12 +296,15 @@ describe(AuthService.name, () => {
       role: UserRole.ADMIN,
       outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
     });
-    expect(result).toEqual({
+    expect(saved?.passwordHash).not.toBeUndefined();
+    expect(await verifyPassword(result.temporaryPassword, saved!.passwordHash)).toBe(true);
+    expect(result).toMatchObject({
       id: customerId,
       name: "Outlet Manager",
       role: UserRole.ADMIN,
       outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
     });
+    expect(result.temporaryPassword).toHaveLength(20);
   });
 
   it("resends verification for the same unverified customer", async () => {

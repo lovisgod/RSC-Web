@@ -27,11 +27,6 @@ export class CreateAdminDto {
   @Matches(/^(?:\+?234|0)[789][01]\d{8}$/)
   phone!: string;
 
-  @ApiProperty({ minLength: 8, maxLength: 128 })
-  @IsString()
-  @Length(8, 128)
-  password!: string;
-
   @ApiProperty({ format: "uuid" })
   @IsUUID()
   outletId!: string;
