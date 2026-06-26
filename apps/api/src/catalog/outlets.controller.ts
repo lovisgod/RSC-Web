@@ -8,11 +8,7 @@ import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import { CatalogService } from "./catalog.service";
-import {
-  CreateOutletDto,
-  UpdateOutletDto,
-  UpdateOutletOnlineStatusDto,
-} from "./dto/catalog.dto";
+import { CreateOutletDto, UpdateOutletDto, UpdateOutletOnlineStatusDto } from "./dto/catalog.dto";
 
 @ApiTags("Outlets")
 @ApiBearerAuth()
