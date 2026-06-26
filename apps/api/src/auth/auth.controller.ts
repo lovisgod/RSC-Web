@@ -22,6 +22,8 @@ import {
   LogoutResponseDto,
   RegistrationDataDto,
   RegistrationResponseDto,
+  ResendVerificationCodeDataDto,
+  ResendVerificationCodeResponseDto,
   UserVerificationDataDto,
   UserVerificationResponseDto,
 } from "./dto/auth-response.dto";
@@ -29,7 +31,7 @@ import { CreateAdminDto } from "./dto/create-admin.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from "./dto/password.dto";
 import { RegisterCustomerDto } from "./dto/register-customer.dto";
-import { VerifyUserDto } from "./dto/verify-user.dto";
+import { ResendVerificationCodeDto, VerifyUserDto } from "./dto/verify-user.dto";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "./auth.constants";
 import type { AuthenticatedRequest } from "./auth-request";
 import { AuthSessionService } from "./auth-session.service";
@@ -70,6 +72,20 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: "OTP is incorrect, expired, or already consumed" })
   verifyUser(@Body() input: VerifyUserDto): Promise<UserVerificationDataDto> {
     return this.authService.verifyUser(input);
+  }
+
+  @Post("resend-verification-code")
+  @ApiMessage("Verification code resent")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Resend a phone or email verification OTP" })
+  @ApiOkResponse({
+    description: "Fresh OTP dispatched to the requested channel",
+    type: ResendVerificationCodeResponseDto,
+  })
+  resendVerificationCode(
+    @Body() input: ResendVerificationCodeDto,
+  ): Promise<ResendVerificationCodeDataDto> {
+    return this.authService.resendVerificationCode(input);
   }
 
   @Post("login")

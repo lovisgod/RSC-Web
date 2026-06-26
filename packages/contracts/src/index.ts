@@ -107,8 +107,32 @@ export const adminResultSchema = z.object({
   temporaryPassword: z.string().min(8),
 });
 
+export const resendVerificationCodeInputSchema = z.discriminatedUnion("channel", [
+  z
+    .object({
+      channel: z.literal("phone"),
+      phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+    })
+    .strict(),
+  z
+    .object({
+      channel: z.literal("email"),
+      email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    })
+    .strict(),
+]);
+
+export const resendVerificationCodeResultSchema = z.object({
+  sent: z.literal(true),
+  channel: verificationChannelSchema,
+  otpExpiresInSeconds: z.int().positive(),
+});
+
 export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
 export const userVerificationResponseSchema = apiResponseSchema(userVerificationResultSchema);
+export const resendVerificationCodeResponseSchema = apiResponseSchema(
+  resendVerificationCodeResultSchema,
+);
 export const loginResponseSchema = apiResponseSchema(loginResultSchema);
 export const logoutResponseSchema = apiResponseSchema(logoutResultSchema);
 export const adminResponseSchema = apiResponseSchema(adminResultSchema);
@@ -200,6 +224,8 @@ export type LoginResult = z.infer<typeof loginResultSchema>;
 export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
+export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
+export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
 export type MenuItem = z.infer<typeof menuItemSchema>;
 export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
