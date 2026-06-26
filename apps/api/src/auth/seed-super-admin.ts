@@ -8,20 +8,14 @@ import { hashPassword } from "./password";
 import { normalizeNigerianPhoneNumber } from "./phone-number";
 import { UserRole } from "./user-role.enum";
 
-const requiredEnv = [
-  "SUPER_ADMIN_NAME",
-  "SUPER_ADMIN_EMAIL",
-  "SUPER_ADMIN_PHONE",
-  "SUPER_ADMIN_PASSWORD",
-];
+const defaultSuperAdmin = {
+  name: "RSC Super Admin",
+  email: "super.admin@yopmail.com",
+  phone: "08030000001",
+  password: "password",
+};
 
 async function main(): Promise<void> {
-  for (const key of requiredEnv) {
-    if (!process.env[key]) {
-      throw new Error(`${key} is required`);
-    }
-  }
-
   await dataSource.initialize();
 
   try {
@@ -39,9 +33,11 @@ async function main(): Promise<void> {
       }),
     } as never);
     const users = dataSource.getRepository(Customer);
-    const name = process.env.SUPER_ADMIN_NAME!.trim();
-    const email = process.env.SUPER_ADMIN_EMAIL!.trim().toLowerCase();
-    const phone = normalizeNigerianPhoneNumber(process.env.SUPER_ADMIN_PHONE!);
+    const name = (process.env.SUPER_ADMIN_NAME ?? defaultSuperAdmin.name).trim();
+    const email = (process.env.SUPER_ADMIN_EMAIL ?? defaultSuperAdmin.email).trim().toLowerCase();
+    const phone = normalizeNigerianPhoneNumber(
+      process.env.SUPER_ADMIN_PHONE ?? defaultSuperAdmin.phone,
+    );
     const emailHash = piiCrypto.searchHash(email);
     const phoneHash = piiCrypto.searchHash(phone);
     const existingByEmail = await users.findOneBy({ emailHash });
@@ -63,16 +59,28 @@ async function main(): Promise<void> {
     superAdmin.name = name;
     superAdmin.emailEncrypted = piiCrypto.encrypt(email);
     superAdmin.phoneEncrypted = piiCrypto.encrypt(phone);
-    superAdmin.passwordHash = await hashPassword(process.env.SUPER_ADMIN_PASSWORD!);
+    superAdmin.passwordHash = await hashPassword(
+      process.env.SUPER_ADMIN_PASSWORD ?? defaultSuperAdmin.password,
+    );
     superAdmin.status = CustomerStatus.ACTIVE;
     superAdmin.role = UserRole.SUPER_ADMIN;
     superAdmin.outletId = null;
     superAdmin.emailVerifiedAt = now;
     superAdmin.phoneVerifiedAt = now;
 
+    const password = process.env.SUPER_ADMIN_PASSWORD ?? defaultSuperAdmin.password;
     const saved = await users.save(superAdmin);
 
     console.log(`Seeded super admin: ${saved.id}`);
+    console.table([
+      {
+        role: saved.role,
+        name: saved.name,
+        email,
+        phone,
+        password,
+      },
+    ]);
   } finally {
     await dataSource.destroy();
   }
