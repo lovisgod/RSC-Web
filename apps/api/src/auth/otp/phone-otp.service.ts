@@ -65,6 +65,14 @@ export class PhoneOtpService {
     await this.storeWithKey(this.emailKey(customerId), customerId, code);
   }
 
+  async storePasswordResetPhone(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.passwordResetPhoneKey(customerId), customerId, code);
+  }
+
+  async storePasswordResetEmail(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.passwordResetEmailKey(customerId), customerId, code);
+  }
+
   private async storeWithKey(key: string, customerId: string, code: string): Promise<void> {
     const value: StoredOtp = {
       hash: this.hash(customerId, code),
@@ -82,12 +90,27 @@ export class PhoneOtpService {
     await this.redis.del(this.emailKey(customerId));
   }
 
+  async revokePasswordReset(customerId: string): Promise<void> {
+    await this.redis.del(
+      this.passwordResetPhoneKey(customerId),
+      this.passwordResetEmailKey(customerId),
+    );
+  }
+
   async verify(customerId: string, code: string): Promise<OtpVerificationResult> {
     return this.verifyWithKey(this.key(customerId), customerId, code);
   }
 
   async verifyEmail(customerId: string, code: string): Promise<OtpVerificationResult> {
     return this.verifyWithKey(this.emailKey(customerId), customerId, code);
+  }
+
+  async verifyPasswordResetPhone(customerId: string, code: string): Promise<OtpVerificationResult> {
+    return this.verifyWithKey(this.passwordResetPhoneKey(customerId), customerId, code);
+  }
+
+  async verifyPasswordResetEmail(customerId: string, code: string): Promise<OtpVerificationResult> {
+    return this.verifyWithKey(this.passwordResetEmailKey(customerId), customerId, code);
   }
 
   private async verifyWithKey(
@@ -123,5 +146,13 @@ export class PhoneOtpService {
 
   private emailKey(customerId: string): string {
     return `auth:email-otp:${customerId}`;
+  }
+
+  private passwordResetPhoneKey(customerId: string): string {
+    return `auth:password-reset-phone-otp:${customerId}`;
+  }
+
+  private passwordResetEmailKey(customerId: string): string {
+    return `auth:password-reset-email-otp:${customerId}`;
   }
 }

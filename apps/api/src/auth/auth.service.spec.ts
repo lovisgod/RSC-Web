@@ -10,7 +10,7 @@ import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
 import type { EmailSender } from "./email/email-sender";
 import type { PhoneOtpService } from "./otp/phone-otp.service";
-import { hashPassword } from "./password";
+import { hashPassword, verifyPassword } from "./password";
 import type { SmsSender } from "./sms/sms-sender";
 import { UserRole } from "./user-role.enum";
 
@@ -27,6 +27,7 @@ describe(AuthService.name, () => {
   let piiCrypto: {
     searchHash: ReturnType<typeof vi.fn>;
     encrypt: ReturnType<typeof vi.fn>;
+    decrypt: ReturnType<typeof vi.fn>;
   };
   let phoneOtp: {
     generateCode: ReturnType<typeof vi.fn>;
@@ -36,9 +37,20 @@ describe(AuthService.name, () => {
     revokeEmail: ReturnType<typeof vi.fn>;
     verify: ReturnType<typeof vi.fn>;
     verifyEmail: ReturnType<typeof vi.fn>;
+    storePasswordResetPhone: ReturnType<typeof vi.fn>;
+    storePasswordResetEmail: ReturnType<typeof vi.fn>;
+    revokePasswordReset: ReturnType<typeof vi.fn>;
+    verifyPasswordResetPhone: ReturnType<typeof vi.fn>;
+    verifyPasswordResetEmail: ReturnType<typeof vi.fn>;
   };
-  let smsSender: { sendPhoneVerification: ReturnType<typeof vi.fn> };
-  let emailSender: { sendWelcomeVerification: ReturnType<typeof vi.fn> };
+  let smsSender: {
+    sendPhoneVerification: ReturnType<typeof vi.fn>;
+    sendPasswordReset: ReturnType<typeof vi.fn>;
+  };
+  let emailSender: {
+    sendWelcomeVerification: ReturnType<typeof vi.fn>;
+    sendPasswordReset: ReturnType<typeof vi.fn>;
+  };
   let sessions: { issueSession: ReturnType<typeof vi.fn> };
   let service: AuthService;
 
@@ -61,6 +73,7 @@ describe(AuthService.name, () => {
     piiCrypto = {
       searchHash: vi.fn((value: string) => `hash:${value}`),
       encrypt: vi.fn((value: string) => `encrypted:${value}`),
+      decrypt: vi.fn((value: string) => value.replace(/^encrypted:/, "")),
     };
     phoneOtp = {
       generateCode: vi.fn().mockReturnValueOnce("482901").mockReturnValue("193847"),
@@ -70,12 +83,19 @@ describe(AuthService.name, () => {
       revokeEmail: vi.fn().mockResolvedValue(undefined),
       verify: vi.fn().mockResolvedValue("VERIFIED"),
       verifyEmail: vi.fn().mockResolvedValue("VERIFIED"),
+      storePasswordResetPhone: vi.fn().mockResolvedValue(undefined),
+      storePasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+      revokePasswordReset: vi.fn().mockResolvedValue(undefined),
+      verifyPasswordResetPhone: vi.fn().mockResolvedValue("VERIFIED"),
+      verifyPasswordResetEmail: vi.fn().mockResolvedValue("VERIFIED"),
     };
     smsSender = {
       sendPhoneVerification: vi.fn().mockResolvedValue(undefined),
+      sendPasswordReset: vi.fn().mockResolvedValue(undefined),
     };
     emailSender = {
       sendWelcomeVerification: vi.fn().mockResolvedValue(undefined),
+      sendPasswordReset: vi.fn().mockResolvedValue(undefined),
     };
     sessions = {
       issueSession: vi.fn().mockResolvedValue({
@@ -177,6 +197,82 @@ describe(AuthService.name, () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
     expect(sessions.issueSession).not.toHaveBeenCalled();
+  });
+
+  it("changes the active user's password after checking the current password", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.CUSTOMER,
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.changePassword(
+      {
+        id: customerId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-id",
+        accessTokenId: "access-token-id",
+      },
+      { currentPassword: "SecureP@ss1", newPassword: "BetterP@ss1" },
+    );
+
+    expect(result).toEqual({ passwordChanged: true });
+    expect(customers.save).toHaveBeenCalledWith(customer);
+    expect(await verifyPassword("BetterP@ss1", customer.passwordHash)).toBe(true);
+  });
+
+  it("sends password reset codes to both stored channels", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.ACTIVE,
+      emailHash: "hash:ada@example.com",
+      phoneEncrypted: "encrypted:2348031234567",
+      emailEncrypted: "encrypted:ada@example.com",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.forgotPassword({ identifier: "ADA@EXAMPLE.COM" });
+
+    expect(result).toEqual({ sent: true, otpExpiresInSeconds: 600 });
+    expect(phoneOtp.storePasswordResetPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.storePasswordResetEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(smsSender.sendPasswordReset).toHaveBeenCalledWith({
+      phone: "2348031234567",
+      code: "482901",
+      expiresInMinutes: 10,
+    });
+    expect(emailSender.sendPasswordReset).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      name: "Ada Okafor",
+      code: "193847",
+      expiresInMinutes: 10,
+    });
+  });
+
+  it("resets a password only after both phone and email reset OTPs verify", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      phoneHash: "hash:2348031234567",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.resetPassword({
+      identifier: "08031234567",
+      phoneCode: "482901",
+      emailCode: "193847",
+      newPassword: "BetterP@ss1",
+    });
+
+    expect(result).toEqual({ passwordChanged: true });
+    expect(phoneOtp.verifyPasswordResetPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.verifyPasswordResetEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(await verifyPassword("BetterP@ss1", customer.passwordHash)).toBe(true);
   });
 
   it("creates an outlet admin for an existing outlet", async () => {
