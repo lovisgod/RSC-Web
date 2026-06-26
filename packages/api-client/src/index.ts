@@ -2,19 +2,31 @@ import {
   adminOverviewSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
+  forgotPasswordInputSchema,
+  forgotPasswordResultSchema,
+  resetPasswordInputSchema,
+  resetPasswordResultSchema,
   loginInputSchema,
   loginResultSchema,
   outletSummarySchema,
   registerCustomerInputSchema,
   registrationResultSchema,
+  resendVerificationInputSchema,
+  resendVerificationResultSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminOverview,
+  type ForgotPasswordInput,
+  type ForgotPasswordResult,
+  type ResetPasswordInput,
+  type ResetPasswordResult,
   type LoginInput,
   type LoginResult,
   type OutletSummary,
   type RegisterCustomerInput,
   type RegistrationResult,
+  type ResendVerificationInput,
+  type ResendVerificationResult,
   type UserVerificationResult,
   type VerifyUserInput,
 } from "@rsc/contracts";
@@ -94,6 +106,30 @@ export function createApiClient(options: ApiClientOptions) {
     logout(): Promise<{ loggedOut: boolean }> {
       return request("/api/v1/auth/logout", z.object({ loggedOut: z.boolean() }), {
         method: "POST",
+      });
+    },
+    resetPassword(input: ResetPasswordInput): Promise<ResetPasswordResult> {
+      const body = resetPasswordInputSchema.parse(input);
+
+      return request("/api/v1/auth/reset-password", resetPasswordResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    forgotPassword(input: ForgotPasswordInput): Promise<ForgotPasswordResult> {
+      const body = forgotPasswordInputSchema.parse(input);
+
+      return request("/api/v1/auth/forgot-password", forgotPasswordResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    resendVerificationCode(input: ResendVerificationInput): Promise<ResendVerificationResult> {
+      const body = resendVerificationInputSchema.parse(input);
+
+      return request("/api/v1/auth/resend-verification-code", resendVerificationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
       });
     },
     registerCustomer(input: RegisterCustomerInput): Promise<RegistrationResult> {

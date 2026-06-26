@@ -2,14 +2,22 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@rsc/ui";
 
 import { resetPasswordSchema, type ResetPasswordFormData } from "@/src/lib/schemas/auth";
+import { apiClient } from "@/src/lib/api";
+import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { inputClass, labelClass } from "@/src/lib/form-styles";
+import { PasswordInput } from "@/src/components/shared/password-input";
 
 export function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const identifier = searchParams.get("identifier") ?? "";
+
   const {
     register,
     handleSubmit,
@@ -17,11 +25,29 @@ export function ResetPasswordForm() {
   } = useForm<ResetPasswordFormData>({ resolver: zodResolver(resetPasswordSchema) });
 
   const mutation = useMutation({
-    mutationFn: async (_data: ResetPasswordFormData) => {
-      // TODO: replace with apiClient.auth.resetPassword(_data)
-      await new Promise((r) => setTimeout(r, 1000));
-    },
+    mutationFn: (data: ResetPasswordFormData) =>
+      apiClient.resetPassword({
+        identifier,
+        emailCode: data.code,
+        phoneCode: data.code,
+        newPassword: data.password,
+      }),
   });
+
+  if (mutation.isSuccess) {
+    return (
+      <div className="w-full max-w-sm space-y-5 text-center">
+        <p className="text-4xl">✅</p>
+        <h2 className="text-xl font-bold text-gray-900">Password updated!</h2>
+        <p className="text-sm text-gray-500">You can now sign in with your new password.</p>
+        <Link href="/sign-in">
+          <Button tone="navy" fullWidth>
+            Go to sign in
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <form
@@ -33,18 +59,28 @@ export function ResetPasswordForm() {
           <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
           <span style={{ color: "var(--rsc-dark)" }}>Food</span>
         </h1>
-        <p className="text-sm text-gray-500">Choose a new password for your account.</p>
+        <p className="text-sm text-gray-500">
+          Enter the reset code sent to you and your new password.
+        </p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className={labelClass}>New password</label>
+          <label className={labelClass}>Reset code</label>
           <input
-            {...register("password")}
-            type="password"
-            placeholder="••••••••"
+            {...register("code")}
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="6-digit code"
             className={inputClass}
           />
+          {errors.code && <p className="mt-1 text-xs text-red-500">{errors.code.message}</p>}
+        </div>
+
+        <div>
+          <label className={labelClass}>New password</label>
+          <PasswordInput {...register("password")} placeholder="••••••••" />
           {errors.password && (
             <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
           )}
@@ -52,12 +88,7 @@ export function ResetPasswordForm() {
 
         <div>
           <label className={labelClass}>Confirm password</label>
-          <input
-            {...register("confirmPassword")}
-            type="password"
-            placeholder="••••••••"
-            className={inputClass}
-          />
+          <PasswordInput {...register("confirmPassword")} placeholder="••••••••" />
           {errors.confirmPassword && (
             <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
           )}
@@ -66,22 +97,14 @@ export function ResetPasswordForm() {
 
       {mutation.isError && (
         <p className="text-center text-sm text-red-500">
-          {mutation.error instanceof Error
-            ? mutation.error.message
-            : "Something went wrong. Please try again."}
+          {getMutationErrorMessage(mutation.error, {
+            400: "The reset code is invalid or has expired.",
+            404: "No account found for this identifier.",
+          })}
         </p>
       )}
 
-      {mutation.isSuccess && (
-        <p className="text-center text-sm text-green-600">Password updated! You can now sign in.</p>
-      )}
-
-      <Button
-        tone="navy"
-        fullWidth
-        type="submit"
-        disabled={mutation.isPending || mutation.isSuccess}
-      >
+      <Button tone="navy" fullWidth type="submit" disabled={mutation.isPending}>
         {mutation.isPending ? "Updating…" : "Update password"}
       </Button>
 

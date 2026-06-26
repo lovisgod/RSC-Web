@@ -13,6 +13,7 @@ import { useAuthStore } from "@/src/stores/auth-store";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { apiClient } from "@/src/lib/api";
 import { inputClass, labelClass } from "@/src/lib/form-styles";
+import { PasswordInput } from "@/src/components/shared/password-input";
 
 export function SignInForm() {
   const router = useRouter();
@@ -64,12 +65,7 @@ export function SignInForm() {
 
         <div>
           <label className={labelClass}>Password</label>
-          <input
-            {...register("password")}
-            type="password"
-            placeholder="••••••••"
-            className={inputClass}
-          />
+          <PasswordInput {...register("password")} placeholder="••••••••" />
           {errors.password && (
             <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
           )}
