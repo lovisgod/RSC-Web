@@ -12,6 +12,7 @@ import { AuthService } from "./auth.service";
 import { Customer } from "./customer.entity";
 import { EMAIL_SENDER } from "./email/email-sender";
 import { NoopEmailSender } from "./email/noop-email.sender";
+import { ResendEmailSender } from "./email/resend-email.sender";
 import { SmtpEmailSender } from "./email/smtp-email.sender";
 import { PhoneOtpService } from "./otp/phone-otp.service";
 import { NoopSmsSender } from "./sms/noop-sms.sender";
@@ -29,17 +30,31 @@ import { RolesGuard } from "./roles.guard";
     RolesGuard,
     PhoneOtpService,
     NoopEmailSender,
+    ResendEmailSender,
     SmtpEmailSender,
     NoopSmsSender,
     TermiiSmsSender,
     {
       provide: EMAIL_SENDER,
-      inject: [ConfigService, NoopEmailSender, SmtpEmailSender],
+      inject: [ConfigService, NoopEmailSender, SmtpEmailSender, ResendEmailSender],
       useFactory: (
         configService: ConfigService<ApplicationConfig, true>,
         noop: NoopEmailSender,
         smtp: SmtpEmailSender,
-      ) => (configService.get("email.provider", { infer: true }) === "smtp" ? smtp : noop),
+        resend: ResendEmailSender,
+      ) => {
+        const provider = configService.get("email.provider", { infer: true });
+
+        if (provider === "smtp") {
+          return smtp;
+        }
+
+        if (provider === "resend") {
+          return resend;
+        }
+
+        return noop;
+      },
     },
     {
       provide: SMS_SENDER,

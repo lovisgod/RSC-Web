@@ -103,6 +103,9 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-RSC <noreply@rscapp.xyz>}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-}
+      RESEND_REPLY_TO: ${RESEND_REPLY_TO:-}
     expose:
       - "4000"
     depends_on:

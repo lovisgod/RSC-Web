@@ -10,6 +10,8 @@ import {
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
+  resendVerificationCodeInputSchema,
+  resendVerificationCodeResultSchema,
   userVerificationResultSchema,
   updateMenuItemAvailabilityInputSchema,
   verifyUserInputSchema,
@@ -116,6 +118,22 @@ describe("customer registration contracts", () => {
     expect(() =>
       verifyUserInputSchema.parse({ channel: "email", phone: "08031234567", code: "123456" }),
     ).toThrow();
+  });
+
+  it("documents resend verification code contracts", () => {
+    expect(
+      resendVerificationCodeInputSchema.parse({
+        channel: "email",
+        email: " ADA@EXAMPLE.COM ",
+      }),
+    ).toEqual({ channel: "email", email: "ada@example.com" });
+    expect(
+      resendVerificationCodeResultSchema.parse({
+        sent: true,
+        channel: "email",
+        otpExpiresInSeconds: 600,
+      }),
+    ).toBeTruthy();
   });
 
   it("documents login contracts", () => {
