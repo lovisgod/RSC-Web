@@ -1,6 +1,7 @@
 "use client";
 
 import { EmptyState } from "@rsc/ui";
+import Image from "next/image";
 import Link from "next/link";
 
 import { useCart } from "@/src/hooks/use-cart";
@@ -30,10 +31,12 @@ export function CartView() {
     return (
       <EmptyState
         icon={
-          <img
+          <Image
             src="/icons/png/shopping-cart_1f6d2.png"
             alt="Cart"
-            className="w-12 h-12 object-contain"
+            width={48}
+            height={48}
+            className="object-contain"
           />
         }
         heading="Your cart is empty"

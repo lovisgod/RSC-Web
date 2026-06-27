@@ -19,7 +19,7 @@ export function ForgotPasswordForm() {
 
   const mutation = useMutation({
     mutationFn: async (_data: ForgotPasswordFormData) => {
-      // TODO: replace with apiClient.auth.forgotPassword(_data)
+      // TODO: replace with apiClient.forgotPassword({ identifier: _data.identifier })
       await new Promise((r) => setTimeout(r, 1000));
     },
   });

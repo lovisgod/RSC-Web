@@ -18,7 +18,7 @@ export function ResetPasswordForm() {
 
   const mutation = useMutation({
     mutationFn: async (_data: ResetPasswordFormData) => {
-      // TODO: replace with apiClient.auth.resetPassword(_data)
+      // TODO: replace with apiClient.resetPassword(_data)
       await new Promise((r) => setTimeout(r, 1000));
     },
   });
