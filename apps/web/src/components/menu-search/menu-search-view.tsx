@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useAllMenu } from "@/src/hooks/use-all-menu";
@@ -49,7 +48,6 @@ function Skeleton() {
 }
 
 export function MenuSearchView() {
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 

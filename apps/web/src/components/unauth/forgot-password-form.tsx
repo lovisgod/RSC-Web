@@ -18,8 +18,8 @@ export function ForgotPasswordForm() {
   } = useForm<ForgotPasswordFormData>({ resolver: zodResolver(forgotPasswordSchema) });
 
   const mutation = useMutation({
-    mutationFn: async (_data: ForgotPasswordFormData) => {
-      // TODO: replace with apiClient.auth.forgotPassword(_data)
+    mutationFn: async () => {
+      // TODO: replace with apiClient.forgotPassword({ identifier: data.identifier })
       await new Promise((r) => setTimeout(r, 1000));
     },
   });

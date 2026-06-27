@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { useCartStore } from "@/src/stores/cart-store";
 import { useAuthStore } from "@/src/stores/auth-store";
@@ -17,7 +17,6 @@ const navItems = [
 
 export function SideNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const itemCount = useCartStore((s) => s.itemCount);
   const signOut = useAuthStore((s) => s.signOut);
 
