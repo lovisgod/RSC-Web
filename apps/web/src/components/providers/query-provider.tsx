@@ -13,6 +13,9 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             staleTime: 60 * 1000,
             retry: 1,
           },
+          mutations: {
+            retry: false,
+          },
         },
       }),
   );
