@@ -97,14 +97,6 @@ export function createApiClient(options: ApiClientOptions) {
   }
 
   return {
-    registerCustomer(input: RegisterCustomerInput): Promise<RegistrationResult> {
-      const body = registerCustomerInputSchema.parse(input);
-
-      return request("/api/v1/auth/register", registrationResultSchema, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-    },
     login(input: LoginInput): Promise<LoginResult> {
       const body = loginInputSchema.parse(input);
 
@@ -113,9 +105,17 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
-    logout(): Promise<LogoutResult> {
-      return request("/api/v1/auth/logout", logoutResultSchema, {
+    logout(): Promise<{ loggedOut: boolean }> {
+      return request("/api/v1/auth/logout", z.object({ loggedOut: z.boolean() }), {
         method: "POST",
+      });
+    },
+    registerCustomer(input: RegisterCustomerInput): Promise<RegistrationResult> {
+      const body = registerCustomerInputSchema.parse(input);
+
+      return request("/api/v1/auth/register", registrationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
       });
     },
     createAdmin(input: CreateAdminInput): Promise<AdminResult> {
