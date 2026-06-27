@@ -1,7 +1,7 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
-import { IsString, Length, Matches } from "class-validator";
+import { IsOptional, IsString, Length, Matches } from "class-validator";
 
 export class ChangePasswordDto {
   @ApiProperty({ minLength: 8, maxLength: 128 })
@@ -32,15 +32,23 @@ export class ResetPasswordDto {
   @IsString()
   identifier!: string;
 
-  @ApiProperty({ example: "482901" })
+  @ApiPropertyOptional({
+    example: "482901",
+    description: "Phone reset OTP. Either phoneCode or emailCode is required.",
+  })
+  @IsOptional()
   @IsString()
   @Matches(/^\d{6}$/)
-  phoneCode!: string;
+  phoneCode?: string;
 
-  @ApiProperty({ example: "193847" })
+  @ApiPropertyOptional({
+    example: "193847",
+    description: "Email reset OTP. Either emailCode or phoneCode is required.",
+  })
+  @IsOptional()
   @IsString()
   @Matches(/^\d{6}$/)
-  emailCode!: string;
+  emailCode?: string;
 
   @ApiProperty({ minLength: 8, maxLength: 128 })
   @IsString()

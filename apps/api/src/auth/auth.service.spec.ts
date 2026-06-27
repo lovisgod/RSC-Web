@@ -253,7 +253,7 @@ describe(AuthService.name, () => {
     });
   });
 
-  it("resets a password only after both phone and email reset OTPs verify", async () => {
+  it("resets a password after a phone reset OTP verifies", async () => {
     const customer = Object.assign(new Customer(), {
       id: customerId,
       status: CustomerStatus.ACTIVE,
@@ -265,13 +265,37 @@ describe(AuthService.name, () => {
     const result = await service.resetPassword({
       identifier: "08031234567",
       phoneCode: "482901",
-      emailCode: "193847",
       newPassword: "BetterP@ss1",
     });
 
     expect(result).toEqual({ passwordChanged: true });
     expect(phoneOtp.verifyPasswordResetPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.verifyPasswordResetEmail).not.toHaveBeenCalled();
+    expect(phoneOtp.revokePasswordReset).toHaveBeenCalledWith(customerId);
+    expect(await verifyPassword("BetterP@ss1", customer.passwordHash)).toBe(true);
+  });
+
+  it("resets a password when either provided reset OTP verifies", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      emailHash: "hash:ada@example.com",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+    phoneOtp.verifyPasswordResetPhone.mockResolvedValueOnce("INVALID");
+
+    const result = await service.resetPassword({
+      identifier: "ada@example.com",
+      phoneCode: "000000",
+      emailCode: "193847",
+      newPassword: "BetterP@ss1",
+    });
+
+    expect(result).toEqual({ passwordChanged: true });
+    expect(phoneOtp.verifyPasswordResetPhone).toHaveBeenCalledWith(customerId, "000000");
     expect(phoneOtp.verifyPasswordResetEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(phoneOtp.revokePasswordReset).toHaveBeenCalledWith(customerId);
     expect(await verifyPassword("BetterP@ss1", customer.passwordHash)).toBe(true);
   });
 

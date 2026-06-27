@@ -41,7 +41,7 @@ export class CatalogService {
 
   async listOutlets(user: AuthenticatedUser): Promise<Outlet[]> {
     if (user.role === UserRole.SUPER_ADMIN) {
-      return this.outlets.find({ order: { name: "ASC" } });
+      return this.listPublicOutlets();
     }
 
     const outletId = await this.requireAdminOutletId(user);
@@ -51,6 +51,14 @@ export class CatalogService {
 
   async getOutlet(user: AuthenticatedUser, id: string): Promise<Outlet> {
     await this.ensureOutletAccess(user, id);
+    return this.requireOutlet(id);
+  }
+
+  async listPublicOutlets(): Promise<Outlet[]> {
+    return this.outlets.find({ order: { name: "ASC" } });
+  }
+
+  async getPublicOutlet(id: string): Promise<Outlet> {
     return this.requireOutlet(id);
   }
 

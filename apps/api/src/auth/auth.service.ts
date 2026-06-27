@@ -423,18 +423,27 @@ export class AuthService {
       throw new UnauthorizedException("Invalid or expired password reset code");
     }
 
-    const [phoneVerification, emailVerification] = await Promise.all([
-      this.phoneOtp.verifyPasswordResetPhone(customer.id, input.phoneCode),
-      this.phoneOtp.verifyPasswordResetEmail(customer.id, input.emailCode),
+    if (!input.phoneCode && !input.emailCode) {
+      throw new BadRequestException("Either phoneCode or emailCode is required");
+    }
+
+    const verifications = await Promise.all([
+      input.phoneCode
+        ? this.phoneOtp.verifyPasswordResetPhone(customer.id, input.phoneCode)
+        : Promise.resolve("EXPIRED"),
+      input.emailCode
+        ? this.phoneOtp.verifyPasswordResetEmail(customer.id, input.emailCode)
+        : Promise.resolve("EXPIRED"),
     ]);
 
-    if (phoneVerification !== "VERIFIED" || emailVerification !== "VERIFIED") {
+    if (!verifications.includes("VERIFIED")) {
       await this.phoneOtp.revokePasswordReset(customer.id);
       throw new UnauthorizedException("Invalid or expired password reset code");
     }
 
     customer.passwordHash = await hashPassword(input.newPassword);
     await this.customers.save(customer);
+    await this.phoneOtp.revokePasswordReset(customer.id);
 
     return { passwordChanged: true };
   }
