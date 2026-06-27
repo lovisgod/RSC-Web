@@ -28,7 +28,10 @@ export function SideNav() {
       // proceed with local sign-out even if the API call fails
     }
     signOut();
-    router.push("/sign-in");
+    // window.location.replace does a full-page navigation that replaces the
+    // current history entry — authenticated pages can no longer be reached
+    // by pressing back.
+    window.location.replace("/sign-in");
   }
 
   return (

@@ -72,14 +72,14 @@ export function MenuSearchView() {
       <div className="flex flex-col h-full">
         {/* Top bar */}
         <div className="flex items-center gap-3 p-4 bg-white border-b border-gray-100 sticky top-0 z-10">
-          <button
+          {/* <button
             type="button"
             onClick={() => router.back()}
             aria-label="Go back"
             className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm text-gray-700 hover:bg-gray-50 transition-colors flex-shrink-0"
           >
             ←
-          </button>
+          </button> */}
 
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
