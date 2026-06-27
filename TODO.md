@@ -20,7 +20,7 @@ so another agent can safely pick the first unchecked task.
 
 - [x] Add NestJS API foundation with validated configuration, OpenAPI,
       PostgreSQL/PostGIS, Redis, migrations, and health probes.
-- [ ] Implement the first domain vertical slice: outlets and public catalog.
+- [x] Implement the first domain vertical slice: outlets and public catalog.
 - [x] Add CI for format, lint, typecheck, unit tests, and production builds.
 - [x] Add native Dokploy Compose builds and GitHub-provider autodeploy for the
       development branch.

@@ -26,12 +26,44 @@ The first authentication slice exposes:
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/verify-user`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/admins`
 
 Frontend applications must import the request and response types (or their Zod
 schemas) from `@rsc/contracts`; they must not import the API's TypeORM entity.
-`@rsc/api-client` exposes `registerCustomer(input)` and `verifyUser(input)` and
-validates both outgoing input and incoming responses at
+`@rsc/api-client` exposes `registerCustomer(input)`, `verifyUser(input)`,
+`login(input)`, and `logout()` and validates outgoing input and responses at
 runtime.
+
+### Resend verification code
+
+`POST /api/v1/auth/resend-verification-code`
+
+| Request field | Type     | Rules                                                  |
+| ------------- | -------- | ------------------------------------------------------ | ------------------------------------------ |
+| `channel`     | `"phone" | "email"`                                               | Selects which channel to resend the OTP to |
+| `phone`       | `string` | Required when `channel` is `phone`; same phone formats |
+| `email`       | `string` | Required when `channel` is `email`; same email rules   |
+
+This endpoint is idempotent: it returns `200 OK` with `sent: true` even if the
+account does not exist or the channel is already verified, to avoid leaking
+account status. A fresh OTP is generated and dispatched only when the account
+exists and the channel is unverified.
+
+Successful `200 OK` response:
+
+```json
+{
+  "data": {
+    "sent": true,
+    "channel": "phone",
+    "otpExpiresInSeconds": 600
+  },
+  "message": "Verification code resent",
+  "status": 200
+}
+```
 
 ### Registration contract
 
@@ -89,6 +121,72 @@ Successful `200 OK` response:
 }
 ```
 
+`POST /api/v1/auth/login`
+
+| Request field | Type     | Rules                                  |
+| ------------- | -------- | -------------------------------------- |
+| `identifier`  | `string` | Registered email or Nigerian phone     |
+| `password`    | `string` | 8-128 characters; verified with bcrypt |
+
+Successful login sets `accessToken` and `refreshToken` as HttpOnly cookies and
+returns role context for routing:
+
+```json
+{
+  "data": {
+    "user": {
+      "id": "2abf9577-027c-4936-83a8-e004fd56a46e",
+      "role": "CUSTOMER"
+    },
+    "accessTokenExpiresInSeconds": 900,
+    "refreshTokenExpiresInSeconds": 604800
+  },
+  "message": "Login successful",
+  "status": 200
+}
+```
+
+`POST /api/v1/auth/logout`
+
+Logout reads the active auth cookies, blacklists token IDs in Redis, deletes the
+server-side session, and clears both cookies.
+
+```json
+{
+  "data": {
+    "loggedOut": true
+  },
+  "message": "Logged out successfully",
+  "status": 200
+}
+```
+
+`POST /api/v1/auth/admins`
+
+Requires a valid `SUPER_ADMIN` session. Creates an outlet admin assigned to
+exactly one outlet.
+
+| Request field | Type     | Rules                                |
+| ------------- | -------- | ------------------------------------ |
+| `name`        | `string` | Trimmed; 2-120 characters            |
+| `email`       | `string` | Valid email; trimmed and lowercased  |
+| `phone`       | `string` | Nigerian mobile number               |
+| `password`    | `string` | 8-128 characters; stored with bcrypt |
+| `outletId`    | `uuid`   | Existing outlet the admin belongs to |
+
+```json
+{
+  "data": {
+    "id": "b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+    "name": "Outlet Manager",
+    "role": "ADMIN",
+    "outletId": "4273e96c-2887-49a5-a6d5-269f007f04f0"
+  },
+  "message": "Admin created successfully",
+  "status": 201
+}
+```
+
 All API controller responses use the same top-level envelope:
 
 - `data` — the endpoint payload, or structured error details.
@@ -116,6 +214,23 @@ The API generates a cryptographically secure six-digit OTP, stores only its
 HMAC-SHA-256 digest in Redis, limits it to five attempts, and expires it after
 ten minutes. Successful verification consumes the OTP and changes the customer
 from `UNVERIFIED` to `ACTIVE`.
+
+Login stores a Redis-backed session and signs short-lived access tokens plus
+long-lived refresh tokens with an HS256 secret of at least 256 bits. Admin
+sessions expire after 30 minutes of inactivity.
+
+Seed the first super admin after migrations:
+
+```bash
+SUPER_ADMIN_NAME="RSC Super Admin" \
+SUPER_ADMIN_EMAIL="admin@example.com" \
+SUPER_ADMIN_PHONE="08031234567" \
+SUPER_ADMIN_PASSWORD="replace-with-a-strong-password" \
+pnpm --filter @rsc/api seed:super-admin
+```
+
+Inside a built production container, run `node dist/src/auth/seed-super-admin.js`
+with the same environment variables.
 
 Termii delivery uses `POST {TERMII_BASE_URL}/api/sms/send` with an approved
 sender ID. Set:
@@ -214,6 +329,22 @@ Run or revert:
 ```bash
 pnpm --filter @rsc/api migration:run
 pnpm --filter @rsc/api migration:revert
+```
+
+### Seeding on the server
+
+**Postgres container:**
+
+```bash
+psql -U rsc -d rsc -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+```
+
+**API container:**
+
+```bash
+node node_modules/typeorm/cli.js migration:run -d dist/src/database/data-source.js
+node dist/src/auth/seed-super-admin.js
+node dist/src/database/seed-demo-data.js
 ```
 
 ## Health semantics

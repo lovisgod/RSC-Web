@@ -6,6 +6,7 @@ import {
   CookingPot,
   LayoutDashboard,
   MapPinned,
+  MenuSquare,
   Search,
   Settings,
   Store,
@@ -14,10 +15,12 @@ import {
 import { NavLink, Route, Routes } from "react-router-dom";
 
 import { DashboardPage } from "./pages/dashboard-page";
+import { MenusPage } from "./pages/menus-page";
 
 const navigation = [
   { label: "Overview", to: "/", icon: LayoutDashboard },
   { label: "Orders", to: "/orders", icon: CookingPot },
+  { label: "Menus", to: "/menus", icon: MenuSquare },
   { label: "Outlets", to: "/outlets", icon: Store },
   { label: "Settlements", to: "/settlements", icon: CircleDollarSign },
   { label: "Delivery", to: "/delivery", icon: MapPinned },
@@ -88,9 +91,14 @@ export function App() {
         <div className="admin-content">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
-            {navigation.slice(1).map(({ label, to }) => (
-              <Route key={to} path={to} element={<PlaceholderPage title={label} />} />
-            ))}
+            <Route path="/menus" element={<MenusPage />} />
+            {navigation
+              .slice(1)
+              .map(({ label, to }) =>
+                to === "/menus" ? null : (
+                  <Route key={to} path={to} element={<PlaceholderPage title={label} />} />
+                ),
+              )}
             <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
           </Routes>
         </div>

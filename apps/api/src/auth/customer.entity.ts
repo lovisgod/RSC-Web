@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 
 import { CustomerStatus } from "./customer-status.enum";
+import { UserRole } from "./user-role.enum";
 
 @Entity({ name: "users" })
 export class Customer {
@@ -38,6 +39,17 @@ export class Customer {
     default: CustomerStatus.UNVERIFIED,
   })
   status!: CustomerStatus;
+
+  @Column({
+    type: "enum",
+    enum: UserRole,
+    enumName: "user_role",
+    default: UserRole.CUSTOMER,
+  })
+  role!: UserRole;
+
+  @Column({ name: "outlet_id", type: "uuid", nullable: true })
+  outletId!: string | null;
 
   @Column({ name: "password_hash", type: "varchar", length: 161 })
   passwordHash!: string;
