@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@rsc/ui";
@@ -16,7 +16,6 @@ import { inputClass, labelClass } from "@/src/lib/form-styles";
 import { AUTH_REDIRECT_KEY } from "@/src/components/auth/auth-guard";
 
 export function SignInForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const signIn = useAuthStore((s) => s.signIn);
 
