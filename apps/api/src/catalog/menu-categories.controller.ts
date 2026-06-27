@@ -22,32 +22,35 @@ import { CatalogService } from "./catalog.service";
 import { CreateMenuCategoryDto, UpdateMenuCategoryDto } from "./dto/catalog.dto";
 
 @ApiTags("Menu Categories")
-@ApiBearerAuth()
 @Controller({ path: "menu-categories", version: "1" })
-@UseGuards(AuthGuard, RolesGuard)
-@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
 export class MenuCategoriesController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get()
   @ApiMessage("Menu categories retrieved")
-  list(@Req() request: AuthenticatedRequest, @Query("outletId") outletId?: string) {
-    return this.catalog.listCategories(request.user!, outletId);
+  list(@Query("outletId") outletId?: string) {
+    return this.catalog.listPublicCategories(outletId);
   }
 
   @Get(":id")
   @ApiMessage("Menu category retrieved")
-  get(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
-    return this.catalog.getCategory(request.user!, id);
+  get(@Param("id") id: string) {
+    return this.catalog.getPublicCategory(id);
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Menu category created successfully")
   create(@Req() request: AuthenticatedRequest, @Body() input: CreateMenuCategoryDto) {
     return this.catalog.createCategory(request.user!, input);
   }
 
   @Patch(":id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Menu category updated successfully")
   update(
     @Req() request: AuthenticatedRequest,
@@ -58,6 +61,9 @@ export class MenuCategoriesController {
   }
 
   @Delete(":id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Menu category deleted successfully")
   delete(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
     return this.catalog.deleteCategory(request.user!, id);

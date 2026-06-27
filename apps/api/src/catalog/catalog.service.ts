@@ -115,6 +115,13 @@ export class CatalogService {
     });
   }
 
+  async listPublicCategories(outletId?: string): Promise<MenuCategory[]> {
+    return this.categories.find({
+      ...(outletId ? { where: { outletId } } : {}),
+      order: { sortOrder: "ASC", name: "ASC" },
+    });
+  }
+
   async createCategory(
     user: AuthenticatedUser,
     input: CreateMenuCategoryDto,
@@ -136,6 +143,10 @@ export class CatalogService {
     await this.ensureOutletAccess(user, category.outletId);
 
     return category;
+  }
+
+  async getPublicCategory(id: string): Promise<MenuCategory> {
+    return this.requireCategory(id);
   }
 
   async updateCategory(
@@ -170,6 +181,13 @@ export class CatalogService {
     });
   }
 
+  async listPublicItems(outletId?: string): Promise<MenuItem[]> {
+    return this.items.find({
+      ...(outletId ? { where: { outletId } } : {}),
+      order: { sortOrder: "ASC", name: "ASC" },
+    });
+  }
+
   async createItem(user: AuthenticatedUser, input: CreateMenuItemDto): Promise<MenuItem> {
     const outletId = await this.resolveOutletId(user, input.outletId);
     await this.ensureCategoryInOutlet(input.categoryId, outletId);
@@ -198,6 +216,10 @@ export class CatalogService {
     await this.ensureOutletAccess(user, item.outletId);
 
     return item;
+  }
+
+  async getPublicItem(id: string): Promise<MenuItem> {
+    return this.requireItem(id);
   }
 
   async updateItem(
@@ -257,6 +279,13 @@ export class CatalogService {
     });
   }
 
+  async listPublicGroups(outletId?: string): Promise<ItemModifierGroup[]> {
+    return this.groups.find({
+      ...(outletId ? { where: { outletId } } : {}),
+      order: { sortOrder: "ASC", name: "ASC" },
+    });
+  }
+
   async createGroup(
     user: AuthenticatedUser,
     input: CreateItemModifierGroupDto,
@@ -280,6 +309,10 @@ export class CatalogService {
     await this.ensureOutletAccess(user, group.outletId);
 
     return group;
+  }
+
+  async getPublicGroup(id: string): Promise<ItemModifierGroup> {
+    return this.requireGroup(id);
   }
 
   async updateGroup(
@@ -314,6 +347,13 @@ export class CatalogService {
     });
   }
 
+  async listPublicModifiers(outletId?: string): Promise<ItemModifier[]> {
+    return this.modifiers.find({
+      ...(outletId ? { where: { outletId } } : {}),
+      order: { sortOrder: "ASC", name: "ASC" },
+    });
+  }
+
   async createModifier(
     user: AuthenticatedUser,
     input: CreateItemModifierDto,
@@ -339,6 +379,10 @@ export class CatalogService {
     await this.ensureOutletAccess(user, modifier.outletId);
 
     return modifier;
+  }
+
+  async getPublicModifier(id: string): Promise<ItemModifier> {
+    return this.requireModifier(id);
   }
 
   async updateModifier(
