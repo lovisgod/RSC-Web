@@ -22,32 +22,35 @@ import { CatalogService } from "./catalog.service";
 import { CreateItemModifierDto, UpdateItemModifierDto } from "./dto/catalog.dto";
 
 @ApiTags("Item Modifiers")
-@ApiBearerAuth()
 @Controller({ path: "item-modifiers", version: "1" })
-@UseGuards(AuthGuard, RolesGuard)
-@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
 export class ItemModifiersController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get()
   @ApiMessage("Modifiers retrieved")
-  list(@Req() request: AuthenticatedRequest, @Query("outletId") outletId?: string) {
-    return this.catalog.listModifiers(request.user!, outletId);
+  list(@Query("outletId") outletId?: string) {
+    return this.catalog.listPublicModifiers(outletId);
   }
 
   @Get(":id")
   @ApiMessage("Modifier retrieved")
-  get(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
-    return this.catalog.getModifier(request.user!, id);
+  get(@Param("id") id: string) {
+    return this.catalog.getPublicModifier(id);
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Modifier created successfully")
   create(@Req() request: AuthenticatedRequest, @Body() input: CreateItemModifierDto) {
     return this.catalog.createModifier(request.user!, input);
   }
 
   @Patch(":id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Modifier updated successfully")
   update(
     @Req() request: AuthenticatedRequest,
@@ -58,6 +61,9 @@ export class ItemModifiersController {
   }
 
   @Delete(":id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Modifier deleted successfully")
   delete(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
     return this.catalog.deleteModifier(request.user!, id);

@@ -26,32 +26,35 @@ import {
 } from "./dto/catalog.dto";
 
 @ApiTags("Menu Items")
-@ApiBearerAuth()
 @Controller({ path: "menu-items", version: "1" })
-@UseGuards(AuthGuard, RolesGuard)
-@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
 export class MenuItemsController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get()
   @ApiMessage("Menu items retrieved")
-  list(@Req() request: AuthenticatedRequest, @Query("outletId") outletId?: string) {
-    return this.catalog.listItems(request.user!, outletId);
+  list(@Query("outletId") outletId?: string) {
+    return this.catalog.listPublicItems(outletId);
   }
 
   @Get(":id")
   @ApiMessage("Menu item retrieved")
-  get(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
-    return this.catalog.getItem(request.user!, id);
+  get(@Param("id") id: string) {
+    return this.catalog.getPublicItem(id);
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Menu item created successfully")
   create(@Req() request: AuthenticatedRequest, @Body() input: CreateMenuItemDto) {
     return this.catalog.createItem(request.user!, input);
   }
 
   @Patch(":id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Menu item updated successfully")
   update(
     @Req() request: AuthenticatedRequest,
@@ -62,6 +65,9 @@ export class MenuItemsController {
   }
 
   @Patch(":id/availability")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Menu item availability updated successfully")
   updateAvailability(
     @Req() request: AuthenticatedRequest,
@@ -72,6 +78,9 @@ export class MenuItemsController {
   }
 
   @Delete(":id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Menu item deleted successfully")
   delete(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
     return this.catalog.deleteItem(request.user!, id);
