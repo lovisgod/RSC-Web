@@ -17,8 +17,8 @@ export function ResetPasswordForm() {
   } = useForm<ResetPasswordFormData>({ resolver: zodResolver(resetPasswordSchema) });
 
   const mutation = useMutation({
-    mutationFn: async () => {
-      // TODO: replace with apiClient.resetPassword({ identifier, code, newPassword })
+    mutationFn: async (_data: ResetPasswordFormData) => {
+      // TODO: replace with apiClient.resetPassword(_data)
       await new Promise((r) => setTimeout(r, 1000));
     },
   });
