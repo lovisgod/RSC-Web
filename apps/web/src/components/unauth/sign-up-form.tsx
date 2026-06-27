@@ -59,7 +59,14 @@ export function SignUpForm() {
 
   return (
     <form
-      onSubmit={handleSubmit(({ confirmPassword: _omit, ...data }) => mutation.mutate(data))}
+      onSubmit={handleSubmit((values) =>
+        mutation.mutate({
+          fullName: values.fullName,
+          phone: values.phone,
+          email: values.email,
+          password: values.password,
+        }),
+      )}
       className="w-full max-w-sm space-y-6"
     >
       <div className="flex flex-col items-center justify-center gap-1 text-center">
