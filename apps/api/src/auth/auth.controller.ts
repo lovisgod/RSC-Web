@@ -158,7 +158,7 @@ export class AuthController {
   @Post("reset-password")
   @ApiMessage("Password reset successfully")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Reset a password using both phone and email OTPs" })
+  @ApiOperation({ summary: "Reset a password using a phone or email OTP" })
   resetPassword(@Body() input: ResetPasswordDto) {
     return this.authService.resetPassword(input);
   }

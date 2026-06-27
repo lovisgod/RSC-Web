@@ -11,27 +11,25 @@ import { CatalogService } from "./catalog.service";
 import { CreateOutletDto, UpdateOutletDto, UpdateOutletOnlineStatusDto } from "./dto/catalog.dto";
 
 @ApiTags("Outlets")
-@ApiBearerAuth()
 @Controller({ path: "outlets", version: "1" })
-@UseGuards(AuthGuard, RolesGuard)
 export class OutletsController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Outlets retrieved")
-  list(@Req() request: AuthenticatedRequest) {
-    return this.catalog.listOutlets(request.user!);
+  list() {
+    return this.catalog.listPublicOutlets();
   }
 
   @Get(":id")
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Outlet retrieved")
-  get(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
-    return this.catalog.getOutlet(request.user!, id);
+  get(@Param("id") id: string) {
+    return this.catalog.getPublicOutlet(id);
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   @ApiMessage("Outlet created successfully")
   create(@Body() input: CreateOutletDto) {
@@ -39,6 +37,8 @@ export class OutletsController {
   }
 
   @Patch(":id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Outlet updated successfully")
   update(
@@ -50,6 +50,8 @@ export class OutletsController {
   }
 
   @Patch(":id/online-status")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   @ApiMessage("Outlet online status updated successfully")
   updateOnlineStatus(@Param("id") id: string, @Body() input: UpdateOutletOnlineStatusDto) {
@@ -57,6 +59,8 @@ export class OutletsController {
   }
 
   @Delete(":id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   @ApiMessage("Outlet deleted successfully")
   delete(@Param("id") id: string) {
