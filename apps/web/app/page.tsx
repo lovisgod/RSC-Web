@@ -97,7 +97,9 @@ export default function HomePage() {
           <p className="eyebrow">Built for Lagos evenings</p>
           <h2>Fresh menus, clear availability, no checkout surprises.</h2>
         </div>
-        <Button>Browse participating outlets</Button>
+        <Link href="/outlets">
+          <Button>Browse participating outlets</Button>
+        </Link>
       </section>
     </main>
   );

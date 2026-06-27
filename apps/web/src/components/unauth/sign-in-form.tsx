@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@rsc/ui";
@@ -14,9 +14,9 @@ import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { apiClient } from "@/src/lib/api";
 import { inputClass, labelClass } from "@/src/lib/form-styles";
 import { PasswordInput } from "@/src/components/shared/password-input";
+import { AUTH_REDIRECT_KEY } from "@/src/components/auth/auth-guard";
 
 export function SignInForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const signIn = useAuthStore((s) => s.signIn);
 
@@ -31,8 +31,10 @@ export function SignInForm() {
       apiClient.login({ identifier: data.identifier, password: data.password }),
     onSuccess: () => {
       signIn();
-      const redirect = searchParams.get("redirect") ?? "/outlets";
-      router.push(redirect);
+      const stored = localStorage.getItem(AUTH_REDIRECT_KEY);
+      if (stored) localStorage.removeItem(AUTH_REDIRECT_KEY);
+      // Replace so /sign-in is gone from history — back button can't return here
+      window.location.replace(stored ?? searchParams.get("redirect") ?? "/outlets");
     },
   });
 

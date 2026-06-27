@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { useCartStore } from "@/src/stores/cart-store";
 import { useAuthStore } from "@/src/stores/auth-store";
@@ -9,15 +9,14 @@ import { apiClient } from "@/src/lib/api";
 
 const navItems = [
   { href: "/outlets", icon: "/icons/png/house_1f3e0.png", label: "Home" },
+  { href: "/menu", icon: "/icons/png/magnifying-glass-tilted-left_1f50d.png", label: "Search" },
   { href: "/cart", icon: "/icons/png/shopping-cart_1f6d2.png", label: "Cart" },
-  { href: "/orders", icon: "📋", label: "Orders" },
   { href: "/tracking", icon: "/icons/png/round-pushpin_1f4cd.png", label: "Tracking" },
   { href: "/profile", icon: "/icons/png/bust-in-silhouette_1f464.png", label: "Profile" },
 ];
 
 export function SideNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const itemCount = useCartStore((s) => s.itemCount);
   const signOut = useAuthStore((s) => s.signOut);
 
@@ -28,7 +27,10 @@ export function SideNav() {
       // proceed with local sign-out even if the API call fails
     }
     signOut();
-    router.push("/sign-in");
+    // window.location.replace does a full-page navigation that replaces the
+    // current history entry — authenticated pages can no longer be reached
+    // by pressing back.
+    window.location.replace("/sign-in");
   }
 
   return (

@@ -23,10 +23,10 @@ export function ForgotPasswordForm() {
   } = useForm<ForgotPasswordFormData>({ resolver: zodResolver(forgotPasswordSchema) });
 
   const mutation = useMutation({
-    mutationFn: (data: ForgotPasswordFormData) =>
-      apiClient.forgotPassword({ identifier: data.identifier }),
-    onSuccess: (_, variables) =>
-      router.push(`/reset-password?identifier=${encodeURIComponent(variables.identifier)}`),
+    mutationFn: async (_data: ForgotPasswordFormData) => {
+      // TODO: replace with apiClient.forgotPassword({ identifier: _data.identifier })
+      await new Promise((r) => setTimeout(r, 1000));
+    },
   });
 
   return (

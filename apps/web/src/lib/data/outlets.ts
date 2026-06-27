@@ -26,7 +26,7 @@ const PALETTE = [
 export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
   const palette = PALETTE[index % PALETTE.length]!;
   return {
-    id: summary.slug, // slug for URL-friendly routing
+    id: summary.id,
     name: summary.name,
     cuisines: [summary.cuisineType],
     headerColor: palette.headerColor,

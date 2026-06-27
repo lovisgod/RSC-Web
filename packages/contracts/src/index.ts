@@ -130,7 +130,6 @@ export const moneySchema = z.object({
 export const outletSummarySchema = z.object({
   id: z.uuid(),
   name: z.string().min(1),
-  slug: z.string().min(1),
   cuisineType: z.string().min(1),
   description: z.string().nullable(),
   imageUrl: z.url().nullable(),
