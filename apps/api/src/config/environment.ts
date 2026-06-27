@@ -15,19 +15,26 @@ export interface Environment {
   PII_ENCRYPTION_KEY: string;
   PII_HASH_PEPPER: string;
   OTP_PEPPER: string;
+  JWT_SECRET: string;
+  ACCESS_TOKEN_TTL_SECONDS: number;
+  REFRESH_TOKEN_TTL_SECONDS: number;
+  ADMIN_INACTIVITY_TIMEOUT_SECONDS: number;
   SMS_PROVIDER: "noop" | "termii";
   TERMII_BASE_URL: string;
   TERMII_API_KEY?: string;
   TERMII_SENDER_ID?: string;
   TERMII_CHANNEL: "generic" | "dnd";
   TERMII_TIMEOUT_MS: number;
-  EMAIL_PROVIDER: "noop" | "smtp";
+  EMAIL_PROVIDER: "noop" | "smtp" | "resend";
   SMTP_HOST?: string;
   SMTP_PORT?: number;
   SMTP_SECURE?: boolean;
   SMTP_USER?: string;
   SMTP_PASS?: string;
   SMTP_FROM?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM?: string;
+  RESEND_REPLY_TO?: string;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -57,6 +64,10 @@ const environmentSchema = Joi.object<Environment>({
   }),
   PII_HASH_PEPPER: Joi.string().min(32).required(),
   OTP_PEPPER: Joi.string().min(32).required(),
+  JWT_SECRET: Joi.string().min(32).required(),
+  ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).default(900),
+  REFRESH_TOKEN_TTL_SECONDS: Joi.number().integer().min(3_600).default(604_800),
+  ADMIN_INACTIVITY_TIMEOUT_SECONDS: Joi.number().integer().min(60).default(1_800),
   SMS_PROVIDER: Joi.string().valid("noop", "termii").default("noop"),
   TERMII_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
@@ -73,7 +84,7 @@ const environmentSchema = Joi.object<Environment>({
   }),
   TERMII_CHANNEL: Joi.string().valid("generic", "dnd").default("generic"),
   TERMII_TIMEOUT_MS: Joi.number().integer().min(1_000).max(30_000).default(10_000),
-  EMAIL_PROVIDER: Joi.string().valid("noop", "smtp").default("noop"),
+  EMAIL_PROVIDER: Joi.string().valid("noop", "smtp", "resend").default("noop"),
   SMTP_HOST: Joi.when("EMAIL_PROVIDER", {
     is: "smtp",
     then: Joi.string().min(3).required(),
@@ -100,6 +111,17 @@ const environmentSchema = Joi.object<Environment>({
     then: Joi.string().min(3).required(),
     otherwise: Joi.string().optional().allow(""),
   }),
+  RESEND_API_KEY: Joi.when("EMAIL_PROVIDER", {
+    is: "resend",
+    then: Joi.string().min(10).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  RESEND_FROM: Joi.when("EMAIL_PROVIDER", {
+    is: "resend",
+    then: Joi.string().min(3).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  RESEND_REPLY_TO: Joi.string().email().optional().allow(""),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {

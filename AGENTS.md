@@ -108,7 +108,7 @@ Before coding, read:
   1. DTO validated (class-validator with `@Matches` for phone, `@IsEmail`, `@Length(8,128)` for password)
   2. Phone normalized to `234…` format via `normalizeNigerianPhoneNumber()`
   3. Email trimmed + lowercased
-  4. Password hashed using Node.js `crypto.scryptSync` with random 16-byte salt (stored as `salt:derivedKey`)
+  4. Password hashed with bcrypt
   5. PII encrypted via `PiiCryptoService` (AES-256-GCM), hashed for lookup (SHA-256 with pepper)
   6. Existing customer check (phone and email hash lookups)
   7. Customer saved to PostgreSQL (encrypted PII, password hash, status `UNVERIFIED`)
@@ -119,7 +119,16 @@ Before coding, read:
   2. Matching identifier normalized, customer looked up by hash
   3. OTP verified against the channel's Redis store via Lua script (atomically checks hash, decrements attempts)
   4. On success: status → `ACTIVE`, matching `*VerifiedAt` timestamp set, customer saved
-- **Password:** scrypt with salt, stored as hash in `password_hash` column (char(128)), no login endpoint yet
+- **POST /api/v1/auth/login** flow:
+  1. Identifier is normalized as email or Nigerian phone
+  2. Active user is looked up by hash
+  3. Password is verified with bcrypt; legacy scrypt hashes are upgraded after successful login
+  4. Short-lived access token and long-lived refresh token are issued in HttpOnly cookies
+  5. Redis stores the server-side session; admin sessions expire after 30 minutes of inactivity
+- **POST /api/v1/auth/logout** flow:
+  1. Active auth cookies are read
+  2. Token IDs are blacklisted in Redis and the session is deleted
+  3. Auth cookies are cleared
 
 ### Key errors and fixes
 

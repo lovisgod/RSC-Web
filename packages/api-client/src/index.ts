@@ -2,19 +2,33 @@ import {
   adminOverviewSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
+  adminResultSchema,
+  createAdminInputSchema,
   loginInputSchema,
   loginResultSchema,
+  logoutResultSchema,
+  menuItemSchema,
   outletSummarySchema,
   registerCustomerInputSchema,
   registrationResultSchema,
+  resendVerificationCodeInputSchema,
+  resendVerificationCodeResultSchema,
+  updateMenuItemAvailabilityInputSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminOverview,
+  type AdminResult,
+  type CreateAdminInput,
   type LoginInput,
   type LoginResult,
+  type LogoutResult,
+  type MenuItem,
   type OutletSummary,
   type RegisterCustomerInput,
   type RegistrationResult,
+  type ResendVerificationCodeInput,
+  type ResendVerificationCodeResult,
+  type UpdateMenuItemAvailabilityInput,
   type UserVerificationResult,
   type VerifyUserInput,
 } from "@rsc/contracts";
@@ -104,6 +118,14 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    createAdmin(input: CreateAdminInput): Promise<AdminResult> {
+      const body = createAdminInputSchema.parse(input);
+
+      return request("/api/v1/auth/admins", adminResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     verifyUser(input: VerifyUserInput): Promise<UserVerificationResult> {
       const body = verifyUserInputSchema.parse(input);
 
@@ -112,8 +134,34 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    resendVerificationCode(
+      input: ResendVerificationCodeInput,
+    ): Promise<ResendVerificationCodeResult> {
+      const body = resendVerificationCodeInputSchema.parse(input);
+
+      return request("/api/v1/auth/resend-verification-code", resendVerificationCodeResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     listOutlets(): Promise<OutletSummary[]> {
       return request("/api/v1/outlets", z.array(outletSummarySchema));
+    },
+    listMenuItems(input: { outletId?: string } = {}): Promise<MenuItem[]> {
+      const query = input.outletId ? `?outletId=${encodeURIComponent(input.outletId)}` : "";
+
+      return request(`/api/v1/menu-items${query}`, z.array(menuItemSchema));
+    },
+    updateMenuItemAvailability(
+      id: string,
+      input: UpdateMenuItemAvailabilityInput,
+    ): Promise<MenuItem> {
+      const body = updateMenuItemAvailabilityInputSchema.parse(input);
+
+      return request(`/api/v1/menu-items/${id}/availability`, menuItemSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
     },
     getAdminOverview(): Promise<AdminOverview> {
       return request("/api/v1/admin/overview", adminOverviewSchema);
