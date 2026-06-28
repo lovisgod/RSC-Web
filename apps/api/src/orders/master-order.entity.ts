@@ -19,6 +19,9 @@ export class MasterOrder {
   @Column({ name: "customer_id", type: "uuid" })
   customerId!: string;
 
+  @Column({ name: "rider_id", type: "uuid", nullable: true })
+  riderId!: string | null;
+
   @Column({
     type: "enum",
     enum: MasterOrderStatus,
@@ -62,6 +65,9 @@ export class MasterOrder {
 
   @Column({ name: "payment_reference", type: "varchar", length: 120, nullable: true })
   paymentReference!: string | null;
+
+  @Column({ name: "delivery_code", type: "char", length: 6, nullable: true })
+  deliveryCode!: string | null;
 
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;

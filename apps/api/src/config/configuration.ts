@@ -58,6 +58,14 @@ export interface ApplicationConfig {
     vatBps: number;
     deliveryFeeMinor: number;
   };
+  push: {
+    provider: "noop" | "firebase";
+    firebase: {
+      projectId: string;
+      clientEmail: string;
+      privateKey: string;
+    };
+  };
 }
 
 function parseOrigins(value: string): string[] {
@@ -134,6 +142,14 @@ export default function configuration(): ApplicationConfig {
       platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
       vatBps: Number(process.env.VAT_BPS ?? 750),
       deliveryFeeMinor: Number(process.env.DELIVERY_FEE_MINOR ?? 1_500_00),
+    },
+    push: {
+      provider: process.env.PUSH_PROVIDER === "firebase" ? "firebase" : "noop",
+      firebase: {
+        projectId: process.env.FIREBASE_PROJECT_ID ?? "",
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "",
+        privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? "").replaceAll("\\n", "\n"),
+      },
     },
   };
 }

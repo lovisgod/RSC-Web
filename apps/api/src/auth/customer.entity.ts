@@ -81,6 +81,9 @@ export class Customer {
   @Column({ name: "rider_status", type: "varchar", length: 40, nullable: true })
   riderStatus!: string | null;
 
+  @Column({ name: "fcm_token", type: "varchar", length: 255, nullable: true })
+  fcmToken!: string | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

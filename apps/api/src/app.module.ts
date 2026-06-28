@@ -11,6 +11,7 @@ import { validateEnvironment } from "./config/environment";
 import { DatabaseModule } from "./database/database.module";
 import { HealthModule } from "./health/health.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { OrdersModule } from "./orders/orders.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { RedisModule } from "./redis/redis.module";
 import { DeliveryModule } from "./delivery/delivery.module";
@@ -35,6 +36,7 @@ import { UsersModule } from "./users/users.module";
     NotificationsModule,
     RidersModule,
     PaymentsModule,
+    OrdersModule,
     HealthModule,
   ],
   controllers: [AppController],

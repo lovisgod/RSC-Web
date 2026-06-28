@@ -53,5 +53,6 @@ import { PaystackPaymentAdapter } from "./paystack-payment.adapter";
       },
     },
   ],
+  exports: [PaymentsService],
 })
 export class PaymentsModule {}
