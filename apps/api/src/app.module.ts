@@ -10,7 +10,12 @@ import configuration from "./config/configuration";
 import { validateEnvironment } from "./config/environment";
 import { DatabaseModule } from "./database/database.module";
 import { HealthModule } from "./health/health.module";
+import { NotificationsModule } from "./notifications/notifications.module";
+import { PaymentsModule } from "./payments/payments.module";
 import { RedisModule } from "./redis/redis.module";
+import { DeliveryModule } from "./delivery/delivery.module";
+import { RidersModule } from "./riders/riders.module";
+import { UsersModule } from "./users/users.module";
 
 @Module({
   imports: [
@@ -24,7 +29,12 @@ import { RedisModule } from "./redis/redis.module";
     RedisModule,
     SecurityModule,
     AuthModule,
+    UsersModule,
     CatalogModule,
+    DeliveryModule,
+    NotificationsModule,
+    RidersModule,
+    PaymentsModule,
     HealthModule,
   ],
   controllers: [AppController],

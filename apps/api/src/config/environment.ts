@@ -35,6 +35,12 @@ export interface Environment {
   RESEND_API_KEY?: string;
   RESEND_FROM?: string;
   RESEND_REPLY_TO?: string;
+  PAYMENT_PROVIDER: "local" | "paystack";
+  PAYSTACK_SECRET_KEY?: string;
+  PAYSTACK_BASE_URL: string;
+  PLATFORM_COMMISSION_BPS: number;
+  VAT_BPS: number;
+  DELIVERY_FEE_MINOR: number;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -122,6 +128,18 @@ const environmentSchema = Joi.object<Environment>({
     otherwise: Joi.string().optional().allow(""),
   }),
   RESEND_REPLY_TO: Joi.string().email().optional().allow(""),
+  PAYMENT_PROVIDER: Joi.string().valid("local", "paystack").default("local"),
+  PAYSTACK_SECRET_KEY: Joi.when("PAYMENT_PROVIDER", {
+    is: "paystack",
+    then: Joi.string().min(10).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  PAYSTACK_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://api.paystack.co"),
+  PLATFORM_COMMISSION_BPS: Joi.number().integer().min(0).max(10_000).default(1_000),
+  VAT_BPS: Joi.number().integer().min(0).max(10_000).default(750),
+  DELIVERY_FEE_MINOR: Joi.number().integer().min(0).default(1_500_00),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {

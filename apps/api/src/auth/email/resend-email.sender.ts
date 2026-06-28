@@ -5,6 +5,7 @@ import type { ApplicationConfig } from "../../config/configuration";
 import type {
   EmailSender,
   SendPasswordResetEmailInput,
+  SendTemporaryPasswordEmailInput,
   SendWelcomeVerificationEmailInput,
 } from "./email-sender";
 
@@ -44,6 +45,19 @@ export class ResendEmailSender implements EmailSender {
         <p>Hi ${this.escapeHtml(input.name)},</p>
         <p>Your RSC password reset code is <strong>${input.code}</strong>.</p>
         <p>It expires in ${input.expiresInMinutes} minutes.</p>
+      `,
+    });
+  }
+
+  async sendTemporaryPassword(input: SendTemporaryPasswordEmailInput): Promise<void> {
+    await this.sendEmail({
+      to: input.email,
+      subject: `Your RSC ${input.role} account`,
+      html: `
+        <p>Hi ${this.escapeHtml(input.name)},</p>
+        <p>Your RSC ${this.escapeHtml(input.role)} account has been created.</p>
+        <p>Your temporary password is <strong>${this.escapeHtml(input.temporaryPassword)}</strong>.</p>
+        <p>Please sign in and change it.</p>
       `,
     });
   }
