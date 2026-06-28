@@ -15,6 +15,7 @@ import { MenuItem } from "../catalog/menu-item.entity";
 import { Outlet } from "../outlets/outlet.entity";
 import { MasterOrder } from "../orders/master-order.entity";
 import { OrderLineItem } from "../orders/order-line-item.entity";
+import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
 import type { InitiatePaymentDto } from "./dto/payment.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
@@ -140,6 +141,11 @@ export class PaymentsService {
           deliveryLatitude: input.deliveryLatitude ?? null,
           deliveryLongitude: input.deliveryLongitude ?? null,
           paymentReference: providerPayment.reference,
+          deliveryCode: randomSixDigitCode(),
+          status:
+            providerPayment.status === "SUCCESS"
+              ? MasterOrderStatus.CONFIRMED
+              : MasterOrderStatus.PENDING_PAYMENT,
         }),
       );
 
@@ -262,4 +268,10 @@ export class PaymentsService {
 
     return lines;
   }
+}
+
+function randomSixDigitCode(): string {
+  return Math.floor(Math.random() * 1_000_000)
+    .toString()
+    .padStart(6, "0");
 }

@@ -7,7 +7,11 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
-import { CreateNotificationDto } from "./dto/notification.dto";
+import {
+  CreateNotificationDto,
+  CreatePromoNotificationDto,
+  RegisterDeviceTokenDto,
+} from "./dto/notification.dto";
 import { NotificationsService } from "./notifications.service";
 
 @ApiTags("Notifications")
@@ -29,6 +33,20 @@ export class NotificationsController {
   @ApiMessage("Notification created successfully")
   create(@Req() request: AuthenticatedRequest, @Body() input: CreateNotificationDto) {
     return this.notifications.create(request.user!, input);
+  }
+
+  @Post("device-token")
+  @ApiMessage("Device token registered")
+  registerDeviceToken(@Req() request: AuthenticatedRequest, @Body() input: RegisterDeviceTokenDto) {
+    return this.notifications.registerDeviceToken(request.user!, input.token);
+  }
+
+  @Post("promos")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Promo notifications queued")
+  broadcastPromo(@Req() request: AuthenticatedRequest, @Body() input: CreatePromoNotificationDto) {
+    return this.notifications.broadcastPromo(request.user!, input);
   }
 
   @Patch(":id/read")

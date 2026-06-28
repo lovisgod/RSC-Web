@@ -41,7 +41,7 @@ export class CatalogService {
 
   async listOutlets(user: AuthenticatedUser): Promise<Outlet[]> {
     if (user.role === UserRole.SUPER_ADMIN) {
-      return this.listPublicOutlets();
+      return this.outlets.find({ order: { name: "ASC" } });
     }
 
     const outletId = await this.requireAdminOutletId(user);
@@ -54,12 +54,17 @@ export class CatalogService {
     return this.requireOutlet(id);
   }
 
-  async listPublicOutlets(): Promise<Outlet[]> {
-    return this.outlets.find({ order: { name: "ASC" } });
+  async listPublicOutlets(): Promise<PublicOutletCatalog[]> {
+    const outlets = await this.outlets.find({ order: { name: "ASC" } });
+
+    return this.attachPublicCatalog(outlets);
   }
 
-  async getPublicOutlet(id: string): Promise<Outlet> {
-    return this.requireOutlet(id);
+  async getPublicOutlet(id: string): Promise<PublicOutletCatalog> {
+    const outlet = await this.requireOutlet(id);
+    const [catalog] = await this.attachPublicCatalog([outlet]);
+
+    return catalog!;
   }
 
   async createOutlet(input: CreateOutletDto): Promise<Outlet> {
@@ -545,4 +550,56 @@ export class CatalogService {
       ),
     );
   }
+
+  private async attachPublicCatalog(outlets: Outlet[]): Promise<PublicOutletCatalog[]> {
+    if (!outlets.length) {
+      return [];
+    }
+
+    const outletIds = outlets.map((outlet) => outlet.id);
+    const [menuCategories, menuItems, itemModifierGroups, itemModifiers] = await Promise.all([
+      this.categories.find({
+        where: { outletId: In(outletIds), isActive: true },
+        order: { sortOrder: "ASC", name: "ASC" },
+      }),
+      this.items.find({
+        where: { outletId: In(outletIds) },
+        order: { sortOrder: "ASC", name: "ASC" },
+      }),
+      this.groups.find({
+        where: { outletId: In(outletIds) },
+        order: { sortOrder: "ASC", name: "ASC" },
+      }),
+      this.modifiers.find({
+        where: { outletId: In(outletIds) },
+        order: { sortOrder: "ASC", name: "ASC" },
+      }),
+    ]);
+    const menuItemIds = menuItems.map((item) => item.id);
+    const menuItemModifierGroups = menuItemIds.length
+      ? await this.itemGroups.find({
+          where: { menuItemId: In(menuItemIds) },
+          order: { sortOrder: "ASC" },
+        })
+      : [];
+
+    return outlets.map((outlet) => ({
+      ...outlet,
+      menuCategories: menuCategories.filter((category) => category.outletId === outlet.id),
+      menuItems: menuItems.filter((item) => item.outletId === outlet.id),
+      itemModifierGroups: itemModifierGroups.filter((group) => group.outletId === outlet.id),
+      itemModifiers: itemModifiers.filter((modifier) => modifier.outletId === outlet.id),
+      menuItemModifierGroups: menuItemModifierGroups.filter((itemGroup) =>
+        menuItems.some((item) => item.id === itemGroup.menuItemId && item.outletId === outlet.id),
+      ),
+    }));
+  }
+}
+
+export interface PublicOutletCatalog extends Outlet {
+  menuCategories: MenuCategory[];
+  menuItems: MenuItem[];
+  itemModifierGroups: ItemModifierGroup[];
+  itemModifiers: ItemModifier[];
+  menuItemModifierGroups: MenuItemModifierGroup[];
 }

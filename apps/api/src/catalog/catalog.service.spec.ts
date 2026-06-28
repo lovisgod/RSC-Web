@@ -59,6 +59,7 @@ describe(CatalogService.name, () => {
     softRemove: ReturnType<typeof vi.fn>;
   };
   let itemGroups: {
+    find: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
@@ -123,6 +124,7 @@ describe(CatalogService.name, () => {
       softRemove: vi.fn().mockResolvedValue(undefined),
     };
     itemGroups = {
+      find: vi.fn().mockResolvedValue([]),
       delete: vi.fn().mockResolvedValue(undefined),
       create: vi.fn((value: Partial<MenuItemModifierGroup>) =>
         Object.assign(new MenuItemModifierGroup(), value),

@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
-import { IsEnum, IsString, IsUUID, Length } from "class-validator";
+import { IsEnum, IsOptional, IsString, IsUUID, Length, MaxLength } from "class-validator";
 
 import { UserRole } from "../../auth/user-role.enum";
 
@@ -34,4 +34,41 @@ export class CreateNotificationDto {
   @IsString()
   @Length(2, 2_000)
   body!: string;
+}
+
+export class RegisterDeviceTokenDto {
+  @ApiProperty({ example: "fcm-token" })
+  @IsString()
+  @Length(10, 255)
+  token!: string;
+}
+
+export class CreatePromoNotificationDto {
+  @ApiProperty({ example: "SPECIAL_PERIOD" })
+  @Transform(trim)
+  @IsString()
+  @Length(2, 80)
+  type!: string;
+
+  @ApiProperty({ example: "Weekend discount" })
+  @Transform(trim)
+  @IsString()
+  @Length(2, 160)
+  title!: string;
+
+  @ApiProperty({ example: "Use code WEEKEND for a discount this weekend." })
+  @Transform(trim)
+  @IsString()
+  @Length(2, 2_000)
+  body!: string;
+
+  @ApiProperty({ enum: ["CUSTOMER", "ADMIN", "RIDER"], example: "CUSTOMER" })
+  @IsEnum(UserRole)
+  recipientRole!: UserRole;
+
+  @ApiProperty({ example: "WEEKEND", required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  promoCode?: string;
 }
