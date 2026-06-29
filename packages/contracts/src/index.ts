@@ -137,6 +137,97 @@ export const outletSummarySchema = z.object({
   momentSubaccountCode: z.string(),
 });
 
+export const userProfileSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  role: z.string(),
+  outletId: z.uuid().nullable(),
+  email: z.string(),
+  phone: z.string(),
+  verificationChannels: z.object({ email: z.boolean(), phone: z.boolean() }),
+  pendingVerificationChannels: z.object({ email: z.boolean(), phone: z.boolean() }),
+});
+
+export const updateProfileInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+  })
+  .strict();
+
+export const createDeliveryAddressInputSchema = z
+  .object({
+    label: z.string().min(1).max(50),
+    addressLine: z.string().min(3),
+    city: z.string().min(1),
+    state: z.string().min(1),
+    latitude: z.number(),
+    longitude: z.number(),
+    isDefault: z.boolean(),
+  })
+  .strict();
+
+export const deliveryAddressSummarySchema = z.object({
+  id: z.uuid(),
+  label: z.string(),
+  addressLine: z.string(),
+  city: z.string(),
+  state: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+  isDefault: z.boolean(),
+});
+
+export const validateAddressInputSchema = z
+  .object({
+    latitude: z.number(),
+    longitude: z.number(),
+  })
+  .strict();
+
+export const validateAddressResultSchema = z.object({
+  deliverable: z.boolean(),
+  zone: z
+    .object({
+      id: z.uuid(),
+      name: z.string().min(1),
+    })
+    .nullable(),
+});
+
+export const changePasswordInputSchema = z
+  .object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8).max(128),
+  })
+  .strict();
+
+export const changePasswordResultSchema = z.object({
+  passwordChanged: z.boolean(),
+});
+
+export const menuCategorySchema = z.object({
+  id: z.uuid(),
+  outletId: z.uuid(),
+  name: z.string().min(1),
+  sortOrder: z.int().nonnegative(),
+  isActive: z.boolean(),
+});
+
+export const menuItemSchema = z.object({
+  id: z.uuid(),
+  outletId: z.uuid(),
+  categoryId: z.uuid(),
+  name: z.string().min(1),
+  description: z.string(),
+  imageUrl: z.url().nullable(),
+  priceMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  isAvailable: z.boolean(),
+  sortOrder: z.int().nonnegative(),
+});
+
 export const masterOrderStatusSchema = z.enum([
   "PENDING_PAYMENT",
   "CONFIRMED",
@@ -191,3 +282,13 @@ export type OutletSummary = z.infer<typeof outletSummarySchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
 export type AdminOverview = z.infer<typeof adminOverviewSchema>;
+export type UserProfile = z.infer<typeof userProfileSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
+export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInputSchema>;
+export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema>;
+export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
+export type ValidateAddressResult = z.infer<typeof validateAddressResultSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
+export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
+export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
+export type MenuItemSummary = z.infer<typeof menuItemSchema>;

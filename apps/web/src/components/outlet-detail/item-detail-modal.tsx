@@ -9,13 +9,14 @@ import { useCartStore } from "@/src/stores/cart-store";
 
 interface ItemDetailModalProps {
   item: MenuItem;
+  outletName: string;
   onClose: () => void;
 }
 
-export function ItemDetailModal({ item, onClose }: ItemDetailModalProps) {
+export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set());
-  const { itemCount, setItemCount } = useCartStore();
+  const addItem = useCartStore((s) => s.addItem);
 
   function toggleExtra(id: string) {
     setSelectedExtras((prev) => {
@@ -37,7 +38,22 @@ export function ItemDetailModal({ item, onClose }: ItemDetailModalProps) {
   const total = unitPrice * quantity;
 
   function handleAddToCart() {
-    setItemCount(itemCount + quantity);
+    const extrasLabel = (item.extras ?? [])
+      .filter((e) => selectedExtras.has(e.id))
+      .map((e) => e.name)
+      .join(", ");
+
+    addItem({
+      outletId: item.outletId,
+      outletName,
+      item: {
+        id: item.id,
+        name: item.name,
+        notes: extrasLabel,
+        quantity,
+        unitPriceMinor: unitPrice,
+      },
+    });
     onClose();
   }
 
@@ -52,7 +68,7 @@ export function ItemDetailModal({ item, onClose }: ItemDetailModalProps) {
           className="h-52 flex items-center justify-center text-8xl flex-shrink-0"
           style={{ backgroundColor: item.bgColor }}
         >
-          {item.image.startsWith("/") ? (
+          {item.image.startsWith("/") || item.image.startsWith("http") ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.image} alt={item.name} className="w-32 h-32 object-contain" />
           ) : (

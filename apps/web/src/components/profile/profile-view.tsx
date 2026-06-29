@@ -1,20 +1,22 @@
 "use client";
 
 import { Card } from "@rsc/ui";
-import { useQuery } from "@tanstack/react-query";
-import { type FormEvent, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, KeyRound, Loader2, MapPin, MapPinCheck, X, XCircle } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { apiClient } from "@/src/lib/api";
+import { getMutationErrorMessage } from "@/src/lib/api-error";
+import { changePasswordSchema, type ChangePasswordFormData } from "@/src/lib/schemas/auth";
+import { profileSchema, type ProfileFormData } from "@/src/lib/schemas/profile";
+import { deliveryAddressSchema, type DeliveryAddressFormData } from "@/src/lib/schemas/delivery";
+import { useGeolocation } from "@/src/hooks/use-geolocation";
+import { useAddressStore } from "@/src/stores/address-store";
+import { PasswordInput } from "@/src/components/shared/password-input";
+
 import { OrdersView } from "@/src/components/orders/orders-view";
-
-const DUMMY_PROFILE = {
-  fullName: "Amara Okafor",
-  phone: "0803 123 4567",
-  email: "amara@example.com",
-  defaultAddress: "14B Akin Adesola St, Victoria Island",
-};
-
-type ProfileForm = typeof DUMMY_PROFILE;
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -22,33 +24,45 @@ function getInitials(name: string): string {
 }
 
 const darkInputClass =
-  "w-full rounded-xl border border-white/20 bg-white/10 px-4 py-4 text-sm text-white placeholder:text-white/40 focus:border-white/50 focus:outline-none";
+  "w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/50 focus:outline-none";
+
+const darkErrorClass = "mt-1 text-xs text-red-300";
 
 // ── Profile header card ───────────────────────────────────────────────────────
 
 function ProfileHeader() {
   const [editing, setEditing] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data: profile, isPending } = useQuery<ProfileForm>({
+  const { data: profile, isPending } = useQuery({
     queryKey: ["profile"],
-    queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 300));
-      return DUMMY_PROFILE;
+    queryFn: () => apiClient.getProfile(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    values: profile
+      ? { name: profile.name, email: profile.email, phone: profile.phone }
+      : undefined,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: ProfileFormData) =>
+      apiClient.updateProfile({ name: data.name, email: data.email, phone: data.phone }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["profile"], updated);
+      setEditing(false);
     },
   });
 
-  const { register, handleSubmit, reset } = useForm<ProfileForm>({
-    values: profile ?? DUMMY_PROFILE,
-  });
-
-  function onSave(data: ProfileForm) {
-    // TODO: apiClient.updateProfile(data)
-    console.log("save profile", data);
-    setEditing(false);
-  }
-
-  const displayName = profile?.fullName ?? DUMMY_PROFILE.fullName;
-  const initials = getInitials(displayName);
+  const displayName = profile?.name ?? "";
+  const initials = displayName ? getInitials(displayName) : "…";
 
   return (
     <div
@@ -61,18 +75,29 @@ function ProfileHeader() {
           className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-3"
           style={{ backgroundColor: "var(--rsc-dark)" }}
         >
-          {isPending ? "…" : initials}
+          {isPending ? <Loader2 className="w-6 h-6 animate-spin opacity-60" /> : initials}
         </div>
 
         {!editing && (
           <>
-            <h2 className="text-xl font-bold text-white">{displayName}</h2>
-            <p className="text-sm text-white/60 mt-0.5">{profile?.email}</p>
-            <p className="text-sm text-white/60">{profile?.phone}</p>
+            {isPending ? (
+              <div className="space-y-2 flex flex-col items-center">
+                <div className="h-5 w-36 bg-white/20 rounded animate-pulse" />
+                <div className="h-4 w-44 bg-white/10 rounded animate-pulse" />
+                <div className="h-4 w-32 bg-white/10 rounded animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-white">{displayName}</h2>
+                <p className="text-sm text-white/60 mt-0.5">{profile?.email}</p>
+                <p className="text-sm text-white/60">{profile?.phone}</p>
+              </>
+            )}
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              disabled={isPending}
+              className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
               style={{ backgroundColor: "var(--rsc-dark)" }}
             >
               ✏️ Edit Profile
@@ -83,31 +108,48 @@ function ProfileHeader() {
 
       {/* Edit form */}
       {editing && (
-        <form onSubmit={handleSubmit(onSave)} className="space-y-3">
-          <input
-            {...register("fullName")}
-            type="text"
-            placeholder="Full name"
-            className={darkInputClass}
-          />
-          <input
-            {...register("email")}
-            type="email"
-            placeholder="Email address"
-            className={darkInputClass}
-          />
-          <input
-            {...register("phone")}
-            type="tel"
-            placeholder="Phone number"
-            className={darkInputClass}
-          />
+        <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-3">
+          <div>
+            <input
+              {...register("name")}
+              type="text"
+              placeholder="Full name"
+              className={darkInputClass}
+            />
+            {errors.name && <p className={darkErrorClass}>{errors.name.message}</p>}
+          </div>
+          <div>
+            <input
+              {...register("email")}
+              type="email"
+              placeholder="Email address"
+              className={darkInputClass}
+            />
+            {errors.email && <p className={darkErrorClass}>{errors.email.message}</p>}
+          </div>
+          <div>
+            <input
+              {...register("phone")}
+              type="tel"
+              placeholder="Phone number (e.g. 08032000102)"
+              maxLength={14}
+              className={darkInputClass}
+            />
+            {errors.phone && <p className={darkErrorClass}>{errors.phone.message}</p>}
+          </div>
+
+          {mutation.isError && (
+            <p className="text-xs text-red-300 text-center">
+              {getMutationErrorMessage(mutation.error, {})}
+            </p>
+          )}
 
           <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={() => {
                 reset();
+                mutation.reset();
                 setEditing(false);
               }}
               className="flex-1 py-3 rounded-full text-sm font-semibold text-white border border-white/30 hover:bg-white/10 transition-colors"
@@ -116,10 +158,11 @@ function ProfileHeader() {
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              disabled={mutation.isPending}
+              className="flex-1 py-3 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
               style={{ backgroundColor: "#22c55e" }}
             >
-              Save Changes
+              {mutation.isPending ? "Saving…" : "Save Changes"}
             </button>
           </div>
         </form>
@@ -128,35 +171,359 @@ function ProfileHeader() {
   );
 }
 
+// ── Default address modal ─────────────────────────────────────────────────────
+
+const inputClass =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
+
+function DefaultAddressModal({ onClose }: { onClose: () => void }) {
+  const geo = useGeolocation();
+  const setDefaultAddress = useAddressStore((s) => s.setDefaultAddress);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<DeliveryAddressFormData>({ resolver: zodResolver(deliveryAddressSchema) });
+
+  const mutation = useMutation({
+    mutationFn: (data: DeliveryAddressFormData) => {
+      if (!geo.coords) throw new Error("Location required");
+      return apiClient.createDeliveryAddress({
+        ...data,
+        latitude: geo.coords.latitude,
+        longitude: geo.coords.longitude,
+        isDefault: true,
+      });
+    },
+    onSuccess: (saved) => {
+      setDefaultAddress({
+        label: saved.label,
+        addressLine: saved.addressLine,
+        city: saved.city,
+        state: saved.state,
+        latitude: saved.latitude,
+        longitude: saved.longitude,
+      });
+      reset();
+      geo.reset();
+      setTimeout(onClose, 2500);
+    },
+  });
+
+  function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target === e.currentTarget && !mutation.isPending) onClose();
+  }
+
+  const canSubmit = !!geo.coords && !geo.locating && !mutation.isPending;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+      onClick={handleBackdropClick}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-5 h-5" style={{ color: "var(--rsc-main)" }} />
+            <h2 className="text-base font-bold text-gray-900">Set Default Address</h2>
+          </div>
+          {!mutation.isPending && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        <div className="p-6">
+          {/* Pending */}
+          {mutation.isPending && (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <Loader2 className="w-12 h-12 animate-spin" style={{ color: "var(--rsc-main)" }} />
+              <p className="text-sm font-medium text-gray-600">Saving your address…</p>
+            </div>
+          )}
+
+          {/* Success */}
+          {mutation.isSuccess && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <MapPinCheck className="w-14 h-14 text-green-500" />
+              <p className="text-base font-bold text-gray-900">Address saved!</p>
+              <p className="text-sm text-gray-400 text-center">
+                Your default delivery address has been updated.
+              </p>
+            </div>
+          )}
+
+          {/* Form */}
+          {!mutation.isPending && !mutation.isSuccess && (
+            <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-3">
+              {/* Label */}
+              <div>
+                <input
+                  {...register("label")}
+                  placeholder='Label (e.g. "Home", "Work")'
+                  className={inputClass}
+                />
+                {errors.label && (
+                  <p className="mt-1 text-xs text-red-500">{errors.label.message}</p>
+                )}
+              </div>
+
+              {/* Address line */}
+              <div>
+                <input
+                  {...register("addressLine")}
+                  placeholder="Street address"
+                  className={inputClass}
+                />
+                {errors.addressLine && (
+                  <p className="mt-1 text-xs text-red-500">{errors.addressLine.message}</p>
+                )}
+              </div>
+
+              {/* City + State */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <input {...register("city")} placeholder="City" className={inputClass} />
+                  {errors.city && (
+                    <p className="mt-1 text-xs text-red-500">{errors.city.message}</p>
+                  )}
+                </div>
+                <div>
+                  <input {...register("state")} placeholder="State" className={inputClass} />
+                  {errors.state && (
+                    <p className="mt-1 text-xs text-red-500">{errors.state.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Geolocation */}
+              <button
+                type="button"
+                onClick={geo.detect}
+                disabled={geo.locating}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 border-2"
+                style={
+                  geo.coords
+                    ? { borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }
+                    : { borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }
+                }
+              >
+                {geo.locating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Getting location…
+                  </>
+                ) : geo.coords ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <span className="text-green-600">Location pinned</span>
+                  </>
+                ) : (
+                  <>
+                    <MapPin className="w-4 h-4" />
+                    Pin My Location
+                  </>
+                )}
+              </button>
+
+              {geo.error && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
+                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-600">{geo.error}</p>
+                </div>
+              )}
+
+              {!geo.coords && !geo.error && (
+                <p className="text-xs text-center text-gray-400">
+                  Pin your location to attach coordinates to this address
+                </p>
+              )}
+
+              {mutation.isError && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
+                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-600">
+                    {getMutationErrorMessage(mutation.error, {})}
+                  </p>
+                </div>
+              )}
+
+              {!canSubmit && !geo.error && (
+                <p className="text-xs text-center text-gray-400">Pin your location before saving</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                className="w-full py-3 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: "var(--rsc-main)" }}
+              >
+                Save as Default Address
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Default address card ──────────────────────────────────────────────────────
 
 function DefaultAddressCard() {
-  const [address, setAddress] = useState(DUMMY_PROFILE.defaultAddress);
+  const [open, setOpen] = useState(false);
 
   return (
-    <Card>
-      <p
-        className="text-xs font-bold uppercase tracking-widest mb-3"
-        style={{ color: "var(--rsc-muted)" }}
-      >
-        Default Delivery Address
-      </p>
-      <div className="flex gap-2">
-        <input
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="Enter your default address"
-          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
-        />
-        <button
-          type="button"
-          className="flex-shrink-0 px-4 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "var(--rsc-main)" }}
-        >
-          Set Default
-        </button>
+    <>
+      <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-gray-900">Default Delivery Address</h3>
+            <p className="text-sm text-gray-400 mt-0.5">Your saved address for quick checkout.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-sm font-semibold hover:underline flex-shrink-0"
+            style={{ color: "var(--rsc-main)" }}
+          >
+            Set Address
+          </button>
+        </div>
+      </Card>
+
+      {open && <DefaultAddressModal onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+// ── Change password modal ─────────────────────────────────────────────────────
+
+function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ChangePasswordFormData>({ resolver: zodResolver(changePasswordSchema) });
+
+  const mutation = useMutation({
+    mutationFn: (data: ChangePasswordFormData) =>
+      apiClient.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      }),
+    onSuccess: () => {
+      reset();
+      setTimeout(onClose, 2500);
+    },
+  });
+
+  function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target === e.currentTarget && !mutation.isPending) onClose();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+      onClick={handleBackdropClick}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <KeyRound className="w-5 h-5" style={{ color: "var(--rsc-main)" }} />
+            <h2 className="text-base font-bold text-gray-900">Change Password</h2>
+          </div>
+          {!mutation.isPending && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        <div className="p-6">
+          {/* Pending */}
+          {mutation.isPending && (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <Loader2 className="w-12 h-12 animate-spin" style={{ color: "var(--rsc-main)" }} />
+              <p className="text-sm font-medium text-gray-600">Updating your password…</p>
+            </div>
+          )}
+
+          {/* Success */}
+          {mutation.isSuccess && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <CheckCircle2 className="w-14 h-14 text-green-500" />
+              <p className="text-base font-bold text-gray-900">Password updated!</p>
+              <p className="text-sm text-gray-400 text-center">
+                Your password has been changed successfully.
+              </p>
+            </div>
+          )}
+
+          {/* Form — idle or after error */}
+          {!mutation.isPending && !mutation.isSuccess && (
+            <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
+              <div>
+                <PasswordInput {...register("currentPassword")} placeholder="Current password" />
+                {errors.currentPassword && (
+                  <p className="mt-1 text-xs text-red-500">{errors.currentPassword.message}</p>
+                )}
+              </div>
+              <div>
+                <PasswordInput {...register("newPassword")} placeholder="New password" />
+                {errors.newPassword && (
+                  <p className="mt-1 text-xs text-red-500">{errors.newPassword.message}</p>
+                )}
+              </div>
+              <div>
+                <PasswordInput
+                  {...register("confirmNewPassword")}
+                  placeholder="Confirm new password"
+                />
+                {errors.confirmNewPassword && (
+                  <p className="mt-1 text-xs text-red-500">{errors.confirmNewPassword.message}</p>
+                )}
+              </div>
+
+              {mutation.isError && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
+                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-600">
+                    {getMutationErrorMessage(mutation.error, {
+                      401: "Current password is incorrect.",
+                    })}
+                  </p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "var(--rsc-main)" }}
+              >
+                Update Password
+              </button>
+            </form>
+          )}
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -164,87 +531,28 @@ function DefaultAddressCard() {
 
 function ChangePasswordCard() {
   const [open, setOpen] = useState(false);
-  const [currentPw, setCurrentPw] = useState("");
-  const [newPw, setNewPw] = useState("");
-  const [confirmPw, setConfirmPw] = useState("");
-  const [error, setError] = useState("");
-
-  const fieldClass =
-    "w-full rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (newPw.length < 8) {
-      setError("New password must be at least 8 characters.");
-      return;
-    }
-    if (newPw !== confirmPw) {
-      setError("Passwords do not match.");
-      return;
-    }
-    setError("");
-    // TODO: apiClient.changePassword({ currentPassword: currentPw, newPassword: newPw })
-    console.log("change password");
-    setOpen(false);
-    setCurrentPw("");
-    setNewPw("");
-    setConfirmPw("");
-  }
 
   return (
-    <Card>
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-gray-900">Change password</h3>
-          <p className="text-sm text-gray-400 mt-0.5">Update your account password.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="text-sm font-semibold hover:underline flex-shrink-0"
-          style={{ color: "var(--rsc-main)" }}
-        >
-          {open ? "Cancel" : "Change"}
-        </button>
-      </div>
-
-      {open && (
-        <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-          <input
-            value={currentPw}
-            onChange={(e) => setCurrentPw(e.target.value)}
-            type="password"
-            placeholder="Current password"
-            className={fieldClass}
-            required
-          />
-          <input
-            value={newPw}
-            onChange={(e) => setNewPw(e.target.value)}
-            type="password"
-            placeholder="New password"
-            className={fieldClass}
-            required
-          />
-          <input
-            value={confirmPw}
-            onChange={(e) => setConfirmPw(e.target.value)}
-            type="password"
-            placeholder="Confirm new password"
-            className={fieldClass}
-            required
-          />
-          {error && <p className="text-xs text-red-500">{error}</p>}
+    <>
+      <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-gray-900">Change password</h3>
+            <p className="text-sm text-gray-400 mt-0.5">Update your account password.</p>
+          </div>
           <button
-            type="submit"
-            className="w-full py-3 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "var(--rsc-main)" }}
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-sm font-semibold hover:underline flex-shrink-0"
+            style={{ color: "var(--rsc-main)" }}
           >
-            Update password
+            Change
           </button>
-        </form>
-      )}
-    </Card>
+        </div>
+      </Card>
+
+      {open && <ChangePasswordModal onClose={() => setOpen(false)} />}
+    </>
   );
 }
 
