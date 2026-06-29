@@ -144,7 +144,7 @@ describe("Customer registration HTTP contract", () => {
   it("verifies a six-digit phone OTP", async () => {
     await request(app.getHttpServer() as Server)
       .post("/api/v1/auth/verify-user")
-      .send({ channel: "phone", phone: "+2348031234567", code: "482901" })
+      .send({ code: "482901" })
       .expect(200)
       .expect({
         data: {
@@ -268,7 +268,7 @@ describe("Customer registration HTTP contract", () => {
 
     await request(app.getHttpServer() as Server)
       .post("/api/v1/auth/verify-user")
-      .send({ channel: "email", email: "ADA@EXAMPLE.COM", code: "193847" })
+      .send({ code: "193847" })
       .expect(200)
       .expect({
         data: {
@@ -283,8 +283,6 @@ describe("Customer registration HTTP contract", () => {
       });
 
     expect(authService.verifyUser).toHaveBeenCalledWith({
-      channel: "email",
-      email: "ada@example.com",
       code: "193847",
     });
   });
@@ -292,7 +290,7 @@ describe("Customer registration HTTP contract", () => {
   it("rejects non-six-digit OTP values", async () => {
     await request(app.getHttpServer() as Server)
       .post("/api/v1/auth/verify-user")
-      .send({ channel: "phone", phone: "08031234567", code: "12345" })
+      .send({ code: "12345" })
       .expect(400);
   });
 });
