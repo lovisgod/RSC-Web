@@ -1,8 +1,16 @@
 export type FulfillmentMode = "delivery" | "takeout";
 
+export interface DeliveryZone {
+  id: string;
+  name: string;
+}
+
 export interface DeliveryForm {
   mode: FulfillmentMode;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
+  zone: DeliveryZone | null;
   onBehalf: boolean;
   instructions: string;
 }
@@ -22,6 +30,9 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
 export const DEFAULT_DELIVERY: DeliveryForm = {
   mode: "delivery",
   address: "12 Admiralty Way, Lekki Phase 1, Lagos",
+  latitude: null,
+  longitude: null,
+  zone: null,
   onBehalf: false,
   instructions: "",
 };

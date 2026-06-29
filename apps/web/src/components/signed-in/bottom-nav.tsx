@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { cartItemCount } from "@/src/lib/data/cart";
 import { useCartStore } from "@/src/stores/cart-store";
 
 const navItems = [
@@ -15,7 +16,7 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const itemCount = useCartStore((s) => s.itemCount);
+  const itemCount = useCartStore((s) => cartItemCount(s.cart));
 
   return (
     <nav

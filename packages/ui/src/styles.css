@@ -200,3 +200,51 @@ a {
   margin: 0.45rem 0;
   font-size: clamp(1.55rem, 4vw, 2.25rem);
 }
+
+/* ── Input / Field ─────────────────────────────────────────── */
+
+.rsc-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.rsc-field__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--rsc-muted);
+}
+
+.rsc-field__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--rsc-muted);
+}
+
+.rsc-field__error {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--rsc-danger);
+}
+
+.rsc-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  color: var(--rsc-ink);
+  background: var(--rsc-panel);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.rsc-input:focus {
+  border-color: var(--rsc-main);
+}
+
+.rsc-input--error {
+  border-color: var(--rsc-danger);
+}

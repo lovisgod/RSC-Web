@@ -1,16 +1,20 @@
 "use client";
 
 import { Button } from "@rsc/ui";
+import { useMutation } from "@tanstack/react-query";
+import { CheckCircle2, Loader2, MapPin, XCircle } from "lucide-react";
 import { useState } from "react";
 
+import { apiClient } from "@/src/lib/api";
 import { cartSubtotalMinor, formatNaira } from "@/src/lib/data/cart";
 import {
-  DEFAULT_DELIVERY,
   VAT_RATE,
   type DeliveryForm,
+  type DeliveryZone,
   type FulfillmentMode,
 } from "@/src/lib/data/checkout";
 import { useCart } from "@/src/hooks/use-cart";
+import { useAddressStore } from "@/src/stores/address-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -39,19 +43,100 @@ export function FulfillmentStep({
   onComplete: (data: DeliveryForm) => void;
 }) {
   const { data: cart } = useCart();
+  const savedDefault = useAddressStore((s) => s.defaultAddress);
 
   const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
   const [address, setAddress] = useState(initial.address);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [instructions, setInstructions] = useState(initial.instructions);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+    initial.latitude != null && initial.longitude != null
+      ? { latitude: initial.latitude, longitude: initial.longitude }
+      : null,
+  );
+  const [zone, setZone] = useState<DeliveryZone | null>(initial.zone);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const validateMutation = useMutation({
+    mutationFn: (input: { latitude: number; longitude: number }) =>
+      apiClient.validateAddress(input),
+    onSuccess: (data) => {
+      if (data.deliverable && data.zone) {
+        setZone(data.zone);
+        setLocationError(null);
+      } else {
+        setZone(null);
+        setLocationError("Sorry, we don't deliver to your location yet.");
+      }
+    },
+    onError: () => {
+      setZone(null);
+      setLocationError("Could not validate your address. Please try again.");
+    },
+  });
+
+  function handleDetectLocation() {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setLocating(true);
+    setLocationError(null);
+    setZone(null);
+    validateMutation.reset();
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCoords({ latitude, longitude });
+        setLocating(false);
+        validateMutation.mutate({ latitude, longitude });
+      },
+      (error) => {
+        setLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError(
+            "Location access denied. Please enable location permissions and try again.",
+          );
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setLocationError("Your location could not be determined. Please try again.");
+        } else {
+          setLocationError("Location request timed out. Please try again.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
+  function resetValidation() {
+    setZone(null);
+    setCoords(null);
+    setLocationError(null);
+    validateMutation.reset();
+  }
 
   const subtotal = cart ? cartSubtotalMinor(cart) : 0;
   const deliveryFee = mode === "delivery" && cart ? cart.deliveryFeeMinor : 0;
   const vat = Math.round((subtotal + deliveryFee) * VAT_RATE);
   const grandTotal = subtotal + deliveryFee + vat;
 
+  const isDetecting = locating || validateMutation.isPending;
+  const isValidated = zone !== null;
+  const canProceed = mode === "takeout" || isValidated;
+
   function handleSubmit() {
-    onComplete({ mode, address, onBehalf, instructions });
+    if (!canProceed) return;
+    onComplete({
+      mode,
+      address,
+      latitude: coords?.latitude ?? null,
+      longitude: coords?.longitude ?? null,
+      zone,
+      onBehalf,
+      instructions,
+    });
   }
 
   return (
@@ -78,7 +163,7 @@ export function FulfillmentStep({
         <div>
           <SectionLabel icon="/icons/png/round-pushpin_1f4cd.png" text="Delivery Address" />
           <div className="bg-blue-50 rounded-2xl p-4 space-y-3">
-            {/* Address input */}
+            {/* Address text input */}
             <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-transparent focus-within:border-[var(--rsc-main)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -94,15 +179,79 @@ export function FulfillmentStep({
               />
             </div>
 
-            {/* Use default address */}
-            <Button
-              tone="navy"
-              fullWidth
-              type="button"
-              onClick={() => setAddress(DEFAULT_DELIVERY.address)}
-            >
-              Use Default Address
-            </Button>
+            {/* Action buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                tone="quiet"
+                fullWidth
+                type="button"
+                disabled={!savedDefault}
+                onClick={() => {
+                  if (!savedDefault) return;
+                  setAddress(
+                    `${savedDefault.addressLine}, ${savedDefault.city}, ${savedDefault.state}`,
+                  );
+                  setCoords({
+                    latitude: savedDefault.latitude,
+                    longitude: savedDefault.longitude,
+                  });
+                  setZone(null);
+                  setLocationError(null);
+                  validateMutation.mutate({
+                    latitude: savedDefault.latitude,
+                    longitude: savedDefault.longitude,
+                  });
+                }}
+              >
+                {savedDefault ? `Use ${savedDefault.label}` : "No Default Set"}
+              </Button>
+
+              <button
+                type="button"
+                onClick={handleDetectLocation}
+                disabled={isDetecting}
+                className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                style={{ backgroundColor: "var(--rsc-main)" }}
+              >
+                {isDetecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {locating ? "Locating…" : "Validating…"}
+                  </>
+                ) : (
+                  <>
+                    <MapPin className="w-4 h-4" />
+                    Use My Location
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Validation success */}
+            {isValidated && zone && (
+              <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-green-800">Deliverable</p>
+                  <p className="text-xs text-green-600 mt-0.5">{zone.name} zone</p>
+                </div>
+              </div>
+            )}
+
+            {/* Validation error */}
+            {locationError && (
+              <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-600 leading-relaxed">{locationError}</p>
+              </div>
+            )}
+
+            {/* Idle hint */}
+            {!isValidated && !locationError && !isDetecting && (
+              <p className="text-xs text-center text-gray-400">
+                Tap &quot;Use My Location&quot; to confirm your delivery zone
+              </p>
+            )}
 
             {/* On behalf checkbox */}
             <label className="flex items-center gap-3 cursor-pointer">
@@ -132,7 +281,7 @@ export function FulfillmentStep({
         />
       </div>
 
-      {/* Price breakdown — shown on mobile; desktop has the sidebar */}
+      {/* Price breakdown — mobile only */}
       <div className="space-y-2 lg:hidden">
         <h3 className="font-bold text-gray-900 text-base">Price Breakdown</h3>
         <div className="space-y-1.5 text-sm">
@@ -156,9 +305,16 @@ export function FulfillmentStep({
       </div>
 
       {/* CTA */}
-      <Button tone="navy" fullWidth type="button" onClick={handleSubmit}>
-        Proceed to Payment 🚀
-      </Button>
+      <div className="space-y-2">
+        {mode === "delivery" && !isValidated && (
+          <p className="text-xs text-center text-gray-400">
+            Validate your delivery location to continue
+          </p>
+        )}
+        <Button tone="navy" fullWidth type="button" onClick={handleSubmit} disabled={!canProceed}>
+          Proceed to Payment 🚀
+        </Button>
+      </div>
     </div>
   );
 }

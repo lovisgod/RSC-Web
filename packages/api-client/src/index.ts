@@ -2,8 +2,18 @@ import {
   adminOverviewSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
+  changePasswordInputSchema,
+  changePasswordResultSchema,
+  userProfileSchema,
+  updateProfileInputSchema,
+  createDeliveryAddressInputSchema,
+  deliveryAddressSummarySchema,
+  validateAddressInputSchema,
+  validateAddressResultSchema,
   forgotPasswordInputSchema,
   forgotPasswordResultSchema,
+  menuCategorySchema,
+  menuItemSchema,
   resetPasswordInputSchema,
   resetPasswordResultSchema,
   loginInputSchema,
@@ -16,8 +26,18 @@ import {
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminOverview,
+  type ChangePasswordInput,
+  type ChangePasswordResult,
+  type UserProfile,
+  type UpdateProfileInput,
+  type CreateDeliveryAddressInput,
+  type DeliveryAddressSummary,
+  type ValidateAddressInput,
+  type ValidateAddressResult,
   type ForgotPasswordInput,
   type ForgotPasswordResult,
+  type MenuCategorySummary,
+  type MenuItemSummary,
   type ResetPasswordInput,
   type ResetPasswordResult,
   type LoginInput,
@@ -148,8 +168,55 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    getProfile(): Promise<UserProfile> {
+      return request("/api/v1/users/me", userProfileSchema);
+    },
+    updateProfile(input: UpdateProfileInput): Promise<UserProfile> {
+      const body = updateProfileInputSchema.parse(input);
+
+      return request("/api/v1/users/me", userProfileSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    createDeliveryAddress(input: CreateDeliveryAddressInput): Promise<DeliveryAddressSummary> {
+      const body = createDeliveryAddressInputSchema.parse(input);
+
+      return request("/api/v1/delivery/addresses", deliveryAddressSummarySchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    validateAddress(input: ValidateAddressInput): Promise<ValidateAddressResult> {
+      const body = validateAddressInputSchema.parse(input);
+
+      return request("/api/v1/delivery/validate-address", validateAddressResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    changePassword(input: ChangePasswordInput): Promise<ChangePasswordResult> {
+      const body = changePasswordInputSchema.parse(input);
+
+      return request("/api/v1/auth/change-password", changePasswordResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     listOutlets(): Promise<OutletSummary[]> {
       return request("/api/v1/outlets", z.array(outletSummarySchema));
+    },
+    listMenuCategories(outletId: string): Promise<MenuCategorySummary[]> {
+      return request(
+        `/api/v1/menu-categories?outletId=${encodeURIComponent(outletId)}`,
+        z.array(menuCategorySchema),
+      );
+    },
+    listMenuItems(outletId: string): Promise<MenuItemSummary[]> {
+      return request(
+        `/api/v1/menu-items?outletId=${encodeURIComponent(outletId)}`,
+        z.array(menuItemSchema),
+      );
     },
     getAdminOverview(): Promise<AdminOverview> {
       return request("/api/v1/admin/overview", adminOverviewSchema);

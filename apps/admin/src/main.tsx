@@ -1,20 +1,20 @@
 import "@rsc/ui/styles.css";
 import "./styles.css";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import { App } from "./app";
-
-const container = document.getElementById("root");
-
-if (!container) {
-  throw new Error("Missing #root container");
-}
+import { toastBus } from "./lib/toast-bus";
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error: Error) => {
+      toastBus.emit(error.message, "error");
+    },
+  }),
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
@@ -23,6 +23,12 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const container = document.getElementById("root");
+
+if (!container) {
+  throw new Error("Missing #root container");
+}
 
 createRoot(container, {
   onRecoverableError(error, errorInfo) {

@@ -55,8 +55,8 @@ export function CartView() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 items-start">
-      <div className="flex-1 space-y-4">
+    <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
+      <div className="w-full flex-1 space-y-4">
         {cart.groups.map((group) => (
           <CartOutletGroupCard key={group.outletId} group={group} />
         ))}
