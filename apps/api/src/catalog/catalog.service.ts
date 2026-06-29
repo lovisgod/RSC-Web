@@ -186,11 +186,13 @@ export class CatalogService {
     });
   }
 
-  async listPublicItems(outletId?: string): Promise<MenuItem[]> {
-    return this.items.find({
+  async listPublicItems(outletId?: string): Promise<PublicMenuItemCatalog[]> {
+    const items = await this.items.find({
       ...(outletId ? { where: { outletId } } : {}),
       order: { sortOrder: "ASC", name: "ASC" },
     });
+
+    return this.attachItemCatalog(items);
   }
 
   async createItem(user: AuthenticatedUser, input: CreateMenuItemDto): Promise<MenuItem> {
@@ -223,8 +225,11 @@ export class CatalogService {
     return item;
   }
 
-  async getPublicItem(id: string): Promise<MenuItem> {
-    return this.requireItem(id);
+  async getPublicItem(id: string): Promise<PublicMenuItemCatalog> {
+    const item = await this.requireItem(id);
+    const [catalog] = await this.attachItemCatalog([item]);
+
+    return catalog!;
   }
 
   async updateItem(
@@ -594,6 +599,48 @@ export class CatalogService {
       ),
     }));
   }
+
+  private async attachItemCatalog(items: MenuItem[]): Promise<PublicMenuItemCatalog[]> {
+    if (!items.length) {
+      return [];
+    }
+
+    const categoryIds = [...new Set(items.map((item) => item.categoryId))];
+    const itemIds = items.map((item) => item.id);
+    const [categories, menuItemModifierGroups] = await Promise.all([
+      this.categories.find({ where: { id: In(categoryIds) } }),
+      this.itemGroups.find({
+        where: { menuItemId: In(itemIds) },
+        order: { sortOrder: "ASC" },
+      }),
+    ]);
+    const groupIds = [...new Set(menuItemModifierGroups.map((itemGroup) => itemGroup.groupId))];
+    const [itemModifierGroups, itemModifiers] = groupIds.length
+      ? await Promise.all([
+          this.groups.find({
+            where: { id: In(groupIds) },
+            order: { sortOrder: "ASC", name: "ASC" },
+          }),
+          this.modifiers.find({
+            where: { groupId: In(groupIds) },
+            order: { sortOrder: "ASC", name: "ASC" },
+          }),
+        ])
+      : [[], []];
+
+    return items.map((item) => {
+      const links = menuItemModifierGroups.filter((itemGroup) => itemGroup.menuItemId === item.id);
+      const linkedGroupIds = new Set(links.map((link) => link.groupId));
+
+      return {
+        ...item,
+        category: categories.find((category) => category.id === item.categoryId) ?? null,
+        menuItemModifierGroups: links,
+        itemModifierGroups: itemModifierGroups.filter((group) => linkedGroupIds.has(group.id)),
+        itemModifiers: itemModifiers.filter((modifier) => linkedGroupIds.has(modifier.groupId)),
+      };
+    });
+  }
 }
 
 export interface PublicOutletCatalog extends Outlet {
@@ -602,4 +649,11 @@ export interface PublicOutletCatalog extends Outlet {
   itemModifierGroups: ItemModifierGroup[];
   itemModifiers: ItemModifier[];
   menuItemModifierGroups: MenuItemModifierGroup[];
+}
+
+export interface PublicMenuItemCatalog extends MenuItem {
+  category: MenuCategory | null;
+  menuItemModifierGroups: MenuItemModifierGroup[];
+  itemModifierGroups: ItemModifierGroup[];
+  itemModifiers: ItemModifier[];
 }
