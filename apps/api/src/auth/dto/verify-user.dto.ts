@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
-import { IsEmail, IsIn, IsString, Matches, ValidateIf } from "class-validator";
+import { Allow, IsEmail, IsIn, IsString, Matches, ValidateIf } from "class-validator";
 
 export type VerificationChannel = "phone" | "email";
 
@@ -10,6 +10,15 @@ export class VerifyUserDto {
   @IsString()
   @Matches(/^\d{6}$/)
   code!: string;
+
+  @Allow()
+  channel?: unknown;
+
+  @Allow()
+  phone?: unknown;
+
+  @Allow()
+  email?: unknown;
 }
 
 export class ResendVerificationCodeDto {
