@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
@@ -44,5 +55,13 @@ export class UsersController {
   @ApiMessage("Rider created successfully")
   createRider(@Req() request: AuthenticatedRequest, @Body() input: CreateRiderDto) {
     return this.users.createRider(request.user!, input);
+  }
+
+  @Delete(":id")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("User deleted successfully")
+  deleteUser(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
+    return this.users.deleteUser(request.user!, id);
   }
 }

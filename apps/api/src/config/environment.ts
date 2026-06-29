@@ -75,9 +75,9 @@ const environmentSchema = Joi.object<Environment>({
   PII_HASH_PEPPER: Joi.string().min(32).required(),
   OTP_PEPPER: Joi.string().min(32).required(),
   JWT_SECRET: Joi.string().min(32).required(),
-  ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).default(900),
+  ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).default(604_800),
   REFRESH_TOKEN_TTL_SECONDS: Joi.number().integer().min(3_600).default(604_800),
-  ADMIN_INACTIVITY_TIMEOUT_SECONDS: Joi.number().integer().min(60).default(1_800),
+  ADMIN_INACTIVITY_TIMEOUT_SECONDS: Joi.number().integer().min(60).default(604_800),
   SMS_PROVIDER: Joi.string().valid("noop", "termii").default("noop"),
   TERMII_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })

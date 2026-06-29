@@ -30,6 +30,7 @@ export interface ProfileResult {
   name: string;
   role: UserRole;
   outletId: string | null;
+  avatarUrl: string | null;
   email: string;
   phone: string;
   verificationChannels: { email: boolean; phone: boolean };
@@ -75,6 +76,10 @@ export class UsersService {
 
     if (input.name !== undefined) {
       account.name = input.name;
+    }
+
+    if (input.avatarUrl !== undefined) {
+      account.avatarUrl = input.avatarUrl;
     }
 
     if (input.phone !== undefined) {
@@ -232,6 +237,26 @@ export class UsersService {
     };
   }
 
+  async deleteUser(actor: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
+    if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only super admins can delete users");
+    }
+
+    if (actor.id === id) {
+      throw new BadRequestException("Super admin cannot delete their own account");
+    }
+
+    const user = await this.users.findOneBy({ id });
+
+    if (!user) {
+      throw new BadRequestException("User not found");
+    }
+
+    await this.users.softRemove(user);
+
+    return { deleted: true };
+  }
+
   private async requireUser(id: string): Promise<Customer> {
     const user = await this.users.findOneBy({ id });
 
@@ -284,6 +309,7 @@ export class UsersService {
       name: user.name,
       role: user.role,
       outletId: user.outletId,
+      avatarUrl: user.avatarUrl,
       email: this.piiCrypto.decrypt(user.emailEncrypted),
       phone: this.piiCrypto.decrypt(user.phoneEncrypted),
       verificationChannels: {
