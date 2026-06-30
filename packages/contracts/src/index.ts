@@ -1,8 +1,9 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
 export const customerStatusSchema = z.enum(["UNVERIFIED", "ACTIVE", "SUSPENDED"]);
+export const userRoleSchema = z.enum(["SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"]);
 
 export const apiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
   z.object({
@@ -81,9 +82,6 @@ export const resendVerificationResultSchema = z.object({
   otpExpiresInSeconds: z.int().positive(),
 });
 
-export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
-export const userVerificationResponseSchema = apiResponseSchema(userVerificationResultSchema);
-
 export const resetPasswordInputSchema = z
   .object({
     identifier: z.string().min(1),
@@ -94,13 +92,13 @@ export const resetPasswordInputSchema = z
   .strict();
 
 export const resetPasswordResultSchema = z.object({
-  reset: z.boolean(),
+  passwordChanged: z.boolean(),
 });
 
 export const loginInputSchema = z
   .object({
-    identifier: z.string().min(1),
-    password: z.string().min(1),
+    identifier: z.string().trim().toLowerCase().min(1),
+    password: z.string().min(8).max(128),
   })
   .strict();
 
@@ -114,11 +112,62 @@ export const forgotPasswordResultSchema = z.object({
 export const loginResultSchema = z.object({
   user: z.object({
     id: z.uuid(),
-    role: z.string(),
+    role: userRoleSchema,
   }),
   accessTokenExpiresInSeconds: z.int().positive(),
   refreshTokenExpiresInSeconds: z.int().positive(),
 });
+
+export const logoutResultSchema = z.object({
+  loggedOut: z.literal(true),
+});
+
+export const createAdminInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+    outletId: z.uuid(),
+  })
+  .strict();
+
+export const adminResultSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  role: z.literal("ADMIN"),
+  outletId: z.uuid(),
+  temporaryPassword: z.string().min(8),
+});
+
+export const resendVerificationCodeInputSchema = z.discriminatedUnion("channel", [
+  z
+    .object({
+      channel: z.literal("phone"),
+      phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+    })
+    .strict(),
+  z
+    .object({
+      channel: z.literal("email"),
+      email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    })
+    .strict(),
+]);
+
+export const resendVerificationCodeResultSchema = z.object({
+  sent: z.literal(true),
+  channel: verificationChannelSchema,
+  otpExpiresInSeconds: z.int().positive(),
+});
+
+export const registrationResponseSchema = apiResponseSchema(registrationResultSchema);
+export const userVerificationResponseSchema = apiResponseSchema(userVerificationResultSchema);
+export const resendVerificationCodeResponseSchema = apiResponseSchema(
+  resendVerificationCodeResultSchema,
+);
+export const loginResponseSchema = apiResponseSchema(loginResultSchema);
+export const logoutResponseSchema = apiResponseSchema(logoutResultSchema);
+export const adminResponseSchema = apiResponseSchema(adminResultSchema);
 
 export const currencySchema = z.literal("NGN");
 
@@ -207,6 +256,29 @@ export const changePasswordResultSchema = z.object({
   passwordChanged: z.boolean(),
 });
 
+export const initiatePaymentInputSchema = z
+  .object({
+    items: z
+      .array(
+        z.object({
+          menuItemId: z.uuid(),
+          quantity: z.int().positive(),
+          modifiers: z.array(z.object({ modifierId: z.uuid() })),
+          customerNote: z.string().optional(),
+        }),
+      )
+      .min(1),
+    deliveryMode: z.enum(["DELIVERY", "TAKEOUT"]),
+    deliveryAddress: z.string().optional(),
+    deliveryLatitude: z.number().optional(),
+    deliveryLongitude: z.number().optional(),
+  })
+  .strict();
+
+export const initiatePaymentResultSchema = z.object({
+  orderId: z.uuid(),
+});
+
 export const menuCategorySchema = z.object({
   id: z.uuid(),
   outletId: z.uuid(),
@@ -220,13 +292,22 @@ export const menuItemSchema = z.object({
   outletId: z.uuid(),
   categoryId: z.uuid(),
   name: z.string().min(1),
-  description: z.string(),
+  description: z.string().nullable(),
   imageUrl: z.url().nullable(),
   priceMinor: z.int().nonnegative(),
   currency: currencySchema,
   isAvailable: z.boolean(),
   sortOrder: z.int().nonnegative(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
 });
+
+export const updateMenuItemAvailabilityInputSchema = z
+  .object({
+    isAvailable: z.boolean(),
+  })
+  .strict();
 
 export const masterOrderStatusSchema = z.enum([
   "PENDING_PAYMENT",
@@ -247,6 +328,19 @@ export const subOrderStatusSchema = z.enum([
   "DISPATCHED",
   "REJECTED",
 ]);
+
+export const orderSummarySchema = z.object({
+  id: z.uuid(),
+  status: masterOrderStatusSchema,
+  deliveryAddress: z.string().nullable(),
+  subOrders: z.array(
+    z.object({
+      outletName: z.string(),
+    }),
+  ),
+  totalAmountMinor: z.int().nonnegative(),
+  createdAt: z.iso.datetime(),
+});
 
 export const adminOverviewSchema = z.object({
   generatedAt: z.iso.datetime(),
@@ -271,14 +365,22 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordInputSchema>;
 export type ForgotPasswordResult = z.infer<typeof forgotPasswordResultSchema>;
 export type ResendVerificationInput = z.infer<typeof resendVerificationInputSchema>;
 export type ResendVerificationResult = z.infer<typeof resendVerificationResultSchema>;
-export type LoginInput = z.infer<typeof loginInputSchema>;
-export type LoginResult = z.infer<typeof loginResultSchema>;
+export type UserRole = z.infer<typeof userRoleSchema>;
 export type RegisterCustomerInput = z.infer<typeof registerCustomerInputSchema>;
 export type RegistrationResult = z.infer<typeof registrationResultSchema>;
 export type VerificationChannel = z.infer<typeof verificationChannelSchema>;
 export type VerifyUserInput = z.infer<typeof verifyUserInputSchema>;
 export type UserVerificationResult = z.infer<typeof userVerificationResultSchema>;
+export type LoginInput = z.infer<typeof loginInputSchema>;
+export type LoginResult = z.infer<typeof loginResultSchema>;
+export type LogoutResult = z.infer<typeof logoutResultSchema>;
+export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
+export type AdminResult = z.infer<typeof adminResultSchema>;
+export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
+export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
+export type MenuItem = z.infer<typeof menuItemSchema>;
+export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
 export type AdminOverview = z.infer<typeof adminOverviewSchema>;
@@ -290,5 +392,8 @@ export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
 export type ValidateAddressResult = z.infer<typeof validateAddressResultSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
 export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
+export type InitiatePaymentInput = z.infer<typeof initiatePaymentInputSchema>;
+export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
+export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;

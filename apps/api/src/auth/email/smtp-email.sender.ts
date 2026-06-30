@@ -5,7 +5,12 @@ import type Mail from "nodemailer/lib/mailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 
 import type { ApplicationConfig } from "../../config/configuration";
-import type { EmailSender, SendWelcomeVerificationEmailInput } from "./email-sender";
+import type {
+  EmailSender,
+  SendPasswordResetEmailInput,
+  SendTemporaryPasswordEmailInput,
+  SendWelcomeVerificationEmailInput,
+} from "./email-sender";
 
 @Injectable()
 export class SmtpEmailSender implements EmailSender {
@@ -61,6 +66,81 @@ export class SmtpEmailSender implements EmailSender {
         `SMTP rejected welcome email: ${JSON.stringify({ message: (error as Error).message })}`,
       );
       throw new BadGatewayException("Unable to send email verification code");
+    }
+  }
+
+  async sendPasswordReset(input: SendPasswordResetEmailInput): Promise<void> {
+    const subject = "Reset your RSC password";
+    const html = `
+      <p>Hi ${this.escapeHtml(input.name)},</p>
+      <p>Your RSC password reset code is <strong>${input.code}</strong>.</p>
+      <p>It expires in ${input.expiresInMinutes} minutes.</p>
+    `;
+
+    this.logger.log(
+      `Sending SMTP password reset email: ${JSON.stringify({
+        host: this.config.host,
+        port: this.config.port,
+        from: this.config.from,
+        to: input.email,
+        subject,
+      })}`,
+    );
+
+    try {
+      const info: SMTPTransport.SentMessageInfo = await this.transporter.sendMail({
+        from: this.config.from,
+        to: input.email,
+        subject,
+        html,
+      });
+
+      this.logger.log(
+        `SMTP accepted password reset email: ${JSON.stringify({ messageId: info.messageId })}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `SMTP rejected password reset email: ${JSON.stringify({ message: (error as Error).message })}`,
+      );
+      throw new BadGatewayException("Unable to send password reset email");
+    }
+  }
+
+  async sendTemporaryPassword(input: SendTemporaryPasswordEmailInput): Promise<void> {
+    const subject = `Your RSC ${input.role} account`;
+    const html = `
+      <p>Hi ${this.escapeHtml(input.name)},</p>
+      <p>Your RSC ${this.escapeHtml(input.role)} account has been created.</p>
+      <p>Your temporary password is <strong>${this.escapeHtml(input.temporaryPassword)}</strong>.</p>
+      <p>Please sign in and change it.</p>
+    `;
+
+    this.logger.log(
+      `Sending SMTP temporary password email: ${JSON.stringify({
+        host: this.config.host,
+        port: this.config.port,
+        from: this.config.from,
+        to: input.email,
+        subject,
+      })}`,
+    );
+
+    try {
+      const info: SMTPTransport.SentMessageInfo = await this.transporter.sendMail({
+        from: this.config.from,
+        to: input.email,
+        subject,
+        html,
+      });
+
+      this.logger.log(
+        `SMTP accepted temporary password email: ${JSON.stringify({ messageId: info.messageId })}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `SMTP rejected temporary password email: ${JSON.stringify({ message: (error as Error).message })}`,
+      );
+      throw new BadGatewayException("Unable to send temporary password email");
     }
   }
 

@@ -23,9 +23,10 @@ export function ForgotPasswordForm() {
   } = useForm<ForgotPasswordFormData>({ resolver: zodResolver(forgotPasswordSchema) });
 
   const mutation = useMutation({
-    mutationFn: async (_data: ForgotPasswordFormData) => {
-      // TODO: replace with apiClient.forgotPassword({ identifier: _data.identifier })
-      await new Promise((r) => setTimeout(r, 1000));
+    mutationFn: (data: ForgotPasswordFormData) =>
+      apiClient.forgotPassword({ identifier: data.identifier }),
+    onSuccess: (_, variables) => {
+      router.push(`/reset-password?identifier=${encodeURIComponent(variables.identifier)}`);
     },
   });
 
@@ -63,18 +64,7 @@ export function ForgotPasswordForm() {
         </p>
       )}
 
-      {mutation.isSuccess && (
-        <p className="text-center text-sm text-green-600">
-          Reset code sent! Check your email or phone.
-        </p>
-      )}
-
-      <Button
-        tone="navy"
-        fullWidth
-        type="submit"
-        disabled={mutation.isPending || mutation.isSuccess}
-      >
+      <Button tone="navy" fullWidth type="submit" disabled={mutation.isPending}>
         {mutation.isPending ? "Sending…" : "Send reset code"}
       </Button>
 

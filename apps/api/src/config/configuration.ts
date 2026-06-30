@@ -17,6 +17,10 @@ export interface ApplicationConfig {
     piiEncryptionKey: string;
     piiHashPepper: string;
     otpPepper: string;
+    jwtSecret: string;
+    accessTokenTtlSeconds: number;
+    refreshTokenTtlSeconds: number;
+    adminInactivityTimeoutSeconds: number;
   };
   sms: {
     provider: "noop" | "termii";
@@ -29,7 +33,7 @@ export interface ApplicationConfig {
     };
   };
   email: {
-    provider: "noop" | "smtp";
+    provider: "noop" | "smtp" | "resend";
     smtp: {
       host: string;
       port: number;
@@ -37,6 +41,29 @@ export interface ApplicationConfig {
       user: string;
       pass: string;
       from: string;
+    };
+    resend: {
+      apiKey: string;
+      from: string;
+      replyTo: string;
+    };
+  };
+  payments: {
+    provider: "local" | "paystack";
+    paystack: {
+      secretKey: string;
+      baseUrl: string;
+    };
+    platformCommissionBps: number;
+    vatBps: number;
+    deliveryFeeMinor: number;
+  };
+  push: {
+    provider: "noop" | "firebase";
+    firebase: {
+      projectId: string;
+      clientEmail: string;
+      privateKey: string;
     };
   };
 }
@@ -70,6 +97,10 @@ export default function configuration(): ApplicationConfig {
       piiEncryptionKey: process.env.PII_ENCRYPTION_KEY ?? "",
       piiHashPepper: process.env.PII_HASH_PEPPER ?? "",
       otpPepper: process.env.OTP_PEPPER ?? "",
+      jwtSecret: process.env.JWT_SECRET ?? "",
+      accessTokenTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 900),
+      refreshTokenTtlSeconds: Number(process.env.REFRESH_TOKEN_TTL_SECONDS ?? 604_800),
+      adminInactivityTimeoutSeconds: Number(process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 1_800),
     },
     sms: {
       provider: process.env.SMS_PROVIDER === "termii" ? "termii" : "noop",
@@ -82,14 +113,42 @@ export default function configuration(): ApplicationConfig {
       },
     },
     email: {
-      provider: process.env.EMAIL_PROVIDER === "smtp" ? "smtp" : "noop",
+      provider:
+        process.env.EMAIL_PROVIDER === "smtp"
+          ? "smtp"
+          : process.env.EMAIL_PROVIDER === "resend"
+            ? "resend"
+            : "noop",
       smtp: {
         host: process.env.SMTP_HOST ?? "smtp.gmail.com",
         port: Number(process.env.SMTP_PORT ?? 587),
         secure: process.env.SMTP_SECURE === "true",
         user: process.env.SMTP_USER ?? "",
         pass: process.env.SMTP_PASS ?? "",
-        from: process.env.SMTP_FROM ?? "RSC <noreply@rscapp.xyz>",
+        from: process.env.SMTP_FROM ?? "RSC <noreply@rscdev.tech>",
+      },
+      resend: {
+        apiKey: process.env.RESEND_API_KEY ?? "",
+        from: process.env.RESEND_FROM ?? "RSC <onboarding@resend.dev>",
+        replyTo: process.env.RESEND_REPLY_TO ?? "",
+      },
+    },
+    payments: {
+      provider: process.env.PAYMENT_PROVIDER === "paystack" ? "paystack" : "local",
+      paystack: {
+        secretKey: process.env.PAYSTACK_SECRET_KEY ?? "",
+        baseUrl: (process.env.PAYSTACK_BASE_URL ?? "https://api.paystack.co").replace(/\/$/, ""),
+      },
+      platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
+      vatBps: Number(process.env.VAT_BPS ?? 750),
+      deliveryFeeMinor: Number(process.env.DELIVERY_FEE_MINOR ?? 1_500_00),
+    },
+    push: {
+      provider: process.env.PUSH_PROVIDER === "firebase" ? "firebase" : "noop",
+      firebase: {
+        projectId: process.env.FIREBASE_PROJECT_ID ?? "",
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "",
+        privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? "").replaceAll("\\n", "\n"),
       },
     },
   };

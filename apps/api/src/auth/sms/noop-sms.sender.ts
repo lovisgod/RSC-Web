@@ -8,4 +8,9 @@ export class NoopSmsSender implements SmsSender {
     // Intentionally does not log the OTP or customer phone number.
     return Promise.resolve();
   }
+
+  sendPasswordReset(): Promise<void> {
+    // Intentionally does not log the OTP or customer phone number.
+    return Promise.resolve();
+  }
 }

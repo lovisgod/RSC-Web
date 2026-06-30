@@ -3,12 +3,16 @@ import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PiiCryptoService } from "../common/security/pii-crypto.service";
+import { Outlet } from "../outlets/outlet.entity";
+import type { AuthSessionService } from "./auth-session.service";
 import { AuthService } from "./auth.service";
 import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
 import type { EmailSender } from "./email/email-sender";
 import type { PhoneOtpService } from "./otp/phone-otp.service";
+import { hashPassword, verifyPassword } from "./password";
 import type { SmsSender } from "./sms/sms-sender";
+import { UserRole } from "./user-role.enum";
 
 describe(AuthService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
@@ -17,21 +21,41 @@ describe(AuthService.name, () => {
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
   };
+  let outlets: {
+    findOneBy: ReturnType<typeof vi.fn>;
+  };
   let piiCrypto: {
     searchHash: ReturnType<typeof vi.fn>;
     encrypt: ReturnType<typeof vi.fn>;
+    decrypt: ReturnType<typeof vi.fn>;
   };
   let phoneOtp: {
     generateCode: ReturnType<typeof vi.fn>;
     store: ReturnType<typeof vi.fn>;
     storeEmail: ReturnType<typeof vi.fn>;
+    storeRegistrationPhone: ReturnType<typeof vi.fn>;
+    storeRegistrationEmail: ReturnType<typeof vi.fn>;
     revoke: ReturnType<typeof vi.fn>;
     revokeEmail: ReturnType<typeof vi.fn>;
     verify: ReturnType<typeof vi.fn>;
     verifyEmail: ReturnType<typeof vi.fn>;
+    verifyRegistrationCode: ReturnType<typeof vi.fn>;
+    storePasswordResetPhone: ReturnType<typeof vi.fn>;
+    storePasswordResetEmail: ReturnType<typeof vi.fn>;
+    revokePasswordReset: ReturnType<typeof vi.fn>;
+    verifyPasswordResetPhone: ReturnType<typeof vi.fn>;
+    verifyPasswordResetEmail: ReturnType<typeof vi.fn>;
   };
-  let smsSender: { sendPhoneVerification: ReturnType<typeof vi.fn> };
-  let emailSender: { sendWelcomeVerification: ReturnType<typeof vi.fn> };
+  let smsSender: {
+    sendPhoneVerification: ReturnType<typeof vi.fn>;
+    sendPasswordReset: ReturnType<typeof vi.fn>;
+  };
+  let emailSender: {
+    sendWelcomeVerification: ReturnType<typeof vi.fn>;
+    sendPasswordReset: ReturnType<typeof vi.fn>;
+    sendTemporaryPassword: ReturnType<typeof vi.fn>;
+  };
+  let sessions: { issueSession: ReturnType<typeof vi.fn> };
   let service: AuthService;
 
   beforeEach(() => {
@@ -43,30 +67,64 @@ describe(AuthService.name, () => {
         return Promise.resolve(customer);
       }),
     };
+    outlets = {
+      findOneBy: vi.fn().mockResolvedValue(
+        Object.assign(new Outlet(), {
+          id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        }),
+      ),
+    };
     piiCrypto = {
       searchHash: vi.fn((value: string) => `hash:${value}`),
       encrypt: vi.fn((value: string) => `encrypted:${value}`),
+      decrypt: vi.fn((value: string) => value.replace(/^encrypted:/, "")),
     };
     phoneOtp = {
       generateCode: vi.fn().mockReturnValueOnce("482901").mockReturnValue("193847"),
       store: vi.fn().mockResolvedValue(undefined),
       storeEmail: vi.fn().mockResolvedValue(undefined),
+      storeRegistrationPhone: vi.fn().mockResolvedValue(undefined),
+      storeRegistrationEmail: vi.fn().mockResolvedValue(undefined),
       revoke: vi.fn().mockResolvedValue(undefined),
       revokeEmail: vi.fn().mockResolvedValue(undefined),
       verify: vi.fn().mockResolvedValue("VERIFIED"),
       verifyEmail: vi.fn().mockResolvedValue("VERIFIED"),
+      verifyRegistrationCode: vi.fn().mockResolvedValue({
+        result: "VERIFIED",
+        customerId,
+        channel: "phone",
+      }),
+      storePasswordResetPhone: vi.fn().mockResolvedValue(undefined),
+      storePasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+      revokePasswordReset: vi.fn().mockResolvedValue(undefined),
+      verifyPasswordResetPhone: vi.fn().mockResolvedValue("VERIFIED"),
+      verifyPasswordResetEmail: vi.fn().mockResolvedValue("VERIFIED"),
     };
     smsSender = {
       sendPhoneVerification: vi.fn().mockResolvedValue(undefined),
+      sendPasswordReset: vi.fn().mockResolvedValue(undefined),
     };
     emailSender = {
       sendWelcomeVerification: vi.fn().mockResolvedValue(undefined),
+      sendPasswordReset: vi.fn().mockResolvedValue(undefined),
+      sendTemporaryPassword: vi.fn().mockResolvedValue(undefined),
+    };
+    sessions = {
+      issueSession: vi.fn().mockResolvedValue({
+        accessToken: "access.jwt",
+        refreshToken: "refresh.jwt",
+        accessTokenExpiresInSeconds: 900,
+        refreshTokenExpiresInSeconds: 604800,
+        user: { id: customerId, role: UserRole.CUSTOMER },
+      }),
     };
 
     service = new AuthService(
       customers as unknown as Repository<Customer>,
+      outlets as unknown as Repository<Outlet>,
       piiCrypto as unknown as PiiCryptoService,
       phoneOtp as unknown as PhoneOtpService,
+      sessions as unknown as AuthSessionService,
       smsSender as SmsSender,
       emailSender as EmailSender,
     );
@@ -89,10 +147,11 @@ describe(AuthService.name, () => {
       emailEncrypted: "encrypted:ada@example.com",
       emailHash: "hash:ada@example.com",
       status: CustomerStatus.UNVERIFIED,
+      role: UserRole.CUSTOMER,
     });
-    expect(saved?.passwordHash).toContain(":");
-    expect(phoneOtp.store).toHaveBeenCalledWith(customerId, "482901");
-    expect(phoneOtp.storeEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(saved?.passwordHash).toMatch(/^\$2[aby]\$/);
+    expect(phoneOtp.storeRegistrationPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.storeRegistrationEmail).toHaveBeenCalledWith(customerId, "193847");
     expect(smsSender.sendPhoneVerification).toHaveBeenCalledWith({
       phone: "2348031234567",
       code: "482901",
@@ -110,6 +169,237 @@ describe(AuthService.name, () => {
       otpExpiresInSeconds: 600,
       verificationChannels: { email: false, phone: false },
     });
+  });
+
+  it("logs in an active customer and issues a session", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.CUSTOMER,
+      emailHash: "hash:ada@example.com",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.login({
+      identifier: "ADA@EXAMPLE.COM",
+      password: "SecureP@ss1",
+    });
+
+    expect(customers.findOneBy).toHaveBeenCalledWith({ emailHash: "hash:ada@example.com" });
+    expect(sessions.issueSession).toHaveBeenCalledWith(customer);
+    expect(result.accessToken).toBe("access.jwt");
+  });
+
+  it("rejects login for invalid credentials", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.CUSTOMER,
+      phoneHash: "hash:2348031234567",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    await expect(
+      service.login({
+        identifier: "08031234567",
+        password: "WrongP@ss1",
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+
+    expect(sessions.issueSession).not.toHaveBeenCalled();
+  });
+
+  it("changes the active user's password after checking the current password", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.CUSTOMER,
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.changePassword(
+      {
+        id: customerId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-id",
+        accessTokenId: "access-token-id",
+      },
+      { currentPassword: "SecureP@ss1", newPassword: "BetterP@ss1" },
+    );
+
+    expect(result).toEqual({ passwordChanged: true });
+    expect(customers.save).toHaveBeenCalledWith(customer);
+    expect(await verifyPassword("BetterP@ss1", customer.passwordHash)).toBe(true);
+  });
+
+  it("sends password reset codes to both stored channels", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.ACTIVE,
+      emailHash: "hash:ada@example.com",
+      phoneEncrypted: "encrypted:2348031234567",
+      emailEncrypted: "encrypted:ada@example.com",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.forgotPassword({ identifier: "ADA@EXAMPLE.COM" });
+
+    expect(result).toEqual({ sent: true, otpExpiresInSeconds: 600 });
+    expect(phoneOtp.storePasswordResetPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.storePasswordResetEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(smsSender.sendPasswordReset).toHaveBeenCalledWith({
+      phone: "2348031234567",
+      code: "482901",
+      expiresInMinutes: 10,
+    });
+    expect(emailSender.sendPasswordReset).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      name: "Ada Okafor",
+      code: "193847",
+      expiresInMinutes: 10,
+    });
+  });
+
+  it("resets a password after a phone reset OTP verifies", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      phoneHash: "hash:2348031234567",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.resetPassword({
+      identifier: "08031234567",
+      phoneCode: "482901",
+      newPassword: "BetterP@ss1",
+    });
+
+    expect(result).toEqual({ passwordChanged: true });
+    expect(phoneOtp.verifyPasswordResetPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.verifyPasswordResetEmail).not.toHaveBeenCalled();
+    expect(phoneOtp.revokePasswordReset).toHaveBeenCalledWith(customerId);
+    expect(await verifyPassword("BetterP@ss1", customer.passwordHash)).toBe(true);
+  });
+
+  it("resets a password when either provided reset OTP verifies", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      status: CustomerStatus.ACTIVE,
+      emailHash: "hash:ada@example.com",
+      passwordHash: await hashPassword("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+    phoneOtp.verifyPasswordResetPhone.mockResolvedValueOnce("INVALID");
+
+    const result = await service.resetPassword({
+      identifier: "ada@example.com",
+      phoneCode: "000000",
+      emailCode: "193847",
+      newPassword: "BetterP@ss1",
+    });
+
+    expect(result).toEqual({ passwordChanged: true });
+    expect(phoneOtp.verifyPasswordResetPhone).toHaveBeenCalledWith(customerId, "000000");
+    expect(phoneOtp.verifyPasswordResetEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(phoneOtp.revokePasswordReset).toHaveBeenCalledWith(customerId);
+    expect(await verifyPassword("BetterP@ss1", customer.passwordHash)).toBe(true);
+  });
+
+  it("resends a phone verification code and invalidates the previous code first", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.UNVERIFIED,
+      phoneHash: "hash:2348031234567",
+      phoneEncrypted: "encrypted:2348031234567",
+      phoneVerifiedAt: null,
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.resendVerificationCode({
+      channel: "phone",
+      phone: "08031234567",
+    });
+
+    expect(result).toEqual({ sent: true, channel: "phone", otpExpiresInSeconds: 600 });
+    expect(phoneOtp.revoke).toHaveBeenCalledWith(customerId);
+    expect(phoneOtp.storeRegistrationPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.revoke.mock.invocationCallOrder[0]!).toBeLessThan(
+      phoneOtp.storeRegistrationPhone.mock.invocationCallOrder[0]!,
+    );
+    expect(smsSender.sendPhoneVerification).toHaveBeenCalledWith({
+      phone: "2348031234567",
+      code: "482901",
+      expiresInMinutes: 10,
+    });
+  });
+
+  it("resends an email verification code and invalidates the previous code first", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.UNVERIFIED,
+      emailHash: "hash:ada@example.com",
+      emailEncrypted: "encrypted:ada@example.com",
+      emailVerifiedAt: null,
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+
+    const result = await service.resendVerificationCode({
+      channel: "email",
+      email: "ADA@EXAMPLE.COM",
+    });
+
+    expect(result).toEqual({ sent: true, channel: "email", otpExpiresInSeconds: 600 });
+    expect(phoneOtp.revokeEmail).toHaveBeenCalledWith(customerId);
+    expect(phoneOtp.storeRegistrationEmail).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.revokeEmail.mock.invocationCallOrder[0]!).toBeLessThan(
+      phoneOtp.storeRegistrationEmail.mock.invocationCallOrder[0]!,
+    );
+    expect(emailSender.sendWelcomeVerification).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      name: "Ada Okafor",
+      code: "482901",
+      expiresInMinutes: 10,
+    });
+  });
+
+  it("creates an outlet admin for an existing outlet", async () => {
+    const result = await service.createAdmin({
+      name: "Outlet Manager",
+      email: "MANAGER@EXAMPLE.COM",
+      phone: "08031234567",
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+
+    const saved = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
+
+    expect(outlets.findOneBy).toHaveBeenCalledWith({
+      id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+    expect(saved).toMatchObject({
+      name: "Outlet Manager",
+      emailHash: "hash:manager@example.com",
+      phoneHash: "hash:2348031234567",
+      status: CustomerStatus.ACTIVE,
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+    expect(saved?.passwordHash).not.toBeUndefined();
+    expect(await verifyPassword(result.temporaryPassword, saved!.passwordHash)).toBe(true);
+    expect(result).toMatchObject({
+      id: customerId,
+      name: "Outlet Manager",
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+    expect(result.temporaryPassword).toHaveLength(20);
   });
 
   it("resends verification for the same unverified customer", async () => {
@@ -221,12 +511,10 @@ describe(AuthService.name, () => {
     customers.findOneBy.mockResolvedValue(customer);
 
     const result = await service.verifyUser({
-      channel: "phone",
-      phone: "08031234567",
       code: "482901",
     });
 
-    expect(phoneOtp.verify).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("482901");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -245,14 +533,17 @@ describe(AuthService.name, () => {
       emailVerifiedAt: null,
     });
     customers.findOneBy.mockResolvedValue(customer);
+    phoneOtp.verifyRegistrationCode.mockResolvedValueOnce({
+      result: "VERIFIED",
+      customerId,
+      channel: "email",
+    });
 
     const result = await service.verifyUser({
-      channel: "email",
-      email: "ADA@EXAMPLE.COM",
       code: "193847",
     });
 
-    expect(phoneOtp.verifyEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("193847");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -273,12 +564,10 @@ describe(AuthService.name, () => {
     customers.findOneBy.mockResolvedValue(customer);
 
     const result = await service.verifyUser({
-      channel: "phone",
-      phone: "08031234567",
       code: "482901",
     });
 
-    expect(phoneOtp.verify).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("482901");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -295,11 +584,11 @@ describe(AuthService.name, () => {
         status: CustomerStatus.UNVERIFIED,
       }),
     );
-    phoneOtp.verify.mockResolvedValue(result);
+    phoneOtp.verifyRegistrationCode.mockResolvedValue({ result });
 
-    await expect(
-      service.verifyUser({ channel: "phone", phone: "08031234567", code: "000000" }),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service.verifyUser({ code: "000000" })).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
     expect(customers.save).not.toHaveBeenCalled();
   });
 });

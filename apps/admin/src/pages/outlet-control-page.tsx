@@ -70,16 +70,16 @@ export function OutletControlPage() {
   const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
   const { mutate: toggleStatus } = useToggleOutletStatus();
 
-  function handleToggle(id: string, currentIsOnline: boolean) {
+  function handleToggle(outlet: OutletSummary, currentIsOnline: boolean) {
     const next = !currentIsOnline;
-    setOnlineState((prev) => ({ ...prev, [id]: next }));
-    setPendingToggleId(id);
+    setOnlineState((prev) => ({ ...prev, [outlet.id]: next }));
+    setPendingToggleId(outlet.id);
     toggleStatus(
-      { id, isOnline: next },
+      { outlet, isOnline: next },
       {
         onSuccess: () => setPendingToggleId(null),
         onError: () => {
-          setOnlineState((prev) => ({ ...prev, [id]: currentIsOnline }));
+          setOnlineState((prev) => ({ ...prev, [outlet.id]: currentIsOnline }));
           setPendingToggleId(null);
         },
       },
@@ -198,7 +198,7 @@ export function OutletControlPage() {
                         disabled={pendingToggleId === outlet.id}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggle(outlet.id, isOnline);
+                          handleToggle(outlet, isOnline);
                         }}
                       />
                     </div>

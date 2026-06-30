@@ -144,6 +144,10 @@ SWAGGER_ENABLED=true
 PII_ENCRYPTION_KEY=replace-with-output-of-openssl-rand-base64-32
 PII_HASH_PEPPER=replace-with-output-of-openssl-rand-hex-32
 OTP_PEPPER=replace-with-another-output-of-openssl-rand-hex-32
+JWT_SECRET=replace-with-output-of-openssl-rand-hex-32
+ACCESS_TOKEN_TTL_SECONDS=900
+REFRESH_TOKEN_TTL_SECONDS=604800
+ADMIN_INACTIVITY_TIMEOUT_SECONDS=1800
 SMS_PROVIDER=termii
 TERMII_BASE_URL=https://v3.api.termii.com
 TERMII_API_KEY=replace-with-termii-dashboard-key
@@ -159,12 +163,14 @@ SMTP_PASS=replace-with-gmail-app-password
 SMTP_FROM=RSC <noreply@rscapp.xyz>
 ```
 
-Generate the two passwords locally and paste the results into Dokploy:
+Generate the server-side passwords and security secrets locally, then paste the
+results into Dokploy:
 
 ```bash
 openssl rand -hex 32
 openssl rand -hex 32
 openssl rand -base64 32
+openssl rand -hex 32
 openssl rand -hex 32
 openssl rand -hex 32
 ```
@@ -173,6 +179,10 @@ Dokploy writes variables to a `.env` file next to the Compose file. The Compose
 configuration explicitly passes `PUBLIC_API_URL` and `APP_VERSION` as Docker
 build arguments. `POSTGRES_PASSWORD` and `REDIS_PASSWORD` remain server-side
 Compose variables and must never use a `NEXT_PUBLIC_` or `VITE_` prefix.
+
+After deploying auth/session changes, confirm `JWT_SECRET` and the token TTL
+variables are present in the Compose service Environment tab and redeploy. The
+Dokploy Compose file passes them through to both `api` and `api-migrate`.
 
 `PII_ENCRYPTION_KEY`, both peppers, and `TERMII_API_KEY` are also server-only
 secrets. Use the regional Termii base URL shown in the Termii dashboard and an
