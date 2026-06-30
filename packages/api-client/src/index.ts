@@ -4,6 +4,9 @@ import {
   apiResponseSchema,
   changePasswordInputSchema,
   changePasswordResultSchema,
+  initiatePaymentInputSchema,
+  initiatePaymentResultSchema,
+  orderSummarySchema,
   userProfileSchema,
   updateProfileInputSchema,
   createDeliveryAddressInputSchema,
@@ -13,11 +16,12 @@ import {
   forgotPasswordInputSchema,
   forgotPasswordResultSchema,
   menuCategorySchema,
-  menuItemSchema,
   resetPasswordInputSchema,
   resetPasswordResultSchema,
   loginInputSchema,
   loginResultSchema,
+  logoutResultSchema,
+  menuItemSchema,
   outletSummarySchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -28,6 +32,9 @@ import {
   type AdminOverview,
   type ChangePasswordInput,
   type ChangePasswordResult,
+  type InitiatePaymentInput,
+  type InitiatePaymentResult,
+  type OrderSummary,
   type UserProfile,
   type UpdateProfileInput,
   type CreateDeliveryAddressInput,
@@ -42,6 +49,8 @@ import {
   type ResetPasswordResult,
   type LoginInput,
   type LoginResult,
+  type LogoutResult,
+  type MenuItem,
   type OutletSummary,
   type RegisterCustomerInput,
   type RegistrationResult,
@@ -123,8 +132,8 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
-    logout(): Promise<{ loggedOut: boolean }> {
-      return request("/api/v1/auth/logout", z.object({ loggedOut: z.boolean() }), {
+    logout(): Promise<LogoutResult> {
+      return request("/api/v1/auth/logout", logoutResultSchema, {
         method: "POST",
       });
     },
@@ -156,6 +165,14 @@ export function createApiClient(options: ApiClientOptions) {
       const body = registerCustomerInputSchema.parse(input);
 
       return request("/api/v1/auth/register", registrationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    createAdmin(input: CreateAdminInput): Promise<AdminResult> {
+      const body = createAdminInputSchema.parse(input);
+
+      return request("/api/v1/auth/admins", adminResultSchema, {
         method: "POST",
         body: JSON.stringify(body),
       });
@@ -217,6 +234,27 @@ export function createApiClient(options: ApiClientOptions) {
         `/api/v1/menu-items?outletId=${encodeURIComponent(outletId)}`,
         z.array(menuItemSchema),
       );
+    },
+    listOrders(): Promise<OrderSummary[]> {
+      return request("/api/v1/orders", z.array(orderSummarySchema));
+    },
+    reorder(id: string): Promise<unknown> {
+      return request(`/api/v1/orders/${encodeURIComponent(id)}/reorder`, z.unknown(), {
+        method: "POST",
+      });
+    },
+    initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
+      const body = initiatePaymentInputSchema.parse(input);
+
+      return request("/api/v1/payments/initiate", initiatePaymentResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    deleteAccount(id: string): Promise<unknown> {
+      return request(`/api/v1/users/${encodeURIComponent(id)}`, z.unknown(), {
+        method: "DELETE",
+      });
     },
     getAdminOverview(): Promise<AdminOverview> {
       return request("/api/v1/admin/overview", adminOverviewSchema);

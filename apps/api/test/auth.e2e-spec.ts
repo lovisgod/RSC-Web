@@ -8,8 +8,12 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { AuthController } from "../src/auth/auth.controller";
+import { AuthGuard } from "../src/auth/auth.guard";
+import { AuthSessionService } from "../src/auth/auth-session.service";
 import { AuthService } from "../src/auth/auth.service";
 import { CustomerStatus } from "../src/auth/customer-status.enum";
+import { RolesGuard } from "../src/auth/roles.guard";
+import { UserRole } from "../src/auth/user-role.enum";
 import { ApiExceptionFilter } from "../src/common/http/api-exception.filter";
 import { ApiResponseInterceptor } from "../src/common/http/api-response.interceptor";
 
@@ -29,13 +33,43 @@ describe("Customer registration HTTP contract", () => {
       verifiedAt: "2026-06-23T10:00:00.000Z",
       verificationChannels: { email: false, phone: true },
     }),
+    resendVerificationCode: vi.fn().mockResolvedValue({
+      sent: true,
+      channel: "phone",
+      otpExpiresInSeconds: 600,
+    }),
+    login: vi.fn().mockResolvedValue({
+      accessToken: "access.jwt",
+      refreshToken: "refresh.jwt",
+      accessTokenExpiresInSeconds: 900,
+      refreshTokenExpiresInSeconds: 604800,
+      user: { id: "2abf9577-027c-4936-83a8-e004fd56a46e", role: UserRole.CUSTOMER },
+    }),
+    createAdmin: vi.fn().mockResolvedValue({
+      id: "b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+      name: "Outlet Manager",
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      temporaryPassword: "e9FPuxWz3zRaAa1!",
+    }),
+  };
+  const sessions = {
+    revokeSession: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: authService }],
-    }).compile();
+      providers: [
+        { provide: AuthService, useValue: authService },
+        { provide: AuthSessionService, useValue: sessions },
+      ],
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = module.createNestApplication();
     app.setGlobalPrefix("api");
@@ -110,7 +144,7 @@ describe("Customer registration HTTP contract", () => {
   it("verifies a six-digit phone OTP", async () => {
     await request(app.getHttpServer() as Server)
       .post("/api/v1/auth/verify-user")
-      .send({ channel: "phone", phone: "+2348031234567", code: "482901" })
+      .send({ code: "482901" })
       .expect(200)
       .expect({
         data: {
@@ -125,6 +159,104 @@ describe("Customer registration HTTP contract", () => {
       });
   });
 
+  it("resends a verification code", async () => {
+    await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/resend-verification-code")
+      .send({ channel: "phone", phone: "+2348031234567" })
+      .expect(200)
+      .expect({
+        data: {
+          sent: true,
+          channel: "phone",
+          otpExpiresInSeconds: 600,
+        },
+        message: "Verification code resent",
+        status: 200,
+      });
+
+    expect(authService.resendVerificationCode).toHaveBeenCalledWith({
+      channel: "phone",
+      phone: "+2348031234567",
+    });
+  });
+
+  it("logs in and writes HttpOnly auth cookies", async () => {
+    const response = await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/login")
+      .send({ identifier: "ADA@EXAMPLE.COM", password: "SecureP@ss1" })
+      .expect(200);
+
+    expect(response.body).toEqual({
+      data: {
+        user: { id: "2abf9577-027c-4936-83a8-e004fd56a46e", role: "CUSTOMER" },
+        accessTokenExpiresInSeconds: 900,
+        refreshTokenExpiresInSeconds: 604800,
+      },
+      message: "Login successful",
+      status: 200,
+    });
+    expect(response.headers["set-cookie"]).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("accessToken=access.jwt"),
+        expect.stringContaining("refreshToken=refresh.jwt"),
+      ]),
+    );
+    expect(authService.login).toHaveBeenCalledWith({
+      identifier: "ada@example.com",
+      password: "SecureP@ss1",
+    });
+  });
+
+  it("logs out and revokes the active cookie tokens", async () => {
+    const response = await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/logout")
+      .set("Cookie", ["accessToken=access.jwt; refreshToken=refresh.jwt"])
+      .expect(200);
+
+    expect(response.body).toEqual({
+      data: { loggedOut: true },
+      message: "Logged out successfully",
+      status: 200,
+    });
+    expect(sessions.revokeSession).toHaveBeenCalledWith("access.jwt", "refresh.jwt");
+    expect(response.headers["set-cookie"]).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("accessToken=;"),
+        expect.stringContaining("refreshToken=;"),
+      ]),
+    );
+  });
+
+  it("creates an outlet admin", async () => {
+    await request(app.getHttpServer() as Server)
+      .post("/api/v1/auth/admins")
+      .send({
+        name: "Outlet Manager",
+        email: "MANAGER@EXAMPLE.COM",
+        phone: "08031234567",
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      })
+      .expect(201)
+      .expect({
+        data: {
+          id: "b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+          name: "Outlet Manager",
+          role: "ADMIN",
+          outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+          temporaryPassword: "e9FPuxWz3zRaAa1!",
+        },
+        message: "Admin created successfully",
+        status: 201,
+      });
+
+    expect(authService.createAdmin).toHaveBeenCalledWith({
+      name: "Outlet Manager",
+      email: "manager@example.com",
+      phone: "08031234567",
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+  });
+
   it("verifies a six-digit email OTP", async () => {
     authService.verifyUser.mockResolvedValueOnce({
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
@@ -136,7 +268,7 @@ describe("Customer registration HTTP contract", () => {
 
     await request(app.getHttpServer() as Server)
       .post("/api/v1/auth/verify-user")
-      .send({ channel: "email", email: "ADA@EXAMPLE.COM", code: "193847" })
+      .send({ code: "193847" })
       .expect(200)
       .expect({
         data: {
@@ -151,8 +283,6 @@ describe("Customer registration HTTP contract", () => {
       });
 
     expect(authService.verifyUser).toHaveBeenCalledWith({
-      channel: "email",
-      email: "ada@example.com",
       code: "193847",
     });
   });
@@ -160,7 +290,7 @@ describe("Customer registration HTTP contract", () => {
   it("rejects non-six-digit OTP values", async () => {
     await request(app.getHttpServer() as Server)
       .post("/api/v1/auth/verify-user")
-      .send({ channel: "phone", phone: "08031234567", code: "12345" })
+      .send({ code: "12345" })
       .expect(400);
   });
 });

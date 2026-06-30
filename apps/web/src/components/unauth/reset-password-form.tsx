@@ -2,10 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { NIGERIAN_MOBILE_NUMBER_PATTERN } from "@rsc/contracts";
 import { useForm } from "react-hook-form";
-
+import { toast } from "sonner";
 import { Button } from "@rsc/ui";
 
 import { resetPasswordSchema, type ResetPasswordFormData } from "@/src/lib/schemas/auth";
@@ -15,6 +15,7 @@ import { inputClass, labelClass } from "@/src/lib/form-styles";
 import { PasswordInput } from "@/src/components/shared/password-input";
 
 export function ResetPasswordForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const identifier = searchParams.get("identifier") ?? "";
 
@@ -25,26 +26,19 @@ export function ResetPasswordForm() {
   } = useForm<ResetPasswordFormData>({ resolver: zodResolver(resetPasswordSchema) });
 
   const mutation = useMutation({
-    mutationFn: async (_data: ResetPasswordFormData) => {
-      // TODO: replace with apiClient.resetPassword(_data)
-      await new Promise((r) => setTimeout(r, 1000));
+    mutationFn: (data: ResetPasswordFormData) => {
+      const isPhone = NIGERIAN_MOBILE_NUMBER_PATTERN.test(identifier);
+      return apiClient.resetPassword({
+        identifier,
+        ...(isPhone ? { phoneCode: data.code } : { emailCode: data.code }),
+        newPassword: data.password,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Password updated! You can now sign in.");
+      router.replace("/sign-in");
     },
   });
-
-  if (mutation.isSuccess) {
-    return (
-      <div className="w-full max-w-sm space-y-5 text-center">
-        <p className="text-4xl">✅</p>
-        <h2 className="text-xl font-bold text-gray-900">Password updated!</h2>
-        <p className="text-sm text-gray-500">You can now sign in with your new password.</p>
-        <Link href="/sign-in">
-          <Button tone="navy" fullWidth>
-            Go to sign in
-          </Button>
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <form

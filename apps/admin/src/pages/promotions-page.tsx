@@ -1,18 +1,44 @@
 import { Button } from "@rsc/ui";
 import { useState } from "react";
 
-export function PromotionsPage() {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [segment, setSegment] = useState("all");
-  const [schedule, setSchedule] = useState("immediate");
+import { useSendPromo } from "../hooks/use-send-promo";
 
-  function handleClear() {
-    setTitle("");
-    setBody("");
-    setSegment("all");
-    setSchedule("immediate");
+const EMPTY_FORM = {
+  type: "SPECIAL_PERIOD",
+  title: "",
+  body: "",
+  recipientRole: "CUSTOMER",
+  promoCode: "",
+};
+
+export function PromotionsPage() {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const { mutate: sendPromo, isPending } = useSendPromo();
+
+  function field(key: keyof typeof EMPTY_FORM) {
+    return {
+      value: form[key],
+      onChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+      ) => setForm((prev) => ({ ...prev, [key]: e.target.value })),
+    };
   }
+
+  function handleBroadcast() {
+    if (!form.title.trim() || !form.body.trim() || !form.promoCode.trim()) return;
+    sendPromo(
+      {
+        type: form.type,
+        title: form.title.trim(),
+        body: form.body.trim(),
+        recipientRole: form.recipientRole,
+        promoCode: form.promoCode.trim(),
+      },
+      { onSuccess: () => setForm(EMPTY_FORM) },
+    );
+  }
+
+  const canBroadcast = form.title.trim() && form.body.trim() && form.promoCode.trim();
 
   return (
     <div className="promo-wrap">
@@ -21,13 +47,19 @@ export function PromotionsPage() {
 
         <div className="promo-form">
           <label className="field-label">
+            Campaign Type
+            <select className="field-input" {...field("type")}>
+              <option value="SPECIAL_PERIOD">Special Period</option>
+            </select>
+          </label>
+
+          <label className="field-label">
             Campaign Title
             <input
               className="field-input"
               type="text"
-              placeholder="e.g. Happy Friday! 🍟"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Happy Friday!"
+              {...field("title")}
             />
           </label>
 
@@ -36,42 +68,36 @@ export function PromotionsPage() {
             <textarea
               className="field-input field-input--textarea"
               placeholder="Get 20% off all grills at Cactus. Order now!"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
+              {...field("body")}
             />
           </label>
 
-          <label className="field-label">
-            Target Segment
-            <select
-              className="field-input"
-              value={segment}
-              onChange={(e) => setSegment(e.target.value)}
-            >
-              <option value="all">All Customers</option>
-              <option value="new">New Customers</option>
-              <option value="returning">Returning Customers</option>
-              <option value="inactive">Inactive (30+ days)</option>
-            </select>
-          </label>
+          <div className="modal-row">
+            <label className="field-label">
+              Recipient Role
+              <select className="field-input" {...field("recipientRole")}>
+                <option value="CUSTOMER">Customers</option>
+              </select>
+            </label>
 
-          <label className="field-label">
-            Schedule Campaign
-            <select
-              className="field-input"
-              value={schedule}
-              onChange={(e) => setSchedule(e.target.value)}
-            >
-              <option value="immediate">Send Immediately 🚀</option>
-              <option value="scheduled">Schedule for Later</option>
-            </select>
-          </label>
+            <label className="field-label">
+              Promo Code
+              <input
+                className="field-input"
+                type="text"
+                placeholder="e.g. WEEKEND"
+                {...field("promoCode")}
+              />
+            </label>
+          </div>
 
           <div className="promo-actions">
-            <Button tone="quiet" onClick={handleClear}>
+            <Button tone="quiet" disabled={isPending} onClick={() => setForm(EMPTY_FORM)}>
               Clear Form
             </Button>
-            <Button tone="navy">Broadcast Campaign</Button>
+            <Button tone="navy" disabled={isPending || !canBroadcast} onClick={handleBroadcast}>
+              {isPending ? "Broadcasting…" : "Broadcast Campaign"}
+            </Button>
           </div>
         </div>
       </div>

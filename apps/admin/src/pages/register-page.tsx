@@ -5,8 +5,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
+import { PasswordInput } from "../components/password-input";
+import { register } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
-import { authStore } from "../stores/auth-store";
 
 const schema = z
   .object({
@@ -16,7 +17,6 @@ const schema = z
       .string()
       .trim()
       .regex(NIGERIAN_MOBILE_NUMBER_PATTERN, "Enter a valid Nigerian number e.g. 08012345678"),
-    // Reuse the existing password Zod schema from contracts
     password: registerCustomerInputSchema.shape.password.refine(
       (p) => p.length >= 8,
       "Password must be at least 8 characters",
@@ -31,13 +31,7 @@ const schema = z
 type FormData = z.infer<typeof schema>;
 type FieldErrors = Partial<Record<keyof FormData, string>>;
 
-const EMPTY: Omit<FormData, never> = {
-  name: "",
-  email: "",
-  phone: "",
-  password: "",
-  confirmPassword: "",
-};
+const EMPTY: FormData = { name: "", email: "", phone: "", password: "", confirmPassword: "" };
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -45,43 +39,30 @@ export function RegisterPage() {
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const { mutate, isPending, error, reset } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: form.name.trim(),
+    mutationFn: () =>
+      register({
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        password: form.password,
+        role: "SUPER_ADMIN",
+      }),
+    onSuccess: (data) => {
+      toastBus.emit(
+        "Account created! Check your email or phone for the verification code.",
+        "success",
+      );
+      navigate("/verify", {
+        replace: true,
+        state: {
           email: form.email.trim().toLowerCase(),
           phone: form.phone.trim(),
-          password: form.password,
-          role: "SUPER_ADMIN",
-        }),
+          otpExpiresInSeconds: data.otpExpiresInSeconds,
+          verificationChannels: data.verificationChannels,
+        },
       });
-
-      const payload: { message?: string; data?: { userId?: string; role?: string } } = await res
-        .json()
-        .catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(payload.message ?? `Registration failed (${res.status})`);
-      }
-
-      return payload;
     },
-    onSuccess: (data) => {
-      toastBus.emit(data.message ?? "Account created — please sign in", "success");
-      // If server returns user data directly, sign them in; otherwise go to login
-      if (data.data?.userId) {
-        authStore.setUser({ id: data.data.userId, role: "SUPER_ADMIN" });
-        navigate("/", { replace: true });
-      } else {
-        navigate("/login", { replace: true });
-      }
-    },
-    onError: (err: Error) => {
-      toastBus.emit(err.message, "error");
-    },
+    onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
 
   function set(key: keyof typeof form) {
@@ -159,10 +140,9 @@ export function RegisterPage() {
           />
 
           <div className="auth-row">
-            <Input
+            <PasswordInput
               id="password"
               label="Password"
-              type="password"
               placeholder="min. 8 characters"
               autoComplete="new-password"
               value={form.password}
@@ -171,10 +151,9 @@ export function RegisterPage() {
               hint="At least 8 characters"
             />
 
-            <Input
+            <PasswordInput
               id="confirmPassword"
               label="Confirm password"
-              type="password"
               placeholder="••••••••"
               autoComplete="new-password"
               value={form.confirmPassword}

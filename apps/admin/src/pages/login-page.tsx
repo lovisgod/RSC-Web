@@ -1,20 +1,20 @@
 import { Button, Input } from "@rsc/ui";
-import { loginInputSchema } from "@rsc/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
-import { apiClient } from "../lib/api";
+import { PasswordInput } from "../components/password-input";
+import { login } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 import { authStore } from "../stores/auth-store";
 
-const schema = loginInputSchema.extend({
+const schema = z.object({
   identifier: z.string().min(1, "Email or phone is required"),
   password: z.string().min(1, "Password is required"),
 });
 
-type FieldErrors = Partial<Record<keyof z.infer<typeof schema>, string>>;
+type FieldErrors = Partial<Record<"identifier" | "password", string>>;
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -23,15 +23,13 @@ export function LoginPage() {
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const { mutate, isPending, error, reset } = useMutation({
-    mutationFn: () => apiClient.login({ identifier: identifier.trim(), password }),
+    mutationFn: () => login({ identifier: identifier.trim(), password }),
     onSuccess: (data) => {
       authStore.setUser({ id: data.user.id, role: data.user.role });
       toastBus.emit("Welcome back!", "success");
       navigate("/", { replace: true });
     },
-    onError: (err: Error) => {
-      toastBus.emit(err.message, "error");
-    },
+    onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -77,16 +75,21 @@ export function LoginPage() {
             error={errors.identifier}
           />
 
-          <Input
+          <PasswordInput
             id="password"
             label="Password"
-            type="password"
             placeholder="••••••••"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={errors.password}
           />
+
+          <div className="auth-forgot-row">
+            <Link to="/forgot-password" className="auth-forgot-link">
+              Forgot password?
+            </Link>
+          </div>
 
           {error && (
             <p className="auth-api-error" role="alert">

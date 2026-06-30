@@ -10,21 +10,24 @@ import {
   Wallet,
 } from "lucide-react";
 import { useState } from "react";
-import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Toaster } from "./components/toaster";
 import { useLiveClock } from "./hooks/use-live-clock";
 import { useAuth } from "./hooks/use-auth";
-import { apiClient } from "./lib/api";
+import { logout as apiLogout } from "./lib/api";
 import { toastBus } from "./lib/toast-bus";
-import { authStore } from "./stores/auth-store";
 import { DashboardPage } from "./pages/dashboard-page";
 import { FinancialReconciliationPage } from "./pages/financial-reconciliation-page";
+import { ForgotPasswordPage } from "./pages/forgot-password-page";
 import { LoginPage } from "./pages/login-page";
 import { OrdersFeedPage } from "./pages/orders-feed-page";
 import { OutletControlPage } from "./pages/outlet-control-page";
 import { PromotionsPage } from "./pages/promotions-page";
 import { RegisterPage } from "./pages/register-page";
+import { ResetPasswordPage } from "./pages/reset-password-page";
+import { VerifyPage } from "./pages/verify-page";
 
 const navigation = [
   { label: "Platform Live Board", to: "/", icon: Gauge },
@@ -69,15 +72,24 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
 function OperatorFooter() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   async function handleLogout() {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
     try {
-      await apiClient.logout();
+      await apiLogout();
     } catch {
-      // Server-side session may already be gone; proceed anyway
+      // Session may already be expired (401) or server unreachable —
+      // always clear local state regardless.
+    } finally {
+      queryClient.clear(); // Prevent stale data leaking to the next session
+      logout(); // Clear authStore + localStorage
+      toastBus.emit("Signed out successfully", "info");
+      navigate("/login", { replace: true });
     }
-    logout();
-    toastBus.emit("Signed out", "info");
   }
 
   return (
@@ -85,10 +97,16 @@ function OperatorFooter() {
       <span className="operator__avatar">{user?.role?.charAt(0) ?? "A"}</span>
       <span>
         <strong>{user?.role ?? "Admin"}</strong>
-        <small>Platform access</small>
+        {/* <small>Platform access</small> */}
       </span>
-      <button type="button" className="logout-btn" aria-label="Sign out" onClick={handleLogout}>
-        <LogOut size={16} />
+      <button
+        type="button"
+        className="logout-btn"
+        aria-label="Sign out"
+        disabled={isLoggingOut}
+        onClick={handleLogout}
+      >
+        <LogOut size={isLoggingOut ? 14 : 16} className={isLoggingOut ? "spin" : ""} />
       </button>
     </div>
   );
@@ -202,6 +220,9 @@ export function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify" element={<VerifyPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           path="/*"
           element={

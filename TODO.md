@@ -20,13 +20,13 @@ so another agent can safely pick the first unchecked task.
 
 - [x] Add NestJS API foundation with validated configuration, OpenAPI,
       PostgreSQL/PostGIS, Redis, migrations, and health probes.
-- [ ] Implement the first domain vertical slice: outlets and public catalog.
+- [x] Implement the first domain vertical slice: outlets and public catalog.
 - [x] Add CI for format, lint, typecheck, unit tests, and production builds.
 - [x] Add native Dokploy Compose builds and GitHub-provider autodeploy for the
       development branch.
-- [ ] Configure staging and production Dokploy environments, domains,
+- [x] Configure staging and production Dokploy environments, domains,
       certificates, and protected promotion procedures.
-- [ ] Extend Dokploy Compose to run `@rsc/api`, PostgreSQL, Redis, and a
+- [x] Extend Dokploy Compose to run `@rsc/api`, PostgreSQL, Redis, and a
       migration release step after domain access is available.
 - [ ] Add changesets or an equivalent package versioning policy.
 - [ ] Add environment validation per app.

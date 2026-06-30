@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, MapPin, XCircle } from "lucide-react";
 import { useState } from "react";
 
 import { apiClient } from "@/src/lib/api";
+import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { cartSubtotalMinor, formatNaira } from "@/src/lib/data/cart";
 import {
   VAT_RATE,
@@ -40,7 +41,7 @@ export function FulfillmentStep({
   onComplete,
 }: {
   initial: DeliveryForm;
-  onComplete: (data: DeliveryForm) => void;
+  onComplete: (data: DeliveryForm, orderId: string) => void;
 }) {
   const { data: cart } = useCart();
   const savedDefault = useAddressStore((s) => s.defaultAddress);
@@ -122,22 +123,54 @@ export function FulfillmentStep({
   const vat = Math.round((subtotal + deliveryFee) * VAT_RATE);
   const grandTotal = subtotal + deliveryFee + vat;
 
+  const initiateMutation = useMutation({
+    mutationFn: () => {
+      const items = cart
+        ? cart.groups.flatMap((g) =>
+            g.items.map((item) => ({
+              menuItemId: item.id,
+              quantity: item.quantity,
+              modifiers: [] as { modifierId: string }[],
+              ...(item.notes ? { customerNote: item.notes } : {}),
+            })),
+          )
+        : [];
+
+      const base = {
+        items,
+        deliveryMode: mode === "delivery" ? ("DELIVERY" as const) : ("TAKEOUT" as const),
+      };
+
+      return apiClient.initiatePayment(
+        mode === "delivery"
+          ? {
+              ...base,
+              deliveryAddress: address,
+              deliveryLatitude: coords!.latitude,
+              deliveryLongitude: coords!.longitude,
+            }
+          : base,
+      );
+    },
+    onSuccess: (result) => {
+      onComplete(
+        {
+          mode,
+          address,
+          latitude: coords?.latitude ?? null,
+          longitude: coords?.longitude ?? null,
+          zone,
+          onBehalf,
+          instructions,
+        },
+        result.orderId,
+      );
+    },
+  });
+
   const isDetecting = locating || validateMutation.isPending;
   const isValidated = zone !== null;
   const canProceed = mode === "takeout" || isValidated;
-
-  function handleSubmit() {
-    if (!canProceed) return;
-    onComplete({
-      mode,
-      address,
-      latitude: coords?.latitude ?? null,
-      longitude: coords?.longitude ?? null,
-      zone,
-      onBehalf,
-      instructions,
-    });
-  }
 
   return (
     <div className="space-y-6">
@@ -306,13 +339,31 @@ export function FulfillmentStep({
 
       {/* CTA */}
       <div className="space-y-2">
-        {mode === "delivery" && !isValidated && (
+        {mode === "delivery" && !isValidated && !initiateMutation.isPending && (
           <p className="text-xs text-center text-gray-400">
             Validate your delivery location to continue
           </p>
         )}
-        <Button tone="navy" fullWidth type="button" onClick={handleSubmit} disabled={!canProceed}>
-          Proceed to Payment 🚀
+        {initiateMutation.isError && (
+          <p className="text-xs text-center text-red-500">
+            {getMutationErrorMessage(initiateMutation.error, {})}
+          </p>
+        )}
+        <Button
+          tone="navy"
+          fullWidth
+          type="button"
+          onClick={() => initiateMutation.mutate()}
+          disabled={!canProceed || initiateMutation.isPending}
+        >
+          {initiateMutation.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Placing order…
+            </span>
+          ) : (
+            "Proceed to Payment 🚀"
+          )}
         </Button>
       </div>
     </div>

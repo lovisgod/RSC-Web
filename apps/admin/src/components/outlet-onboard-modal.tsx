@@ -1,10 +1,11 @@
 import { Button } from "@rsc/ui";
 import type { OutletSummary } from "@rsc/contracts";
-import { Pencil, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { createOutlet, updateOutlet } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
 interface Props {
@@ -83,31 +84,20 @@ export function OutletOnboardModal({ open, onClose, outlet }: Props) {
     error,
     reset: resetMutation,
   } = useMutation({
-    mutationFn: async () => {
+    mutationFn: () => {
       const fd = new FormData();
       fd.append("name", form.name.trim());
       fd.append("description", form.description.trim());
       fd.append("cuisineType", form.cuisineType.trim());
       fd.append("isOnline", String(form.isOnline));
       fd.append("momentSubaccountCode", form.momentSubaccountCode.trim());
-      if (imageFile) fd.append("image", imageFile);
+      if (imageFile) fd.append("imageUrl", imageFile);
 
-      const url = isEditMode
-        ? `${import.meta.env.VITE_API_BASE_URL}/api/v1/outlets/${outlet!.id}`
-        : `${import.meta.env.VITE_API_BASE_URL}/api/v1/outlets`;
-      const method = isEditMode ? "PATCH" : "POST";
-
-      const res = await fetch(url, { method, body: fd });
-      const payload: { message?: string } = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload.message ?? `Request failed (${res.status})`);
-      return payload;
+      return isEditMode ? updateOutlet(outlet!.id, fd) : createOutlet(fd);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "outlets"] });
-      toastBus.emit(
-        data.message ?? (isEditMode ? "Outlet updated" : "Outlet onboarded"),
-        "success",
-      );
+      toastBus.emit(isEditMode ? "Outlet updated" : "Outlet onboarded", "success");
       handleClose();
     },
     onError: (err: Error) => {
@@ -204,18 +194,11 @@ export function OutletOnboardModal({ open, onClose, outlet }: Props) {
               onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
             >
               {imagePreview ? (
-                <>
-                  <img
-                    src={imagePreview}
-                    alt="Outlet preview"
-                    className="outlet-image-drop__preview"
-                  />
-                  {isEditMode && (
-                    <span className="outlet-image-drop__replace-hint">
-                      <Pencil size={14} /> Click to replace
-                    </span>
-                  )}
-                </>
+                <img
+                  src={imagePreview}
+                  alt="Outlet preview"
+                  className="outlet-image-drop__preview"
+                />
               ) : (
                 <span className="outlet-image-drop__placeholder">
                   <Upload size={26} />

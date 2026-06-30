@@ -8,7 +8,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { AppController } from "../src/app.controller";
 import { AuthController } from "../src/auth/auth.controller";
+import { AuthGuard } from "../src/auth/auth.guard";
+import { AuthSessionService } from "../src/auth/auth-session.service";
 import { AuthService } from "../src/auth/auth.service";
+import { RolesGuard } from "../src/auth/roles.guard";
 import { configureApplication } from "../src/bootstrap";
 import { RequestIdMiddleware } from "../src/common/middleware/request-id.middleware";
 
@@ -24,6 +27,14 @@ describe("API bootstrap", () => {
           useValue: {
             register: () => undefined,
             verifyUser: () => undefined,
+            login: () => undefined,
+            createAdmin: () => undefined,
+          },
+        },
+        {
+          provide: AuthSessionService,
+          useValue: {
+            revokeSession: () => undefined,
           },
         },
         {
@@ -45,7 +56,12 @@ describe("API bootstrap", () => {
           },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = module.createNestApplication();
     const requestIdMiddleware = new RequestIdMiddleware();
@@ -92,6 +108,9 @@ describe("API bootstrap", () => {
     expect(document.paths?.["/api/v1"]).toBeTypeOf("object");
     expect(document.paths?.["/api/v1/auth/register"]).toBeTypeOf("object");
     expect(document.paths?.["/api/v1/auth/verify-user"]).toBeTypeOf("object");
+    expect(document.paths?.["/api/v1/auth/login"]).toBeTypeOf("object");
+    expect(document.paths?.["/api/v1/auth/logout"]).toBeTypeOf("object");
+    expect(document.paths?.["/api/v1/auth/admins"]).toBeTypeOf("object");
   });
 
   it("uses the standard response envelope for errors", async () => {

@@ -9,10 +9,19 @@ import { REDIS_CLIENT } from "../../redis/redis.constants";
 import { OTP_MAX_ATTEMPTS, OTP_TTL_SECONDS } from "./otp.constants";
 
 export type OtpVerificationResult = "VERIFIED" | "INVALID" | "EXPIRED";
+export type VerificationOtpChannel = "phone" | "email";
+export type ChannelOtpVerificationResult =
+  | { result: "VERIFIED"; customerId: string; channel: VerificationOtpChannel }
+  | { result: "INVALID" | "EXPIRED" };
 
 interface StoredOtp {
   hash: string;
   attemptsRemaining: number;
+}
+
+interface StoredRegistrationOtpIndex {
+  customerId: string;
+  channel: VerificationOtpChannel;
 }
 
 const VERIFY_OTP_SCRIPT = `
@@ -65,6 +74,24 @@ export class PhoneOtpService {
     await this.storeWithKey(this.emailKey(customerId), customerId, code);
   }
 
+  async storeRegistrationPhone(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.key(customerId), customerId, code);
+    await this.storeRegistrationIndex(customerId, "phone", code);
+  }
+
+  async storeRegistrationEmail(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.emailKey(customerId), customerId, code);
+    await this.storeRegistrationIndex(customerId, "email", code);
+  }
+
+  async storePasswordResetPhone(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.passwordResetPhoneKey(customerId), customerId, code);
+  }
+
+  async storePasswordResetEmail(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.passwordResetEmailKey(customerId), customerId, code);
+  }
+
   private async storeWithKey(key: string, customerId: string, code: string): Promise<void> {
     const value: StoredOtp = {
       hash: this.hash(customerId, code),
@@ -82,12 +109,57 @@ export class PhoneOtpService {
     await this.redis.del(this.emailKey(customerId));
   }
 
+  async revokePasswordReset(customerId: string): Promise<void> {
+    await this.redis.del(
+      this.passwordResetPhoneKey(customerId),
+      this.passwordResetEmailKey(customerId),
+    );
+  }
+
   async verify(customerId: string, code: string): Promise<OtpVerificationResult> {
     return this.verifyWithKey(this.key(customerId), customerId, code);
   }
 
   async verifyEmail(customerId: string, code: string): Promise<OtpVerificationResult> {
     return this.verifyWithKey(this.emailKey(customerId), customerId, code);
+  }
+
+  async verifyRegistrationCode(code: string): Promise<ChannelOtpVerificationResult> {
+    const indexKey = this.registrationCodeIndexKey(code);
+    const serializedIndex = await this.redis.get(indexKey);
+
+    if (!serializedIndex) {
+      return { result: "EXPIRED" };
+    }
+
+    const index = JSON.parse(serializedIndex) as StoredRegistrationOtpIndex;
+    const verification =
+      index.channel === "phone"
+        ? await this.verify(index.customerId, code)
+        : await this.verifyEmail(index.customerId, code);
+
+    if (verification === "VERIFIED") {
+      await this.redis.del(indexKey);
+      return {
+        result: "VERIFIED",
+        customerId: index.customerId,
+        channel: index.channel,
+      };
+    }
+
+    if (verification === "EXPIRED") {
+      await this.redis.del(indexKey);
+    }
+
+    return { result: verification };
+  }
+
+  async verifyPasswordResetPhone(customerId: string, code: string): Promise<OtpVerificationResult> {
+    return this.verifyWithKey(this.passwordResetPhoneKey(customerId), customerId, code);
+  }
+
+  async verifyPasswordResetEmail(customerId: string, code: string): Promise<OtpVerificationResult> {
+    return this.verifyWithKey(this.passwordResetEmailKey(customerId), customerId, code);
   }
 
   private async verifyWithKey(
@@ -117,11 +189,46 @@ export class PhoneOtpService {
       .digest("hex");
   }
 
+  private codeHash(code: string): string {
+    return createHmac("sha256", this.otpPepper)
+      .update("registration-code")
+      .update("\0")
+      .update(code)
+      .digest("hex");
+  }
+
+  private async storeRegistrationIndex(
+    customerId: string,
+    channel: VerificationOtpChannel,
+    code: string,
+  ): Promise<void> {
+    const value: StoredRegistrationOtpIndex = { customerId, channel };
+
+    await this.redis.set(
+      this.registrationCodeIndexKey(code),
+      JSON.stringify(value),
+      "EX",
+      OTP_TTL_SECONDS,
+    );
+  }
+
   private key(customerId: string): string {
     return `auth:phone-otp:${customerId}`;
   }
 
   private emailKey(customerId: string): string {
     return `auth:email-otp:${customerId}`;
+  }
+
+  private registrationCodeIndexKey(code: string): string {
+    return `auth:registration-otp-code:${this.codeHash(code)}`;
+  }
+
+  private passwordResetPhoneKey(customerId: string): string {
+    return `auth:password-reset-phone-otp:${customerId}`;
+  }
+
+  private passwordResetEmailKey(customerId: string): string {
+    return `auth:password-reset-email-otp:${customerId}`;
   }
 }

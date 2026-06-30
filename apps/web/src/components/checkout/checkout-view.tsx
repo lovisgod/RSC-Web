@@ -56,8 +56,9 @@ export function CheckoutView() {
           {step === 1 && (
             <FulfillmentStep
               initial={delivery}
-              onComplete={(d) => {
+              onComplete={(d, id) => {
                 setDelivery(d);
+                setOrderId(id);
                 setStep(2);
               }}
             />
@@ -67,14 +68,11 @@ export function CheckoutView() {
             <PaymentStep
               deliveryForm={delivery}
               onBack={() => setStep(1)}
-              onSuccess={(id) => {
-                setOrderId(id);
-                setStep(3);
-              }}
+              onSuccess={() => setStep(3)}
             />
           )}
 
-          {step === 3 && <ConfirmationStep orderId={orderId ?? "RSC-482916"} />}
+          {step === 3 && <ConfirmationStep orderId={orderId ?? ""} />}
         </div>
 
         {/* Order summary sidebar — hidden on mobile when on confirmation */}
