@@ -35,6 +35,11 @@ export interface Environment {
   RESEND_API_KEY?: string;
   RESEND_FROM?: string;
   RESEND_REPLY_TO?: string;
+  MEDIA_PROVIDER: "noop" | "cloudinary";
+  CLOUDINARY_CLOUD_NAME?: string;
+  CLOUDINARY_API_KEY?: string;
+  CLOUDINARY_API_SECRET?: string;
+  CLOUDINARY_FOLDER: string;
   PAYMENT_PROVIDER: "local" | "paystack";
   PAYSTACK_SECRET_KEY?: string;
   PAYSTACK_BASE_URL: string;
@@ -133,6 +138,23 @@ const environmentSchema = Joi.object<Environment>({
     otherwise: Joi.string().optional().allow(""),
   }),
   RESEND_REPLY_TO: Joi.string().email().optional().allow(""),
+  MEDIA_PROVIDER: Joi.string().valid("noop", "cloudinary").default("noop"),
+  CLOUDINARY_CLOUD_NAME: Joi.when("MEDIA_PROVIDER", {
+    is: "cloudinary",
+    then: Joi.string().min(2).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  CLOUDINARY_API_KEY: Joi.when("MEDIA_PROVIDER", {
+    is: "cloudinary",
+    then: Joi.string().min(2).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  CLOUDINARY_API_SECRET: Joi.when("MEDIA_PROVIDER", {
+    is: "cloudinary",
+    then: Joi.string().min(2).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  CLOUDINARY_FOLDER: Joi.string().min(1).default("rsc"),
   PAYMENT_PROVIDER: Joi.string().valid("local", "paystack").default("local"),
   PAYSTACK_SECRET_KEY: Joi.when("PAYMENT_PROVIDER", {
     is: "paystack",

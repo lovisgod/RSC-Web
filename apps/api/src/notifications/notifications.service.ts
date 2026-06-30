@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -11,6 +11,8 @@ import { PUSH_SENDER, type PushSender } from "./push-sender";
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   constructor(
     @InjectRepository(Notification)
     private readonly notifications: Repository<Notification>,
@@ -42,15 +44,25 @@ export class NotificationsService {
     });
 
     if (recipient?.fcmToken) {
-      await this.pushSender.send({
-        token: recipient.fcmToken,
-        title: input.title,
-        body: input.body,
-        data: {
-          notificationId: notification.id,
-          type: notification.type,
-        },
-      });
+      try {
+        await this.pushSender.send({
+          token: recipient.fcmToken,
+          title: input.title,
+          body: input.body,
+          data: {
+            notificationId: notification.id,
+            type: notification.type,
+          },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `Push notification delivery failed: ${JSON.stringify({
+            notificationId: notification.id,
+            recipientId: input.recipientId,
+            message: error instanceof Error ? error.message : "Unknown push error",
+          })}`,
+        );
+      }
     }
 
     return notification;

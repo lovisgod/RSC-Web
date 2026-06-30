@@ -40,7 +40,9 @@ export class PaystackPaymentAdapter implements PaymentAdapter {
   }
 
   async initiate(input: InitiateProviderPaymentInput): Promise<InitiateProviderPaymentResult> {
-    const subaccounts = input.splitRoutes.filter((route) => route.subaccountCode);
+    const subaccounts = input.splitRoutes.filter((route) =>
+      isPaystackSubaccountCode(route.subaccountCode),
+    );
     const splitCode = subaccounts.length ? await this.createSplit(input, subaccounts) : null;
     const body = {
       email: input.email,
@@ -134,4 +136,8 @@ export class PaystackPaymentAdapter implements PaymentAdapter {
       throw new BadGatewayException("Unable to create payment split");
     }
   }
+}
+
+function isPaystackSubaccountCode(value: string | null): value is string {
+  return typeof value === "string" && value.startsWith("ACCT_");
 }

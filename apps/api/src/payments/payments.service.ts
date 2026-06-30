@@ -86,13 +86,6 @@ export class PaymentsService {
     }
 
     const pricedLines = await this.priceCart(input);
-    const subtotalMinor = pricedLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
-    const deliveryFeeMinor = input.deliveryMode === "DELIVERY" ? this.deliveryFeeMinor : 0;
-    const serviceFeeMinor = 0;
-    const vatMinor = Math.round(
-      ((subtotalMinor + deliveryFeeMinor + serviceFeeMinor) * this.vatBps) / 10_000,
-    );
-    const totalMinor = subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor;
     const grouped = new Map<string, PricedLine[]>();
 
     for (const line of pricedLines) {
@@ -102,6 +95,18 @@ export class PaymentsService {
     const outletIds = [...grouped.keys()];
     const outlets = await this.outlets.findBy({ id: In(outletIds) });
     const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
+    const subtotalMinor = pricedLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
+    const deliveryFeeMinor = input.deliveryMode === "DELIVERY" ? this.deliveryFeeMinor : 0;
+    const serviceFeeMinor = 0;
+    const vatMinor = outletIds.reduce((sum, outletId) => {
+      const outletSubtotalMinor = grouped
+        .get(outletId)!
+        .reduce((lineSum, line) => lineSum + line.lineTotalMinor, 0);
+      const vatBps = outletById.get(outletId)?.vatBps ?? this.vatBps;
+
+      return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
+    }, 0);
+    const totalMinor = subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor;
     const splitRoutes: PaymentSplitRoute[] = outletIds.map((outletId) => {
       const grossMinor = grouped.get(outletId)!.reduce((sum, line) => sum + line.lineTotalMinor, 0);
       const commissionMinor = Math.round((grossMinor * this.platformCommissionBps) / 10_000);

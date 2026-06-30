@@ -10,6 +10,7 @@ import configuration from "./config/configuration";
 import { validateEnvironment } from "./config/environment";
 import { DatabaseModule } from "./database/database.module";
 import { HealthModule } from "./health/health.module";
+import { MediaModule } from "./media/media.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { OrdersModule } from "./orders/orders.module";
 import { PaymentsModule } from "./payments/payments.module";
@@ -33,6 +34,7 @@ import { UsersModule } from "./users/users.module";
     UsersModule,
     CatalogModule,
     DeliveryModule,
+    MediaModule,
     NotificationsModule,
     RidersModule,
     PaymentsModule,
