@@ -422,6 +422,30 @@ th {
   background: #fae7e3;
 }
 
+.status-pill--campaign {
+  min-width: 0;
+}
+
+.status-pill--scheduled {
+  color: #7a5412;
+  background: #fff0d7;
+}
+
+.status-pill--dispatching {
+  color: #1e4f7a;
+  background: #e0effa;
+}
+
+.status-pill--sent {
+  color: #176038;
+  background: #e5f3e9;
+}
+
+.status-pill--failed {
+  color: #9b3628;
+  background: #fae7e3;
+}
+
 .switch-control {
   display: inline-grid;
   grid-template-columns: 46px minmax(44px, auto);
@@ -494,6 +518,139 @@ th {
   animation: spin 900ms linear infinite;
 }
 
+.campaign-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 1rem;
+}
+
+.campaign-composer,
+.campaign-preview {
+  align-self: start;
+}
+
+.campaign-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.form-field span {
+  color: var(--rsc-ink);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  border: 1px solid #dfe4da;
+  border-radius: 12px;
+  padding: 0.78rem 0.85rem;
+  color: var(--rsc-ink);
+  background: #fbfcfa;
+  outline: 0;
+}
+
+.form-field textarea {
+  min-height: 132px;
+  resize: vertical;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--rsc-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rsc-brand) 16%, transparent);
+}
+
+.campaign-form .rsc-button {
+  width: fit-content;
+  gap: 0.45rem;
+}
+
+.campaign-error {
+  min-height: auto;
+  margin: 0;
+  padding: 0.4rem 0;
+}
+
+.phone-preview {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid #dfe4da;
+  border-radius: 18px;
+  padding: 1rem;
+  background: linear-gradient(180deg, #ffffff, #f7f9f5), #ffffff;
+}
+
+.phone-preview__app {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.22rem 0.5rem;
+  color: #10271b;
+  background: #e6efe3;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.phone-preview strong {
+  font-size: 1rem;
+}
+
+.phone-preview p {
+  margin: 0;
+  color: var(--rsc-muted);
+  line-height: 1.5;
+}
+
+.phone-preview small {
+  color: var(--rsc-brand-strong);
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.campaign-summary {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+}
+
+.campaign-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #eceee8;
+  padding-bottom: 0.75rem;
+}
+
+.campaign-summary div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.campaign-summary dt {
+  color: var(--rsc-muted);
+  font-size: 0.78rem;
+}
+
+.campaign-summary dd {
+  margin: 0;
+  font-weight: 800;
+  text-align: right;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -511,6 +668,10 @@ th {
   }
 
   .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-layout {
     grid-template-columns: 1fr;
   }
 
@@ -545,5 +706,13 @@ th {
   .page-heading {
     align-items: start;
     flex-direction: column;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-form .rsc-button {
+    width: 100%;
   }
 }

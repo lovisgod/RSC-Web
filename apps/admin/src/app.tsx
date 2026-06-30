@@ -16,11 +16,13 @@ import { NavLink, Route, Routes } from "react-router-dom";
 
 import { DashboardPage } from "./pages/dashboard-page";
 import { MenusPage } from "./pages/menus-page";
+import { NotificationsPage } from "./pages/notifications-page";
 
 const navigation = [
   { label: "Overview", to: "/", icon: LayoutDashboard },
   { label: "Orders", to: "/orders", icon: CookingPot },
   { label: "Menus", to: "/menus", icon: MenuSquare },
+  { label: "Notifications", to: "/notifications", icon: Bell },
   { label: "Outlets", to: "/outlets", icon: Store },
   { label: "Settlements", to: "/settlements", icon: CircleDollarSign },
   { label: "Delivery", to: "/delivery", icon: MapPinned },
@@ -92,10 +94,11 @@ export function App() {
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/menus" element={<MenusPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             {navigation
               .slice(1)
               .map(({ label, to }) =>
-                to === "/menus" ? null : (
+                to === "/menus" || to === "/notifications" ? null : (
                   <Route key={to} path={to} element={<PlaceholderPage title={label} />} />
                 ),
               )}
