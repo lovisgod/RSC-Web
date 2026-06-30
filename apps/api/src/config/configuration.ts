@@ -48,6 +48,15 @@ export interface ApplicationConfig {
       replyTo: string;
     };
   };
+  media: {
+    provider: "noop" | "cloudinary";
+    cloudinary: {
+      cloudName: string;
+      apiKey: string;
+      apiSecret: string;
+      folder: string;
+    };
+  };
   payments: {
     provider: "local" | "paystack";
     paystack: {
@@ -141,6 +150,15 @@ export default function configuration(): ApplicationConfig {
         apiKey: process.env.RESEND_API_KEY ?? "",
         from: process.env.RESEND_FROM ?? "RSC <onboarding@resend.dev>",
         replyTo: process.env.RESEND_REPLY_TO ?? "",
+      },
+    },
+    media: {
+      provider: process.env.MEDIA_PROVIDER === "cloudinary" ? "cloudinary" : "noop",
+      cloudinary: {
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
+        apiKey: process.env.CLOUDINARY_API_KEY ?? "",
+        apiSecret: process.env.CLOUDINARY_API_SECRET ?? "",
+        folder: process.env.CLOUDINARY_FOLDER ?? "rsc",
       },
     },
     payments: {

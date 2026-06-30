@@ -8,8 +8,11 @@ import {
   Param,
   Post,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
@@ -18,6 +21,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import type { UploadedImageFile } from "../media/media.service";
 import { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
 import { CreateRiderDto } from "./dto/rider.dto";
 import { UsersService } from "./users.service";
@@ -47,6 +51,21 @@ export class UsersController {
   @ApiMessage("Profile change verified")
   verifyProfileChange(@Req() request: AuthenticatedRequest, @Body() input: VerifyProfileChangeDto) {
     return this.users.verifyProfileChange(request.user!, input);
+  }
+
+  @Post("me/avatar")
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor("file"))
+  @ApiMessage("Avatar uploaded successfully")
+  uploadAvatar(@Req() request: AuthenticatedRequest, @UploadedFile() file: UploadedImageFile) {
+    return this.users.uploadAvatar(request.user!, file);
+  }
+
+  @Post("me/deactivate")
+  @HttpCode(HttpStatus.OK)
+  @ApiMessage("Account deactivated successfully")
+  deactivateAccount(@Req() request: AuthenticatedRequest) {
+    return this.users.deactivateAccount(request.user!);
   }
 
   @Post("riders")

@@ -22,6 +22,7 @@ import { normalizeNigerianPhoneNumber } from "../auth/phone-number";
 import { SMS_SENDER, type SmsSender } from "../auth/sms/sms-sender";
 import { UserRole } from "../auth/user-role.enum";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
+import { MediaService, type UploadedImageFile } from "../media/media.service";
 import type { CreateRiderDto } from "./dto/rider.dto";
 import type { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
 
@@ -61,6 +62,7 @@ export class UsersService {
     private readonly phoneOtp: PhoneOtpService,
     @Inject(SMS_SENDER) private readonly smsSender: SmsSender,
     @Inject(EMAIL_SENDER) private readonly emailSender: EmailSender,
+    private readonly media: MediaService,
   ) {}
 
   async getProfile(user: AuthenticatedUser): Promise<ProfileResult> {
@@ -174,6 +176,29 @@ export class UsersService {
     }
 
     return this.toProfile(await this.saveUser(account));
+  }
+
+  async uploadAvatar(user: AuthenticatedUser, file: UploadedImageFile): Promise<ProfileResult> {
+    const account = await this.requireUser(user.id);
+    const upload = await this.media.uploadImage({
+      file,
+      folder: "user-avatars",
+      publicIdPrefix: account.id,
+    });
+
+    account.avatarUrl = upload.url;
+
+    return this.toProfile(await this.saveUser(account));
+  }
+
+  async deactivateAccount(user: AuthenticatedUser): Promise<{ deactivated: true }> {
+    const account = await this.requireUser(user.id);
+
+    account.status = CustomerStatus.SUSPENDED;
+    await this.users.save(account);
+    await this.users.softRemove(account);
+
+    return { deactivated: true };
   }
 
   async createRider(actor: AuthenticatedUser, input: CreateRiderDto): Promise<RiderResult> {

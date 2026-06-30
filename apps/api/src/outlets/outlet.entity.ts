@@ -30,6 +30,9 @@ export class Outlet {
   @Column({ name: "moment_subaccount_code", length: 100 })
   momentSubaccountCode!: string;
 
+  @Column({ name: "vat_bps", type: "integer", default: 0 })
+  vatBps!: number;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

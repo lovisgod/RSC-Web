@@ -152,6 +152,7 @@ export const outletSummarySchema = z.object({
   description: z.string().nullable(),
   imageUrl: z.url().nullable(),
   isOnline: z.boolean(),
+  vatBps: z.int().min(0).max(10_000).default(0),
 });
 
 export const menuItemSchema = z.object({
@@ -161,6 +162,9 @@ export const menuItemSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable(),
   imageUrl: z.url().nullable(),
+  deliveryTimeRange: z.string().nullable().optional(),
+  ratingAverage: z.coerce.number().min(0).max(5).default(0),
+  ratingCount: z.int().nonnegative().default(0),
   priceMinor: z.int().nonnegative(),
   currency: currencySchema,
   isAvailable: z.boolean(),

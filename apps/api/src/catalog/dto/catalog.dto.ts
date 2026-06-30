@@ -13,6 +13,7 @@ import {
   Length,
   MaxLength,
   Min,
+  Max,
 } from "class-validator";
 
 const trim = ({ value }: TransformFnParams): unknown =>
@@ -49,6 +50,13 @@ export class CreateOutletDto {
   @IsOptional()
   @IsBoolean()
   isOnline?: boolean;
+
+  @ApiPropertyOptional({ example: 750, description: "Outlet VAT in basis points. 1000 = 10%." })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10_000)
+  vatBps?: number;
 
   @ApiProperty({ example: "MOMENT_SUBACCOUNT_123" })
   @Transform(trim)
@@ -127,6 +135,13 @@ export class CreateMenuItemDto {
   @MaxLength(512)
   imageUrl?: string;
 
+  @ApiPropertyOptional({ example: "25-35 mins", maxLength: 60 })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  deliveryTimeRange?: string;
+
   @ApiProperty({ example: 450000 })
   @IsInt()
   @Min(0)
@@ -157,6 +172,21 @@ export class UpdateMenuItemAvailabilityDto {
   @ApiProperty({ example: false })
   @IsBoolean()
   isAvailable!: boolean;
+}
+
+export class RateMenuItemDto {
+  @ApiProperty({ example: 5, minimum: 1, maximum: 5 })
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating!: number;
+
+  @ApiPropertyOptional({ example: "Loved it", maxLength: 1_000 })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(1_000)
+  comment?: string;
 }
 
 export class CreateItemModifierGroupDto {
