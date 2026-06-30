@@ -8,6 +8,7 @@ import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import {
+  CreateNotificationCampaignDto,
   CreateNotificationDto,
   CreatePromoNotificationDto,
   RegisterDeviceTokenDto,
@@ -47,6 +48,25 @@ export class NotificationsController {
   @ApiMessage("Promo notifications queued")
   broadcastPromo(@Req() request: AuthenticatedRequest, @Body() input: CreatePromoNotificationDto) {
     return this.notifications.broadcastPromo(request.user!, input);
+  }
+
+  @Post("campaigns")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("Notification campaign scheduled")
+  scheduleCampaign(
+    @Req() request: AuthenticatedRequest,
+    @Body() input: CreateNotificationCampaignDto,
+  ) {
+    return this.notifications.scheduleCampaign(request.user!, input);
+  }
+
+  @Get("campaigns")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("Notification campaigns retrieved")
+  listCampaigns() {
+    return this.notifications.listCampaigns();
   }
 
   @Patch(":id/read")

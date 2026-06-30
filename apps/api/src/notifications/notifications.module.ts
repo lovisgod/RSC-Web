@@ -5,15 +5,21 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import type { ApplicationConfig } from "../config/configuration";
 import { AuthModule } from "../auth/auth.module";
 import { Customer } from "../auth/customer.entity";
+import { RedisModule } from "../redis/redis.module";
 import { FirebasePushSender } from "./firebase-push.sender";
 import { NoopPushSender } from "./noop-push.sender";
+import { NotificationCampaign } from "./notification-campaign.entity";
 import { Notification } from "./notification.entity";
 import { NotificationsController } from "./notifications.controller";
 import { NotificationsService } from "./notifications.service";
 import { PUSH_SENDER } from "./push-sender";
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([Notification, Customer])],
+  imports: [
+    AuthModule,
+    RedisModule,
+    TypeOrmModule.forFeature([Notification, NotificationCampaign, Customer]),
+  ],
   controllers: [NotificationsController],
   providers: [
     NotificationsService,

@@ -3,6 +3,24 @@ import { describe, expect, it, vi } from "vitest";
 import { createApiClient } from "./index";
 
 describe("registration API client", () => {
+  const notificationCampaign = {
+    id: "f585b919-3204-4fc8-9d48-1703ab296888",
+    createdById: "31a2df7e-7f2a-4433-9d5e-1caad0f91c4d",
+    title: "Weekend special",
+    body: "Use code WEEKEND for a seasonal discount.",
+    targetSegment: "ACTIVE_CUSTOMERS",
+    deepLink: "rsc://promos/weekend",
+    scheduledAt: "2026-07-01T10:00:00.000Z",
+    status: "SCHEDULED",
+    totalTargeted: 0,
+    sentCount: 0,
+    failedCount: 0,
+    dispatchedAt: null,
+    failureReason: null,
+    createdAt: "2026-06-30T10:00:00.000Z",
+    updatedAt: "2026-06-30T10:00:00.000Z",
+  };
+
   const menuItem = {
     id: "45ef3252-b96f-4308-b40e-391623b25ac9",
     outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
@@ -272,6 +290,72 @@ describe("registration API client", () => {
         method: "PATCH",
         body: JSON.stringify({ isAvailable: false }),
       }),
+    );
+  });
+
+  it("schedules notification campaigns through the central admin endpoint", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: notificationCampaign,
+          message: "Notification campaign scheduled",
+          status: 201,
+        }),
+        { status: 201, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await client.scheduleNotificationCampaign({
+      title: "Weekend special",
+      body: "Use code WEEKEND for a seasonal discount.",
+      targetSegment: "ACTIVE_CUSTOMERS",
+      deepLink: "rsc://promos/weekend",
+      scheduledAt: "2026-07-01T10:00:00.000Z",
+    });
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/notifications/campaigns",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+    const [, init] = requestFetch.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({
+      title: "Weekend special",
+      body: "Use code WEEKEND for a seasonal discount.",
+      targetSegment: "ACTIVE_CUSTOMERS",
+      scheduledAt: "2026-07-01T10:00:00.000Z",
+      deepLink: "rsc://promos/weekend",
+    });
+  });
+
+  it("lists notification campaigns with delivery aggregates", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [{ ...notificationCampaign, status: "SENT", totalTargeted: 120, sentCount: 118 }],
+          message: "Notification campaigns retrieved",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.listNotificationCampaigns()).resolves.toMatchObject([
+      { id: notificationCampaign.id, totalTargeted: 120, sentCount: 118 },
+    ]);
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/notifications/campaigns",
+      expect.objectContaining({ credentials: "include" }),
     );
   });
 });

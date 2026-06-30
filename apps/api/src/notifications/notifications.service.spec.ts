@@ -3,13 +3,35 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
+import { NotificationCampaign } from "./notification-campaign.entity";
 import { Notification } from "./notification.entity";
 import { NotificationsService } from "./notifications.service";
 import type { PushSender } from "./push-sender";
 
+vi.mock("bullmq", () => ({
+  Queue: vi.fn().mockImplementation(function Queue() {
+    return {
+      add: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+  }),
+  Worker: vi.fn().mockImplementation(function Worker() {
+    return {
+      close: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+    };
+  }),
+}));
+
 describe(NotificationsService.name, () => {
   const recipientId = "2abf9577-027c-4936-83a8-e004fd56a46e";
   let notifications: {
+    create: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+    find: ReturnType<typeof vi.fn>;
+    findOneBy: ReturnType<typeof vi.fn>;
+  };
+  let campaigns: {
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
     find: ReturnType<typeof vi.fn>;
@@ -36,6 +58,17 @@ describe(NotificationsService.name, () => {
       find: vi.fn().mockResolvedValue([]),
       findOneBy: vi.fn().mockResolvedValue(null),
     };
+    campaigns = {
+      create: vi.fn((input: Partial<NotificationCampaign>) =>
+        Object.assign(new NotificationCampaign(), {
+          id: "f585b919-3204-4fc8-9d48-1703ab296888",
+          ...input,
+        }),
+      ),
+      save: vi.fn((campaign: NotificationCampaign) => Promise.resolve(campaign)),
+      find: vi.fn().mockResolvedValue([]),
+      findOneBy: vi.fn().mockResolvedValue(null),
+    };
     users = {
       findOne: vi.fn().mockResolvedValue(
         Object.assign(new Customer(), {
@@ -51,8 +84,10 @@ describe(NotificationsService.name, () => {
     pushSender = { send: (input) => sendPush(input) };
     service = new NotificationsService(
       notifications as unknown as Repository<Notification>,
+      campaigns as unknown as Repository<NotificationCampaign>,
       users as unknown as Repository<Customer>,
       pushSender,
+      { get: vi.fn().mockReturnValue("redis://localhost:6379") } as never,
     );
   });
 

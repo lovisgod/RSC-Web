@@ -4,10 +4,12 @@ import {
   apiResponseSchema,
   adminResultSchema,
   createAdminInputSchema,
+  createNotificationCampaignInputSchema,
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
   menuItemSchema,
+  notificationCampaignSchema,
   outletSummarySchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -19,10 +21,12 @@ import {
   type AdminOverview,
   type AdminResult,
   type CreateAdminInput,
+  type CreateNotificationCampaignInput,
   type LoginInput,
   type LoginResult,
   type LogoutResult,
   type MenuItem,
+  type NotificationCampaign,
   type OutletSummary,
   type RegisterCustomerInput,
   type RegistrationResult,
@@ -46,14 +50,14 @@ export class ApiError extends Error {
 }
 
 export interface ApiClientOptions {
-  baseUrl: string;
+  baseUrl?: string;
   fetch?: typeof globalThis.fetch;
   getAccessToken?: () => Promise<string | null> | string | null;
 }
 
 export function createApiClient(options: ApiClientOptions) {
   const requestFetch = options.fetch ?? globalThis.fetch;
-  const baseUrl = options.baseUrl.replace(/\/$/, "");
+  const baseUrl = (options.baseUrl ?? "http://localhost:4000").replace(/\/$/, "");
 
   async function request<T>(
     path: string,
@@ -165,6 +169,19 @@ export function createApiClient(options: ApiClientOptions) {
     },
     getAdminOverview(): Promise<AdminOverview> {
       return request("/api/v1/admin/overview", adminOverviewSchema);
+    },
+    scheduleNotificationCampaign(
+      input: CreateNotificationCampaignInput,
+    ): Promise<NotificationCampaign> {
+      const body = createNotificationCampaignInputSchema.parse(input);
+
+      return request("/api/v1/notifications/campaigns", notificationCampaignSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    listNotificationCampaigns(): Promise<NotificationCampaign[]> {
+      return request("/api/v1/notifications/campaigns", z.array(notificationCampaignSchema));
     },
   };
 }

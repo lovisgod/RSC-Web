@@ -1,7 +1,17 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
-import { IsEnum, IsOptional, IsString, IsUUID, Length, MaxLength } from "class-validator";
+import {
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsUrl,
+  Length,
+  MaxLength,
+} from "class-validator";
 
 import { UserRole } from "../../auth/user-role.enum";
 
@@ -71,4 +81,35 @@ export class CreatePromoNotificationDto {
   @IsString()
   @MaxLength(80)
   promoCode?: string;
+}
+
+export class CreateNotificationCampaignDto {
+  @ApiProperty({ example: "Weekend special" })
+  @Transform(trim)
+  @IsString()
+  @Length(2, 160)
+  title!: string;
+
+  @ApiProperty({ example: "Use code WEEKEND for a seasonal discount." })
+  @Transform(trim)
+  @IsString()
+  @Length(2, 2_000)
+  body!: string;
+
+  @ApiProperty({
+    enum: ["ALL_CUSTOMERS", "ACTIVE_CUSTOMERS", "CUSTOMERS_WITH_DEVICE_TOKEN"],
+    example: "ACTIVE_CUSTOMERS",
+  })
+  @IsIn(["ALL_CUSTOMERS", "ACTIVE_CUSTOMERS", "CUSTOMERS_WITH_DEVICE_TOKEN"])
+  targetSegment!: "ALL_CUSTOMERS" | "ACTIVE_CUSTOMERS" | "CUSTOMERS_WITH_DEVICE_TOKEN";
+
+  @ApiProperty({ example: "2026-07-01T10:00:00.000Z" })
+  @IsDateString()
+  scheduledAt!: string;
+
+  @ApiProperty({ example: "rsc://promos/weekend", required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  deepLink?: string;
 }

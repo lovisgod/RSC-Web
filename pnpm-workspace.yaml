@@ -5,6 +5,7 @@ packages:
 allowBuilds:
   "@scarf/scarf": false
   bcrypt: set this to true or false
+  msgpackr-extract: false
   sharp: true
   unrs-resolver: true
 
