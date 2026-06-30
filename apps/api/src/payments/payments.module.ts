@@ -11,6 +11,7 @@ import { MasterOrder } from "../orders/master-order.entity";
 import { OrderLineItem } from "../orders/order-line-item.entity";
 import { SubOrder } from "../orders/sub-order.entity";
 import { Outlet } from "../outlets/outlet.entity";
+import { RealtimeModule } from "../realtime/realtime.module";
 import type { ApplicationConfig } from "../config/configuration";
 import { LocalPaymentAdapter } from "./local-payment.adapter";
 import { PAYMENT_ADAPTER } from "./payment-adapter";
@@ -23,6 +24,7 @@ import { PaystackPaymentAdapter } from "./paystack-payment.adapter";
   imports: [
     AuthModule,
     DeliveryModule,
+    RealtimeModule,
     TypeOrmModule.forFeature([
       Customer,
       MenuItem,

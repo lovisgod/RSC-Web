@@ -6,6 +6,7 @@ import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
 import { NotificationsService } from "../notifications/notifications.service";
+import { RealtimeService } from "../realtime/realtime.service";
 import type { InitiatePaymentDto } from "../payments/dto/payment.dto";
 import { PaymentsService } from "../payments/payments.service";
 import { MasterOrder } from "./master-order.entity";
@@ -35,6 +36,7 @@ export class OrdersService {
     private readonly dataSource: DataSource,
     private readonly payments: PaymentsService,
     private readonly notifications: NotificationsService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   listMine(user: AuthenticatedUser): Promise<MasterOrder[]> {
@@ -98,6 +100,13 @@ export class OrdersService {
     await this.masterOrders.save(order);
     await this.recordStatusEvent(order, user.id, input.note ?? null);
     await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
 
     return this.buildOrderDetail(order);
   }
@@ -126,6 +135,13 @@ export class OrdersService {
     await this.masterOrders.save(order);
     await this.recordStatusEvent(order, user.id, "Delivery completed with customer code");
     await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
 
     return this.buildOrderDetail(order);
   }
