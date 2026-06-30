@@ -13,6 +13,7 @@ import { DeliveryService } from "../delivery/delivery.service";
 import { ItemModifier } from "../catalog/item-modifier.entity";
 import { MenuItem } from "../catalog/menu-item.entity";
 import { Outlet } from "../outlets/outlet.entity";
+import { RealtimeService } from "../realtime/realtime.service";
 import { MasterOrder } from "../orders/master-order.entity";
 import { OrderLineItem } from "../orders/order-line-item.entity";
 import { MasterOrderStatus } from "../orders/order-status.enum";
@@ -51,6 +52,7 @@ export class PaymentsService {
     private readonly piiCrypto: PiiCryptoService,
     configService: ConfigService<ApplicationConfig, true>,
     @Inject(PAYMENT_ADAPTER) private readonly paymentAdapter: PaymentAdapter,
+    private readonly realtime: RealtimeService,
   ) {
     const paymentsConfig = configService.get("payments", { infer: true });
 
@@ -166,6 +168,7 @@ export class PaymentsService {
           }),
         );
         subOrders.push(subOrder);
+        this.realtime.emitSuborderNew(subOrder);
 
         for (const line of grouped.get(route.outletId)!) {
           await manager.save(

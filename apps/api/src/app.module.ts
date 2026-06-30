@@ -14,6 +14,7 @@ import { MediaModule } from "./media/media.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { OrdersModule } from "./orders/orders.module";
 import { PaymentsModule } from "./payments/payments.module";
+import { RealtimeModule } from "./realtime/realtime.module";
 import { RedisModule } from "./redis/redis.module";
 import { DeliveryModule } from "./delivery/delivery.module";
 import { RidersModule } from "./riders/riders.module";
@@ -37,6 +38,7 @@ import { UsersModule } from "./users/users.module";
     MediaModule,
     NotificationsModule,
     RidersModule,
+    RealtimeModule,
     PaymentsModule,
     OrdersModule,
     HealthModule,

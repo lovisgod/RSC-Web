@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
@@ -56,6 +56,19 @@ export class UsersController {
   @Post("me/avatar")
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor("file"))
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["file"],
+      properties: {
+        file: {
+          type: "string",
+          format: "binary",
+        },
+      },
+    },
+  })
   @ApiMessage("Avatar uploaded successfully")
   uploadAvatar(@Req() request: AuthenticatedRequest, @UploadedFile() file: UploadedImageFile) {
     return this.users.uploadAvatar(request.user!, file);
