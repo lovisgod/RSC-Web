@@ -8,7 +8,6 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  IsUrl,
   Length,
   MaxLength,
 } from "class-validator";

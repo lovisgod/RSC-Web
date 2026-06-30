@@ -53,9 +53,11 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       { connection },
     );
     this.campaignWorker.on("failed", (job, error) => {
+      const data = isNotificationCampaignJob(job?.data) ? job.data : null;
+
       this.logger.error(
         `Notification campaign job failed: ${JSON.stringify({
-          campaignId: job?.data.campaignId ?? null,
+          campaignId: data?.campaignId ?? null,
           message: error.message,
         })}`,
       );
@@ -299,7 +301,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       query.andWhere("user.fcmToken IS NOT NULL");
     }
 
-    return query.getMany() as Promise<CampaignRecipient[]>;
+    return query.getMany();
   }
 }
 
@@ -311,6 +313,15 @@ interface CampaignRecipient {
   id: string;
   role: UserRole;
   fcmToken: string | null;
+}
+
+function isNotificationCampaignJob(value: unknown): value is NotificationCampaignJob {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "campaignId" in value &&
+    typeof value.campaignId === "string"
+  );
 }
 
 function redisConnectionOptions(redisUrl: string): ConnectionOptions {
