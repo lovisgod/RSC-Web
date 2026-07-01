@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
@@ -24,6 +24,11 @@ export class NotificationsController {
 
   @Get()
   @ApiMessage("Notifications retrieved")
+  @ApiOperation({
+    summary: "List the authenticated user's notifications",
+    description:
+      "Returns the current user's notification inbox. Admin-created promos only appear here when this request is made with a recipient user's token.",
+  })
   listMine(@Req() request: AuthenticatedRequest) {
     return this.notifications.listMine(request.user!);
   }
@@ -32,12 +37,22 @@ export class NotificationsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Notification created successfully")
+  @ApiOperation({
+    summary: "Create a direct notification for one recipient",
+    description:
+      "Creates one notification row for the specified recipientId and recipientRole, then attempts push delivery if the recipient has a registered device token. This is not a broadcast or scheduled campaign endpoint.",
+  })
   create(@Req() request: AuthenticatedRequest, @Body() input: CreateNotificationDto) {
     return this.notifications.create(request.user!, input);
   }
 
   @Post("device-token")
   @ApiMessage("Device token registered")
+  @ApiOperation({
+    summary: "Register the authenticated user's push device token",
+    description:
+      "Stores the user's FCM device token so future direct, promo, order, or campaign notifications can be delivered as push notifications.",
+  })
   registerDeviceToken(@Req() request: AuthenticatedRequest, @Body() input: RegisterDeviceTokenDto) {
     return this.notifications.registerDeviceToken(request.user!, input.token);
   }
@@ -46,6 +61,11 @@ export class NotificationsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Promo notifications queued")
+  @ApiOperation({
+    summary: "Broadcast an immediate promo notification by role",
+    description:
+      "Creates notification rows immediately for every user with the selected recipientRole and attempts push delivery for recipients with device tokens.",
+  })
   broadcastPromo(@Req() request: AuthenticatedRequest, @Body() input: CreatePromoNotificationDto) {
     return this.notifications.broadcastPromo(request.user!, input);
   }
@@ -54,6 +74,11 @@ export class NotificationsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   @ApiMessage("Notification campaign scheduled")
+  @ApiOperation({
+    summary: "Schedule a central push notification campaign",
+    description:
+      "Creates a scheduled campaign for a customer segment. BullMQ dispatches it at scheduledAt; customer inbox notification rows are created when the campaign dispatches.",
+  })
   scheduleCampaign(
     @Req() request: AuthenticatedRequest,
     @Body() input: CreateNotificationCampaignDto,
@@ -65,12 +90,21 @@ export class NotificationsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   @ApiMessage("Notification campaigns retrieved")
+  @ApiOperation({
+    summary: "List scheduled notification campaigns and delivery reports",
+    description:
+      "Super-admin reporting endpoint for campaign status, schedule, dispatch time, total targeted, sent count, and failed count. This is not the customer notification inbox.",
+  })
   listCampaigns() {
     return this.notifications.listCampaigns();
   }
 
   @Patch(":id/read")
   @ApiMessage("Notification marked as read")
+  @ApiOperation({
+    summary: "Mark a notification as read",
+    description: "Marks one notification in the authenticated user's inbox as read.",
+  })
   markRead(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
     return this.notifications.markRead(request.user!, id);
   }
