@@ -42,8 +42,14 @@ export class ApiExceptionFilter implements ExceptionFilter {
       return [payload];
     }
 
-    if (typeof payload === "object" && payload !== null && "message" in payload) {
-      const message: unknown = payload.message;
+    if (isRecord(payload)) {
+      const healthMessages = this.getHealthMessages(payload);
+
+      if (healthMessages.length > 0) {
+        return healthMessages;
+      }
+
+      const message = payload.message;
 
       if (Array.isArray(message) && message.every((item) => typeof item === "string")) {
         return message;
@@ -56,4 +62,27 @@ export class ApiExceptionFilter implements ExceptionFilter {
 
     return [exception.message || "Request failed"];
   }
+
+  private getHealthMessages(payload: Record<string, unknown>): string[] {
+    const entries = isRecord(payload.error) ? payload.error : null;
+
+    if (!entries) {
+      return [];
+    }
+
+    return Object.entries(entries).map(([key, value]) => {
+      if (!isRecord(value)) {
+        return `${key}: ${String(value)}`;
+      }
+
+      const message = typeof value.message === "string" ? value.message : null;
+      const status = typeof value.status === "string" ? value.status : null;
+
+      return [key, message ?? status].filter(Boolean).join(": ");
+    });
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
