@@ -11,12 +11,16 @@ import {
   menuItemSchema,
   notificationCampaignSchema,
   outletSummarySchema,
+  profileSchema,
+  profileUpdateResultSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
   resendVerificationCodeInputSchema,
   resendVerificationCodeResultSchema,
   updateMenuItemAvailabilityInputSchema,
+  updateProfileInputSchema,
   userVerificationResultSchema,
+  verifyProfileChangeInputSchema,
   verifyUserInputSchema,
   type AdminOverview,
   type AdminResult,
@@ -28,12 +32,16 @@ import {
   type MenuItem,
   type NotificationCampaign,
   type OutletSummary,
+  type Profile,
+  type ProfileUpdateResult,
   type RegisterCustomerInput,
   type RegistrationResult,
   type ResendVerificationCodeInput,
   type ResendVerificationCodeResult,
   type UpdateMenuItemAvailabilityInput,
+  type UpdateProfileInput,
   type UserVerificationResult,
+  type VerifyProfileChangeInput,
   type VerifyUserInput,
 } from "@rsc/contracts";
 import { z } from "zod";
@@ -169,6 +177,25 @@ export function createApiClient(options: ApiClientOptions) {
     },
     getAdminOverview(): Promise<AdminOverview> {
       return request("/api/v1/admin/overview", adminOverviewSchema);
+    },
+    getProfile(): Promise<Profile> {
+      return request("/api/v1/users/me", profileSchema);
+    },
+    updateProfile(input: UpdateProfileInput): Promise<ProfileUpdateResult> {
+      const body = updateProfileInputSchema.parse(input);
+
+      return request("/api/v1/users/me", profileUpdateResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    verifyProfileChange(input: VerifyProfileChangeInput): Promise<Profile> {
+      const body = verifyProfileChangeInputSchema.parse(input);
+
+      return request("/api/v1/users/me/verify-change", profileSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
     },
     scheduleNotificationCampaign(
       input: CreateNotificationCampaignInput,

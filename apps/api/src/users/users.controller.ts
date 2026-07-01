@@ -13,7 +13,16 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
@@ -42,6 +51,14 @@ export class UsersController {
   @Post("me")
   @HttpCode(HttpStatus.OK)
   @ApiMessage("Profile updated")
+  @ApiOperation({
+    summary: "Update the active user's profile",
+    description:
+      "Changing phone or email sends an OTP. Verify that OTP with POST /api/v1/users/me/verify-change, not /api/v1/auth/verify-user.",
+  })
+  @ApiOkResponse({
+    description: "Profile updated; otpExpiresInSeconds is set when verification is pending",
+  })
   updateProfile(@Req() request: AuthenticatedRequest, @Body() input: UpdateProfileDto) {
     return this.users.updateProfile(request.user!, input);
   }
@@ -49,6 +66,14 @@ export class UsersController {
   @Post("me/verify-change")
   @HttpCode(HttpStatus.OK)
   @ApiMessage("Profile change verified")
+  @ApiOperation({
+    summary: "Verify a pending profile phone or email change",
+    description:
+      "Use this authenticated endpoint for OTPs sent after updating a profile. The public /auth/verify-user endpoint is only for registration OTPs.",
+  })
+  @ApiOkResponse({ description: "Pending phone or email change verified" })
+  @ApiBadRequestResponse({ description: "No pending change exists for the selected channel" })
+  @ApiUnauthorizedResponse({ description: "OTP is incorrect, expired, or already consumed" })
   verifyProfileChange(@Req() request: AuthenticatedRequest, @Body() input: VerifyProfileChangeDto) {
     return this.users.verifyProfileChange(request.user!, input);
   }
