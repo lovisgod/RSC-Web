@@ -21,6 +21,18 @@ describe("registration API client", () => {
     updatedAt: "2026-06-30T10:00:00.000Z",
   };
 
+  const profile = {
+    id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+    name: "Ada Okafor",
+    role: "CUSTOMER",
+    outletId: null,
+    avatarUrl: null,
+    email: "ada@example.com",
+    phone: "+2348031234567",
+    verificationChannels: { email: true, phone: true },
+    pendingVerificationChannels: { email: false, phone: false },
+  };
+
   const menuItem = {
     id: "45ef3252-b96f-4308-b40e-391623b25ac9",
     outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
@@ -289,6 +301,64 @@ describe("registration API client", () => {
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({ isAvailable: false }),
+      }),
+    );
+  });
+
+  it("updates the authenticated profile and surfaces OTP expiry", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            ...profile,
+            pendingVerificationChannels: { email: true, phone: false },
+            otpExpiresInSeconds: 600,
+          },
+          message: "Profile updated",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await client.updateProfile({ email: "ADA.NEW@EXAMPLE.COM" });
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/users/me",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ email: "ada.new@example.com" }),
+      }),
+    );
+  });
+
+  it("verifies profile change codes against the authenticated users endpoint", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: profile,
+          message: "Profile change verified",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await client.verifyProfileChange({ channel: "email", code: "801785" });
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/users/me/verify-change",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ channel: "email", code: "801785" }),
       }),
     );
   });

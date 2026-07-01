@@ -208,6 +208,44 @@ export const adminOverviewSchema = z.object({
   pendingSettlements: moneySchema,
 });
 
+export const profileSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  role: userRoleSchema,
+  outletId: z.uuid().nullable(),
+  avatarUrl: z.url().nullable(),
+  email: z.email(),
+  phone: z.string().min(1),
+  verificationChannels: z.object({
+    email: z.boolean(),
+    phone: z.boolean(),
+  }),
+  pendingVerificationChannels: z.object({
+    email: z.boolean(),
+    phone: z.boolean(),
+  }),
+});
+
+export const updateProfileInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120).optional(),
+    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN).optional(),
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)).optional(),
+    avatarUrl: z.url().max(512).optional(),
+  })
+  .strict();
+
+export const profileUpdateResultSchema = profileSchema.extend({
+  otpExpiresInSeconds: z.int().positive().nullable(),
+});
+
+export const verifyProfileChangeInputSchema = z
+  .object({
+    channel: verificationChannelSchema,
+    code: z.string().regex(/^\d{6}$/),
+  })
+  .strict();
+
 export const notificationCampaignTargetSegmentSchema = z.enum([
   "ALL_CUSTOMERS",
   "ACTIVE_CUSTOMERS",
@@ -277,6 +315,10 @@ export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvail
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
 export type AdminOverview = z.infer<typeof adminOverviewSchema>;
+export type Profile = z.infer<typeof profileSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
+export type ProfileUpdateResult = z.infer<typeof profileUpdateResultSchema>;
+export type VerifyProfileChangeInput = z.infer<typeof verifyProfileChangeInputSchema>;
 export type NotificationCampaignTargetSegment = z.infer<
   typeof notificationCampaignTargetSegmentSchema
 >;
