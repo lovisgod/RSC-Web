@@ -130,4 +130,81 @@ describe(NotificationsService.name, () => {
 
     expect(notifications.save).toHaveBeenCalledOnce();
   });
+
+  it("broadcasts promo notifications to matching recipients so customer GET has data", async () => {
+    const secondRecipientId = "41e98748-bc19-44e9-b070-178b3a126efb";
+    users.find.mockResolvedValueOnce([
+      Object.assign(new Customer(), { id: recipientId, role: UserRole.CUSTOMER }),
+      Object.assign(new Customer(), { id: secondRecipientId, role: UserRole.CUSTOMER }),
+    ]);
+    users.findOne
+      .mockResolvedValueOnce(
+        Object.assign(new Customer(), {
+          id: recipientId,
+          role: UserRole.CUSTOMER,
+          fcmToken: "first-fcm-token",
+        }),
+      )
+      .mockResolvedValueOnce(
+        Object.assign(new Customer(), {
+          id: secondRecipientId,
+          role: UserRole.CUSTOMER,
+          fcmToken: null,
+        }),
+      );
+
+    await expect(
+      service.broadcastPromo(
+        {
+          id: "31a2df7e-7f2a-4433-9d5e-1caad0f91c4d",
+          role: UserRole.ADMIN,
+          sessionId: "session-1",
+          accessTokenId: "access-token-1",
+        },
+        {
+          recipientRole: UserRole.CUSTOMER,
+          type: "PROMO",
+          title: "Weekend discount",
+          body: "Use code WEEKEND for a discount this weekend.",
+        },
+      ),
+    ).resolves.toEqual({ sent: 2 });
+
+    expect(notifications.save).toHaveBeenCalledTimes(2);
+    expect(notifications.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId,
+        recipientRole: UserRole.CUSTOMER,
+        type: "PROMO",
+        title: "Weekend discount",
+      }),
+    );
+  });
+
+  it("lists notifications for the authenticated recipient only", async () => {
+    const savedNotification = Object.assign(new Notification(), {
+      id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+      recipientId,
+      recipientRole: UserRole.CUSTOMER,
+      type: "PROMO",
+      title: "Weekend discount",
+      body: "Use code WEEKEND for a discount this weekend.",
+      isRead: false,
+    });
+    notifications.find.mockResolvedValueOnce([savedNotification]);
+
+    await expect(
+      service.listMine({
+        id: recipientId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      }),
+    ).resolves.toEqual([savedNotification]);
+
+    expect(notifications.find).toHaveBeenCalledWith({
+      where: { recipientId, recipientRole: UserRole.CUSTOMER },
+      order: { createdAt: "DESC" },
+    });
+  });
 });

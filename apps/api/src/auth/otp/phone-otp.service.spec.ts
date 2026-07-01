@@ -125,4 +125,28 @@ describe(PhoneOtpService.name, () => {
     );
     expect(redis.del).toHaveBeenCalledWith(indexSetCall?.[0]);
   });
+
+  it("stores a profile-change code index and verifies the channel from code only", async () => {
+    await service.storeProfileChangePhone(customerId, "482901");
+
+    const indexSetCall = redis.set.mock.calls.find(([key]) =>
+      String(key).startsWith("auth:profile-change-otp-code:"),
+    );
+    expect(indexSetCall).toBeDefined();
+    redis.get.mockResolvedValue(indexSetCall?.[1]);
+    redis.eval.mockResolvedValue("VERIFIED");
+
+    await expect(service.verifyProfileChangeCode("482901")).resolves.toEqual({
+      result: "VERIFIED",
+      customerId,
+      channel: "phone",
+    });
+    expect(redis.eval).toHaveBeenCalledWith(
+      expect.any(String),
+      1,
+      `auth:phone-otp:${customerId}`,
+      expect.stringMatching(/^[a-f0-9]{64}$/),
+    );
+    expect(redis.del).toHaveBeenCalledWith(indexSetCall?.[0]);
+  });
 });

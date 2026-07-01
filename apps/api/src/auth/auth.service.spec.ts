@@ -35,11 +35,14 @@ describe(AuthService.name, () => {
     storeEmail: ReturnType<typeof vi.fn>;
     storeRegistrationPhone: ReturnType<typeof vi.fn>;
     storeRegistrationEmail: ReturnType<typeof vi.fn>;
+    storeProfileChangePhone: ReturnType<typeof vi.fn>;
+    storeProfileChangeEmail: ReturnType<typeof vi.fn>;
     revoke: ReturnType<typeof vi.fn>;
     revokeEmail: ReturnType<typeof vi.fn>;
     verify: ReturnType<typeof vi.fn>;
     verifyEmail: ReturnType<typeof vi.fn>;
     verifyRegistrationCode: ReturnType<typeof vi.fn>;
+    verifyProfileChangeCode: ReturnType<typeof vi.fn>;
     storePasswordResetPhone: ReturnType<typeof vi.fn>;
     storePasswordResetEmail: ReturnType<typeof vi.fn>;
     revokePasswordReset: ReturnType<typeof vi.fn>;
@@ -85,11 +88,18 @@ describe(AuthService.name, () => {
       storeEmail: vi.fn().mockResolvedValue(undefined),
       storeRegistrationPhone: vi.fn().mockResolvedValue(undefined),
       storeRegistrationEmail: vi.fn().mockResolvedValue(undefined),
+      storeProfileChangePhone: vi.fn().mockResolvedValue(undefined),
+      storeProfileChangeEmail: vi.fn().mockResolvedValue(undefined),
       revoke: vi.fn().mockResolvedValue(undefined),
       revokeEmail: vi.fn().mockResolvedValue(undefined),
       verify: vi.fn().mockResolvedValue("VERIFIED"),
       verifyEmail: vi.fn().mockResolvedValue("VERIFIED"),
       verifyRegistrationCode: vi.fn().mockResolvedValue({
+        result: "VERIFIED",
+        customerId,
+        channel: "phone",
+      }),
+      verifyProfileChangeCode: vi.fn().mockResolvedValue({
         result: "VERIFIED",
         customerId,
         channel: "phone",

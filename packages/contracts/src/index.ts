@@ -241,10 +241,20 @@ export const profileUpdateResultSchema = profileSchema.extend({
 
 export const verifyProfileChangeInputSchema = z
   .object({
-    channel: verificationChannelSchema,
     code: z.string().regex(/^\d{6}$/),
   })
   .strict();
+
+export const notificationSchema = z.object({
+  id: z.uuid(),
+  recipientId: z.uuid(),
+  recipientRole: userRoleSchema,
+  type: z.string().min(1),
+  title: z.string().min(1),
+  body: z.string().min(1),
+  isRead: z.boolean(),
+  createdAt: z.iso.datetime(),
+});
 
 export const notificationCampaignTargetSegmentSchema = z.enum([
   "ALL_CUSTOMERS",
@@ -319,6 +329,7 @@ export type Profile = z.infer<typeof profileSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
 export type ProfileUpdateResult = z.infer<typeof profileUpdateResultSchema>;
 export type VerifyProfileChangeInput = z.infer<typeof verifyProfileChangeInputSchema>;
+export type Notification = z.infer<typeof notificationSchema>;
 export type NotificationCampaignTargetSegment = z.infer<
   typeof notificationCampaignTargetSegmentSchema
 >;
