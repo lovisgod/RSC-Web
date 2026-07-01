@@ -95,7 +95,7 @@ export class UsersService {
         account.pendingPhoneEncrypted = this.piiCrypto.encrypt(phone);
         account.pendingPhoneHash = phoneHash;
         await this.phoneOtp.revoke(account.id);
-        await this.phoneOtp.store(account.id, code);
+        await this.phoneOtp.storeProfileChangePhone(account.id, code);
         await this.smsSender.sendPhoneVerification({
           phone,
           code,
@@ -116,7 +116,7 @@ export class UsersService {
         account.pendingEmailEncrypted = this.piiCrypto.encrypt(email);
         account.pendingEmailHash = emailHash;
         await this.phoneOtp.revokeEmail(account.id);
-        await this.phoneOtp.storeEmail(account.id, code);
+        await this.phoneOtp.storeProfileChangeEmail(account.id, code);
         await this.emailSender.sendWelcomeVerification({
           email,
           name: account.name,
@@ -140,16 +140,15 @@ export class UsersService {
     input: VerifyProfileChangeDto,
   ): Promise<ProfileResult> {
     const account = await this.requireUser(user.id);
+    const verification = await this.phoneOtp.verifyProfileChangeCode(input.code);
 
-    if (input.channel === "phone") {
+    if (verification.result !== "VERIFIED" || verification.customerId !== account.id) {
+      throw new UnauthorizedException("Invalid or expired verification code");
+    }
+
+    if (verification.channel === "phone") {
       if (!account.pendingPhoneEncrypted || !account.pendingPhoneHash) {
         throw new BadRequestException("No pending phone change");
-      }
-
-      const verification = await this.phoneOtp.verify(account.id, input.code);
-
-      if (verification !== "VERIFIED") {
-        throw new UnauthorizedException("Invalid or expired verification code");
       }
 
       account.phoneEncrypted = account.pendingPhoneEncrypted;
@@ -160,12 +159,6 @@ export class UsersService {
     } else {
       if (!account.pendingEmailEncrypted || !account.pendingEmailHash) {
         throw new BadRequestException("No pending email change");
-      }
-
-      const verification = await this.phoneOtp.verifyEmail(account.id, input.code);
-
-      if (verification !== "VERIFIED") {
-        throw new UnauthorizedException("Invalid or expired verification code");
       }
 
       account.emailEncrypted = account.pendingEmailEncrypted;

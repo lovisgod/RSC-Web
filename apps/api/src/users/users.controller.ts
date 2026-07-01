@@ -69,7 +69,7 @@ export class UsersController {
   @ApiOperation({
     summary: "Verify a pending profile phone or email change",
     description:
-      "Use this authenticated endpoint for OTPs sent after updating a profile. The public /auth/verify-user endpoint is only for registration OTPs.",
+      "Use this authenticated endpoint for OTPs sent after updating a profile. Send only the code; the API resolves phone vs email from the OTP. The public /auth/verify-user endpoint is only for registration OTPs.",
   })
   @ApiOkResponse({ description: "Pending phone or email change verified" })
   @ApiBadRequestResponse({ description: "No pending change exists for the selected channel" })

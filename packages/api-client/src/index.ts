@@ -9,6 +9,7 @@ import {
   loginResultSchema,
   logoutResultSchema,
   menuItemSchema,
+  notificationSchema,
   notificationCampaignSchema,
   outletSummarySchema,
   profileSchema,
@@ -30,6 +31,7 @@ import {
   type LoginResult,
   type LogoutResult,
   type MenuItem,
+  type Notification,
   type NotificationCampaign,
   type OutletSummary,
   type Profile,
@@ -196,6 +198,9 @@ export function createApiClient(options: ApiClientOptions) {
         method: "POST",
         body: JSON.stringify(body),
       });
+    },
+    listNotifications(): Promise<Notification[]> {
+      return request("/api/v1/notifications", z.array(notificationSchema));
     },
     scheduleNotificationCampaign(
       input: CreateNotificationCampaignInput,

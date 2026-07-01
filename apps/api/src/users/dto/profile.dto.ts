@@ -2,8 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
 import {
+  Allow,
   IsEmail,
-  IsIn,
   IsOptional,
   IsString,
   IsUrl,
@@ -49,12 +49,11 @@ export class UpdateProfileDto {
 }
 
 export class VerifyProfileChangeDto {
-  @ApiProperty({ enum: ["phone", "email"], example: "email" })
-  @IsIn(["phone", "email"])
-  channel!: "phone" | "email";
-
   @ApiProperty({ example: "482901" })
   @IsString()
   @Matches(/^\d{6}$/)
   code!: string;
+
+  @Allow()
+  channel?: unknown;
 }

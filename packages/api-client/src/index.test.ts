@@ -33,6 +33,17 @@ describe("registration API client", () => {
     pendingVerificationChannels: { email: false, phone: false },
   };
 
+  const notification = {
+    id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+    recipientId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+    recipientRole: "CUSTOMER",
+    type: "PROMO",
+    title: "Weekend discount",
+    body: "Use code WEEKEND for a discount this weekend.",
+    isRead: false,
+    createdAt: "2026-07-01T08:00:00.000Z",
+  };
+
   const menuItem = {
     id: "45ef3252-b96f-4308-b40e-391623b25ac9",
     outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
@@ -352,14 +363,38 @@ describe("registration API client", () => {
       fetch: requestFetch,
     });
 
-    await client.verifyProfileChange({ channel: "email", code: "801785" });
+    await client.verifyProfileChange({ code: "801785" });
 
     expect(requestFetch).toHaveBeenCalledWith(
       "https://api-dev.rscapp.xyz/api/v1/users/me/verify-change",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ channel: "email", code: "801785" }),
+        body: JSON.stringify({ code: "801785" }),
       }),
+    );
+  });
+
+  it("lists the authenticated user's notifications", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [notification],
+          message: "Notifications retrieved",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.listNotifications()).resolves.toEqual([notification]);
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/notifications",
+      expect.objectContaining({ credentials: "include" }),
     );
   });
 
