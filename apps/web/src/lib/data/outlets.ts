@@ -32,6 +32,6 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     headerColor: palette.headerColor,
     image: summary.imageUrl ?? palette.image,
     isOnline: summary.isOnline,
-    tag: !summary.isOnline ? "Offline" : undefined,
+    ...(!summary.isOnline ? { tag: "Offline" } : {}),
   };
 }

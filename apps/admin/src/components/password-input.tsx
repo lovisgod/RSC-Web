@@ -7,9 +7,9 @@ interface PasswordInputProps {
   placeholder?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error?: string;
-  hint?: string;
-  autoComplete?: string;
+  error?: string | undefined;
+  hint?: string | undefined;
+  autoComplete?: string | undefined;
 }
 
 export function PasswordInput({

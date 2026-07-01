@@ -3,7 +3,7 @@
 import { Button, EmptyState } from "@rsc/ui";
 import { useState } from "react";
 
-import { useActiveOrder } from "@/src/hooks/use-orders";
+import { useActiveOrders } from "@/src/hooks/use-orders";
 import { useCompletedOrders } from "@/src/hooks/use-orders";
 import { OrderCard } from "@/src/components/orders/order-card";
 
@@ -26,7 +26,7 @@ function TabButton({
 }
 
 function ActiveTab() {
-  const { data: order, isPending, isError } = useActiveOrder();
+  const { data: orders, isPending, isError } = useActiveOrders();
 
   if (isPending) {
     return <p className="text-sm text-gray-400 py-8 text-center">Checking for active orders…</p>;
@@ -40,7 +40,7 @@ function ActiveTab() {
     );
   }
 
-  if (!order) {
+  if (!orders || orders.length === 0) {
     return (
       <EmptyState
         icon="🍽️"
@@ -51,8 +51,10 @@ function ActiveTab() {
   }
 
   return (
-    <div className="space-y-4">
-      <OrderCard order={order} variant="active" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {orders.map((order) => (
+        <OrderCard key={order.id} order={order} variant="active" />
+      ))}
     </div>
   );
 }

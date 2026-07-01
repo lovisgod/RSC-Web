@@ -1,9 +1,12 @@
 import {
   adminOverviewSchema,
+  adminResultSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
   changePasswordInputSchema,
   changePasswordResultSchema,
+  createAdminInputSchema,
+  customerOrderSchema,
   initiatePaymentInputSchema,
   initiatePaymentResultSchema,
   orderSummarySchema,
@@ -22,6 +25,7 @@ import {
   loginResultSchema,
   logoutResultSchema,
   menuItemSchema,
+  notificationSchema,
   outletSummarySchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -30,8 +34,11 @@ import {
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminOverview,
+  type AdminResult,
   type ChangePasswordInput,
   type ChangePasswordResult,
+  type CreateAdminInput,
+  type CustomerOrder,
   type InitiatePaymentInput,
   type InitiatePaymentResult,
   type OrderSummary,
@@ -51,6 +58,7 @@ import {
   type LoginResult,
   type LogoutResult,
   type MenuItem,
+  type Notification,
   type OutletSummary,
   type RegisterCustomerInput,
   type RegistrationResult,
@@ -237,6 +245,12 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listOrders(): Promise<OrderSummary[]> {
       return request("/api/v1/orders", z.array(orderSummarySchema));
+    },
+    listCustomerOrders(): Promise<CustomerOrder[]> {
+      return request("/api/v1/orders", z.array(customerOrderSchema));
+    },
+    listNotifications(): Promise<Notification[]> {
+      return request("/api/v1/notifications", z.array(notificationSchema));
     },
     reorder(id: string): Promise<unknown> {
       return request(`/api/v1/orders/${encodeURIComponent(id)}/reorder`, z.unknown(), {

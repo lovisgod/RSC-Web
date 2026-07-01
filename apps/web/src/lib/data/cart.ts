@@ -4,6 +4,7 @@ export interface CartItem {
   notes: string;
   quantity: number;
   unitPriceMinor: number;
+  modifiers: { modifierId: string }[];
 }
 
 export interface CartOutletGroup {

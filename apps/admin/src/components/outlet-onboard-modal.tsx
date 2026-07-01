@@ -12,7 +12,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   /** Pass an existing outlet to switch the modal into edit mode */
-  outlet?: OutletSummary;
+  outlet?: OutletSummary | undefined;
 }
 
 interface FormState {
@@ -32,52 +32,38 @@ const EMPTY_FORM: FormState = {
 };
 
 export function OutletOnboardModal({ open, onClose, outlet }: Props) {
+  if (!open) return null;
+
+  return (
+    <OutletOnboardModalContent key={outlet?.id ?? "new-outlet"} onClose={onClose} outlet={outlet} />
+  );
+}
+
+function getInitialForm(outlet?: OutletSummary): FormState {
+  if (!outlet) return EMPTY_FORM;
+
+  return {
+    name: outlet.name,
+    description: outlet.description ?? "",
+    cuisineType: outlet.cuisineType,
+    isOnline: outlet.isOnline,
+    momentSubaccountCode: outlet.momentSubaccountCode,
+  };
+}
+
+function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
   const isEditMode = !!outlet;
   const queryClient = useQueryClient();
 
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(() => getInitialForm(outlet));
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(outlet?.imageUrl ?? null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
   // Seed form when modal opens (add → empty, edit → outlet data)
-  useEffect(() => {
-    if (!open) return;
-    if (outlet) {
-      setForm({
-        name: outlet.name,
-        description: outlet.description ?? "",
-        cuisineType: outlet.cuisineType,
-        isOnline: outlet.isOnline,
-        momentSubaccountCode: outlet.momentSubaccountCode,
-      });
-      setImagePreview(outlet.imageUrl);
-    } else {
-      setForm(EMPTY_FORM);
-      setImagePreview(null);
-    }
-    setImageFile(null);
-    setFieldErrors({});
-  }, [open, outlet]);
-
-  // Focus + Escape
-  useEffect(() => {
-    if (!open) return;
-    const id = setTimeout(() => firstFieldRef.current?.focus(), 50);
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") handleClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => {
-      clearTimeout(id);
-      document.removeEventListener("keydown", onKey);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
   const {
     mutate,
     isPending,
@@ -111,6 +97,22 @@ export function OutletOnboardModal({ open, onClose, outlet }: Props) {
     onClose();
   }
 
+  useEffect(() => {
+    const id = setTimeout(() => firstFieldRef.current?.focus(), 50);
+    return () => clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !isPending) {
+        resetMutation();
+        onClose();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isPending, onClose, resetMutation]);
+
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -142,8 +144,6 @@ export function OutletOnboardModal({ open, onClose, outlet }: Props) {
         setForm((p) => ({ ...p, [key]: e.target.value })),
     };
   }
-
-  if (!open) return null;
 
   return createPortal(
     <div className="modal-overlay" aria-hidden="true" onClick={handleClose}>

@@ -1,9 +1,13 @@
 import axios, { type AxiosError } from "axios";
 import type {
   AdminOverview,
+  AdminResult,
+  CreateAdminInput,
   ForgotPasswordResult,
   LoginResult,
   LogoutResult,
+  MenuItem,
+  OrderSummary,
   OutletSummary,
   RegistrationResult,
   ResendVerificationCodeResult,
@@ -84,6 +88,8 @@ export const resetPassword = (body: {
 
 export const listOutlets = (): Promise<OutletSummary[]> => get("/api/v1/outlets");
 
+export const getOutlet = (id: string): Promise<OutletSummary> => get(`/api/v1/outlets/${id}`);
+
 /** POST — send FormData (multipart) for image upload */
 export const createOutlet = (body: FormData): Promise<OutletSummary> =>
   post("/api/v1/outlets", body);
@@ -101,6 +107,18 @@ export const toggleOutletOnlineStatus = (
 export const deleteOutlet = (id: string): Promise<void> =>
   http.delete(`/api/v1/outlets/${id}`).then(() => undefined);
 
+export const listMenuItems = (): Promise<MenuItem[]> => get("/api/v1/menu-items");
+
+export const updateMenuItemAvailability = (
+  id: string,
+  body: { isAvailable: boolean },
+): Promise<MenuItem> => patchReq(`/api/v1/menu-items/${id}/availability`, body);
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+export const listOrders = (query?: string): Promise<OrderSummary[]> =>
+  get(`/api/v1/orders${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+
 // ─── Notifications ────────────────────────────────────────────────────────────
 
 export interface SendPromoBody {
@@ -113,6 +131,11 @@ export interface SendPromoBody {
 
 export const sendPromoNotification = (body: SendPromoBody): Promise<{ sent: number }> =>
   post("/api/v1/notifications/promos", body);
+
+// ─── Admin accounts ───────────────────────────────────────────────────────────
+
+export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
+  post("/api/v1/auth/admins", body);
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 

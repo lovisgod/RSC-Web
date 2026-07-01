@@ -77,7 +77,7 @@ export const useCartStore = create<CartState>()(
     {
       name: "rsc-customer-cart",
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
     },
   ),
 );

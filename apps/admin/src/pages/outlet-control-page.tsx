@@ -3,6 +3,7 @@ import type { OutletSummary } from "@rsc/contracts";
 import Skeleton from "@mui/material/Skeleton";
 import { Pencil, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { OutletOnboardModal } from "../components/outlet-onboard-modal";
 import { useDeleteOutlet } from "../hooks/use-delete-outlet";
@@ -35,10 +36,12 @@ function OutletAvatar({ imageUrl, name }: { imageUrl: string | null; name: strin
 }
 
 export function OutletControlPage() {
+  const navigate = useNavigate();
   const { data: outlets, isLoading } = useOutletsLive();
   const [onlineState, setOnlineState] = useState<Record<string, boolean>>({});
   const [deleteReadyId, setDeleteReadyId] = useState<string | null>(null);
   const initialized = useRef(false);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (outlets && !initialized.current) {
@@ -46,6 +49,29 @@ export function OutletControlPage() {
       initialized.current = true;
     }
   }, [outlets]);
+
+  // Single click navigates to detail page; double-click reveals edit/delete actions.
+  // The timer differentiates the two: second click cancels pending navigation.
+  function handleCardClick(outletId: string) {
+    if (deleteReadyId && deleteReadyId !== outletId) setDeleteReadyId(null);
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+      return;
+    }
+    clickTimerRef.current = setTimeout(() => {
+      clickTimerRef.current = null;
+      navigate(`/outlets/${outletId}`);
+    }, 250);
+  }
+
+  function handleCardDoubleClick(outletId: string) {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+    setDeleteReadyId(outletId);
+  }
 
   // Dismiss delete/edit mode when clicking outside a card or pressing Escape
   useEffect(() => {
@@ -142,10 +168,8 @@ export function OutletControlPage() {
                       ]
                         .join(" ")
                         .trim()}
-                      onDoubleClick={() => setDeleteReadyId(outlet.id)}
-                      onClick={() => {
-                        if (deleteReadyId && deleteReadyId !== outlet.id) setDeleteReadyId(null);
-                      }}
+                      onClick={() => handleCardClick(outlet.id)}
+                      onDoubleClick={() => handleCardDoubleClick(outlet.id)}
                     >
                       {/* Side action buttons — slide in on double-tap */}
                       <div className="outlet-card__side-actions">

@@ -1,74 +1,104 @@
 "use client";
 
+import type { Notification } from "@rsc/contracts";
+import { Bell, CalendarDays, RotateCw, Tag, X } from "lucide-react";
 import { useState } from "react";
-import { X } from "lucide-react";
-import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
 
-interface Offer {
-  id: string;
-  heading: string;
-  body: string;
-  icon: string;
-  bg: string;
+import { useNotifications } from "@/src/hooks/use-notifications";
+
+function getOfferAppearance(type: string) {
+  switch (type.toUpperCase()) {
+    case "PROMO":
+      return { bg: "var(--rsc-main)", Icon: Tag };
+    case "SPECIAL_PERIOD":
+      return { bg: "var(--rsc-dark)", Icon: CalendarDays };
+    default:
+      return { bg: "var(--rsc-navy-light)", Icon: Bell };
+  }
 }
 
-const OFFERS: Offer[] = [
-  {
-    id: "free-delivery",
-    heading: "Free Delivery Today!",
-    body: "Enjoy free delivery on your first split order.",
-    icon: "🎉",
-    bg: "var(--rsc-dark)",
-  },
-  {
-    id: "new-kitchen",
-    heading: "New Kitchen Alert!",
-    body: "Farfallino Kitchen is now live. Try Italian tonight.",
-    icon: "🍝",
-    bg: "var(--rsc-main)",
-  },
-];
+function OfferCard({
+  notification,
+  onDismiss,
+}: {
+  notification: Notification;
+  onDismiss: () => void;
+}) {
+  const { bg, Icon } = getOfferAppearance(notification.type);
 
-function OfferCard({ offer, onDismiss }: { offer: Offer; onDismiss: () => void }) {
   return (
-    <div
-      className="relative flex items-center justify-between gap-4 rounded-2xl px-5 py-4 w-full h-full"
-      style={{ backgroundColor: offer.bg }}
+    <article
+      className="relative flex h-full w-full items-center justify-between gap-4 rounded-2xl px-5 py-4"
+      style={{ backgroundColor: bg }}
     >
       <button
         type="button"
         onClick={onDismiss}
-        aria-label="Dismiss offer"
-        className="absolute top-2.5 right-2.5 text-white/50 hover:text-white transition-colors"
+        aria-label={`Dismiss ${notification.title}`}
+        className="absolute right-2.5 top-2.5 text-white/50 transition-colors hover:text-white"
       >
-        <X className="w-4 h-4" />
+        <X className="h-4 w-4" aria-hidden="true" />
       </button>
 
-      <div className="pr-6 flex-1 min-w-0">
-        <p className="text-base font-bold text-white leading-tight">{offer.heading}</p>
-        <p className="text-sm text-white/80 mt-0.5">{offer.body}</p>
+      <div className="min-w-0 flex-1 pr-6">
+        <p className="text-base font-bold leading-tight text-white">{notification.title}</p>
+        <p className="mt-0.5 text-sm text-white/80">{notification.body}</p>
       </div>
 
-      <span className="text-4xl flex-shrink-0 select-none">{offer.icon}</span>
+      <span
+        className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white/15 text-white"
+        aria-hidden="true"
+      >
+        <Icon className="h-6 w-6" />
+      </span>
+    </article>
+  );
+}
+
+function OffersSkeleton() {
+  return (
+    <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="Loading offers">
+      {[1, 2].map((item) => (
+        <div key={item} className="h-24 animate-pulse rounded-2xl bg-gray-200" />
+      ))}
     </div>
   );
 }
 
 export function OffersSection() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const { data: notifications = [], isPending, isError, refetch } = useNotifications();
 
-  const visible = OFFERS.filter((o) => !dismissed.has(o.id));
+  if (isPending) return <OffersSkeleton />;
 
+  if (isError) {
+    return (
+      <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 py-3">
+        <p className="text-sm text-gray-500">Offers could not be loaded.</p>
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold"
+          style={{ color: "var(--rsc-main)" }}
+        >
+          <RotateCw className="h-4 w-4" aria-hidden="true" />
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const visible = notifications.filter((notification) => !dismissed.has(notification.id));
   if (visible.length === 0) return null;
 
   function dismiss(id: string) {
-    setDismissed((prev) => new Set([...prev, id]));
+    setDismissed((current) => new Set([...current, id]));
   }
 
   return (
-    <div className="mb-6">
-      {/* Mobile — Swiper carousel */}
+    <section className="mb-6" aria-label="Offers and announcements">
       <div className="sm:hidden">
         <Swiper
           modules={[Pagination]}
@@ -77,20 +107,23 @@ export function OffersSection() {
           pagination={{ clickable: true }}
           className="!pb-8"
         >
-          {visible.map((offer) => (
-            <SwiperSlide key={offer.id}>
-              <OfferCard offer={offer} onDismiss={() => dismiss(offer.id)} />
+          {visible.map((notification) => (
+            <SwiperSlide key={notification.id}>
+              <OfferCard notification={notification} onDismiss={() => dismiss(notification.id)} />
             </SwiperSlide>
           ))}
         </Swiper>
       </div>
 
-      {/* Desktop — 2-column grid */}
-      <div className="hidden sm:grid sm:grid-cols-2 gap-3">
-        {visible.map((offer) => (
-          <OfferCard key={offer.id} offer={offer} onDismiss={() => dismiss(offer.id)} />
+      <div className="hidden gap-3 sm:grid sm:grid-cols-2">
+        {visible.map((notification) => (
+          <OfferCard
+            key={notification.id}
+            notification={notification}
+            onDismiss={() => dismiss(notification.id)}
+          />
         ))}
       </div>
-    </div>
+    </section>
   );
 }

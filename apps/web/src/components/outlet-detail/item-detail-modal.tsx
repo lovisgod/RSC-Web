@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@rsc/ui";
 import { useState } from "react";
+import { Button } from "@rsc/ui";
 
 import { formatNaira } from "@/src/lib/data/cart";
-import type { MenuItem } from "@/src/lib/data/outlet-menu";
+import type { DisplayModifierGroup, MenuItem } from "@/src/lib/data/outlet-menu";
 import { useCartStore } from "@/src/stores/cart-store";
 
 interface ItemDetailModalProps {
@@ -13,35 +13,114 @@ interface ItemDetailModalProps {
   onClose: () => void;
 }
 
+function ModifierGroupSection({
+  group,
+  selections,
+  onToggle,
+}: {
+  group: DisplayModifierGroup;
+  selections: Set<string>;
+  onToggle: (modifierId: string) => void;
+}) {
+  const isRadio = group.maxSelections === 1;
+  const atMax = !isRadio && selections.size >= group.maxSelections;
+
+  return (
+    <div className="bg-gray-50 rounded-2xl p-4">
+      <div className="flex justify-between mb-3">
+        <span className="text-sm font-bold text-gray-900">{group.name}</span>
+        <span
+          className="text-xs font-semibold px-2 py-0.5 rounded-full"
+          style={
+            group.isRequired
+              ? { backgroundColor: "var(--rsc-dark)", color: "#fff" }
+              : { backgroundColor: "#e5e7eb", color: "#6b7280" }
+          }
+        >
+          {group.isRequired ? "Required" : "Optional"}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        {group.modifiers.map((mod) => {
+          const checked = selections.has(mod.id);
+          const disabled = !checked && atMax;
+
+          return (
+            <label
+              key={mod.id}
+              className={`flex items-center justify-between gap-3 ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+            >
+              <div className="flex items-center gap-3">
+                <input
+                  type={isRadio ? "radio" : "checkbox"}
+                  name={isRadio ? `modifier-group-${group.id}` : undefined}
+                  checked={checked}
+                  disabled={disabled}
+                  onChange={() => onToggle(mod.id)}
+                  className="w-4 h-4 accent-[var(--rsc-main)]"
+                />
+                <span className="text-sm text-gray-700">{mod.name}</span>
+              </div>
+              {mod.priceDeltaMinor > 0 && (
+                <span className="text-sm font-medium text-gray-500 flex-shrink-0">
+                  +{formatNaira(mod.priceDeltaMinor)}
+                </span>
+              )}
+            </label>
+          );
+        })}
+      </div>
+
+      {!isRadio && group.maxSelections > 1 && (
+        <p className="text-xs text-gray-400 mt-2">Choose up to {group.maxSelections}</p>
+      )}
+    </div>
+  );
+}
+
 export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
-  const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set());
+  // groupId → Set of selected modifierIds
+  const [selections, setSelections] = useState<Map<string, Set<string>>>(() => new Map());
   const addItem = useCartStore((s) => s.addItem);
 
-  function toggleExtra(id: string) {
-    setSelectedExtras((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
+  function toggle(group: DisplayModifierGroup, modifierId: string) {
+    setSelections((prev) => {
+      const next = new Map(prev);
+      const current = new Set(next.get(group.id) ?? []);
+
+      if (group.maxSelections === 1) {
+        current.clear();
+        if (!prev.get(group.id)?.has(modifierId)) current.add(modifierId);
       } else {
-        next.add(id);
+        if (current.has(modifierId)) {
+          current.delete(modifierId);
+        } else if (current.size < group.maxSelections) {
+          current.add(modifierId);
+        }
       }
+
+      next.set(group.id, current);
       return next;
     });
   }
 
-  const extrasTotal = (item.extras ?? [])
-    .filter((e) => selectedExtras.has(e.id))
-    .reduce((sum, e) => sum + e.priceMinor, 0);
+  const extrasTotal = item.modifierGroups
+    .flatMap((g) => g.modifiers.filter((m) => selections.get(g.id)?.has(m.id)))
+    .reduce((sum, m) => sum + m.priceDeltaMinor, 0);
 
   const unitPrice = item.priceMinor + extrasTotal;
   const total = unitPrice * quantity;
 
+  const allRequiredMet = item.modifierGroups
+    .filter((g) => g.isRequired)
+    .every((g) => (selections.get(g.id)?.size ?? 0) >= g.minSelections);
+
   function handleAddToCart() {
-    const extrasLabel = (item.extras ?? [])
-      .filter((e) => selectedExtras.has(e.id))
-      .map((e) => e.name)
-      .join(", ");
+    const selectedModifiers = item.modifierGroups.flatMap((g) =>
+      g.modifiers.filter((m) => selections.get(g.id)?.has(m.id)),
+    );
 
     addItem({
       outletId: item.outletId,
@@ -49,9 +128,10 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
       item: {
         id: item.id,
         name: item.name,
-        notes: extrasLabel,
+        notes: selectedModifiers.map((m) => m.name).join(", "),
         quantity,
         unitPriceMinor: unitPrice,
+        modifiers: selectedModifiers.map((m) => ({ modifierId: m.id })),
       },
     });
     onClose();
@@ -65,12 +145,12 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
       <div className="w-full md:max-w-md bg-white rounded-t-3xl md:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header image */}
         <div
-          className="h-52 flex items-center justify-center text-8xl flex-shrink-0"
+          className="h-52 flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: item.bgColor }}
         >
           {item.image.startsWith("/") || item.image.startsWith("http") ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.image} alt={item.name} className="w-32 h-32 object-contain" />
+            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
           ) : (
             <span className="text-8xl">{item.image}</span>
           )}
@@ -86,45 +166,17 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
             </span>
           </div>
 
-          <p className="text-sm text-gray-500">{item.description}</p>
+          {item.description && <p className="text-sm text-gray-500">{item.description}</p>}
 
-          {/* Note */}
-          {item.note && (
-            <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-              <p className="text-sm text-green-700">{item.note}</p>
-            </div>
-          )}
-
-          {/* Extras */}
-          {item.extras && item.extras.length > 0 && (
-            <div className="bg-gray-50 rounded-2xl p-4">
-              <div className="flex justify-between mb-3">
-                <span className="text-sm font-bold text-gray-900">Add Extras</span>
-                <span className="text-xs text-gray-400 font-medium">Optional</span>
-              </div>
-              <div className="space-y-3">
-                {item.extras.map((extra) => (
-                  <label
-                    key={extra.id}
-                    className="flex items-center justify-between gap-3 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedExtras.has(extra.id)}
-                        onChange={() => toggleExtra(extra.id)}
-                        className="w-4 h-4 rounded border-gray-300 accent-[var(--rsc-main)]"
-                      />
-                      <span className="text-sm text-gray-700">{extra.name}</span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-500">
-                      +{formatNaira(extra.priceMinor)}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Modifier groups */}
+          {item.modifierGroups.map((group) => (
+            <ModifierGroupSection
+              key={group.id}
+              group={group}
+              selections={selections.get(group.id) ?? new Set()}
+              onToggle={(modifierId) => toggle(group, modifierId)}
+            />
+          ))}
         </div>
 
         {/* Sticky footer */}
@@ -151,7 +203,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
           </div>
 
           {/* Add to cart */}
-          <Button tone="navy" fullWidth onClick={handleAddToCart}>
+          <Button tone="navy" fullWidth onClick={handleAddToCart} disabled={!allRequiredMet}>
             Add to Unified Cart &nbsp;·&nbsp; {formatNaira(total)}
           </Button>
         </div>
