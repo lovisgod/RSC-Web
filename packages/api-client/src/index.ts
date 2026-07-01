@@ -12,6 +12,7 @@ import {
   orderSummarySchema,
   userProfileSchema,
   updateProfileInputSchema,
+  updateMenuItemAvailabilityInputSchema,
   createDeliveryAddressInputSchema,
   deliveryAddressSummarySchema,
   validateAddressInputSchema,
@@ -44,6 +45,7 @@ import {
   type OrderSummary,
   type UserProfile,
   type UpdateProfileInput,
+  type UpdateMenuItemAvailabilityInput,
   type CreateDeliveryAddressInput,
   type DeliveryAddressSummary,
   type ValidateAddressInput,
@@ -237,11 +239,22 @@ export function createApiClient(options: ApiClientOptions) {
         z.array(menuCategorySchema),
       );
     },
-    listMenuItems(outletId: string): Promise<MenuItemSummary[]> {
+    listMenuItems(input: { outletId: string }): Promise<MenuItemSummary[]> {
       return request(
-        `/api/v1/menu-items?outletId=${encodeURIComponent(outletId)}`,
+        `/api/v1/menu-items?outletId=${encodeURIComponent(input.outletId)}`,
         z.array(menuItemSchema),
       );
+    },
+    updateMenuItemAvailability(
+      id: string,
+      input: UpdateMenuItemAvailabilityInput,
+    ): Promise<MenuItem> {
+      const body = updateMenuItemAvailabilityInputSchema.parse(input);
+
+      return request(`/api/v1/menu-items/${encodeURIComponent(id)}/availability`, menuItemSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
     },
     listOrders(): Promise<OrderSummary[]> {
       return request("/api/v1/orders", z.array(orderSummarySchema));
