@@ -111,13 +111,6 @@ export function FulfillmentStep({
     );
   }
 
-  function resetValidation() {
-    setZone(null);
-    setCoords(null);
-    setLocationError(null);
-    validateMutation.reset();
-  }
-
   const subtotal = cart ? cartSubtotalMinor(cart) : 0;
   const deliveryFee = mode === "delivery" && cart ? cart.deliveryFeeMinor : 0;
   const vat = Math.round((subtotal + deliveryFee) * VAT_RATE);
@@ -130,7 +123,7 @@ export function FulfillmentStep({
             g.items.map((item) => ({
               menuItemId: item.id,
               quantity: item.quantity,
-              modifiers: [] as { modifierId: string }[],
+              modifiers: item.modifiers,
               ...(item.notes ? { customerNote: item.notes } : {}),
             })),
           )
@@ -163,7 +156,7 @@ export function FulfillmentStep({
           onBehalf,
           instructions,
         },
-        result.orderId,
+        result.reference,
       );
     },
   });

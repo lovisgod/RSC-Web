@@ -176,15 +176,7 @@ export const moneySchema = z.object({
   currency: currencySchema,
 });
 
-export const outletSummarySchema = z.object({
-  id: z.uuid(),
-  name: z.string().min(1),
-  cuisineType: z.string().min(1),
-  description: z.string().nullable(),
-  imageUrl: z.url().nullable(),
-  isOnline: z.boolean(),
-  momentSubaccountCode: z.string(),
-});
+// outletSummarySchema is defined after menuItem / modifier schemas (below) to avoid TDZ
 
 export const userProfileSchema = z.object({
   id: z.uuid(),
@@ -276,7 +268,28 @@ export const initiatePaymentInputSchema = z
   .strict();
 
 export const initiatePaymentResultSchema = z.object({
-  orderId: z.uuid(),
+  masterOrderId: z.uuid(),
+  paymentId: z.uuid(),
+  reference: z.string(),
+  checkoutUrl: z.string().nullable(),
+  status: z.string(),
+  totals: z.object({
+    subtotalMinor: z.int().nonnegative(),
+    deliveryFeeMinor: z.int().nonnegative(),
+    serviceFeeMinor: z.int().nonnegative(),
+    vatMinor: z.int().nonnegative(),
+    totalMinor: z.int().nonnegative(),
+    currency: currencySchema,
+  }),
+  splitBreakdown: z.array(
+    z.object({
+      outletId: z.uuid(),
+      subaccountCode: z.string(),
+      grossMinor: z.int().nonnegative(),
+      commissionMinor: z.int().nonnegative(),
+      netMinor: z.int().nonnegative(),
+    }),
+  ),
 });
 
 export const menuCategorySchema = z.object({
@@ -309,6 +322,49 @@ export const updateMenuItemAvailabilityInputSchema = z
   })
   .strict();
 
+export const itemModifierGroupSchema = z.object({
+  id: z.uuid(),
+  outletId: z.uuid(),
+  name: z.string().min(1),
+  minSelections: z.int().nonnegative(),
+  maxSelections: z.int().positive(),
+  isRequired: z.boolean(),
+  sortOrder: z.int().nonnegative(),
+});
+
+export const itemModifierSchema = z.object({
+  id: z.uuid(),
+  outletId: z.uuid(),
+  groupId: z.uuid(),
+  name: z.string().min(1),
+  priceDeltaMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  isAvailable: z.boolean(),
+  sortOrder: z.int().nonnegative(),
+});
+
+export const menuItemModifierGroupSchema = z.object({
+  id: z.uuid(),
+  menuItemId: z.uuid(),
+  groupId: z.uuid(),
+  sortOrder: z.int().nonnegative(),
+});
+
+export const outletSummarySchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  cuisineType: z.string().min(1),
+  description: z.string().nullable(),
+  imageUrl: z.string().nullable(),
+  isOnline: z.boolean(),
+  momentSubaccountCode: z.string(),
+  menuCategories: z.array(menuCategorySchema),
+  menuItems: z.array(menuItemSchema),
+  itemModifierGroups: z.array(itemModifierGroupSchema),
+  itemModifiers: z.array(itemModifierSchema),
+  menuItemModifierGroups: z.array(menuItemModifierGroupSchema),
+});
+
 export const masterOrderStatusSchema = z.enum([
   "PENDING_PAYMENT",
   "CONFIRMED",
@@ -339,6 +395,40 @@ export const orderSummarySchema = z.object({
     }),
   ),
   totalAmountMinor: z.int().nonnegative(),
+  createdAt: z.iso.datetime(),
+});
+
+export const customerOrderSchema = z.object({
+  id: z.uuid(),
+  customerId: z.uuid(),
+  riderId: z.uuid().nullable(),
+  status: z.string().trim().min(1),
+  subtotalMinor: z.int().nonnegative(),
+  deliveryFeeMinor: z.int().nonnegative(),
+  serviceFeeMinor: z.int().nonnegative(),
+  vatMinor: z.int().nonnegative(),
+  discountMinor: z.int().nonnegative(),
+  totalMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  deliveryMode: z.enum(["DELIVERY", "TAKEOUT"]),
+  deliveryAddress: z.string().nullable(),
+  deliveryLatitude: z.number().nullable(),
+  deliveryLongitude: z.number().nullable(),
+  paymentReference: z.string(),
+  deliveryCode: z.string(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
+
+export const notificationSchema = z.object({
+  id: z.uuid(),
+  recipientId: z.uuid(),
+  recipientRole: z.string().trim().min(1),
+  type: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+  body: z.string().trim().min(1),
+  isRead: z.boolean(),
   createdAt: z.iso.datetime(),
 });
 
@@ -379,6 +469,9 @@ export type AdminResult = z.infer<typeof adminResultSchema>;
 export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
 export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
+export type ItemModifierGroup = z.infer<typeof itemModifierGroupSchema>;
+export type ItemModifier = z.infer<typeof itemModifierSchema>;
+export type MenuItemModifierGroup = z.infer<typeof menuItemModifierGroupSchema>;
 export type MenuItem = z.infer<typeof menuItemSchema>;
 export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
@@ -395,5 +488,7 @@ export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
 export type InitiatePaymentInput = z.infer<typeof initiatePaymentInputSchema>;
 export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
+export type CustomerOrder = z.infer<typeof customerOrderSchema>;
+export type Notification = z.infer<typeof notificationSchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;

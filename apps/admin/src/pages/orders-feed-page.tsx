@@ -1,4 +1,5 @@
 import { EmptyState } from "@rsc/ui";
+import type { MasterOrderStatus } from "@rsc/contracts";
 import Skeleton from "@mui/material/Skeleton";
 import { Search, ShoppingBag } from "lucide-react";
 import { useState } from "react";
@@ -6,6 +7,38 @@ import { useState } from "react";
 import { useOrdersFeed } from "../hooks/use-orders-feed";
 
 const COLUMNS = 8;
+
+function statusLabel(status: MasterOrderStatus): string {
+  switch (status) {
+    case "PENDING_PAYMENT":
+      return "Awaiting Payment";
+    case "CONFIRMED":
+      return "Confirmed";
+    case "PARTIALLY_READY":
+      return "Part Ready";
+    case "READY":
+      return "Ready";
+    case "OUT_FOR_DELIVERY":
+      return "On Delivery";
+    case "DELIVERED":
+      return "Delivered";
+    case "CANCELLED":
+      return "Cancelled";
+  }
+}
+
+function statusBadgeClass(status: MasterOrderStatus): string {
+  switch (status) {
+    case "DELIVERED":
+      return "badge--paid";
+    case "CANCELLED":
+      return "badge--failed";
+    case "PENDING_PAYMENT":
+      return "badge--pending";
+    default:
+      return "";
+  }
+}
 
 export function OrdersFeedPage() {
   const [query, setQuery] = useState("");
@@ -20,7 +53,7 @@ export function OrdersFeedPage() {
           <span className="sr-only">Search orders</span>
           <input
             type="search"
-            placeholder="Search customer, Order ID..."
+            placeholder="Search Order ID..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -41,7 +74,6 @@ export function OrdersFeedPage() {
                 <br />
                 Time
               </th>
-              <th>Customer</th>
               <th>
                 Delivery /<br />
                 Takeout
@@ -49,7 +81,7 @@ export function OrdersFeedPage() {
               <th>
                 Sub-Orders
                 <br />
-                Split
+                (Outlets)
               </th>
               <th>
                 Grand
@@ -57,7 +89,7 @@ export function OrdersFeedPage() {
                 Total
               </th>
               <th>
-                Payment
+                Order
                 <br />
                 Status
               </th>
@@ -68,7 +100,7 @@ export function OrdersFeedPage() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  {Array.from({ length: COLUMNS }).map((_, j) => (
+                  {Array.from({ length: COLUMNS - 2 }).map((_, j) => (
                     <td key={j}>
                       <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
                     </td>
@@ -85,15 +117,19 @@ export function OrdersFeedPage() {
                       timeStyle: "short",
                     })}
                   </td>
-                  <td>{order.customerName}</td>
-                  <td>{order.fulfillmentType}</td>
-                  <td>{order.subOrderCount}</td>
-                  <td>₦{(order.grandTotalMinor / 100).toLocaleString()}</td>
+                  <td>{order.deliveryAddress ? "DELIVERY" : "TAKEOUT"}</td>
                   <td>
-                    <span
-                      className={`badge ${order.paymentStatus === "PAID" ? "badge--paid" : order.paymentStatus === "FAILED" ? "badge--failed" : "badge--pending"}`}
-                    >
-                      {order.paymentStatus}
+                    <strong>{order.subOrders.length}</strong>
+                    {order.subOrders.length > 0 && (
+                      <small className="table-note">
+                        {order.subOrders.map((s) => s.outletName).join(", ")}
+                      </small>
+                    )}
+                  </td>
+                  <td>₦{(order.totalAmountMinor / 100).toLocaleString()}</td>
+                  <td>
+                    <span className={`badge ${statusBadgeClass(order.status)}`}>
+                      {statusLabel(order.status)}
                     </span>
                   </td>
                   <td>

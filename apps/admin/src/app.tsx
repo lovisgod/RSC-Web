@@ -24,6 +24,7 @@ import { ForgotPasswordPage } from "./pages/forgot-password-page";
 import { LoginPage } from "./pages/login-page";
 import { OrdersFeedPage } from "./pages/orders-feed-page";
 import { OutletControlPage } from "./pages/outlet-control-page";
+import { OutletDetailPage } from "./pages/outlet-detail-page";
 import { PromotionsPage } from "./pages/promotions-page";
 import { RegisterPage } from "./pages/register-page";
 import { ResetPasswordPage } from "./pages/reset-password-page";
@@ -45,6 +46,12 @@ const routeTitles: Record<string, string> = {
   "/promotions": "Promotions Push Composer",
   "/settings": "Settings",
 };
+
+function getPageTitle(pathname: string): string {
+  if (routeTitles[pathname]) return routeTitles[pathname];
+  if (pathname.startsWith("/outlets/")) return "Outlet Details";
+  return "RSC Central";
+}
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
@@ -115,7 +122,7 @@ function OperatorFooter() {
 function AdminShell() {
   const location = useLocation();
   const clock = useLiveClock();
-  const pageTitle = routeTitles[location.pathname] ?? "RSC Central";
+  const pageTitle = getPageTitle(location.pathname);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -192,6 +199,7 @@ function AdminShell() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/orders" element={<OrdersFeedPage />} />
             <Route path="/outlets" element={<OutletControlPage />} />
+            <Route path="/outlets/:id" element={<OutletDetailPage />} />
             <Route path="/finance" element={<FinancialReconciliationPage />} />
             <Route path="/promotions" element={<PromotionsPage />} />
             <Route

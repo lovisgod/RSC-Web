@@ -63,9 +63,9 @@ function ProfileHeader() {
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
-    values: profile
-      ? { name: profile.name, email: profile.email, phone: profile.phone }
-      : undefined,
+    ...(profile
+      ? { values: { name: profile.name, email: profile.email, phone: profile.phone } }
+      : {}),
   });
 
   const mutation = useMutation({

@@ -13,27 +13,20 @@ const SEVERITY_COLORS: Record<ToastItem["severity"], string> = {
 
 export function Toaster() {
   const [queue, setQueue] = useState<ToastItem[]>([]);
-  const [current, setCurrent] = useState<ToastItem | null>(null);
-  const [open, setOpen] = useState(false);
 
   useEffect(() => toastBus.subscribe((item) => setQueue((q) => [...q, item])), []);
 
-  useEffect(() => {
-    if (!open && queue.length > 0) {
-      setCurrent(queue[0]);
-      setQueue((q) => q.slice(1));
-      setOpen(true);
-    }
-  }, [open, queue]);
+  const current = queue[0] ?? null;
 
   function handleClose(_: unknown, reason?: string) {
     if (reason === "clickaway") return;
-    setOpen(false);
+    setQueue((currentQueue) => currentQueue.slice(1));
   }
 
   return (
     <Snackbar
-      open={open}
+      key={current?.id ?? "empty"}
+      open={current !== null}
       autoHideDuration={4500}
       onClose={handleClose}
       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
@@ -42,7 +35,7 @@ export function Toaster() {
         <Alert
           severity={current.severity}
           variant="filled"
-          onClose={() => setOpen(false)}
+          onClose={() => setQueue((currentQueue) => currentQueue.slice(1))}
           sx={{
             minWidth: 280,
             borderRadius: "14px",

@@ -44,10 +44,9 @@ export function ResetPasswordPage() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [otpError, setOtpError] = useState("");
 
-  if (!state) return <Navigate to="/forgot-password" replace />;
-
   const { mutate, isPending, error, reset } = useMutation({
     mutationFn: () => {
+      if (!state) throw new Error("Password reset session is missing");
       const codeField = isPhone(state.identifier) ? { phoneCode: otp } : { emailCode: otp };
       return resetPassword({ identifier: state.identifier, newPassword, ...codeField });
     },
@@ -57,6 +56,8 @@ export function ResetPasswordPage() {
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
+
+  if (!state) return <Navigate to="/forgot-password" replace />;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

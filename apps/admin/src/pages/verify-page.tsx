@@ -18,10 +18,6 @@ function Countdown({ seconds, onExpire }: { seconds: number; onExpire: () => voi
   const [remaining, setRemaining] = useState(seconds);
 
   useEffect(() => {
-    setRemaining(seconds);
-  }, [seconds]);
-
-  useEffect(() => {
     if (remaining <= 0) {
       onExpire();
       return;
@@ -49,23 +45,22 @@ export function VerifyPage() {
   const [otp, setOtp] = useState("");
   const [expired, setExpired] = useState(false);
   const [otpSecs, setOtpSecs] = useState(state?.otpExpiresInSeconds ?? 300);
+  const [countdownVersion, setCountdownVersion] = useState(0);
   const [channel, setChannel] = useState<"email" | "phone">(
     state?.verificationChannels?.phone ? "phone" : "email",
   );
-
-  if (!state) return <Navigate to="/register" replace />;
-
-  const contact = channel === "phone" ? state.phone : state.email;
 
   const {
     mutate: verify,
     isPending: verifying,
     error: verifyErr,
   } = useMutation({
-    mutationFn: () =>
-      channel === "phone"
+    mutationFn: () => {
+      if (!state) throw new Error("Verification session is missing");
+      return channel === "phone"
         ? verifyUser({ channel: "phone", phone: state.phone, code: otp })
-        : verifyUser({ channel: "email", email: state.email, code: otp }),
+        : verifyUser({ channel: "email", email: state.email, code: otp });
+    },
     onSuccess: () => {
       toastBus.emit("Account verified! You can now sign in.", "success");
       navigate("/login", { replace: true });
@@ -74,20 +69,25 @@ export function VerifyPage() {
   });
 
   const { mutate: resend, isPending: resending } = useMutation({
-    mutationFn: () =>
-      resendVerificationCode({
-        channel,
-        phone: channel === "phone" ? state.phone : undefined,
-        email: channel === "email" ? state.email : undefined,
-      }),
+    mutationFn: () => {
+      if (!state) throw new Error("Verification session is missing");
+      return channel === "phone"
+        ? resendVerificationCode({ channel: "phone", phone: state.phone })
+        : resendVerificationCode({ channel: "email", email: state.email });
+    },
     onSuccess: (data) => {
       setOtpSecs(data.otpExpiresInSeconds);
+      setCountdownVersion((version) => version + 1);
       setExpired(false);
       setOtp("");
       toastBus.emit("New code sent!", "success");
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
+
+  if (!state) return <Navigate to="/register" replace />;
+
+  const contact = channel === "phone" ? state.phone : state.email;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -138,7 +138,11 @@ export function VerifyPage() {
               ) : (
                 <>
                   <span className="otp-meta__label">Expires in</span>
-                  <Countdown seconds={otpSecs} onExpire={() => setExpired(true)} />
+                  <Countdown
+                    key={`${channel}-${countdownVersion}`}
+                    seconds={otpSecs}
+                    onExpire={() => setExpired(true)}
+                  />
                 </>
               )}
             </div>
