@@ -104,7 +104,7 @@ export default function configuration(): ApplicationConfig {
       version: process.env.APP_VERSION ?? "development",
       corsOrigins: parseOrigins(
         process.env.CORS_ORIGINS ??
-          "http://localhost:3000,http://localhost:5173,http://localhost:8080",
+          "http://localhost:3000,http://localhost:5173,http://localhost:5175",
       ),
       swaggerEnabled: process.env.SWAGGER_ENABLED !== "false",
     },
