@@ -38,6 +38,7 @@ export interface IssuedSession {
   user: {
     id: string;
     role: UserRole;
+    outletId: string | null;
   };
 }
 
@@ -106,6 +107,7 @@ export class AuthSessionService {
       user: {
         id: user.id,
         role: user.role,
+        outletId: user.outletId,
       },
     };
   }

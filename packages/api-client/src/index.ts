@@ -1,59 +1,64 @@
 import {
   adminOverviewSchema,
+  adminOrdersQuerySchema,
+  adminOrdersResultSchema,
   adminResultSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
   changePasswordInputSchema,
   changePasswordResultSchema,
   createAdminInputSchema,
-  customerOrderSchema,
-  initiatePaymentInputSchema,
-  initiatePaymentResultSchema,
-  orderSummarySchema,
-  userProfileSchema,
-  updateProfileInputSchema,
-  updateMenuItemAvailabilityInputSchema,
+  createNotificationCampaignInputSchema,
   createDeliveryAddressInputSchema,
+  customerOrderSchema,
   deliveryAddressSummarySchema,
-  validateAddressInputSchema,
-  validateAddressResultSchema,
   forgotPasswordInputSchema,
   forgotPasswordResultSchema,
+  initiatePaymentInputSchema,
+  initiatePaymentResultSchema,
   menuCategorySchema,
-  resetPasswordInputSchema,
-  resetPasswordResultSchema,
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
   menuItemSchema,
   notificationSchema,
+  notificationCampaignSchema,
+  orderSummarySchema,
+  outletAdminSchema,
   outletSummarySchema,
+  profileSchema,
+  profileUpdateResultSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
   resendVerificationInputSchema,
   resendVerificationResultSchema,
+  resetPasswordInputSchema,
+  resetPasswordResultSchema,
+  updateMenuItemAvailabilityInputSchema,
+  updateProfileInputSchema,
+  validateAddressInputSchema,
+  validateAddressResultSchema,
   userVerificationResultSchema,
+  verifyProfileChangeInputSchema,
   verifyUserInputSchema,
   type AdminOverview,
+  type AdminOrdersQuery,
+  type AdminOrdersResult,
   type AdminResult,
   type ChangePasswordInput,
   type ChangePasswordResult,
   type CreateAdminInput,
-  type CustomerOrder,
-  type InitiatePaymentInput,
-  type InitiatePaymentResult,
-  type OrderSummary,
-  type UserProfile,
-  type UpdateProfileInput,
-  type UpdateMenuItemAvailabilityInput,
+  type CreateNotificationCampaignInput,
   type CreateDeliveryAddressInput,
+  type CustomerOrder,
   type DeliveryAddressSummary,
-  type ValidateAddressInput,
-  type ValidateAddressResult,
   type ForgotPasswordInput,
   type ForgotPasswordResult,
+  type InitiatePaymentInput,
+  type InitiatePaymentResult,
   type MenuCategorySummary,
   type MenuItemSummary,
+  type OrderSummary,
   type ResetPasswordInput,
   type ResetPasswordResult,
   type LoginInput,
@@ -61,12 +66,21 @@ import {
   type LogoutResult,
   type MenuItem,
   type Notification,
+  type NotificationCampaign,
+  type OutletAdmin,
   type OutletSummary,
+  type Profile,
+  type ProfileUpdateResult,
   type RegisterCustomerInput,
   type RegistrationResult,
   type ResendVerificationInput,
   type ResendVerificationResult,
+  type UpdateMenuItemAvailabilityInput,
+  type UpdateProfileInput,
+  type ValidateAddressInput,
+  type ValidateAddressResult,
   type UserVerificationResult,
+  type VerifyProfileChangeInput,
   type VerifyUserInput,
 } from "@rsc/contracts";
 import { z } from "zod";
@@ -83,14 +97,14 @@ export class ApiError extends Error {
 }
 
 export interface ApiClientOptions {
-  baseUrl: string;
+  baseUrl?: string;
   fetch?: typeof globalThis.fetch;
   getAccessToken?: () => Promise<string | null> | string | null;
 }
 
 export function createApiClient(options: ApiClientOptions) {
   const requestFetch = options.fetch ?? globalThis.fetch;
-  const baseUrl = options.baseUrl.replace(/\/$/, "");
+  const baseUrl = (options.baseUrl ?? "http://localhost:4000").replace(/\/$/, "");
 
   async function request<T>(
     path: string,
@@ -187,21 +201,18 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    listOutletAdmins(): Promise<OutletAdmin[]> {
+      return request("/api/v1/users/outlet-admins", z.array(outletAdminSchema));
+    },
+    deleteOutletAdmin(id: string): Promise<{ deleted: true }> {
+      return request(`/api/v1/users/outlet-admins/${id}`, z.object({ deleted: z.literal(true) }), {
+        method: "DELETE",
+      });
+    },
     verifyUser(input: VerifyUserInput): Promise<UserVerificationResult> {
       const body = verifyUserInputSchema.parse(input);
 
       return request("/api/v1/auth/verify-user", userVerificationResultSchema, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-    },
-    getProfile(): Promise<UserProfile> {
-      return request("/api/v1/users/me", userProfileSchema);
-    },
-    updateProfile(input: UpdateProfileInput): Promise<UserProfile> {
-      const body = updateProfileInputSchema.parse(input);
-
-      return request("/api/v1/users/me", userProfileSchema, {
         method: "POST",
         body: JSON.stringify(body),
       });
@@ -262,9 +273,6 @@ export function createApiClient(options: ApiClientOptions) {
     listCustomerOrders(): Promise<CustomerOrder[]> {
       return request("/api/v1/orders", z.array(customerOrderSchema));
     },
-    listNotifications(): Promise<Notification[]> {
-      return request("/api/v1/notifications", z.array(notificationSchema));
-    },
     reorder(id: string): Promise<unknown> {
       return request(`/api/v1/orders/${encodeURIComponent(id)}/reorder`, z.unknown(), {
         method: "POST",
@@ -285,6 +293,55 @@ export function createApiClient(options: ApiClientOptions) {
     },
     getAdminOverview(): Promise<AdminOverview> {
       return request("/api/v1/admin/overview", adminOverviewSchema);
+    },
+    listAdminOrders(input: AdminOrdersQuery = {}): Promise<AdminOrdersResult> {
+      const filters = adminOrdersQuerySchema.parse(input);
+      const params = new URLSearchParams();
+
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== undefined) {
+          params.set(key, String(value));
+        }
+      }
+
+      const query = params.toString();
+
+      return request(`/api/v1/orders/admin${query ? `?${query}` : ""}`, adminOrdersResultSchema);
+    },
+    getProfile(): Promise<Profile> {
+      return request("/api/v1/users/me", profileSchema);
+    },
+    updateProfile(input: UpdateProfileInput): Promise<ProfileUpdateResult> {
+      const body = updateProfileInputSchema.parse(input);
+
+      return request("/api/v1/users/me", profileUpdateResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    verifyProfileChange(input: VerifyProfileChangeInput): Promise<Profile> {
+      const body = verifyProfileChangeInputSchema.parse(input);
+
+      return request("/api/v1/users/me/verify-change", profileSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    listNotifications(): Promise<Notification[]> {
+      return request("/api/v1/notifications", z.array(notificationSchema));
+    },
+    scheduleNotificationCampaign(
+      input: CreateNotificationCampaignInput,
+    ): Promise<NotificationCampaign> {
+      const body = createNotificationCampaignInputSchema.parse(input);
+
+      return request("/api/v1/notifications/campaigns", notificationCampaignSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    listNotificationCampaigns(): Promise<NotificationCampaign[]> {
+      return request("/api/v1/notifications/campaigns", z.array(notificationCampaignSchema));
     },
   };
 }

@@ -30,6 +30,15 @@ export class MenuItem {
   @Column({ name: "image_url", type: "varchar", length: 512, nullable: true })
   imageUrl!: string | null;
 
+  @Column({ name: "delivery_time_range", type: "varchar", length: 60, nullable: true })
+  deliveryTimeRange!: string | null;
+
+  @Column({ name: "rating_average", type: "numeric", precision: 3, scale: 2, default: 0 })
+  ratingAverage!: string;
+
+  @Column({ name: "rating_count", type: "integer", default: 0 })
+  ratingCount!: number;
+
   @Column({ name: "price_minor", type: "integer" })
   priceMinor!: number;
 

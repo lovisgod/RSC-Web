@@ -1,4 +1,5 @@
 import { BadGatewayException, ConflictException, UnauthorizedException } from "@nestjs/common";
+import bcrypt from "bcryptjs";
 import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,9 +11,13 @@ import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
 import type { EmailSender } from "./email/email-sender";
 import type { PhoneOtpService } from "./otp/phone-otp.service";
-import { hashPassword, verifyPassword } from "./password";
+import { verifyPassword } from "./password";
 import type { SmsSender } from "./sms/sms-sender";
 import { UserRole } from "./user-role.enum";
+
+function hashPasswordForTest(password: string): Promise<string> {
+  return bcrypt.hash(password, 4);
+}
 
 describe(AuthService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
@@ -35,11 +40,14 @@ describe(AuthService.name, () => {
     storeEmail: ReturnType<typeof vi.fn>;
     storeRegistrationPhone: ReturnType<typeof vi.fn>;
     storeRegistrationEmail: ReturnType<typeof vi.fn>;
+    storeProfileChangePhone: ReturnType<typeof vi.fn>;
+    storeProfileChangeEmail: ReturnType<typeof vi.fn>;
     revoke: ReturnType<typeof vi.fn>;
     revokeEmail: ReturnType<typeof vi.fn>;
     verify: ReturnType<typeof vi.fn>;
     verifyEmail: ReturnType<typeof vi.fn>;
     verifyRegistrationCode: ReturnType<typeof vi.fn>;
+    verifyProfileChangeCode: ReturnType<typeof vi.fn>;
     storePasswordResetPhone: ReturnType<typeof vi.fn>;
     storePasswordResetEmail: ReturnType<typeof vi.fn>;
     revokePasswordReset: ReturnType<typeof vi.fn>;
@@ -85,11 +93,18 @@ describe(AuthService.name, () => {
       storeEmail: vi.fn().mockResolvedValue(undefined),
       storeRegistrationPhone: vi.fn().mockResolvedValue(undefined),
       storeRegistrationEmail: vi.fn().mockResolvedValue(undefined),
+      storeProfileChangePhone: vi.fn().mockResolvedValue(undefined),
+      storeProfileChangeEmail: vi.fn().mockResolvedValue(undefined),
       revoke: vi.fn().mockResolvedValue(undefined),
       revokeEmail: vi.fn().mockResolvedValue(undefined),
       verify: vi.fn().mockResolvedValue("VERIFIED"),
       verifyEmail: vi.fn().mockResolvedValue("VERIFIED"),
       verifyRegistrationCode: vi.fn().mockResolvedValue({
+        result: "VERIFIED",
+        customerId,
+        channel: "phone",
+      }),
+      verifyProfileChangeCode: vi.fn().mockResolvedValue({
         result: "VERIFIED",
         customerId,
         channel: "phone",
@@ -115,7 +130,7 @@ describe(AuthService.name, () => {
         refreshToken: "refresh.jwt",
         accessTokenExpiresInSeconds: 900,
         refreshTokenExpiresInSeconds: 604800,
-        user: { id: customerId, role: UserRole.CUSTOMER },
+        user: { id: customerId, role: UserRole.CUSTOMER, outletId: null },
       }),
     };
 
@@ -177,7 +192,7 @@ describe(AuthService.name, () => {
       status: CustomerStatus.ACTIVE,
       role: UserRole.CUSTOMER,
       emailHash: "hash:ada@example.com",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -197,7 +212,7 @@ describe(AuthService.name, () => {
       status: CustomerStatus.ACTIVE,
       role: UserRole.CUSTOMER,
       phoneHash: "hash:2348031234567",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -216,7 +231,7 @@ describe(AuthService.name, () => {
       id: customerId,
       status: CustomerStatus.ACTIVE,
       role: UserRole.CUSTOMER,
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -243,7 +258,7 @@ describe(AuthService.name, () => {
       emailHash: "hash:ada@example.com",
       phoneEncrypted: "encrypted:2348031234567",
       emailEncrypted: "encrypted:ada@example.com",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -270,7 +285,7 @@ describe(AuthService.name, () => {
       id: customerId,
       status: CustomerStatus.ACTIVE,
       phoneHash: "hash:2348031234567",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -292,7 +307,7 @@ describe(AuthService.name, () => {
       id: customerId,
       status: CustomerStatus.ACTIVE,
       emailHash: "hash:ada@example.com",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
     phoneOtp.verifyPasswordResetPhone.mockResolvedValueOnce("INVALID");
