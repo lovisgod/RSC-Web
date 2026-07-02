@@ -274,4 +274,22 @@ describe("registration API client", () => {
       }),
     );
   });
+
+  it("notifies the host application when a request is unauthorized", async () => {
+    const onUnauthorized = vi.fn();
+    const requestFetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ message: "Unauthorized" }), { status: 401 }),
+      );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+      onUnauthorized,
+    });
+
+    await expect(client.listOutlets()).rejects.toMatchObject({ status: 401 });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+    expect(onUnauthorized).toHaveBeenCalledWith("/api/v1/outlets");
+  });
 });

@@ -8,6 +8,8 @@ import type {
   SubOrderStatus,
 } from "@rsc/contracts";
 
+import { authStore } from "../stores/auth-store";
+
 // ─── Axios instance ───────────────────────────────────────────────────────────
 
 export const http = axios.create({
@@ -16,10 +18,33 @@ export const http = axios.create({
   headers: { Accept: "application/json" },
 });
 
+const PUBLIC_AUTH_ENDPOINTS = ["/api/v1/auth/login"];
+
+let isRedirectingToLogin = false;
+
+function redirectOnUnauthorized(error: AxiosError) {
+  const path = error.config?.url ?? "";
+
+  if (
+    error.response?.status !== 401 ||
+    typeof window === "undefined" ||
+    isRedirectingToLogin ||
+    window.location.pathname === "/login" ||
+    PUBLIC_AUTH_ENDPOINTS.some((endpoint) => path.startsWith(endpoint))
+  ) {
+    return;
+  }
+
+  isRedirectingToLogin = true;
+  authStore.setUser(null);
+  window.location.replace("/login");
+}
+
 // Unwrap API errors into plain Error so TanStack mutation.error is always Error
 http.interceptors.response.use(
   (res) => res,
   (err: AxiosError<{ message?: string }>) => {
+    redirectOnUnauthorized(err);
     throw new Error(err.response?.data?.message ?? err.message ?? "An unexpected error occurred");
   },
 );

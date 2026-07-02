@@ -86,6 +86,7 @@ export interface ApiClientOptions {
   baseUrl: string;
   fetch?: typeof globalThis.fetch;
   getAccessToken?: () => Promise<string | null> | string | null;
+  onUnauthorized?: (path: string) => Promise<void> | void;
 }
 
 export function createApiClient(options: ApiClientOptions) {
@@ -114,6 +115,14 @@ export function createApiClient(options: ApiClientOptions) {
       headers,
       credentials: "include",
     });
+
+    if (response.status === 401) {
+      try {
+        await options.onUnauthorized?.(path);
+      } catch {
+        // Redirect/session cleanup failures must not hide the API response.
+      }
+    }
 
     if (!response.ok) {
       const errorPayload: unknown = await response.json().catch(() => null);
