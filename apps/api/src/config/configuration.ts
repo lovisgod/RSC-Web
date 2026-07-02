@@ -84,6 +84,18 @@ function parseOrigins(value: string): string[] {
     .filter(Boolean);
 }
 
+function resolveFirebasePrivateKey(): string {
+  if (process.env.FIREBASE_PRIVATE_KEY) {
+    return process.env.FIREBASE_PRIVATE_KEY.replaceAll("\\n", "\n");
+  }
+
+  if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
+    return Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, "base64").toString("utf8");
+  }
+
+  return "";
+}
+
 export default function configuration(): ApplicationConfig {
   return {
     app: {
@@ -166,7 +178,7 @@ export default function configuration(): ApplicationConfig {
       firebase: {
         projectId: process.env.FIREBASE_PROJECT_ID ?? "",
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "",
-        privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? "").replaceAll("\\n", "\n"),
+        privateKey: resolveFirebasePrivateKey(),
       },
     },
   };
