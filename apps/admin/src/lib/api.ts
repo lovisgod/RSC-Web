@@ -14,6 +14,7 @@ import type {
   RegistrationResult,
   ResendVerificationCodeResult,
   ResetPasswordResult,
+  UploadedImage,
   UserVerificationResult,
 } from "@rsc/contracts";
 
@@ -115,6 +116,13 @@ export const updateMenuItemAvailability = (
   id: string,
   body: { isAvailable: boolean },
 ): Promise<MenuItem> => patchReq(`/api/v1/menu-items/${id}/availability`, body);
+
+export const uploadImage = (file: File): Promise<UploadedImage> => {
+  const body = new FormData();
+  body.append("file", file);
+
+  return post("/api/v1/media/images", body);
+};
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 

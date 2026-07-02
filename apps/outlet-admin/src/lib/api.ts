@@ -6,6 +6,7 @@ import type {
   MenuCategorySummary,
   OutletSummary,
   SubOrderStatus,
+  UploadedImage,
 } from "@rsc/contracts";
 
 // ─── Axios instance ───────────────────────────────────────────────────────────
@@ -82,6 +83,13 @@ export interface CreateMenuItemBody {
 
 export const createMenuItem = (outletId: string, body: CreateMenuItemBody): Promise<MenuItem> =>
   post(`/api/v1/outlets/${outletId}/menu/items`, body);
+
+export const uploadImage = (file: File): Promise<UploadedImage> => {
+  const body = new FormData();
+  body.append("file", file);
+
+  return post("/api/v1/media/images", body);
+};
 
 export const verifyHandoffCode = (
   outletId: string,

@@ -321,6 +321,11 @@ export const menuItemsPageSchema = z.object({
   hasMore: z.boolean(),
 });
 
+export const uploadedImageSchema = z.object({
+  url: z.url(),
+  publicId: z.string().min(1),
+});
+
 export const updateMenuItemAvailabilityInputSchema = z
   .object({
     isAvailable: z.boolean(),
@@ -677,6 +682,7 @@ export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;
+export type UploadedImage = z.infer<typeof uploadedImageSchema>;
 export type NotificationCampaignTargetSegment = z.infer<
   typeof notificationCampaignTargetSegmentSchema
 >;

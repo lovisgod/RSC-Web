@@ -652,4 +652,39 @@ describe("registration API client", () => {
       expect.objectContaining({ credentials: "include" }),
     );
   });
+
+  it("uploads images as multipart form data", async () => {
+    const uploadedImage = {
+      url: "https://res.cloudinary.com/rsc/image/upload/uploads/item.jpg",
+      publicId: "rsc/uploads/item",
+    };
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: uploadedImage,
+          message: "Image uploaded successfully",
+          status: 201,
+        }),
+        { status: 201, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.uploadImage(new Blob(["image"], { type: "image/png" }))).resolves.toEqual(
+      uploadedImage,
+    );
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/media/images",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+    const [, init] = requestFetch.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBeInstanceOf(FormData);
+    expect(new Headers(init.headers).has("content-type")).toBe(false);
+  });
 });
