@@ -1,4 +1,5 @@
 import { BadGatewayException, ConflictException, UnauthorizedException } from "@nestjs/common";
+import bcrypt from "bcryptjs";
 import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,9 +11,13 @@ import { Customer } from "./customer.entity";
 import { CustomerStatus } from "./customer-status.enum";
 import type { EmailSender } from "./email/email-sender";
 import type { PhoneOtpService } from "./otp/phone-otp.service";
-import { hashPassword, verifyPassword } from "./password";
+import { verifyPassword } from "./password";
 import type { SmsSender } from "./sms/sms-sender";
 import { UserRole } from "./user-role.enum";
+
+function hashPasswordForTest(password: string): Promise<string> {
+  return bcrypt.hash(password, 4);
+}
 
 describe(AuthService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
@@ -187,7 +192,7 @@ describe(AuthService.name, () => {
       status: CustomerStatus.ACTIVE,
       role: UserRole.CUSTOMER,
       emailHash: "hash:ada@example.com",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -207,7 +212,7 @@ describe(AuthService.name, () => {
       status: CustomerStatus.ACTIVE,
       role: UserRole.CUSTOMER,
       phoneHash: "hash:2348031234567",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -226,7 +231,7 @@ describe(AuthService.name, () => {
       id: customerId,
       status: CustomerStatus.ACTIVE,
       role: UserRole.CUSTOMER,
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -253,7 +258,7 @@ describe(AuthService.name, () => {
       emailHash: "hash:ada@example.com",
       phoneEncrypted: "encrypted:2348031234567",
       emailEncrypted: "encrypted:ada@example.com",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -280,7 +285,7 @@ describe(AuthService.name, () => {
       id: customerId,
       status: CustomerStatus.ACTIVE,
       phoneHash: "hash:2348031234567",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
 
@@ -302,7 +307,7 @@ describe(AuthService.name, () => {
       id: customerId,
       status: CustomerStatus.ACTIVE,
       emailHash: "hash:ada@example.com",
-      passwordHash: await hashPassword("SecureP@ss1"),
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
     });
     customers.findOneBy.mockResolvedValue(customer);
     phoneOtp.verifyPasswordResetPhone.mockResolvedValueOnce("INVALID");
