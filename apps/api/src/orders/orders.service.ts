@@ -11,7 +11,7 @@ import type { InitiatePaymentDto } from "../payments/dto/payment.dto";
 import { PaymentsService } from "../payments/payments.service";
 import { MasterOrder } from "./master-order.entity";
 import { OrderLineItem } from "./order-line-item.entity";
-import { MasterOrderStatus } from "./order-status.enum";
+import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
 import { OrderStatusEvent } from "./order-status-event.entity";
 import { SubOrder } from "./sub-order.entity";
 import type {
@@ -208,6 +208,10 @@ export class OrdersService {
       throw new ForbiddenException("Use the delivery completion code to mark delivery complete");
     }
 
+    if (user.role === UserRole.ADMIN) {
+      return this.updateOutletSubOrderStatus(user, id, input);
+    }
+
     const order = await this.requireOperationalOrder(user, id);
 
     if (user.role === UserRole.RIDER) {
@@ -222,6 +226,50 @@ export class OrdersService {
     order.status = input.status;
     await this.masterOrders.save(order);
     await this.recordStatusEvent(order, user.id, input.note ?? null);
+    await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return this.buildOrderDetail(order);
+  }
+
+  private async updateOutletSubOrderStatus(
+    user: AuthenticatedUser,
+    id: string,
+    input: UpdateOrderStatusDto,
+  ) {
+    const outletId = await this.requireAdminOutletId(user);
+    const subOrder =
+      (await this.subOrders.findOneBy({ id, outletId })) ??
+      (await this.subOrders.findOneBy({ masterOrderId: id, outletId }));
+
+    if (!subOrder) {
+      throw new NotFoundException("Order not found");
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: subOrder.masterOrderId });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    subOrder.status = this.toSubOrderStatus(input.status);
+    await this.subOrders.save(subOrder);
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+
+    if (derivedStatus !== order.status) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
+
+    await this.recordStatusEvent(order, user.id, input.note ?? null, subOrder);
     await this.notifyOrderStatus(order);
     this.realtime.emitOrderStatusUpdate({
       masterOrderId: order.id,
@@ -341,15 +389,62 @@ export class OrdersService {
     return admin.outletId;
   }
 
+  private toSubOrderStatus(status: MasterOrderStatus): SubOrderStatus {
+    const statusMap: Record<MasterOrderStatus, SubOrderStatus> = {
+      [MasterOrderStatus.PENDING_PAYMENT]: SubOrderStatus.PENDING,
+      [MasterOrderStatus.CONFIRMED]: SubOrderStatus.ACCEPTED,
+      [MasterOrderStatus.PARTIALLY_READY]: SubOrderStatus.READY,
+      [MasterOrderStatus.READY]: SubOrderStatus.READY,
+      [MasterOrderStatus.OUT_FOR_DELIVERY]: SubOrderStatus.DISPATCHED,
+      [MasterOrderStatus.DELIVERED]: SubOrderStatus.COLLECTED,
+      [MasterOrderStatus.CANCELLED]: SubOrderStatus.REJECTED,
+    };
+
+    return statusMap[status];
+  }
+
+  private deriveMasterStatus(subOrders: SubOrder[]): MasterOrderStatus {
+    if (subOrders.length === 0) {
+      return MasterOrderStatus.CONFIRMED;
+    }
+
+    if (subOrders.every((subOrder) => subOrder.status === SubOrderStatus.REJECTED)) {
+      return MasterOrderStatus.CANCELLED;
+    }
+
+    if (
+      subOrders.every(
+        (subOrder) =>
+          subOrder.status === SubOrderStatus.DISPATCHED ||
+          subOrder.status === SubOrderStatus.COLLECTED,
+      )
+    ) {
+      return MasterOrderStatus.OUT_FOR_DELIVERY;
+    }
+
+    if (subOrders.every((subOrder) => subOrder.status === SubOrderStatus.READY)) {
+      return MasterOrderStatus.READY;
+    }
+
+    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.READY)) {
+      return MasterOrderStatus.PARTIALLY_READY;
+    }
+
+    return MasterOrderStatus.CONFIRMED;
+  }
+
   private async recordStatusEvent(
     order: MasterOrder,
     actorId: string | null,
     note: string | null,
+    subOrder?: SubOrder,
   ): Promise<void> {
     await this.statusEvents.save(
       this.statusEvents.create({
         masterOrderId: order.id,
+        subOrderId: subOrder?.id ?? null,
         masterStatus: order.status,
+        subOrderStatus: subOrder?.status ?? null,
         actorId,
         note,
       }),

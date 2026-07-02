@@ -413,6 +413,37 @@ describe("registration API client", () => {
     );
   });
 
+  it("lists paginated menu items for infinite scroll", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { items: [menuItem], total: 25, limit: 10, offset: 10, hasMore: true },
+          message: "Menu items retrieved",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(
+      client.listMenuItemsPage({
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        q: "jollof rice",
+        limit: 10,
+        offset: 10,
+      }),
+    ).resolves.toMatchObject({ total: 25, hasMore: true });
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/menu-items?paginated=true&outletId=4273e96c-2887-49a5-a6d5-269f007f04f0&q=jollof+rice&limit=10&offset=10",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("patches menu item availability to the real-time toggle endpoint", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(

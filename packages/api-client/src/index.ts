@@ -20,6 +20,7 @@ import {
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
+  menuItemsPageSchema,
   menuItemSchema,
   notificationSchema,
   notificationCampaignSchema,
@@ -57,6 +58,7 @@ import {
   type InitiatePaymentInput,
   type InitiatePaymentResult,
   type MenuCategorySummary,
+  type MenuItemsPage,
   type MenuItemSummary,
   type OrderSummary,
   type ResetPasswordInput,
@@ -250,11 +252,37 @@ export function createApiClient(options: ApiClientOptions) {
         z.array(menuCategorySchema),
       );
     },
-    listMenuItems(input: { outletId: string }): Promise<MenuItemSummary[]> {
-      return request(
-        `/api/v1/menu-items?outletId=${encodeURIComponent(input.outletId)}`,
-        z.array(menuItemSchema),
-      );
+    listMenuItems(input: { outletId?: string; q?: string } = {}): Promise<MenuItemSummary[]> {
+      const params = new URLSearchParams();
+      if (input.outletId) {
+        params.set("outletId", input.outletId);
+      }
+      if (input.q) {
+        params.set("q", input.q);
+      }
+      const query = params.toString();
+
+      return request(`/api/v1/menu-items${query ? `?${query}` : ""}`, z.array(menuItemSchema));
+    },
+    listMenuItemsPage(
+      input: { outletId?: string; q?: string; limit?: number; offset?: number } = {},
+    ): Promise<MenuItemsPage> {
+      const params = new URLSearchParams();
+      params.set("paginated", "true");
+      if (input.outletId) {
+        params.set("outletId", input.outletId);
+      }
+      if (input.q) {
+        params.set("q", input.q);
+      }
+      if (input.limit !== undefined) {
+        params.set("limit", String(input.limit));
+      }
+      if (input.offset !== undefined) {
+        params.set("offset", String(input.offset));
+      }
+
+      return request(`/api/v1/menu-items?${params.toString()}`, menuItemsPageSchema);
     },
     updateMenuItemAvailability(
       id: string,

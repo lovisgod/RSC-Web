@@ -313,6 +313,14 @@ export const menuItemSchema = z.object({
   deletedAt: z.iso.datetime().nullable(),
 });
 
+export const menuItemsPageSchema = z.object({
+  items: z.array(menuItemSchema),
+  total: z.int().nonnegative(),
+  limit: z.int().min(1).max(100),
+  offset: z.int().min(0),
+  hasMore: z.boolean(),
+});
+
 export const updateMenuItemAvailabilityInputSchema = z
   .object({
     isAvailable: z.boolean(),
@@ -639,6 +647,7 @@ export type ItemModifierGroup = z.infer<typeof itemModifierGroupSchema>;
 export type ItemModifier = z.infer<typeof itemModifierSchema>;
 export type MenuItemModifierGroup = z.infer<typeof menuItemModifierGroupSchema>;
 export type MenuItem = z.infer<typeof menuItemSchema>;
+export type MenuItemsPage = z.infer<typeof menuItemsPageSchema>;
 export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;

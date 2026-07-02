@@ -6,6 +6,7 @@ import {
   adminOrdersResultSchema,
   createAdminInputSchema,
   loginInputSchema,
+  menuItemsPageSchema,
   loginResultSchema,
   menuItemSchema,
   moneySchema,
@@ -199,6 +200,34 @@ describe("customer registration contracts", () => {
         createdAt: "2026-06-23T10:00:00.000Z",
         updatedAt: "2026-06-23T10:00:00.000Z",
         deletedAt: null,
+      }),
+    ).toBeTruthy();
+    expect(
+      menuItemsPageSchema.parse({
+        items: [
+          {
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+            categoryId: "35df7fe2-f6cd-483e-a0a2-b2331c4f4fb9",
+            name: "Jollof Rice",
+            description: null,
+            imageUrl: null,
+            deliveryTimeRange: "25-35 mins",
+            ratingAverage: 4.5,
+            ratingCount: 10,
+            priceMinor: 450000,
+            currency: "NGN",
+            isAvailable: true,
+            sortOrder: 0,
+            createdAt: "2026-06-23T10:00:00.000Z",
+            updatedAt: "2026-06-23T10:00:00.000Z",
+            deletedAt: null,
+          },
+        ],
+        total: 25,
+        limit: 10,
+        offset: 10,
+        hasMore: true,
       }),
     ).toBeTruthy();
   });

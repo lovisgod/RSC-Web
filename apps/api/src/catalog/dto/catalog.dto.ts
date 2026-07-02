@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
 import {
   ArrayUnique,
@@ -21,6 +21,9 @@ import {
 
 const trim = ({ value }: TransformFnParams): unknown =>
   typeof value === "string" ? value.trim() : value;
+
+const toBoolean = ({ value }: TransformFnParams): unknown =>
+  value === true || value === "true" || value === "1";
 
 export class CreateOutletDto {
   @ApiProperty({ example: "Farfallino Kitchen" })
@@ -118,6 +121,48 @@ export class CreateMenuCategoryDto {
 }
 
 export class UpdateMenuCategoryDto extends PartialType(CreateMenuCategoryDto) {}
+
+export class ListMenuItemsQueryDto {
+  @ApiPropertyOptional({ format: "uuid", description: "Filter menu items to one outlet." })
+  @IsOptional()
+  @IsUUID()
+  outletId?: string;
+
+  @ApiPropertyOptional({
+    example: "jollof",
+    description: "Case-insensitive search across item name and description.",
+  })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  q?: string;
+
+  @ApiPropertyOptional({
+    default: false,
+    description:
+      "When true, returns { items, total, limit, offset, hasMore } for infinite-scroll clients. When false or omitted, returns the legacy array response.",
+  })
+  @IsOptional()
+  @Transform(toBoolean)
+  @IsBoolean()
+  paginated?: boolean;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 30 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @ApiPropertyOptional({ minimum: 0, default: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
+}
 
 export class CreateMenuItemDto {
   @ApiPropertyOptional({
