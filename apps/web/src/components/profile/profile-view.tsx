@@ -601,10 +601,7 @@ function DeleteAccountCard() {
   });
 
   const mutation = useMutation({
-    mutationFn: () => {
-      if (!profile?.id) throw new Error("Profile not loaded");
-      return apiClient.deleteAccount(profile.id);
-    },
+    mutationFn: () => apiClient.deleteAccount(),
     onSuccess: () => {
       clearCart();
       clearAddress();

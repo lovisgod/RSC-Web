@@ -1,13 +1,87 @@
-import type { SubOrderStatus } from "@rsc/contracts";
-import { useState } from "react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import type { MasterOrderStatus, SubOrderStatus } from "@rsc/contracts";
+import { useRef, useState } from "react";
 
 import { KanbanColumn } from "../components/kanban-column";
 import { OutletPageHeader } from "../components/outlet-page-header";
 import { useAuth } from "../hooks/use-auth";
+import { useNewOrderAlert } from "../hooks/use-new-order-alert";
 import { useOrdersQueue } from "../hooks/use-orders-queue";
 import { useUpdateOrderStatus } from "../hooks/use-update-order-status";
-import { http } from "../lib/api";
+import { verifyHandoffCode, type PosSubOrder } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
+
+// ─── Allowed drag transitions ─────────────────────────────────────────────────
+const DRAG_TRANSITIONS: Record<string, Partial<Record<SubOrderStatus, MasterOrderStatus>>> = {
+  preparing: { PENDING: "CONFIRMED" },
+  ready: { ACCEPTED: "READY", PREPARING: "READY" },
+};
+
+// ─── Accept + prep-time modal ─────────────────────────────────────────────────
+
+function AcceptOrderModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: (prepTimeMinutes: number) => void;
+  onCancel: () => void;
+}) {
+  const [minutes, setMinutes] = useState(25);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+        <h2 className="text-lg font-bold text-slate-900">
+          Accept Order &amp; Set Preparation Time
+        </h2>
+        <p className="mt-1.5 text-sm text-slate-500">
+          Estimate how long (in minutes) this sub-order will take to be cooked &amp; packaged.
+        </p>
+
+        <div className="mt-5">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Preparation Time (Minutes)
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={240}
+            value={minutes}
+            onChange={(e) => setMinutes(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+            autoFocus
+          />
+        </div>
+
+        <div className="mt-5 flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(minutes)}
+            className="flex-1 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white transition hover:bg-emerald-600"
+          >
+            Accept
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Takeout hand-off verifier ────────────────────────────────────────────────
 
@@ -15,12 +89,12 @@ function TakeoutVerifier({ outletId }: { outletId: string }) {
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
-  async function handleVerify(e: React.FormEvent) {
+  async function handleVerify(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (code.length !== 6 || !outletId) return;
     setIsVerifying(true);
     try {
-      await http.post(`/api/v1/outlets/${outletId}/orders/verify-handoff`, { code });
+      await verifyHandoffCode(outletId, { code });
       toastBus.emit("Handoff verified — order collected ✓", "success");
       setCode("");
     } catch (err) {
@@ -69,12 +143,66 @@ export function ActiveOrdersPage() {
   const { data: orders = [], isLoading } = useOrdersQueue(outletId);
   const { mutate: updateStatus, isPending: isAdvancing } = useUpdateOrderStatus(outletId);
 
+  // Holds the pending CONFIRMED transition until the prep-time modal is confirmed
+  const [pendingAccept, setPendingAccept] = useState<{ subOrderId: string } | null>(null);
+  // Local fallback for prep times set at acceptance time (survives until next poll)
+  const prepTimesRef = useRef<Map<string, number>>(new Map());
+
+  useNewOrderAlert(orders);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
+    useSensor(KeyboardSensor),
+  );
+
   const incoming = orders.filter((o) => o.status === "PENDING");
-  const preparing = orders.filter((o) => o.status === "ACCEPTED" || o.status === "PREPARING");
+  const preparing = orders
+    .filter((o) => o.status === "ACCEPTED" || o.status === "PREPARING")
+    .map((o) => ({
+      ...o,
+      estimatedPrepTimeMinutes: o.estimatedPrepTimeMinutes ?? prepTimesRef.current.get(o.id),
+    }));
   const ready = orders.filter((o) => o.status === "READY");
 
-  function handleAdvance(subOrderId: string, status: SubOrderStatus) {
+  function handleAdvance(subOrderId: string, status: MasterOrderStatus) {
+    if (status === "CONFIRMED") {
+      setPendingAccept({ subOrderId });
+      return;
+    }
     updateStatus({ subOrderId, status });
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const targetColumn = event.over?.id as string | undefined;
+    const order = event.active.data.current?.order as PosSubOrder | undefined;
+    if (!order || !targetColumn) return;
+
+    const transitions = DRAG_TRANSITIONS[targetColumn];
+    const nextStatus = transitions?.[order.status] ?? null;
+
+    if (!nextStatus) {
+      toastBus.emit("That move is not allowed", "warning");
+      return;
+    }
+
+    if (nextStatus === "CONFIRMED") {
+      setPendingAccept({ subOrderId: order.id });
+      return;
+    }
+
+    updateStatus({ subOrderId: order.id, status: nextStatus });
+  }
+
+  function handleAcceptConfirm(prepTimeMinutes: number) {
+    if (!pendingAccept) return;
+    prepTimesRef.current.set(pendingAccept.subOrderId, prepTimeMinutes);
+    updateStatus({
+      subOrderId: pendingAccept.subOrderId,
+      status: "CONFIRMED",
+      preparationTimeMinutes: prepTimeMinutes,
+    });
+    setPendingAccept(null);
   }
 
   return (
@@ -82,38 +210,55 @@ export function ActiveOrdersPage() {
       <OutletPageHeader />
       <TakeoutVerifier outletId={outletId} />
 
-      <div className="grid flex-1 grid-cols-3 gap-4 px-6 pb-6" style={{ minHeight: 0 }}>
-        <KanbanColumn
-          title="Incoming Sub-Orders"
-          badge={incoming.length}
-          badgeColor="bg-orange-500"
-          orders={incoming}
-          isLoading={isLoading}
-          emptyText="No incoming sub-orders"
-          onAdvance={handleAdvance}
-          isAdvancing={isAdvancing}
-        />
-        <KanbanColumn
-          title="Kitchen Preparing"
-          badge={preparing.length}
-          badgeColor="bg-orange-500"
-          orders={preparing}
-          isLoading={isLoading}
-          emptyText="No items in preparation"
-          onAdvance={handleAdvance}
-          isAdvancing={isAdvancing}
-        />
-        <KanbanColumn
-          title="Ready for Collection"
-          badge={ready.length}
-          badgeColor="bg-emerald-500"
-          orders={ready}
-          isLoading={isLoading}
-          emptyText="No ready orders in queue"
-          onAdvance={handleAdvance}
-          isAdvancing={isAdvancing}
-        />
-      </div>
+      <p id="board-hint" className="mx-6 mb-3 text-xs text-slate-400">
+        Drag a card to its next stage, or use the action button.
+      </p>
+
+      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+        <div
+          className="grid flex-1 grid-cols-1 gap-4 px-6 pb-6 lg:grid-cols-3"
+          style={{ minHeight: 0 }}
+          aria-describedby="board-hint"
+        >
+          <KanbanColumn
+            id="incoming"
+            title="Incoming"
+            badge={incoming.length}
+            badgeColor="bg-orange-500"
+            orders={incoming}
+            isLoading={isLoading}
+            emptyText="No incoming orders"
+            onAdvance={handleAdvance}
+            isAdvancing={isAdvancing}
+          />
+          <KanbanColumn
+            id="preparing"
+            title="Kitchen Preparing"
+            badge={preparing.length}
+            badgeColor="bg-orange-500"
+            orders={preparing}
+            isLoading={isLoading}
+            emptyText="No items in preparation"
+            onAdvance={handleAdvance}
+            isAdvancing={isAdvancing}
+          />
+          <KanbanColumn
+            id="ready"
+            title="Ready for Collection"
+            badge={ready.length}
+            badgeColor="bg-emerald-500"
+            orders={ready}
+            isLoading={isLoading}
+            emptyText="No ready orders"
+            onAdvance={handleAdvance}
+            isAdvancing={isAdvancing}
+          />
+        </div>
+      </DndContext>
+
+      {pendingAccept && (
+        <AcceptOrderModal onConfirm={handleAcceptConfirm} onCancel={() => setPendingAccept(null)} />
+      )}
     </div>
   );
 }

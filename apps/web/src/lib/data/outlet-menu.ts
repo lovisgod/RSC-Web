@@ -107,7 +107,6 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
   }
 
   const items = summary.menuItems
-    .filter((item) => item.isAvailable)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((item, i) => {
       const links = (linksByItem.get(item.id) ?? []).sort((a, b) => a.sortOrder - b.sortOrder);

@@ -1,4 +1,5 @@
 import axios, { type AxiosError } from "axios";
+import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import type {
   AdminOverview,
   AdminResult,
@@ -54,12 +55,33 @@ function redirectOnUnauthorized(error: AxiosError) {
   window.location.replace("/login");
 }
 
+function redirectOnServerError(error: AxiosError) {
+  if (
+    (error.response?.status ?? 0) < 500 ||
+    typeof window === "undefined" ||
+    isRedirectingToLogin ||
+    window.location.pathname === "/login" ||
+    !authStore.isAuthenticated()
+  ) {
+    return;
+  }
+
+  isRedirectingToLogin = true;
+  authStore.setUser(null);
+  window.location.replace("/login");
+}
+
 // Unwrap API errors into plain Error so TanStack mutation.error is always Error
 http.interceptors.response.use(
   (res) => res,
   (err: AxiosError<{ message?: string }>) => {
     redirectOnUnauthorized(err);
-    throw new Error(err.response?.data?.message ?? err.message ?? "An unexpected error occurred");
+    redirectOnServerError(err);
+    throw new Error(
+      (err.response?.status ?? 0) >= 500
+        ? SERVER_ERROR_MESSAGE
+        : (err.response?.data?.message ?? err.message ?? "An unexpected error occurred"),
+    );
   },
 );
 

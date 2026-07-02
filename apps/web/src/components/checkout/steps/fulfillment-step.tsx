@@ -16,6 +16,7 @@ import {
 } from "@/src/lib/data/checkout";
 import { useCart } from "@/src/hooks/use-cart";
 import { useAddressStore } from "@/src/stores/address-store";
+import { useCartStore } from "@/src/stores/cart-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -44,6 +45,7 @@ export function FulfillmentStep({
   onComplete: (data: DeliveryForm, orderId: string) => void;
 }) {
   const { data: cart } = useCart();
+  const clearCart = useCartStore((s) => s.clear);
   const savedDefault = useAddressStore((s) => s.defaultAddress);
 
   const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
@@ -146,6 +148,7 @@ export function FulfillmentStep({
       );
     },
     onSuccess: (result) => {
+      clearCart();
       onComplete(
         {
           mode,
