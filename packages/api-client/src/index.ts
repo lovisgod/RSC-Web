@@ -35,6 +35,7 @@ import {
   resendVerificationResultSchema,
   resetPasswordInputSchema,
   resetPasswordResultSchema,
+  uploadedImageSchema,
   updateMenuItemAvailabilityInputSchema,
   updateProfileInputSchema,
   validateAddressInputSchema,
@@ -63,6 +64,7 @@ import {
   type OrderSummary,
   type ResetPasswordInput,
   type ResetPasswordResult,
+  type UploadedImage,
   type LoginInput,
   type LoginResult,
   type LogoutResult,
@@ -117,7 +119,18 @@ export function createApiClient(options: ApiClientOptions) {
     const headers = new Headers(init.headers);
     headers.set("accept", "application/json");
 
-    if (init.body && !headers.has("content-type")) {
+    const isFormDataBody = typeof FormData !== "undefined" && init.body instanceof FormData;
+    const isUrlSearchParamsBody =
+      typeof URLSearchParams !== "undefined" && init.body instanceof URLSearchParams;
+    const isBlobBody = typeof Blob !== "undefined" && init.body instanceof Blob;
+
+    if (
+      init.body &&
+      !headers.has("content-type") &&
+      !isFormDataBody &&
+      !isUrlSearchParamsBody &&
+      !isBlobBody
+    ) {
       headers.set("content-type", "application/json");
     }
 
@@ -293,6 +306,15 @@ export function createApiClient(options: ApiClientOptions) {
       return request(`/api/v1/menu-items/${encodeURIComponent(id)}/availability`, menuItemSchema, {
         method: "PATCH",
         body: JSON.stringify(body),
+      });
+    },
+    uploadImage(file: Blob): Promise<UploadedImage> {
+      const body = new FormData();
+      body.append("file", file);
+
+      return request("/api/v1/media/images", uploadedImageSchema, {
+        method: "POST",
+        body,
       });
     },
     listOrders(): Promise<OrderSummary[]> {

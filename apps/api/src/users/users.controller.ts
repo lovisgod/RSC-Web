@@ -110,6 +110,11 @@ export class UsersController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Rider created successfully")
+  @ApiOperation({
+    summary: "Create a rider account",
+    description:
+      "Admin endpoint for creating a delivery rider account. Super admins can create platform riders; outlet admins can create riders for operational delivery workflows.",
+  })
   createRider(@Req() request: AuthenticatedRequest, @Body() input: CreateRiderDto) {
     return this.users.createRider(request.user!, input);
   }
