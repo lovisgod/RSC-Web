@@ -2,7 +2,7 @@ import { scryptSync, timingSafeEqual } from "node:crypto";
 
 import bcrypt from "bcryptjs";
 
-const BCRYPT_ROUNDS = 12;
+const BCRYPT_ROUNDS = process.env.NODE_ENV === "test" ? 4 : 12;
 const LEGACY_KEY_LENGTH = 64;
 
 export async function hashPassword(password: string): Promise<string> {
