@@ -66,6 +66,6 @@ import { RolesGuard } from "./roles.guard";
       ) => (configService.get("sms.provider", { infer: true }) === "termii" ? termii : noop),
     },
   ],
-  exports: [AuthGuard, RolesGuard, AuthSessionService],
+  exports: [AuthGuard, RolesGuard, AuthSessionService, PhoneOtpService, EMAIL_SENDER, SMS_SENDER],
 })
 export class AuthModule {}

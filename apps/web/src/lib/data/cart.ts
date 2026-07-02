@@ -4,6 +4,7 @@ export interface CartItem {
   notes: string;
   quantity: number;
   unitPriceMinor: number;
+  modifiers: { modifierId: string }[];
 }
 
 export interface CartOutletGroup {
@@ -36,52 +37,10 @@ export function formatNaira(minor: number): string {
 
 export function itemLabel(item: CartItem): string {
   const qty = item.quantity > 1 ? ` x${item.quantity}` : "";
-  const note = item.notes ? ` - ${item.notes}` : "";
+  const note = item.notes ? ` · ${item.notes}` : "";
   return `${item.name}${qty}${note}`;
 }
 
-// Dummy data — swap mutationFn for apiClient.getCart() when ready
-export const DUMMY_CART: Cart = {
-  groups: [
-    {
-      outletId: "cactus",
-      outletName: "Cactus",
-      items: [
-        {
-          id: "item-1",
-          name: "Club sandwich",
-          notes: "no tomatoes",
-          quantity: 1,
-          unitPriceMinor: 890000,
-        },
-      ],
-    },
-    {
-      outletId: "salmas",
-      outletName: "Salmas",
-      items: [
-        {
-          id: "item-2",
-          name: "Jollof bowl",
-          notes: "extra plantain",
-          quantity: 2,
-          unitPriceMinor: 680000,
-        },
-      ],
-    },
-    {
-      outletId: "black-diamond",
-      outletName: "Black Diamond",
-      items: [
-        {
-          id: "item-3",
-          name: "Gelato cake",
-          notes: "",
-          quantity: 1,
-          unitPriceMinor: 570000,
-        },
-      ],
-    },
-  ],
-  deliveryFeeMinor: 180000,
-};
+export function cartItemCount(cart: Cart): number {
+  return cart.groups.reduce((sum, g) => sum + g.items.reduce((s, i) => s + i.quantity, 0), 0);
+}

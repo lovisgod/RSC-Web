@@ -13,6 +13,7 @@ import { signUpSchema, type SignUpFormData } from "@/src/lib/schemas/auth";
 import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { inputClass, labelClass } from "@/src/lib/form-styles";
+import { PasswordInput } from "@/src/components/shared/password-input";
 
 const signUpFormSchema = signUpSchema
   .extend({
@@ -82,24 +83,23 @@ export function SignUpForm() {
         {fields.map(({ name, type, label, placeholder }) => (
           <div key={name}>
             <label className={labelClass}>{label}</label>
-            <input
-              {...register(name)}
-              type={type}
-              placeholder={placeholder}
-              className={inputClass}
-            />
+            {type === "password" ? (
+              <PasswordInput {...register(name)} placeholder={placeholder} />
+            ) : (
+              <input
+                {...register(name)}
+                type={type}
+                placeholder={placeholder}
+                className={inputClass}
+              />
+            )}
             {errors[name] && <p className="mt-1 text-xs text-red-500">{errors[name]?.message}</p>}
           </div>
         ))}
 
         <div>
           <label className={labelClass}>Confirm password</label>
-          <input
-            {...register("confirmPassword")}
-            type="password"
-            placeholder="••••••••"
-            className={inputClass}
-          />
+          <PasswordInput {...register("confirmPassword")} placeholder="••••••••" />
           {errors.confirmPassword && (
             <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
           )}

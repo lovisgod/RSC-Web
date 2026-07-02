@@ -33,10 +33,13 @@ describe(AuthService.name, () => {
     generateCode: ReturnType<typeof vi.fn>;
     store: ReturnType<typeof vi.fn>;
     storeEmail: ReturnType<typeof vi.fn>;
+    storeRegistrationPhone: ReturnType<typeof vi.fn>;
+    storeRegistrationEmail: ReturnType<typeof vi.fn>;
     revoke: ReturnType<typeof vi.fn>;
     revokeEmail: ReturnType<typeof vi.fn>;
     verify: ReturnType<typeof vi.fn>;
     verifyEmail: ReturnType<typeof vi.fn>;
+    verifyRegistrationCode: ReturnType<typeof vi.fn>;
     storePasswordResetPhone: ReturnType<typeof vi.fn>;
     storePasswordResetEmail: ReturnType<typeof vi.fn>;
     revokePasswordReset: ReturnType<typeof vi.fn>;
@@ -50,6 +53,7 @@ describe(AuthService.name, () => {
   let emailSender: {
     sendWelcomeVerification: ReturnType<typeof vi.fn>;
     sendPasswordReset: ReturnType<typeof vi.fn>;
+    sendTemporaryPassword: ReturnType<typeof vi.fn>;
   };
   let sessions: { issueSession: ReturnType<typeof vi.fn> };
   let service: AuthService;
@@ -79,10 +83,17 @@ describe(AuthService.name, () => {
       generateCode: vi.fn().mockReturnValueOnce("482901").mockReturnValue("193847"),
       store: vi.fn().mockResolvedValue(undefined),
       storeEmail: vi.fn().mockResolvedValue(undefined),
+      storeRegistrationPhone: vi.fn().mockResolvedValue(undefined),
+      storeRegistrationEmail: vi.fn().mockResolvedValue(undefined),
       revoke: vi.fn().mockResolvedValue(undefined),
       revokeEmail: vi.fn().mockResolvedValue(undefined),
       verify: vi.fn().mockResolvedValue("VERIFIED"),
       verifyEmail: vi.fn().mockResolvedValue("VERIFIED"),
+      verifyRegistrationCode: vi.fn().mockResolvedValue({
+        result: "VERIFIED",
+        customerId,
+        channel: "phone",
+      }),
       storePasswordResetPhone: vi.fn().mockResolvedValue(undefined),
       storePasswordResetEmail: vi.fn().mockResolvedValue(undefined),
       revokePasswordReset: vi.fn().mockResolvedValue(undefined),
@@ -96,6 +107,7 @@ describe(AuthService.name, () => {
     emailSender = {
       sendWelcomeVerification: vi.fn().mockResolvedValue(undefined),
       sendPasswordReset: vi.fn().mockResolvedValue(undefined),
+      sendTemporaryPassword: vi.fn().mockResolvedValue(undefined),
     };
     sessions = {
       issueSession: vi.fn().mockResolvedValue({
@@ -138,8 +150,8 @@ describe(AuthService.name, () => {
       role: UserRole.CUSTOMER,
     });
     expect(saved?.passwordHash).toMatch(/^\$2[aby]\$/);
-    expect(phoneOtp.store).toHaveBeenCalledWith(customerId, "482901");
-    expect(phoneOtp.storeEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(phoneOtp.storeRegistrationPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.storeRegistrationEmail).toHaveBeenCalledWith(customerId, "193847");
     expect(smsSender.sendPhoneVerification).toHaveBeenCalledWith({
       phone: "2348031234567",
       code: "482901",
@@ -317,9 +329,9 @@ describe(AuthService.name, () => {
 
     expect(result).toEqual({ sent: true, channel: "phone", otpExpiresInSeconds: 600 });
     expect(phoneOtp.revoke).toHaveBeenCalledWith(customerId);
-    expect(phoneOtp.store).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.storeRegistrationPhone).toHaveBeenCalledWith(customerId, "482901");
     expect(phoneOtp.revoke.mock.invocationCallOrder[0]!).toBeLessThan(
-      phoneOtp.store.mock.invocationCallOrder[0]!,
+      phoneOtp.storeRegistrationPhone.mock.invocationCallOrder[0]!,
     );
     expect(smsSender.sendPhoneVerification).toHaveBeenCalledWith({
       phone: "2348031234567",
@@ -346,9 +358,9 @@ describe(AuthService.name, () => {
 
     expect(result).toEqual({ sent: true, channel: "email", otpExpiresInSeconds: 600 });
     expect(phoneOtp.revokeEmail).toHaveBeenCalledWith(customerId);
-    expect(phoneOtp.storeEmail).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.storeRegistrationEmail).toHaveBeenCalledWith(customerId, "482901");
     expect(phoneOtp.revokeEmail.mock.invocationCallOrder[0]!).toBeLessThan(
-      phoneOtp.storeEmail.mock.invocationCallOrder[0]!,
+      phoneOtp.storeRegistrationEmail.mock.invocationCallOrder[0]!,
     );
     expect(emailSender.sendWelcomeVerification).toHaveBeenCalledWith({
       email: "ada@example.com",
@@ -499,12 +511,10 @@ describe(AuthService.name, () => {
     customers.findOneBy.mockResolvedValue(customer);
 
     const result = await service.verifyUser({
-      channel: "phone",
-      phone: "08031234567",
       code: "482901",
     });
 
-    expect(phoneOtp.verify).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("482901");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -523,14 +533,17 @@ describe(AuthService.name, () => {
       emailVerifiedAt: null,
     });
     customers.findOneBy.mockResolvedValue(customer);
+    phoneOtp.verifyRegistrationCode.mockResolvedValueOnce({
+      result: "VERIFIED",
+      customerId,
+      channel: "email",
+    });
 
     const result = await service.verifyUser({
-      channel: "email",
-      email: "ADA@EXAMPLE.COM",
       code: "193847",
     });
 
-    expect(phoneOtp.verifyEmail).toHaveBeenCalledWith(customerId, "193847");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("193847");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -551,12 +564,10 @@ describe(AuthService.name, () => {
     customers.findOneBy.mockResolvedValue(customer);
 
     const result = await service.verifyUser({
-      channel: "phone",
-      phone: "08031234567",
       code: "482901",
     });
 
-    expect(phoneOtp.verify).toHaveBeenCalledWith(customerId, "482901");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("482901");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -573,11 +584,11 @@ describe(AuthService.name, () => {
         status: CustomerStatus.UNVERIFIED,
       }),
     );
-    phoneOtp.verify.mockResolvedValue(result);
+    phoneOtp.verifyRegistrationCode.mockResolvedValue({ result });
 
-    await expect(
-      service.verifyUser({ channel: "phone", phone: "08031234567", code: "000000" }),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service.verifyUser({ code: "000000" })).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
     expect(customers.save).not.toHaveBeenCalled();
   });
 });

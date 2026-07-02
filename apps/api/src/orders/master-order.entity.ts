@@ -19,6 +19,9 @@ export class MasterOrder {
   @Column({ name: "customer_id", type: "uuid" })
   customerId!: string;
 
+  @Column({ name: "rider_id", type: "uuid", nullable: true })
+  riderId!: string | null;
+
   @Column({
     type: "enum",
     enum: MasterOrderStatus,
@@ -36,6 +39,9 @@ export class MasterOrder {
   @Column({ name: "service_fee_minor", type: "integer", default: 0 })
   serviceFeeMinor!: number;
 
+  @Column({ name: "vat_minor", type: "integer", default: 0 })
+  vatMinor!: number;
+
   @Column({ name: "discount_minor", type: "integer", default: 0 })
   discountMinor!: number;
 
@@ -44,6 +50,24 @@ export class MasterOrder {
 
   @Column({ type: "char", length: 3, default: "NGN" })
   currency!: "NGN";
+
+  @Column({ name: "delivery_mode", type: "varchar", length: 20, default: "DELIVERY" })
+  deliveryMode!: "DELIVERY" | "TAKEOUT";
+
+  @Column({ name: "delivery_address", type: "text", nullable: true })
+  deliveryAddress!: string | null;
+
+  @Column({ name: "delivery_latitude", type: "double precision", nullable: true })
+  deliveryLatitude!: number | null;
+
+  @Column({ name: "delivery_longitude", type: "double precision", nullable: true })
+  deliveryLongitude!: number | null;
+
+  @Column({ name: "payment_reference", type: "varchar", length: 120, nullable: true })
+  paymentReference!: string | null;
+
+  @Column({ name: "delivery_code", type: "char", length: 6, nullable: true })
+  deliveryCode!: string | null;
 
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;

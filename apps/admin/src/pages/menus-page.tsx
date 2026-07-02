@@ -3,7 +3,7 @@ import { Button, formatMoney } from "@rsc/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2, Loader2, Power } from "lucide-react";
 
-import { apiClient } from "../lib/api";
+import { listMenuItems, updateMenuItemAvailability } from "../lib/api";
 
 const menuItemsQueryKey = ["menu-items"] as const;
 
@@ -11,12 +11,12 @@ export function MenusPage() {
   const queryClient = useQueryClient();
   const menuItems = useQuery({
     queryKey: menuItemsQueryKey,
-    queryFn: () => apiClient.listMenuItems(),
+    queryFn: listMenuItems,
   });
   const items = menuItems.data ?? [];
   const availability = useMutation({
     mutationFn: ({ id, isAvailable }: { id: string; isAvailable: boolean }) =>
-      apiClient.updateMenuItemAvailability(id, { isAvailable }),
+      updateMenuItemAvailability(id, { isAvailable }),
     onMutate: async ({ id, isAvailable }) => {
       await queryClient.cancelQueries({ queryKey: menuItemsQueryKey });
       const previous = queryClient.getQueryData<MenuItem[]>(menuItemsQueryKey);

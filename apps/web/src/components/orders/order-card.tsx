@@ -1,28 +1,93 @@
-import { Button, Card } from "@rsc/ui";
+"use client";
 
-import { type Order } from "@/src/lib/data/orders";
+import { Button, Card } from "@rsc/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { apiClient } from "@/src/lib/api";
+import { formatNaira } from "@/src/lib/data/cart";
+import { getStatusConfig, type Order } from "@/src/lib/data/orders";
 
 interface OrderCardProps {
   order: Order;
   variant?: "active" | "completed";
 }
 
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
-  const kitchenSummary = order.kitchens.join(", ");
-  const description = `${kitchenSummary} — Delivered to ${order.deliveryAddress}`;
+  const queryClient = useQueryClient();
+  const status = getStatusConfig(order.status);
+
+  const reorderMutation = useMutation({
+    mutationFn: () => apiClient.reorder(order.id),
+    onSuccess: () => {
+      toast.success("Reorder placed! Check your active orders.");
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: () => {
+      toast.error("Could not place reorder. Please try again.");
+    },
+  });
 
   return (
-    <Card className="flex items-center gap-3 sm:gap-4">
-      <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-gray-900 text-lg leading-tight">{order.id}</h3>
-        <p className="text-sm text-gray-400 mt-0.5 truncate">{description}</p>
-      </div>
+    <Card className="space-y-3">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-bold leading-tight text-gray-900">
+              Order #{order.id.slice(0, 8).toUpperCase()}
+            </h3>
+            <span
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
+              style={{ backgroundColor: status.bg, color: status.color }}
+            >
+              {status.label}
+            </span>
+          </div>
 
-      {variant === "completed" ? (
-        <Button tone="primary">Reorder</Button>
-      ) : (
-        <Button tone="primary">Track</Button>
-      )}
+          <p className="mt-1 text-sm font-semibold text-gray-700">
+            {formatNaira(order.totalMinor)}
+          </p>
+
+          {order.deliveryAddress && (
+            <p className="mt-0.5 truncate text-xs text-gray-400">→ {order.deliveryAddress}</p>
+          )}
+
+          <p className="mt-1 text-xs text-gray-400">
+            {order.deliveryMode === "DELIVERY" ? "Delivery" : "Takeout"} ·{" "}
+            {formatDate(order.createdAt)}
+          </p>
+
+          {variant === "active" && order.deliveryCode && (
+            <p className="mt-2 text-xs font-semibold text-gray-600">
+              Delivery code: <span className="font-mono">{order.deliveryCode}</span>
+            </p>
+          )}
+        </div>
+
+        {variant === "completed" ? (
+          <Button
+            tone="primary"
+            type="button"
+            onClick={() => reorderMutation.mutate()}
+            disabled={reorderMutation.isPending}
+          >
+            {reorderMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reorder"}
+          </Button>
+        ) : (
+          <Button tone="primary" type="button">
+            Track
+          </Button>
+        )}
+      </div>
     </Card>
   );
 }

@@ -1,17 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useCartStore } from "@/src/stores/cart-store";
+import type { Cart } from "@/src/lib/data/cart";
 
-import { DUMMY_CART, type Cart } from "@/src/lib/data/cart";
-
-export const cartQueryKey = ["cart"] as const;
-
-export function useCart() {
-  return useQuery<Cart>({
-    queryKey: cartQueryKey,
-    queryFn: async () => {
-      // TODO: replace with apiClient.getCart()
-      await new Promise((r) => setTimeout(r, 400));
-      return DUMMY_CART;
-    },
-    staleTime: 0,
-  });
+export function useCart(): { data: Cart; isPending: false; isError: false } {
+  const cart = useCartStore((s) => s.cart);
+  return { data: cart, isPending: false, isError: false };
 }

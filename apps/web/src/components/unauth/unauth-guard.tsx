@@ -7,16 +7,15 @@ import { useAuthStore } from "@/src/stores/auth-store";
 
 export function UnauthGuard({ children }: { children: ReactNode }) {
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
   const router = useRouter();
 
   useEffect(() => {
-    if (isSignedIn) {
-      router.replace("/outlets");
-    }
-  }, [isSignedIn, router]);
+    if (!hasHydrated) return;
+    if (isSignedIn) router.replace("/outlets");
+  }, [isSignedIn, hasHydrated, router]);
 
-  // Prevent flash of unauth content after Zustand rehydrates
-  if (isSignedIn) return null;
+  if (!hasHydrated || isSignedIn) return null;
 
   return <>{children}</>;
 }
