@@ -12,6 +12,7 @@
     "dev": "turbo run dev",
     "dev:api": "pnpm --filter @rsc/api dev",
     "dev:admin": "pnpm --filter @rsc/admin dev",
+    "dev:outlet-admin": "pnpm --filter @rsc/outlet-admin dev",
     "dev:web": "pnpm --filter @rsc/web dev",
     "infra:up": "docker compose -f deploy/local/compose.yaml up -d",
     "infra:down": "docker compose -f deploy/local/compose.yaml down",

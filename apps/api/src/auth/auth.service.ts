@@ -136,11 +136,10 @@ export class AuthService {
 
       throw error;
     }
-    const phoneCode = this.phoneOtp.generateCode();
-    const emailCode = this.phoneOtp.generateCode();
+    const { phoneCode, emailCode } = this.generateDistinctVerificationCodes();
 
-    await this.phoneOtp.store(savedCustomer.id, phoneCode);
-    await this.phoneOtp.storeEmail(savedCustomer.id, emailCode);
+    await this.phoneOtp.storeRegistrationPhone(savedCustomer.id, phoneCode);
+    await this.phoneOtp.storeRegistrationEmail(savedCustomer.id, emailCode);
 
     try {
       await Promise.all([
@@ -248,27 +247,27 @@ export class AuthService {
   }
 
   async verifyUser(input: VerifyUserDto): Promise<UserVerificationResult> {
-    const customer =
-      input.channel === "phone"
-        ? await this.findCustomerByPhone(input.phone)
-        : await this.findCustomerByEmail(input.email);
+    const verification = await this.phoneOtp.verifyRegistrationCode(input.code);
 
-    if (!customer || customer.status === CustomerStatus.SUSPENDED) {
+    if (verification.result !== "VERIFIED") {
       throw new UnauthorizedException("Invalid or expired verification code");
     }
 
-    const verification =
-      input.channel === "phone"
-        ? await this.phoneOtp.verify(customer.id, input.code)
-        : await this.phoneOtp.verifyEmail(customer.id, input.code);
+    const customer = await this.customers.findOneBy({ id: verification.customerId });
+    const channel = verification.channel;
 
-    if (verification !== "VERIFIED") {
+    if (
+      !customer ||
+      customer.status === CustomerStatus.SUSPENDED ||
+      (channel === "phone" && customer.phoneVerifiedAt) ||
+      (channel === "email" && customer.emailVerifiedAt)
+    ) {
       throw new UnauthorizedException("Invalid or expired verification code");
     }
 
     const verifiedAt = new Date();
     customer.status = CustomerStatus.ACTIVE;
-    if (input.channel === "phone") {
+    if (channel === "phone") {
       customer.phoneVerifiedAt = verifiedAt;
     } else {
       customer.emailVerifiedAt = verifiedAt;
@@ -278,7 +277,7 @@ export class AuthService {
     return {
       customerId: savedCustomer.id,
       status: CustomerStatus.ACTIVE,
-      channel: input.channel,
+      channel,
       verifiedAt: verifiedAt.toISOString(),
       verificationChannels: this.verificationChannels(savedCustomer),
     };
@@ -317,7 +316,7 @@ export class AuthService {
       const phone = this.piiCrypto.decrypt(customer.phoneEncrypted);
 
       await this.phoneOtp.revoke(customer.id);
-      await this.phoneOtp.store(customer.id, code);
+      await this.phoneOtp.storeRegistrationPhone(customer.id, code);
 
       try {
         await this.smsSender.sendPhoneVerification({
@@ -333,7 +332,7 @@ export class AuthService {
       const email = this.piiCrypto.decrypt(customer.emailEncrypted);
 
       await this.phoneOtp.revokeEmail(customer.id);
-      await this.phoneOtp.storeEmail(customer.id, code);
+      await this.phoneOtp.storeRegistrationEmail(customer.id, code);
 
       try {
         await this.emailSender.sendWelcomeVerification({
@@ -483,6 +482,17 @@ export class AuthService {
       email: Boolean(customer.emailVerifiedAt),
       phone: Boolean(customer.phoneVerifiedAt),
     };
+  }
+
+  private generateDistinctVerificationCodes(): { phoneCode: string; emailCode: string } {
+    const phoneCode = this.phoneOtp.generateCode();
+    let emailCode = this.phoneOtp.generateCode();
+
+    while (emailCode === phoneCode) {
+      emailCode = this.phoneOtp.generateCode();
+    }
+
+    return { phoneCode, emailCode };
   }
 
   private isUniqueViolation(error: unknown): boolean {

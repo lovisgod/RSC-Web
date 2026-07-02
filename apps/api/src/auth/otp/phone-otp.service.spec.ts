@@ -9,6 +9,7 @@ import { PhoneOtpService } from "./phone-otp.service";
 describe(PhoneOtpService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
   let redis: {
+    get: ReturnType<typeof vi.fn>;
     set: ReturnType<typeof vi.fn>;
     del: ReturnType<typeof vi.fn>;
     eval: ReturnType<typeof vi.fn>;
@@ -17,6 +18,7 @@ describe(PhoneOtpService.name, () => {
 
   beforeEach(() => {
     redis = {
+      get: vi.fn().mockResolvedValue(null),
       set: vi.fn().mockResolvedValue("OK"),
       del: vi.fn().mockResolvedValue(1),
       eval: vi.fn(),
@@ -98,5 +100,29 @@ describe(PhoneOtpService.name, () => {
       expect.stringMatching(/^[a-f0-9]{64}$/),
     );
     expect(redis.del).toHaveBeenCalledWith(`auth:email-otp:${customerId}`);
+  });
+
+  it("stores a registration code index and verifies the channel from code only", async () => {
+    await service.storeRegistrationEmail(customerId, "193847");
+
+    const indexSetCall = redis.set.mock.calls.find(([key]) =>
+      String(key).startsWith("auth:registration-otp-code:"),
+    );
+    expect(indexSetCall).toBeDefined();
+    redis.get.mockResolvedValue(indexSetCall?.[1]);
+    redis.eval.mockResolvedValue("VERIFIED");
+
+    await expect(service.verifyRegistrationCode("193847")).resolves.toEqual({
+      result: "VERIFIED",
+      customerId,
+      channel: "email",
+    });
+    expect(redis.eval).toHaveBeenCalledWith(
+      expect.any(String),
+      1,
+      `auth:email-otp:${customerId}`,
+      expect.stringMatching(/^[a-f0-9]{64}$/),
+    );
+    expect(redis.del).toHaveBeenCalledWith(indexSetCall?.[0]);
   });
 });

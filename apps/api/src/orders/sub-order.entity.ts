@@ -34,6 +34,12 @@ export class SubOrder {
   @Column({ name: "subtotal_minor", type: "integer", default: 0 })
   subtotalMinor!: number;
 
+  @Column({ name: "commission_minor", type: "integer", default: 0 })
+  commissionMinor!: number;
+
+  @Column({ name: "net_minor", type: "integer", default: 0 })
+  netMinor!: number;
+
   @Column({ type: "char", length: 3, default: "NGN" })
   currency!: "NGN";
 

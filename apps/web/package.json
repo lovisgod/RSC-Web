@@ -23,6 +23,8 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-hook-form": "^7.80.0",
+    "sonner": "^2.0.7",
+    "swiper": "^12.2.0",
     "zod": "4.4.3",
     "zustand": "5.0.14"
   },

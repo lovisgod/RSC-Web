@@ -60,6 +60,30 @@ export class Customer {
   @Column({ name: "email_verified_at", type: "timestamptz", nullable: true })
   emailVerifiedAt!: Date | null;
 
+  @Column({ name: "pending_phone_encrypted", type: "text", nullable: true })
+  pendingPhoneEncrypted!: string | null;
+
+  @Column({ name: "pending_phone_hash", type: "char", length: 64, nullable: true })
+  pendingPhoneHash!: string | null;
+
+  @Column({ name: "pending_email_encrypted", type: "text", nullable: true })
+  pendingEmailEncrypted!: string | null;
+
+  @Column({ name: "pending_email_hash", type: "char", length: 64, nullable: true })
+  pendingEmailHash!: string | null;
+
+  @Column({ name: "vehicle_type", type: "varchar", length: 40, nullable: true })
+  vehicleType!: string | null;
+
+  @Column({ name: "plate_number", type: "varchar", length: 40, nullable: true })
+  plateNumber!: string | null;
+
+  @Column({ name: "rider_status", type: "varchar", length: 40, nullable: true })
+  riderStatus!: string | null;
+
+  @Column({ name: "fcm_token", type: "varchar", length: 255, nullable: true })
+  fcmToken!: string | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 
