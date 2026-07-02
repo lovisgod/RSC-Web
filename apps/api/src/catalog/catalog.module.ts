@@ -3,6 +3,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AuthModule } from "../auth/auth.module";
 import { Customer } from "../auth/customer.entity";
+import { MediaModule } from "../media/media.module";
 import { Outlet } from "../outlets/outlet.entity";
 import { CatalogService } from "./catalog.service";
 import { ItemModifierGroupsController } from "./item-modifier-groups.controller";
@@ -12,6 +13,7 @@ import { ItemModifier } from "./item-modifier.entity";
 import { MenuCategoriesController } from "./menu-categories.controller";
 import { MenuCategory } from "./menu-category.entity";
 import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
+import { MenuItemRating } from "./menu-item-rating.entity";
 import { MenuItemsController } from "./menu-items.controller";
 import { MenuItem } from "./menu-item.entity";
 import { OutletsController } from "./outlets.controller";
@@ -19,11 +21,13 @@ import { OutletsController } from "./outlets.controller";
 @Module({
   imports: [
     AuthModule,
+    MediaModule,
     TypeOrmModule.forFeature([
       Outlet,
       Customer,
       MenuCategory,
       MenuItem,
+      MenuItemRating,
       ItemModifierGroup,
       ItemModifier,
       MenuItemModifierGroup,

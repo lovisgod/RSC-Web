@@ -48,6 +48,14 @@ export class LoginUserDto {
 
   @ApiProperty({ enum: ["SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"], example: "CUSTOMER" })
   role!: "SUPER_ADMIN" | "CUSTOMER" | "ADMIN" | "RIDER";
+
+  @ApiProperty({
+    example: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    format: "uuid",
+    nullable: true,
+    description: "Set for outlet admin users; null for customers, riders, and super admins",
+  })
+  outletId!: string | null;
 }
 
 export class LoginDataDto {

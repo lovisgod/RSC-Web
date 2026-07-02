@@ -84,9 +84,15 @@ export function toDisplayMenuItem(
 }
 
 export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletMenu {
+  const itemModifiers = summary.itemModifiers ?? [];
+  const itemModifierGroups = summary.itemModifierGroups ?? [];
+  const menuItemModifierGroups = summary.menuItemModifierGroups ?? [];
+  const menuItems = summary.menuItems ?? [];
+  const menuCategories = summary.menuCategories ?? [];
+
   // Build available modifier options per group
   const modifiersByGroup = new Map<string, DisplayModifier[]>();
-  const sortedModifiers = [...summary.itemModifiers]
+  const sortedModifiers = [...itemModifiers]
     .filter((m) => m.isAvailable)
     .sort((a, b) => a.sortOrder - b.sortOrder);
   for (const mod of sortedModifiers) {
@@ -96,17 +102,17 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
   }
 
   // Index modifier groups by id
-  const groupById = new Map(summary.itemModifierGroups.map((g) => [g.id, g]));
+  const groupById = new Map(itemModifierGroups.map((g) => [g.id, g]));
 
   // Index modifier group links by menuItemId, sorted by sortOrder
   const linksByItem = new Map<string, { groupId: string; sortOrder: number }[]>();
-  for (const link of summary.menuItemModifierGroups) {
+  for (const link of menuItemModifierGroups) {
     const arr = linksByItem.get(link.menuItemId) ?? [];
     arr.push({ groupId: link.groupId, sortOrder: link.sortOrder });
     linksByItem.set(link.menuItemId, arr);
   }
 
-  const items = summary.menuItems
+  const items = menuItems
     .filter((item) => item.isAvailable)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((item, i) => {
@@ -129,7 +135,7 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
       return toDisplayMenuItem(item, i, modifierGroups);
     });
 
-  const namedCategories = summary.menuCategories
+  const namedCategories = menuCategories
     .filter((c) => c.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((c) => ({ id: c.id, name: c.name }));

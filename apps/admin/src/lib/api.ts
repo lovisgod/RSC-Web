@@ -3,10 +3,12 @@ import type {
   AdminOverview,
   AdminResult,
   CreateAdminInput,
+  CreateNotificationCampaignInput,
   ForgotPasswordResult,
   LoginResult,
   LogoutResult,
   MenuItem,
+  NotificationCampaign,
   OrderSummary,
   OutletSummary,
   RegistrationResult,
@@ -132,6 +134,13 @@ export interface SendPromoBody {
 export const sendPromoNotification = (body: SendPromoBody): Promise<{ sent: number }> =>
   post("/api/v1/notifications/promos", body);
 
+export const scheduleNotificationCampaign = (
+  body: CreateNotificationCampaignInput,
+): Promise<NotificationCampaign> => post("/api/v1/notifications/campaigns", body);
+
+export const listNotificationCampaigns = (): Promise<NotificationCampaign[]> =>
+  get("/api/v1/notifications/campaigns");
+
 // ─── Admin accounts ───────────────────────────────────────────────────────────
 
 export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
@@ -140,3 +149,8 @@ export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export const getAdminOverview = (): Promise<AdminOverview> => get("/api/v1/admin/overview");
+
+export const apiClient = {
+  scheduleNotificationCampaign,
+  listNotificationCampaigns,
+};

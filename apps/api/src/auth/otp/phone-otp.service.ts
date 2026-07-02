@@ -84,6 +84,16 @@ export class PhoneOtpService {
     await this.storeRegistrationIndex(customerId, "email", code);
   }
 
+  async storeProfileChangePhone(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.key(customerId), customerId, code);
+    await this.storeProfileChangeIndex(customerId, "phone", code);
+  }
+
+  async storeProfileChangeEmail(customerId: string, code: string): Promise<void> {
+    await this.storeWithKey(this.emailKey(customerId), customerId, code);
+    await this.storeProfileChangeIndex(customerId, "email", code);
+  }
+
   async storePasswordResetPhone(customerId: string, code: string): Promise<void> {
     await this.storeWithKey(this.passwordResetPhoneKey(customerId), customerId, code);
   }
@@ -125,33 +135,11 @@ export class PhoneOtpService {
   }
 
   async verifyRegistrationCode(code: string): Promise<ChannelOtpVerificationResult> {
-    const indexKey = this.registrationCodeIndexKey(code);
-    const serializedIndex = await this.redis.get(indexKey);
+    return this.verifyIndexedCode(this.registrationCodeIndexKey(code), code);
+  }
 
-    if (!serializedIndex) {
-      return { result: "EXPIRED" };
-    }
-
-    const index = JSON.parse(serializedIndex) as StoredRegistrationOtpIndex;
-    const verification =
-      index.channel === "phone"
-        ? await this.verify(index.customerId, code)
-        : await this.verifyEmail(index.customerId, code);
-
-    if (verification === "VERIFIED") {
-      await this.redis.del(indexKey);
-      return {
-        result: "VERIFIED",
-        customerId: index.customerId,
-        channel: index.channel,
-      };
-    }
-
-    if (verification === "EXPIRED") {
-      await this.redis.del(indexKey);
-    }
-
-    return { result: verification };
+  async verifyProfileChangeCode(code: string): Promise<ChannelOtpVerificationResult> {
+    return this.verifyIndexedCode(this.profileChangeCodeIndexKey(code), code);
   }
 
   async verifyPasswordResetPhone(customerId: string, code: string): Promise<OtpVerificationResult> {
@@ -212,6 +200,53 @@ export class PhoneOtpService {
     );
   }
 
+  private async storeProfileChangeIndex(
+    customerId: string,
+    channel: VerificationOtpChannel,
+    code: string,
+  ): Promise<void> {
+    const value: StoredRegistrationOtpIndex = { customerId, channel };
+
+    await this.redis.set(
+      this.profileChangeCodeIndexKey(code),
+      JSON.stringify(value),
+      "EX",
+      OTP_TTL_SECONDS,
+    );
+  }
+
+  private async verifyIndexedCode(
+    indexKey: string,
+    code: string,
+  ): Promise<ChannelOtpVerificationResult> {
+    const serializedIndex = await this.redis.get(indexKey);
+
+    if (!serializedIndex) {
+      return { result: "EXPIRED" };
+    }
+
+    const index = JSON.parse(serializedIndex) as StoredRegistrationOtpIndex;
+    const verification =
+      index.channel === "phone"
+        ? await this.verify(index.customerId, code)
+        : await this.verifyEmail(index.customerId, code);
+
+    if (verification === "VERIFIED") {
+      await this.redis.del(indexKey);
+      return {
+        result: "VERIFIED",
+        customerId: index.customerId,
+        channel: index.channel,
+      };
+    }
+
+    if (verification === "EXPIRED") {
+      await this.redis.del(indexKey);
+    }
+
+    return { result: verification };
+  }
+
   private key(customerId: string): string {
     return `auth:phone-otp:${customerId}`;
   }
@@ -222,6 +257,10 @@ export class PhoneOtpService {
 
   private registrationCodeIndexKey(code: string): string {
     return `auth:registration-otp-code:${this.codeHash(code)}`;
+  }
+
+  private profileChangeCodeIndexKey(code: string): string {
+    return `auth:profile-change-otp-code:${this.codeHash(code)}`;
   }
 
   private passwordResetPhoneKey(customerId: string): string {

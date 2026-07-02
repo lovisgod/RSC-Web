@@ -5,11 +5,13 @@ import { In, Repository } from "typeorm";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
+import { MediaService, type UploadedImageFile } from "../media/media.service";
 import { Outlet } from "../outlets/outlet.entity";
 import { ItemModifierGroup } from "./item-modifier-group.entity";
 import { ItemModifier } from "./item-modifier.entity";
 import { MenuCategory } from "./menu-category.entity";
 import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
+import { MenuItemRating } from "./menu-item-rating.entity";
 import { MenuItem } from "./menu-item.entity";
 import type {
   CreateItemModifierDto,
@@ -17,6 +19,7 @@ import type {
   CreateMenuCategoryDto,
   CreateMenuItemDto,
   CreateOutletDto,
+  RateMenuItemDto,
   UpdateItemModifierDto,
   UpdateItemModifierGroupDto,
   UpdateMenuCategoryDto,
@@ -33,10 +36,12 @@ export class CatalogService {
     @InjectRepository(Customer) private readonly users: Repository<Customer>,
     @InjectRepository(MenuCategory) private readonly categories: Repository<MenuCategory>,
     @InjectRepository(MenuItem) private readonly items: Repository<MenuItem>,
+    @InjectRepository(MenuItemRating) private readonly ratings: Repository<MenuItemRating>,
     @InjectRepository(ItemModifierGroup) private readonly groups: Repository<ItemModifierGroup>,
     @InjectRepository(ItemModifier) private readonly modifiers: Repository<ItemModifier>,
     @InjectRepository(MenuItemModifierGroup)
     private readonly itemGroups: Repository<MenuItemModifierGroup>,
+    private readonly media: MediaService,
   ) {}
 
   async listOutlets(user: AuthenticatedUser): Promise<Outlet[]> {
@@ -75,6 +80,10 @@ export class CatalogService {
         cuisineType: input.cuisineType,
         imageUrl: input.imageUrl ?? null,
         isOnline: input.isOnline ?? true,
+        vatBps: input.vatBps ?? 0,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        deliveryRadiusKm: input.deliveryRadiusKm ?? 15,
         momentSubaccountCode: input.momentSubaccountCode,
       }),
     );
@@ -205,6 +214,7 @@ export class CatalogService {
         name: input.name,
         description: input.description ?? null,
         imageUrl: input.imageUrl ?? null,
+        deliveryTimeRange: input.deliveryTimeRange ?? null,
         priceMinor: input.priceMinor,
         currency: "NGN",
         isAvailable: input.isAvailable ?? true,
@@ -251,6 +261,8 @@ export class CatalogService {
       ...input,
       description: input.description === undefined ? item.description : input.description,
       imageUrl: input.imageUrl === undefined ? item.imageUrl : input.imageUrl,
+      deliveryTimeRange:
+        input.deliveryTimeRange === undefined ? item.deliveryTimeRange : input.deliveryTimeRange,
     });
     delete (item as Partial<MenuItem> & { modifierGroupIds?: string[] }).modifierGroupIds;
 
@@ -266,6 +278,51 @@ export class CatalogService {
     item.isAvailable = input.isAvailable;
 
     return this.items.save(item);
+  }
+
+  async uploadItemImage(
+    user: AuthenticatedUser,
+    id: string,
+    file: UploadedImageFile,
+  ): Promise<MenuItem> {
+    const item = await this.getItem(user, id);
+    const upload = await this.media.uploadImage({
+      file,
+      folder: "menu-items",
+      publicIdPrefix: item.id,
+    });
+
+    item.imageUrl = upload.url;
+
+    return this.items.save(item);
+  }
+
+  async rateItem(user: AuthenticatedUser, id: string, input: RateMenuItemDto): Promise<MenuItem> {
+    if (user.role !== UserRole.CUSTOMER) {
+      throw new ForbiddenException("Only customers can rate menu items");
+    }
+
+    const item = await this.requireItem(id);
+    const existing = await this.ratings.findOneBy({ menuItemId: id, customerId: user.id });
+
+    const rating = existing ?? this.ratings.create({ menuItemId: id, customerId: user.id });
+    rating.rating = input.rating;
+    rating.comment = input.comment ?? null;
+
+    await this.ratings.save(rating);
+
+    const aggregate = await this.ratings
+      .createQueryBuilder("rating")
+      .select("AVG(rating.rating)", "average")
+      .addSelect("COUNT(rating.id)", "count")
+      .where("rating.menuItemId = :id", { id })
+      .getRawOne<{ average: string | null; count: string }>();
+
+    item.ratingAverage = Number(aggregate?.average ?? 0).toFixed(2);
+    item.ratingCount = Number(aggregate?.count ?? 0);
+    await this.items.save(item);
+
+    return this.getPublicItem(id);
   }
 
   async deleteItem(user: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
