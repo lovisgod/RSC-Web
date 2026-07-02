@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   adminResultSchema,
+  adminOrdersQuerySchema,
+  adminOrdersResultSchema,
   createAdminInputSchema,
   loginInputSchema,
   loginResultSchema,
@@ -145,6 +147,7 @@ describe("customer registration contracts", () => {
         user: {
           id: "2abf9577-027c-4936-83a8-e004fd56a46e",
           role: "CUSTOMER",
+          outletId: null,
         },
         accessTokenExpiresInSeconds: 900,
         refreshTokenExpiresInSeconds: 604800,
@@ -196,6 +199,88 @@ describe("customer registration contracts", () => {
         createdAt: "2026-06-23T10:00:00.000Z",
         updatedAt: "2026-06-23T10:00:00.000Z",
         deletedAt: null,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("documents admin order list contracts", () => {
+    expect(
+      adminOrdersQuerySchema.parse({
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        status: "CONFIRMED",
+        subOrderStatus: "PREPARING",
+        deliveryMode: "DELIVERY",
+        customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+        dateFrom: "2026-07-01T00:00:00.000Z",
+        dateTo: "2026-07-02T23:59:59.000Z",
+        limit: 50,
+        offset: 0,
+      }),
+    ).toBeTruthy();
+    expect(
+      adminOrdersResultSchema.parse({
+        orders: [
+          {
+            order: {
+              id: "50296ef7-fb39-4b42-ae55-81caec8efd21",
+              customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+              riderId: null,
+              status: "CONFIRMED",
+              subtotalMinor: 450000,
+              deliveryFeeMinor: 100000,
+              serviceFeeMinor: 0,
+              vatMinor: 0,
+              discountMinor: 0,
+              totalMinor: 550000,
+              currency: "NGN",
+              deliveryMode: "DELIVERY",
+              deliveryAddress: "12 Abakaliki Road, Enugu",
+              deliveryLatitude: 6.4474,
+              deliveryLongitude: 7.5139,
+              paymentReference: "paystack-ref",
+              deliveryCode: "123456",
+              createdAt: "2026-07-02T08:00:00.000Z",
+              updatedAt: "2026-07-02T08:00:00.000Z",
+              deletedAt: null,
+            },
+            subOrders: [
+              {
+                id: "8f36ee26-6f25-47cf-aed7-26afcb6278fe",
+                masterOrderId: "50296ef7-fb39-4b42-ae55-81caec8efd21",
+                outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+                status: "PREPARING",
+                subtotalMinor: 450000,
+                commissionMinor: 45000,
+                netMinor: 405000,
+                currency: "NGN",
+                createdAt: "2026-07-02T08:00:00.000Z",
+                updatedAt: "2026-07-02T08:00:00.000Z",
+                deletedAt: null,
+              },
+            ],
+            lineItems: [
+              {
+                id: "b4eec994-872d-4915-9e12-b31947f96c3b",
+                masterOrderId: "50296ef7-fb39-4b42-ae55-81caec8efd21",
+                subOrderId: "8f36ee26-6f25-47cf-aed7-26afcb6278fe",
+                outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+                menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+                itemNameSnapshot: "Jollof Rice",
+                unitPriceMinor: 450000,
+                quantity: 1,
+                lineTotalMinor: 450000,
+                currency: "NGN",
+                modifiersSnapshot: [],
+                createdAt: "2026-07-02T08:00:00.000Z",
+                updatedAt: "2026-07-02T08:00:00.000Z",
+                deletedAt: null,
+              },
+            ],
+          },
+        ],
+        total: 1,
+        limit: 50,
+        offset: 0,
       }),
     ).toBeTruthy();
   });

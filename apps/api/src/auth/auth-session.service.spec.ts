@@ -64,6 +64,22 @@ describe(AuthSessionService.name, () => {
     });
   });
 
+  it("includes outlet id in issued outlet admin login responses", async () => {
+    const user = Object.assign(new Customer(), {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+
+    const session = await service.issueSession(user);
+
+    expect(session.user).toEqual({
+      id: user.id,
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+  });
+
   it("blacklists tokens and removes the session on logout", async () => {
     const user = Object.assign(new Customer(), {
       id: "2abf9577-027c-4936-83a8-e004fd56a46e",

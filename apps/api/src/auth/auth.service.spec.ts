@@ -125,7 +125,7 @@ describe(AuthService.name, () => {
         refreshToken: "refresh.jwt",
         accessTokenExpiresInSeconds: 900,
         refreshTokenExpiresInSeconds: 604800,
-        user: { id: customerId, role: UserRole.CUSTOMER },
+        user: { id: customerId, role: UserRole.CUSTOMER, outletId: null },
       }),
     };
 

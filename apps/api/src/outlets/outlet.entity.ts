@@ -33,6 +33,15 @@ export class Outlet {
   @Column({ name: "vat_bps", type: "integer", default: 0 })
   vatBps!: number;
 
+  @Column({ type: "double precision" })
+  latitude!: number;
+
+  @Column({ type: "double precision" })
+  longitude!: number;
+
+  @Column({ name: "delivery_radius_km", type: "double precision", default: 15 })
+  deliveryRadiusKm!: number;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

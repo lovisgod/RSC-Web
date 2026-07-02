@@ -81,6 +81,9 @@ export class CatalogService {
         imageUrl: input.imageUrl ?? null,
         isOnline: input.isOnline ?? true,
         vatBps: input.vatBps ?? 0,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        deliveryRadiusKm: input.deliveryRadiusKm ?? 15,
         momentSubaccountCode: input.momentSubaccountCode,
       }),
     );

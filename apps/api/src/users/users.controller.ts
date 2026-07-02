@@ -114,6 +114,32 @@ export class UsersController {
     return this.users.createRider(request.user!, input);
   }
 
+  @Get("outlet-admins")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("Outlet admins retrieved")
+  @ApiOperation({
+    summary: "List outlet admins",
+    description:
+      "Returns all active outlet admin users for the super admin management screen. Soft-deleted admins are excluded.",
+  })
+  listOutletAdmins(@Req() request: AuthenticatedRequest) {
+    return this.users.listOutletAdmins(request.user!);
+  }
+
+  @Delete("outlet-admins/:id")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("Outlet admin deleted successfully")
+  @ApiOperation({
+    summary: "Soft-delete an outlet admin",
+    description:
+      "Soft-deletes an outlet admin account. This endpoint only deletes users with the ADMIN role.",
+  })
+  deleteOutletAdmin(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
+    return this.users.deleteOutletAdmin(request.user!, id);
+  }
+
   @Delete(":id")
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)

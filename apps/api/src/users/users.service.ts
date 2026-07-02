@@ -53,6 +53,18 @@ export interface RiderResult {
   temporaryPassword: string;
 }
 
+export interface OutletAdminResult {
+  id: string;
+  name: string;
+  role: UserRole.ADMIN;
+  outletId: string;
+  email: string;
+  phone: string;
+  status: CustomerStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -255,6 +267,39 @@ export class UsersService {
     };
   }
 
+  async listOutletAdmins(actor: AuthenticatedUser): Promise<OutletAdminResult[]> {
+    if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only super admins can list outlet admins");
+    }
+
+    const admins = await this.users.find({
+      where: { role: UserRole.ADMIN },
+      order: { createdAt: "DESC" },
+    });
+
+    return admins.map((admin) => this.toOutletAdmin(admin));
+  }
+
+  async deleteOutletAdmin(actor: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
+    if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only super admins can delete outlet admins");
+    }
+
+    if (actor.id === id) {
+      throw new BadRequestException("Super admin cannot delete their own account");
+    }
+
+    const admin = await this.users.findOneBy({ id, role: UserRole.ADMIN });
+
+    if (!admin) {
+      throw new BadRequestException("Outlet admin not found");
+    }
+
+    await this.users.softRemove(admin);
+
+    return { deleted: true };
+  }
+
   async deleteUser(actor: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
     if (actor.role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException("Only super admins can delete users");
@@ -338,6 +383,24 @@ export class UsersService {
         email: Boolean(user.pendingEmailHash),
         phone: Boolean(user.pendingPhoneHash),
       },
+    };
+  }
+
+  private toOutletAdmin(user: Customer): OutletAdminResult {
+    if (!user.outletId) {
+      throw new BadRequestException("Outlet admin is not linked to an outlet");
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      role: UserRole.ADMIN,
+      outletId: user.outletId,
+      email: this.piiCrypto.decrypt(user.emailEncrypted),
+      phone: this.piiCrypto.decrypt(user.phoneEncrypted),
+      status: user.status,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
   }
 
