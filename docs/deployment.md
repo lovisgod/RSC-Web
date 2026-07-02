@@ -135,11 +135,11 @@ Open the Compose service's **Environment** tab and add:
 
 ```dotenv
 DEPLOY_ENV=development
-PUBLIC_API_URL=https://api-dev.rscapp.xyz
+PUBLIC_API_URL=https://api-dev.rscdev.tech
 APP_VERSION=development
 POSTGRES_PASSWORD=replace-with-a-long-random-value
 REDIS_PASSWORD=replace-with-a-different-long-random-value
-CORS_ORIGINS=https://dev.rscapp.xyz,https://admin-dev.rscapp.xyz
+CORS_ORIGINS=https://dev.rscdev.tech,https://admin-dev.rscdev.tech,https://outlet-admin-dev.rscdev.tech
 SWAGGER_ENABLED=true
 PII_ENCRYPTION_KEY=replace-with-output-of-openssl-rand-base64-32
 PII_HASH_PEPPER=replace-with-output-of-openssl-rand-hex-32
@@ -160,7 +160,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=replace-with-gmail-address
 SMTP_PASS=replace-with-gmail-app-password
-SMTP_FROM=RSC <noreply@rscapp.xyz>
+SMTP_FROM=RSC <noreply@rscdev.tech>
 ```
 
 Generate the server-side passwords and security secrets locally, then paste the
