@@ -46,27 +46,52 @@ function createService(input: {
   };
   const masterOrders = {
     createQueryBuilder: vi.fn(() => queryBuilder),
+    findOneBy: vi.fn(({ id }: { id: string }) =>
+      Promise.resolve((input.orders ?? []).find((order) => order.id === id) ?? null),
+    ),
+    save: vi.fn((order: MasterOrder) => Promise.resolve(order)),
   };
   const subOrders = {
     find: vi.fn().mockResolvedValue(input.subOrders ?? []),
-    findOneBy: vi.fn().mockResolvedValue(null),
+    findOneBy: vi.fn((where: Partial<SubOrder>) =>
+      Promise.resolve(
+        (input.subOrders ?? []).find((subOrder) =>
+          Object.entries(where).every(([key, value]) => subOrder[key as keyof SubOrder] === value),
+        ) ?? null,
+      ),
+    ),
+    save: vi.fn((subOrder: SubOrder) => Promise.resolve(subOrder)),
   };
   const lineItems = {
     find: vi.fn().mockResolvedValue(input.lineItems ?? []),
+  };
+  const statusEvents = {
+    create: vi.fn((event: Partial<OrderStatusEvent>) => event),
+    find: vi.fn().mockResolvedValue([]),
+    save: vi.fn((event: Partial<OrderStatusEvent>) => Promise.resolve(event)),
+  };
+  const notifications = {
+    createAndPush: vi.fn().mockResolvedValue({}),
+  };
+  const realtime = {
+    emitOrderStatusUpdate: vi.fn(),
+  };
+  const dataSource = {
+    query: vi.fn().mockResolvedValue([]),
   };
   const service = new OrdersService(
     users as unknown as Repository<Customer>,
     masterOrders as unknown as Repository<MasterOrder>,
     subOrders as unknown as Repository<SubOrder>,
     lineItems as unknown as Repository<OrderLineItem>,
-    {} as Repository<OrderStatusEvent>,
-    {} as DataSource,
+    statusEvents as unknown as Repository<OrderStatusEvent>,
+    dataSource as unknown as DataSource,
     {} as PaymentsService,
-    {} as NotificationsService,
-    {} as RealtimeService,
+    notifications as unknown as NotificationsService,
+    realtime as unknown as RealtimeService,
   );
 
-  return { service, queryBuilder, users, subOrders, lineItems };
+  return { service, queryBuilder, users, masterOrders, subOrders, lineItems, statusEvents };
 }
 
 describe(OrdersService.name, () => {
@@ -155,6 +180,50 @@ describe(OrdersService.name, () => {
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       expect.stringContaining("adminSubOrder.status = :subOrderStatus"),
       expect.objectContaining({ outletId, subOrderStatus: SubOrderStatus.READY }),
+    );
+  });
+
+  it("updates only the outlet admin's sub-order when a sub-order id is passed", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.CONFIRMED,
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const outletSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.PENDING,
+    });
+    const otherSubOrder = Object.assign(new SubOrder(), {
+      id: "6b8537f9-b0c1-4df3-8567-aa49517d7de1",
+      masterOrderId: order.id,
+      outletId: otherOutletId,
+      status: SubOrderStatus.PENDING,
+    });
+    const { service, masterOrders, subOrders, statusEvents } = createService({
+      adminOutletId: outletId,
+      orders: [order],
+      subOrders: [outletSubOrder, otherSubOrder],
+    });
+
+    await service.updateStatus(adminUser, outletSubOrder.id, {
+      status: MasterOrderStatus.CONFIRMED,
+    });
+
+    expect(outletSubOrder.status).toBe(SubOrderStatus.ACCEPTED);
+    expect(otherSubOrder.status).toBe(SubOrderStatus.PENDING);
+    expect(subOrders.save).toHaveBeenCalledWith(outletSubOrder);
+    expect(masterOrders.save).not.toHaveBeenCalled();
+    expect(statusEvents.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        masterOrderId: order.id,
+        subOrderId: outletSubOrder.id,
+        masterStatus: MasterOrderStatus.CONFIRMED,
+        subOrderStatus: SubOrderStatus.ACCEPTED,
+      }),
     );
   });
 });

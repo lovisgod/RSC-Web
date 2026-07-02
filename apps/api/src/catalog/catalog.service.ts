@@ -19,6 +19,7 @@ import type {
   CreateMenuCategoryDto,
   CreateMenuItemDto,
   CreateOutletDto,
+  ListMenuItemsQueryDto,
   RateMenuItemDto,
   UpdateItemModifierDto,
   UpdateItemModifierGroupDto,
@@ -28,6 +29,14 @@ import type {
   UpdateOutletOnlineStatusDto,
   UpdateOutletDto,
 } from "./dto/catalog.dto";
+
+export interface MenuItemsPage {
+  items: MenuItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
 
 @Injectable()
 export class CatalogService {
@@ -195,11 +204,14 @@ export class CatalogService {
     });
   }
 
-  async listPublicItems(outletId?: string): Promise<MenuItem[]> {
-    return this.items.find({
-      ...(outletId ? { where: { outletId } } : {}),
-      order: { sortOrder: "ASC", name: "ASC" },
-    });
+  async listPublicItems(query: ListMenuItemsQueryDto = {}): Promise<MenuItem[]> {
+    const { items } = await this.queryPublicItems(query);
+
+    return items;
+  }
+
+  async listPublicItemsPage(query: ListMenuItemsQueryDto = {}): Promise<MenuItemsPage> {
+    return this.queryPublicItems(query);
   }
 
   async createItem(user: AuthenticatedUser, input: CreateMenuItemDto): Promise<MenuItem> {
@@ -519,6 +531,39 @@ export class CatalogService {
     }
 
     await this.requireAdminOutletId(user, outletId);
+  }
+
+  private async queryPublicItems(query: ListMenuItemsQueryDto): Promise<MenuItemsPage> {
+    const limit = query.limit ?? 30;
+    const offset = query.offset ?? 0;
+    const itemQuery = this.items
+      .createQueryBuilder("item")
+      .orderBy("item.sortOrder", "ASC")
+      .addOrderBy("item.name", "ASC")
+      .take(limit)
+      .skip(offset);
+
+    if (query.outletId) {
+      itemQuery.andWhere("item.outletId = :outletId", { outletId: query.outletId });
+    }
+
+    const search = query.q?.trim();
+
+    if (search) {
+      itemQuery.andWhere("(item.name ILIKE :search OR item.description ILIKE :search)", {
+        search: `%${search}%`,
+      });
+    }
+
+    const [items, total] = await itemQuery.getManyAndCount();
+
+    return {
+      items,
+      total,
+      limit,
+      offset,
+      hasMore: offset + items.length < total,
+    };
   }
 
   private async requireOutlet(id: string): Promise<Outlet> {

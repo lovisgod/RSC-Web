@@ -25,6 +25,7 @@ import type { UploadedImageFile } from "../media/media.service";
 import { CatalogService } from "./catalog.service";
 import {
   CreateMenuItemDto,
+  ListMenuItemsQueryDto,
   RateMenuItemDto,
   UpdateMenuItemAvailabilityDto,
   UpdateMenuItemDto,
@@ -37,8 +38,10 @@ export class MenuItemsController {
 
   @Get()
   @ApiMessage("Menu items retrieved")
-  list(@Query("outletId") outletId?: string) {
-    return this.catalog.listPublicItems(outletId);
+  list(@Query() query: ListMenuItemsQueryDto) {
+    return query.paginated
+      ? this.catalog.listPublicItemsPage(query)
+      : this.catalog.listPublicItems(query);
   }
 
   @Get(":id")
