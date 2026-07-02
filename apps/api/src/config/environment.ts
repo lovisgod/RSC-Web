@@ -66,7 +66,9 @@ const environmentSchema = Joi.object<Environment>({
   PORT: Joi.number().port().default(4000),
   APP_VERSION: Joi.string().default("development"),
   LOG_LEVEL: Joi.string().valid("fatal", "error", "warn", "log", "debug", "verbose").default("log"),
-  CORS_ORIGINS: Joi.string().default("http://localhost:3000,http://localhost:5173"),
+  CORS_ORIGINS: Joi.string().default(
+    "http://localhost:3000,http://localhost:5173,http://localhost:8080",
+  ),
   DATABASE_URL: Joi.string()
     .uri({ scheme: ["postgres", "postgresql"] })
     .required(),
