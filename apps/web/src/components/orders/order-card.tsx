@@ -3,6 +3,7 @@
 import { Button, Card } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { apiClient } from "@/src/lib/api";
@@ -24,6 +25,7 @@ function formatDate(iso: string): string {
 
 export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const status = getStatusConfig(order.status);
 
   const reorderMutation = useMutation({
@@ -83,7 +85,11 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
             {reorderMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reorder"}
           </Button>
         ) : (
-          <Button tone="primary" type="button">
+          <Button
+            tone="primary"
+            type="button"
+            onClick={() => router.push(`/tracking?orderId=${order.id}`)}
+          >
             Track
           </Button>
         )}

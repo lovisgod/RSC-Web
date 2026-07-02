@@ -113,6 +113,7 @@ export const loginResultSchema = z.object({
   user: z.object({
     id: z.uuid(),
     role: userRoleSchema,
+    outletId: z.uuid().nullable(),
   }),
   accessTokenExpiresInSeconds: z.int().positive(),
   refreshTokenExpiresInSeconds: z.int().positive(),
@@ -421,6 +422,55 @@ export const customerOrderSchema = z.object({
   deletedAt: z.iso.datetime().nullable(),
 });
 
+export const riderLocationSchema = z.object({
+  riderId: z.uuid(),
+  masterOrderId: z.uuid().nullable(),
+  latitude: z.number(),
+  longitude: z.number(),
+  recordedAt: z.iso.datetime(),
+});
+
+export const orderStatusEventSchema = z.object({
+  id: z.uuid(),
+  masterOrderId: z.uuid(),
+  subOrderId: z.uuid().nullable(),
+  masterStatus: z.string().nullable(),
+  subOrderStatus: z.string().nullable(),
+  note: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+});
+
+export const subOrderDetailSchema = z.object({
+  id: z.uuid(),
+  masterOrderId: z.uuid(),
+  outletId: z.uuid(),
+  status: z.string(),
+  subtotalMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  createdAt: z.iso.datetime(),
+});
+
+export const orderLineItemSchema = z.object({
+  id: z.uuid(),
+  masterOrderId: z.uuid(),
+  subOrderId: z.uuid(),
+  outletId: z.uuid(),
+  menuItemId: z.uuid().nullable(),
+  itemNameSnapshot: z.string(),
+  unitPriceMinor: z.int().nonnegative(),
+  quantity: z.int().positive(),
+  lineTotalMinor: z.int().nonnegative(),
+  currency: currencySchema,
+});
+
+export const orderDetailSchema = z.object({
+  order: customerOrderSchema,
+  subOrders: z.array(subOrderDetailSchema),
+  lineItems: z.array(orderLineItemSchema),
+  events: z.array(orderStatusEventSchema),
+  latestRiderLocation: riderLocationSchema.nullable(),
+});
+
 export const notificationSchema = z.object({
   id: z.uuid(),
   recipientId: z.uuid(),
@@ -492,3 +542,8 @@ export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;
+export type RiderLocation = z.infer<typeof riderLocationSchema>;
+export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
+export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
+export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
+export type OrderDetail = z.infer<typeof orderDetailSchema>;
