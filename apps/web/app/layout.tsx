@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { Toaster } from "sonner";
+
 import { QueryProvider } from "@/src/components/providers/query-provider";
 
 const roboto = Roboto({
@@ -28,6 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="en" className={roboto.variable}>
       <body>
         <QueryProvider>{children}</QueryProvider>
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

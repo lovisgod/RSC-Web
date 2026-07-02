@@ -8,26 +8,35 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
       <article className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col transition-shadow duration-200 group-hover:shadow-md">
         {/* Coloured header */}
         <div
-          className="relative flex items-center justify-center h-36 sm:h-44 flex-shrink-0"
-          style={{ backgroundColor: outlet.headerColor }}
+          className="relative h-36 sm:h-44 flex-shrink-0"
+          style={{
+            backgroundColor: outlet.headerColor,
+            ...(outlet.image.startsWith("/") || outlet.image.startsWith("http")
+              ? {
+                  backgroundImage: `url(${outlet.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : {}),
+          }}
         >
+          {(outlet.image.startsWith("/") || outlet.image.startsWith("http")) && (
+            <div className="absolute inset-0 bg-black/25" />
+          )}
+
           {outlet.tag && (
             <span
-              className="absolute top-2 left-2 text-xs font-semibold text-white px-2.5 py-0.5 rounded-full"
+              className="absolute top-2 left-2 text-xs font-semibold text-white px-2.5 py-0.5 rounded-full z-10"
               style={{ backgroundColor: "var(--rsc-dark)" }}
             >
               {outlet.tag}
             </span>
           )}
-          {outlet.image.startsWith("/") ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={outlet.image}
-              alt={outlet.name}
-              className="w-20 h-20 sm:w-28 sm:h-28 object-contain select-none"
-            />
-          ) : (
-            <span className="text-5xl sm:text-7xl select-none">{outlet.image}</span>
+
+          {!outlet.image.startsWith("/") && !outlet.image.startsWith("http") && (
+            <span className="absolute inset-0 flex items-center justify-center text-5xl sm:text-7xl select-none">
+              {outlet.image}
+            </span>
           )}
         </div>
 
@@ -40,10 +49,14 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
 
           <div className="flex items-center justify-between mt-auto pt-2">
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-                ★ {outlet.rating}
-              </span>
-              <span className="text-gray-400 hidden sm:inline">⏱ {outlet.deliveryTime}</span>
+              {outlet.rating != null && (
+                <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
+                  ★ {outlet.rating}
+                </span>
+              )}
+              {outlet.deliveryTime && (
+                <span className="text-gray-400 hidden sm:inline">⏱ {outlet.deliveryTime}</span>
+              )}
             </div>
 
             <span className="text-xs sm:text-sm font-semibold" style={{ color: "var(--rsc-dark)" }}>

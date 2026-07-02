@@ -50,7 +50,6 @@ export interface Environment {
   FIREBASE_PROJECT_ID?: string;
   FIREBASE_CLIENT_EMAIL?: string;
   FIREBASE_PRIVATE_KEY?: string;
-  FIREBASE_PRIVATE_KEY_BASE64?: string;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -81,9 +80,9 @@ const environmentSchema = Joi.object<Environment>({
   PII_HASH_PEPPER: Joi.string().min(32).required(),
   OTP_PEPPER: Joi.string().min(32).required(),
   JWT_SECRET: Joi.string().min(32).required(),
-  ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).default(604_800),
+  ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).default(900),
   REFRESH_TOKEN_TTL_SECONDS: Joi.number().integer().min(3_600).default(604_800),
-  ADMIN_INACTIVITY_TIMEOUT_SECONDS: Joi.number().integer().min(60).default(604_800),
+  ADMIN_INACTIVITY_TIMEOUT_SECONDS: Joi.number().integer().min(60).default(1_800),
   SMS_PROVIDER: Joi.string().valid("noop", "termii").default("noop"),
   TERMII_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
@@ -178,19 +177,12 @@ const environmentSchema = Joi.object<Environment>({
     then: Joi.string().email().required(),
     otherwise: Joi.string().optional().allow(""),
   }),
-  FIREBASE_PRIVATE_KEY: Joi.string().optional().allow(""),
-  FIREBASE_PRIVATE_KEY_BASE64: Joi.string().optional().allow(""),
-})
-  .when(Joi.object({ PUSH_PROVIDER: Joi.valid("firebase") }).unknown(), {
-    then: Joi.object({
-      FIREBASE_PRIVATE_KEY: Joi.when("FIREBASE_PRIVATE_KEY_BASE64", {
-        is: Joi.string().min(1).required(),
-        then: Joi.string().optional().allow(""),
-        otherwise: Joi.string().min(100).required(),
-      }),
-    }),
-  })
-  .unknown(true);
+  FIREBASE_PRIVATE_KEY: Joi.when("PUSH_PROVIDER", {
+    is: "firebase",
+    then: Joi.string().min(100).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+}).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {
   const result = environmentSchema.validate(config, {

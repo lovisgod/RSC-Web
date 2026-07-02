@@ -84,14 +84,6 @@ function parseOrigins(value: string): string[] {
     .filter(Boolean);
 }
 
-function parseFirebasePrivateKey(): string {
-  if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
-    return Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, "base64").toString("utf8");
-  }
-
-  return (process.env.FIREBASE_PRIVATE_KEY ?? "").replaceAll("\\n", "\n");
-}
-
 export default function configuration(): ApplicationConfig {
   return {
     app: {
@@ -115,11 +107,9 @@ export default function configuration(): ApplicationConfig {
       piiHashPepper: process.env.PII_HASH_PEPPER ?? "",
       otpPepper: process.env.OTP_PEPPER ?? "",
       jwtSecret: process.env.JWT_SECRET ?? "",
-      accessTokenTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 604_800),
+      accessTokenTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 900),
       refreshTokenTtlSeconds: Number(process.env.REFRESH_TOKEN_TTL_SECONDS ?? 604_800),
-      adminInactivityTimeoutSeconds: Number(
-        process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 604_800,
-      ),
+      adminInactivityTimeoutSeconds: Number(process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 1_800),
     },
     sms: {
       provider: process.env.SMS_PROVIDER === "termii" ? "termii" : "noop",
@@ -176,7 +166,7 @@ export default function configuration(): ApplicationConfig {
       firebase: {
         projectId: process.env.FIREBASE_PROJECT_ID ?? "",
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "",
-        privateKey: parseFirebasePrivateKey(),
+        privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? "").replaceAll("\\n", "\n"),
       },
     },
   };

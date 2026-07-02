@@ -10,6 +10,14 @@ export default defineConfig({
     fs: {
       allow: [searchForWorkspaceRoot(process.cwd())],
     },
+    proxy: {
+      "/api": {
+        target: "https://api-dev.rscdev.tech",
+        changeOrigin: true,
+        // Rewrite cookie domain so the browser accepts them on 127.0.0.1
+        cookieDomainRewrite: { "*": "" },
+      },
+    },
   },
   preview: {
     host: "127.0.0.1",

@@ -67,29 +67,47 @@ export function OutletDetailView({ id }: { id: string }) {
     );
   }
 
-  const currentCategory = activeCategory ?? menu.categories[0]?.id ?? "";
-  const visibleItems = menu.items.filter((item) => item.categoryId === currentCategory);
+  const currentCategory = activeCategory ?? menu.categories[0]?.id ?? "all";
+  const visibleItems =
+    currentCategory === "all"
+      ? menu.items
+      : menu.items.filter((item) => item.categoryId === currentCategory);
 
   return (
     <>
       {/* Header */}
       <div
-        className="relative h-52 flex items-center justify-center text-8xl"
-        style={{ backgroundColor: menu.headerColor }}
+        className="relative h-52"
+        style={{
+          backgroundColor: menu.headerColor,
+          ...(menu.image.startsWith("/") || menu.image.startsWith("http")
+            ? {
+                backgroundImage: `url(${menu.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : {}),
+        }}
       >
+        {/* Darken overlay so the back button stays readable over photos */}
+        {(menu.image.startsWith("/") || menu.image.startsWith("http")) && (
+          <div className="absolute inset-0 bg-black/30" />
+        )}
+
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => router.push("/outlets")}
           aria-label="Go back"
-          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow text-gray-700 hover:bg-gray-50 transition-colors"
+          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow text-gray-700 hover:bg-gray-50 transition-colors z-10"
         >
           <ArrowLeft />
         </button>
-        {menu.image.startsWith("/") ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={menu.image} alt={menu.outletName} className="w-20 h-20 object-contain" />
-        ) : (
-          <span>{menu.image}</span>
+
+        {/* Emoji fallback — only shown when no photo */}
+        {!menu.image.startsWith("/") && !menu.image.startsWith("http") && (
+          <span className="absolute inset-0 flex items-center justify-center text-8xl">
+            {menu.image}
+          </span>
         )}
       </div>
 
@@ -98,13 +116,21 @@ export function OutletDetailView({ id }: { id: string }) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{menu.outletName}</h1>
           <p className="text-sm text-gray-400 mt-0.5">{menu.cuisines.join(" · ")}</p>
-          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-            <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-              ★ {menu.rating}
-            </span>
-            <span>⏱ {menu.deliveryTime}</span>
-            <span>🚗 {formatNaira(menu.deliveryFeeMinor)} delivery</span>
-          </div>
+          {(menu.rating !== undefined ||
+            menu.deliveryTime ||
+            menu.deliveryFeeMinor !== undefined) && (
+            <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+              {menu.rating !== undefined && (
+                <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
+                  ★ {menu.rating}
+                </span>
+              )}
+              {menu.deliveryTime && <span>⏱ {menu.deliveryTime}</span>}
+              {menu.deliveryFeeMinor !== undefined && (
+                <span>🚗 {formatNaira(menu.deliveryFeeMinor)} delivery</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Category tabs */}
@@ -149,7 +175,11 @@ export function OutletDetailView({ id }: { id: string }) {
 
       {/* Item detail modal */}
       {selectedItem && (
-        <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+        <ItemDetailModal
+          item={selectedItem}
+          outletName={menu.outletName}
+          onClose={() => setSelectedItem(null)}
+        />
       )}
     </>
   );

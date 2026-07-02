@@ -178,10 +178,10 @@ async function main(): Promise<void> {
         piiHashPepper: process.env.PII_HASH_PEPPER ?? "",
         otpPepper: process.env.OTP_PEPPER ?? "",
         jwtSecret: process.env.JWT_SECRET ?? "",
-        accessTokenTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 604_800),
+        accessTokenTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 900),
         refreshTokenTtlSeconds: Number(process.env.REFRESH_TOKEN_TTL_SECONDS ?? 604_800),
         adminInactivityTimeoutSeconds: Number(
-          process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 604_800,
+          process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 1_800,
         ),
       }),
     } as never);
