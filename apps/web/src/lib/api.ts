@@ -1,5 +1,7 @@
 import { createApiClient } from "@rsc/api-client";
 
+import { useAuthStore } from "@/src/stores/auth-store";
+
 // In the browser, all /api/v1/* requests go through the Next.js rewrite proxy
 // (same origin → cookies are forwarded automatically).
 // In server-side contexts, fall back to the direct API URL.
@@ -34,4 +36,23 @@ function handleUnauthorized(path: string) {
   window.location.replace("/sign-in");
 }
 
-export const apiClient = createApiClient({ baseUrl, onUnauthorized: handleUnauthorized });
+function handleServerError() {
+  if (
+    typeof window === "undefined" ||
+    isRedirectingToSignIn ||
+    window.location.pathname === "/sign-in" ||
+    !useAuthStore.getState().isSignedIn
+  ) {
+    return;
+  }
+
+  isRedirectingToSignIn = true;
+  useAuthStore.getState().signOut();
+  window.location.replace("/sign-in");
+}
+
+export const apiClient = createApiClient({
+  baseUrl,
+  onUnauthorized: handleUnauthorized,
+  onServerError: handleServerError,
+});

@@ -13,6 +13,7 @@ import {
 
 import { Toaster } from "./components/toaster";
 import { useAuth } from "./hooks/use-auth";
+import { useOrdersQueue } from "./hooks/use-orders-queue";
 import { useOutletInfo } from "./hooks/use-outlet-info";
 import { logout as apiLogout } from "./lib/api";
 import { toastBus } from "./lib/toast-bus";
@@ -129,6 +130,10 @@ function StaffFooter() {
 }
 
 function NavigationPanel({ onNavigate }: NavigationPanelProps) {
+  const { user } = useAuth();
+  const { data: orders = [] } = useOrdersQueue(user?.outletId ?? "");
+  const activeOrderCount = orders.length;
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Brand />
@@ -173,7 +178,18 @@ function NavigationPanel({ onNavigate }: NavigationPanelProps) {
                 <span className="min-w-0 flex-1 truncate" style={{ color: "var(--rsc-panel)" }}>
                   {label}
                 </span>
-                {isActive && (
+                {to === "/" && activeOrderCount > 0 && (
+                  <span
+                    className="grid h-5 min-w-[1.25rem] shrink-0 place-items-center rounded-full px-1 text-[10px] font-bold"
+                    style={{
+                      backgroundColor: isActive ? "rgb(255 255 255 / 0.2)" : "var(--rsc-brand)",
+                      color: "var(--rsc-panel)",
+                    }}
+                  >
+                    {activeOrderCount}
+                  </span>
+                )}
+                {isActive && activeOrderCount === 0 && (
                   <span
                     className="h-1.5 w-1.5 shrink-0 rounded-full"
                     style={{ backgroundColor: "var(--rsc-panel)" }}

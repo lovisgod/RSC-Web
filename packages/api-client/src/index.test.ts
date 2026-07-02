@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createApiClient } from "./index";
+import { createApiClient, SERVER_ERROR_MESSAGE } from "./index";
 
 describe("registration API client", () => {
   const menuItem = {
@@ -147,6 +147,7 @@ describe("registration API client", () => {
             user: {
               id: "2abf9577-027c-4936-83a8-e004fd56a46e",
               role: "CUSTOMER",
+              outletId: null,
             },
             accessTokenExpiresInSeconds: 900,
             refreshTokenExpiresInSeconds: 604800,
@@ -291,5 +292,25 @@ describe("registration API client", () => {
     await expect(client.listOutlets()).rejects.toMatchObject({ status: 401 });
     expect(onUnauthorized).toHaveBeenCalledOnce();
     expect(onUnauthorized).toHaveBeenCalledWith("/api/v1/outlets");
+  });
+
+  it("sanitizes server errors and notifies the host application", async () => {
+    const onServerError = vi.fn();
+    const requestFetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ message: "Database connection details" }), { status: 500 }),
+      );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+      onServerError,
+    });
+
+    await expect(client.listOutlets()).rejects.toMatchObject({
+      status: 500,
+      message: SERVER_ERROR_MESSAGE,
+    });
+    expect(onServerError).toHaveBeenCalledWith("/api/v1/outlets", 500);
   });
 });

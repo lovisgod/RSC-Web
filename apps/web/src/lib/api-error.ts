@@ -1,4 +1,4 @@
-import { ApiError } from "@rsc/api-client";
+import { ApiError, SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 
 export function getMutationErrorMessage(
   error: unknown,
@@ -9,6 +9,7 @@ export function getMutationErrorMessage(
   }
 
   if (error instanceof ApiError) {
+    if (error.status >= 500) return SERVER_ERROR_MESSAGE;
     return statusMessages[error.status] ?? error.message;
   }
 

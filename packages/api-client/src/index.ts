@@ -84,11 +84,14 @@ export class ApiError extends Error {
   }
 }
 
+export const SERVER_ERROR_MESSAGE = "Error encountered. Please try again later.";
+
 export interface ApiClientOptions {
   baseUrl: string;
   fetch?: typeof globalThis.fetch;
   getAccessToken?: () => Promise<string | null> | string | null;
   onUnauthorized?: (path: string) => Promise<void> | void;
+  onServerError?: (path: string, status: number) => Promise<void> | void;
 }
 
 export function createApiClient(options: ApiClientOptions) {
@@ -126,14 +129,24 @@ export function createApiClient(options: ApiClientOptions) {
       }
     }
 
+    if (response.status >= 500) {
+      try {
+        await options.onServerError?.(path, response.status);
+      } catch {
+        // Session cleanup/redirect failures must not hide the API response.
+      }
+    }
+
     if (!response.ok) {
       const errorPayload: unknown = await response.json().catch(() => null);
       const parsedError = apiErrorResponseSchema.safeParse(errorPayload);
 
       throw new ApiError(
-        parsedError.success
-          ? parsedError.data.message
-          : `API request failed with status ${response.status}`,
+        response.status >= 500
+          ? SERVER_ERROR_MESSAGE
+          : parsedError.success
+            ? parsedError.data.message
+            : `API request failed with status ${response.status}`,
         response.status,
         response.headers.get("x-request-id"),
       );
@@ -279,10 +292,14 @@ export function createApiClient(options: ApiClientOptions) {
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
     },
-    reorder(id: string): Promise<unknown> {
-      return request(`/api/v1/orders/${encodeURIComponent(id)}/reorder`, z.unknown(), {
-        method: "POST",
-      });
+    reorder(id: string): Promise<InitiatePaymentResult> {
+      return request(
+        `/api/v1/orders/${encodeURIComponent(id)}/reorder`,
+        initiatePaymentResultSchema,
+        {
+          method: "POST",
+        },
+      );
     },
     initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
       const body = initiatePaymentInputSchema.parse(input);
@@ -292,9 +309,9 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
-    deleteAccount(id: string): Promise<unknown> {
-      return request(`/api/v1/users/${encodeURIComponent(id)}`, z.unknown(), {
-        method: "DELETE",
+    deleteAccount(): Promise<unknown> {
+      return request("/api/v1/users/me/deactivate", z.unknown(), {
+        method: "POST",
       });
     },
     getAdminOverview(): Promise<AdminOverview> {

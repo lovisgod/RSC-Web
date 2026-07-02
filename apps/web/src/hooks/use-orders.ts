@@ -6,7 +6,6 @@ import { isActiveOrder, isCompletedOrder, type Order } from "@/src/lib/data/orde
 const ORDERS_QUERY = {
   queryKey: ["orders"] as const,
   queryFn: () => apiClient.listCustomerOrders(),
-  staleTime: 30 * 1000,
 };
 
 export function useActiveOrders() {

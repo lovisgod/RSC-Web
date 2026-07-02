@@ -28,7 +28,6 @@ export function LoginPage() {
       toastBus.emit("Welcome back!", "success");
       navigate("/", { replace: true });
     },
-    onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
 
   function handleSubmit(e: React.FormEvent) {
