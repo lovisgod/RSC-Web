@@ -33,6 +33,18 @@ describe("registration API client", () => {
     pendingVerificationChannels: { email: false, phone: false },
   };
 
+  const outletAdmin = {
+    id: "b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+    name: "Outlet Manager",
+    role: "ADMIN",
+    outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    email: "manager@example.com",
+    phone: "+2348031234567",
+    status: "ACTIVE",
+    createdAt: "2026-07-02T08:00:00.000Z",
+    updatedAt: "2026-07-02T08:00:00.000Z",
+  };
+
   const notification = {
     id: "45ef3252-b96f-4308-b40e-391623b25ac9",
     recipientId: "2abf9577-027c-4936-83a8-e004fd56a46e",
@@ -58,6 +70,71 @@ describe("registration API client", () => {
     createdAt: "2026-06-23T10:00:00.000Z",
     updatedAt: "2026-06-23T10:00:00.000Z",
     deletedAt: null,
+  };
+
+  const adminOrders = {
+    orders: [
+      {
+        order: {
+          id: "50296ef7-fb39-4b42-ae55-81caec8efd21",
+          customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+          riderId: null,
+          status: "CONFIRMED",
+          subtotalMinor: 450000,
+          deliveryFeeMinor: 100000,
+          serviceFeeMinor: 0,
+          vatMinor: 0,
+          discountMinor: 0,
+          totalMinor: 550000,
+          currency: "NGN",
+          deliveryMode: "DELIVERY",
+          deliveryAddress: "12 Abakaliki Road, Enugu",
+          deliveryLatitude: 6.4474,
+          deliveryLongitude: 7.5139,
+          paymentReference: "paystack-ref",
+          deliveryCode: "123456",
+          createdAt: "2026-07-02T08:00:00.000Z",
+          updatedAt: "2026-07-02T08:00:00.000Z",
+          deletedAt: null,
+        },
+        subOrders: [
+          {
+            id: "8f36ee26-6f25-47cf-aed7-26afcb6278fe",
+            masterOrderId: "50296ef7-fb39-4b42-ae55-81caec8efd21",
+            outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+            status: "PREPARING",
+            subtotalMinor: 450000,
+            commissionMinor: 45000,
+            netMinor: 405000,
+            currency: "NGN",
+            createdAt: "2026-07-02T08:00:00.000Z",
+            updatedAt: "2026-07-02T08:00:00.000Z",
+            deletedAt: null,
+          },
+        ],
+        lineItems: [
+          {
+            id: "b4eec994-872d-4915-9e12-b31947f96c3b",
+            masterOrderId: "50296ef7-fb39-4b42-ae55-81caec8efd21",
+            subOrderId: "8f36ee26-6f25-47cf-aed7-26afcb6278fe",
+            outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+            menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            itemNameSnapshot: "Jollof Rice",
+            unitPriceMinor: 450000,
+            quantity: 1,
+            lineTotalMinor: 450000,
+            currency: "NGN",
+            modifiersSnapshot: [],
+            createdAt: "2026-07-02T08:00:00.000Z",
+            updatedAt: "2026-07-02T08:00:00.000Z",
+            deletedAt: null,
+          },
+        ],
+      },
+    ],
+    total: 1,
+    limit: 50,
+    offset: 0,
   };
 
   it("posts the typed registration shape to the versioned API", async () => {
@@ -188,6 +265,7 @@ describe("registration API client", () => {
             user: {
               id: "2abf9577-027c-4936-83a8-e004fd56a46e",
               role: "CUSTOMER",
+              outletId: null,
             },
             accessTokenExpiresInSeconds: 900,
             refreshTokenExpiresInSeconds: 604800,
@@ -263,6 +341,54 @@ describe("registration API client", () => {
     );
   });
 
+  it("lists outlet admins for super admin management", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [outletAdmin],
+          message: "Outlet admins retrieved",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.listOutletAdmins()).resolves.toEqual([outletAdmin]);
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/users/outlet-admins",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("soft-deletes outlet admins through the role-specific endpoint", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { deleted: true },
+          message: "Outlet admin deleted successfully",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.deleteOutletAdmin(outletAdmin.id)).resolves.toEqual({ deleted: true });
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      `https://api-dev.rscapp.xyz/api/v1/users/outlet-admins/${outletAdmin.id}`,
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
   it("lists menu items for an outlet", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(
@@ -313,6 +439,38 @@ describe("registration API client", () => {
         method: "PATCH",
         body: JSON.stringify({ isAvailable: false }),
       }),
+    );
+  });
+
+  it("lists admin orders with optional filters", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: adminOrders,
+          message: "Admin orders retrieved",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(
+      client.listAdminOrders({
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        status: "CONFIRMED",
+        subOrderStatus: "PREPARING",
+        limit: 50,
+        offset: 0,
+      }),
+    ).resolves.toEqual(adminOrders);
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/orders/admin?outletId=4273e96c-2887-49a5-a6d5-269f007f04f0&status=CONFIRMED&subOrderStatus=PREPARING&limit=50&offset=0",
+      expect.objectContaining({ credentials: "include" }),
     );
   });
 

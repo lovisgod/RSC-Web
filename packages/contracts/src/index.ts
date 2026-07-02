@@ -81,6 +81,7 @@ export const loginResultSchema = z.object({
   user: z.object({
     id: z.uuid(),
     role: userRoleSchema,
+    outletId: z.uuid().nullable(),
   }),
   accessTokenExpiresInSeconds: z.int().positive(),
   refreshTokenExpiresInSeconds: z.int().positive(),
@@ -105,6 +106,18 @@ export const adminResultSchema = z.object({
   role: z.literal("ADMIN"),
   outletId: z.uuid(),
   temporaryPassword: z.string().min(8),
+});
+
+export const outletAdminSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  role: z.literal("ADMIN"),
+  outletId: z.uuid(),
+  email: z.email(),
+  phone: z.string().min(1),
+  status: customerStatusSchema,
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 
 export const resendVerificationCodeInputSchema = z.discriminatedUnion("channel", [
@@ -153,6 +166,9 @@ export const outletSummarySchema = z.object({
   imageUrl: z.url().nullable(),
   isOnline: z.boolean(),
   vatBps: z.int().min(0).max(10_000).default(0),
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  deliveryRadiusKm: z.coerce.number().positive(),
 });
 
 export const menuItemSchema = z.object({
@@ -199,6 +215,89 @@ export const subOrderStatusSchema = z.enum([
   "DISPATCHED",
   "REJECTED",
 ]);
+
+export const deliveryModeSchema = z.enum(["DELIVERY", "TAKEOUT"]);
+
+export const adminOrdersQuerySchema = z
+  .object({
+    outletId: z.uuid().optional(),
+    status: masterOrderStatusSchema.optional(),
+    subOrderStatus: subOrderStatusSchema.optional(),
+    deliveryMode: deliveryModeSchema.optional(),
+    customerId: z.uuid().optional(),
+    dateFrom: z.iso.datetime().optional(),
+    dateTo: z.iso.datetime().optional(),
+    limit: z.int().min(1).max(100).optional(),
+    offset: z.int().min(0).optional(),
+  })
+  .strict();
+
+export const adminOrderMasterSchema = z.object({
+  id: z.uuid(),
+  customerId: z.uuid(),
+  riderId: z.uuid().nullable(),
+  status: masterOrderStatusSchema,
+  subtotalMinor: z.int().nonnegative(),
+  deliveryFeeMinor: z.int().nonnegative(),
+  serviceFeeMinor: z.int().nonnegative(),
+  vatMinor: z.int().nonnegative(),
+  discountMinor: z.int().nonnegative(),
+  totalMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  deliveryMode: deliveryModeSchema,
+  deliveryAddress: z.string().nullable(),
+  deliveryLatitude: z.number().nullable(),
+  deliveryLongitude: z.number().nullable(),
+  paymentReference: z.string().nullable(),
+  deliveryCode: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
+
+export const adminOrderSubOrderSchema = z.object({
+  id: z.uuid(),
+  masterOrderId: z.uuid(),
+  outletId: z.uuid(),
+  status: subOrderStatusSchema,
+  subtotalMinor: z.int().nonnegative(),
+  commissionMinor: z.int().nonnegative(),
+  netMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
+
+export const adminOrderLineItemSchema = z.object({
+  id: z.uuid(),
+  masterOrderId: z.uuid(),
+  subOrderId: z.uuid(),
+  outletId: z.uuid(),
+  menuItemId: z.uuid().nullable(),
+  itemNameSnapshot: z.string().min(1),
+  unitPriceMinor: z.int().nonnegative(),
+  quantity: z.int().positive(),
+  lineTotalMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  modifiersSnapshot: z.array(z.unknown()),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
+
+export const adminOrderSummarySchema = z.object({
+  order: adminOrderMasterSchema,
+  subOrders: z.array(adminOrderSubOrderSchema),
+  lineItems: z.array(adminOrderLineItemSchema),
+});
+
+export const adminOrdersResultSchema = z.object({
+  orders: z.array(adminOrderSummarySchema),
+  total: z.int().nonnegative(),
+  limit: z.int().min(1).max(100),
+  offset: z.int().min(0),
+});
 
 export const adminOverviewSchema = z.object({
   generatedAt: z.iso.datetime(),
@@ -317,6 +416,7 @@ export type LoginResult = z.infer<typeof loginResultSchema>;
 export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
+export type OutletAdmin = z.infer<typeof outletAdminSchema>;
 export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
 export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
@@ -324,6 +424,13 @@ export type MenuItem = z.infer<typeof menuItemSchema>;
 export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
+export type DeliveryMode = z.infer<typeof deliveryModeSchema>;
+export type AdminOrdersQuery = z.infer<typeof adminOrdersQuerySchema>;
+export type AdminOrderMaster = z.infer<typeof adminOrderMasterSchema>;
+export type AdminOrderSubOrder = z.infer<typeof adminOrderSubOrderSchema>;
+export type AdminOrderLineItem = z.infer<typeof adminOrderLineItemSchema>;
+export type AdminOrderSummary = z.infer<typeof adminOrderSummarySchema>;
+export type AdminOrdersResult = z.infer<typeof adminOrdersResultSchema>;
 export type AdminOverview = z.infer<typeof adminOverviewSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;

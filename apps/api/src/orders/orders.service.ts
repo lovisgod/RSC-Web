@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
@@ -14,7 +14,11 @@ import { OrderLineItem } from "./order-line-item.entity";
 import { MasterOrderStatus } from "./order-status.enum";
 import { OrderStatusEvent } from "./order-status-event.entity";
 import { SubOrder } from "./sub-order.entity";
-import type { CompleteDeliveryDto, UpdateOrderStatusDto } from "./dto/orders.dto";
+import type {
+  CompleteDeliveryDto,
+  ListAdminOrdersQueryDto,
+  UpdateOrderStatusDto,
+} from "./dto/orders.dto";
 
 export interface LatestLocation {
   riderId: string;
@@ -22,6 +26,17 @@ export interface LatestLocation {
   latitude: number;
   longitude: number;
   recordedAt: Date;
+}
+
+export interface AdminOrderListResult {
+  orders: Array<{
+    order: MasterOrder;
+    subOrders: SubOrder[];
+    lineItems: OrderLineItem[];
+  }>;
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 @Injectable()
@@ -44,6 +59,114 @@ export class OrdersService {
       where: { customerId: user.id },
       order: { createdAt: "DESC" },
     });
+  }
+
+  async listAdmin(
+    user: AuthenticatedUser,
+    query: ListAdminOrdersQueryDto,
+  ): Promise<AdminOrderListResult> {
+    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Order listing requires admin access");
+    }
+
+    const scopedOutletId =
+      user.role === UserRole.ADMIN ? await this.requireAdminOutletId(user) : query.outletId;
+
+    if (user.role === UserRole.ADMIN && query.outletId && query.outletId !== scopedOutletId) {
+      throw new ForbiddenException("Cannot view another outlet's orders");
+    }
+
+    const limit = query.limit ?? 50;
+    const offset = query.offset ?? 0;
+    const orderQuery = this.masterOrders
+      .createQueryBuilder("masterOrder")
+      .orderBy("masterOrder.createdAt", "DESC")
+      .take(limit)
+      .skip(offset);
+
+    if (query.status) {
+      orderQuery.andWhere("masterOrder.status = :status", { status: query.status });
+    }
+
+    if (query.deliveryMode) {
+      orderQuery.andWhere("masterOrder.deliveryMode = :deliveryMode", {
+        deliveryMode: query.deliveryMode,
+      });
+    }
+
+    if (query.customerId) {
+      orderQuery.andWhere("masterOrder.customerId = :customerId", { customerId: query.customerId });
+    }
+
+    if (query.dateFrom) {
+      orderQuery.andWhere("masterOrder.createdAt >= :dateFrom", {
+        dateFrom: new Date(query.dateFrom),
+      });
+    }
+
+    if (query.dateTo) {
+      orderQuery.andWhere("masterOrder.createdAt <= :dateTo", { dateTo: new Date(query.dateTo) });
+    }
+
+    if (scopedOutletId || query.subOrderStatus) {
+      const clauses = ['adminSubOrder.master_order_id = "masterOrder"."id"'];
+      const params: Record<string, string> = {};
+
+      if (scopedOutletId) {
+        clauses.push("adminSubOrder.outlet_id = :outletId");
+        params.outletId = scopedOutletId;
+      }
+
+      if (query.subOrderStatus) {
+        clauses.push("adminSubOrder.status = :subOrderStatus");
+        params.subOrderStatus = query.subOrderStatus;
+      }
+
+      orderQuery.andWhere(
+        `EXISTS (SELECT 1 FROM sub_orders adminSubOrder WHERE ${clauses.join(" AND ")})`,
+        params,
+      );
+    }
+
+    const [orders, total] = await orderQuery.getManyAndCount();
+    const orderIds = orders.map((order) => order.id);
+
+    if (orderIds.length === 0) {
+      return { orders: [], total, limit, offset };
+    }
+
+    const subOrderWhere = {
+      masterOrderId: In(orderIds),
+      ...(scopedOutletId ? { outletId: scopedOutletId } : {}),
+      ...(query.subOrderStatus ? { status: query.subOrderStatus } : {}),
+    };
+    const subOrders = await this.subOrders.find({
+      where: subOrderWhere,
+      order: { createdAt: "ASC" },
+    });
+    const subOrderIds = subOrders.map((subOrder) => subOrder.id);
+    const lineItems =
+      subOrderIds.length > 0
+        ? await this.lineItems.find({
+            where: {
+              masterOrderId: In(orderIds),
+              subOrderId: In(subOrderIds),
+              ...(scopedOutletId ? { outletId: scopedOutletId } : {}),
+            },
+            order: { createdAt: "ASC" },
+          })
+        : [];
+
+    return {
+      orders: orders.map((order) => ({
+        order,
+        subOrders: subOrders.filter((subOrder) => subOrder.masterOrderId === order.id),
+        lineItems: lineItems.filter((lineItem) => lineItem.masterOrderId === order.id),
+      })),
+      total,
+      limit,
+      offset,
+    };
   }
 
   async getMine(user: AuthenticatedUser, id: string) {
@@ -188,18 +311,11 @@ export class OrdersService {
     }
 
     if (user.role === UserRole.ADMIN) {
-      const admin = await this.users.findOne({
-        where: { id: user.id, role: UserRole.ADMIN },
-        select: { id: true, outletId: true },
-      });
-
-      if (!admin?.outletId) {
-        throw new ForbiddenException("Outlet admin is not linked to an outlet");
-      }
+      const outletId = await this.requireAdminOutletId(user);
 
       const subOrder = await this.subOrders.findOneBy({
         masterOrderId: id,
-        outletId: admin.outletId,
+        outletId,
       });
 
       if (!subOrder) {
@@ -210,6 +326,19 @@ export class OrdersService {
     }
 
     throw new ForbiddenException("Order operations require admin or rider access");
+  }
+
+  private async requireAdminOutletId(user: AuthenticatedUser): Promise<string> {
+    const admin = await this.users.findOne({
+      where: { id: user.id, role: UserRole.ADMIN },
+      select: { id: true, outletId: true },
+    });
+
+    if (!admin?.outletId) {
+      throw new ForbiddenException("Outlet admin is not linked to an outlet");
+    }
+
+    return admin.outletId;
   }
 
   private async recordStatusEvent(

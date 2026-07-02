@@ -1,5 +1,7 @@
 import {
   adminOverviewSchema,
+  adminOrdersQuerySchema,
+  adminOrdersResultSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
   adminResultSchema,
@@ -11,6 +13,7 @@ import {
   menuItemSchema,
   notificationSchema,
   notificationCampaignSchema,
+  outletAdminSchema,
   outletSummarySchema,
   profileSchema,
   profileUpdateResultSchema,
@@ -24,6 +27,8 @@ import {
   verifyProfileChangeInputSchema,
   verifyUserInputSchema,
   type AdminOverview,
+  type AdminOrdersQuery,
+  type AdminOrdersResult,
   type AdminResult,
   type CreateAdminInput,
   type CreateNotificationCampaignInput,
@@ -33,6 +38,7 @@ import {
   type MenuItem,
   type Notification,
   type NotificationCampaign,
+  type OutletAdmin,
   type OutletSummary,
   type Profile,
   type ProfileUpdateResult,
@@ -140,6 +146,14 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    listOutletAdmins(): Promise<OutletAdmin[]> {
+      return request("/api/v1/users/outlet-admins", z.array(outletAdminSchema));
+    },
+    deleteOutletAdmin(id: string): Promise<{ deleted: true }> {
+      return request(`/api/v1/users/outlet-admins/${id}`, z.object({ deleted: z.literal(true) }), {
+        method: "DELETE",
+      });
+    },
     verifyUser(input: VerifyUserInput): Promise<UserVerificationResult> {
       const body = verifyUserInputSchema.parse(input);
 
@@ -179,6 +193,20 @@ export function createApiClient(options: ApiClientOptions) {
     },
     getAdminOverview(): Promise<AdminOverview> {
       return request("/api/v1/admin/overview", adminOverviewSchema);
+    },
+    listAdminOrders(input: AdminOrdersQuery = {}): Promise<AdminOrdersResult> {
+      const filters = adminOrdersQuerySchema.parse(input);
+      const params = new URLSearchParams();
+
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== undefined) {
+          params.set(key, String(value));
+        }
+      }
+
+      const query = params.toString();
+
+      return request(`/api/v1/orders/admin${query ? `?${query}` : ""}`, adminOrdersResultSchema);
     },
     getProfile(): Promise<Profile> {
       return request("/api/v1/users/me", profileSchema);
