@@ -23,6 +23,7 @@ describe(UsersService.name, () => {
     name: "Outlet Manager",
     role: UserRole.ADMIN,
     outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    avatarUrl: "https://cdn.example.com/avatar.png",
     emailEncrypted: "encrypted:manager@example.com",
     phoneEncrypted: "encrypted:+2348031234567",
     status: CustomerStatus.ACTIVE,
@@ -74,6 +75,22 @@ describe(UsersService.name, () => {
     expect(users.find).toHaveBeenCalledWith({
       where: { role: UserRole.ADMIN },
       order: { createdAt: "DESC" },
+    });
+  });
+
+  it("returns the uploaded avatar URL on the active user's profile", async () => {
+    await expect(
+      service.getProfile({
+        id: admin.id,
+        role: UserRole.ADMIN,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      }),
+    ).resolves.toMatchObject({
+      id: admin.id,
+      avatarUrl: "https://cdn.example.com/avatar.png",
+      email: "manager@example.com",
+      phone: "+2348031234567",
     });
   });
 
