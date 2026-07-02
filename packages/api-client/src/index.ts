@@ -9,6 +9,7 @@ import {
   customerOrderSchema,
   initiatePaymentInputSchema,
   initiatePaymentResultSchema,
+  orderDetailSchema,
   orderSummarySchema,
   userProfileSchema,
   updateProfileInputSchema,
@@ -42,6 +43,7 @@ import {
   type CustomerOrder,
   type InitiatePaymentInput,
   type InitiatePaymentResult,
+  type OrderDetail,
   type OrderSummary,
   type UserProfile,
   type UpdateProfileInput,
@@ -270,6 +272,9 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listCustomerOrders(): Promise<CustomerOrder[]> {
       return request("/api/v1/orders", z.array(customerOrderSchema));
+    },
+    getOrder(id: string): Promise<OrderDetail> {
+      return request(`/api/v1/orders/${encodeURIComponent(id)}`, orderDetailSchema);
     },
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
