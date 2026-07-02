@@ -47,9 +47,11 @@ function Skeleton() {
   );
 }
 
+type SelectedItem = { item: MenuItem; outletName: string };
+
 export function MenuSearchView() {
   const [query, setQuery] = useState("");
-  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [selected, setSelected] = useState<SelectedItem | null>(null);
 
   const { data: menus, isPending } = useAllMenu();
 
@@ -108,15 +110,19 @@ export function MenuSearchView() {
                 key={section.outletName}
                 outletName={section.outletName}
                 items={section.items}
-                onViewOptions={setSelectedItem}
+                onViewOptions={(item) => setSelected({ item, outletName: section.outletName })}
               />
             ))
           )}
         </div>
       </div>
 
-      {selectedItem && (
-        <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+      {selected && (
+        <ItemDetailModal
+          item={selected.item}
+          outletName={selected.outletName}
+          onClose={() => setSelected(null)}
+        />
       )}
     </>
   );

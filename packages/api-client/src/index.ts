@@ -2,27 +2,42 @@ import {
   adminOverviewSchema,
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
+  adminResultSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
-  adminResultSchema,
+  changePasswordInputSchema,
+  changePasswordResultSchema,
   createAdminInputSchema,
   createNotificationCampaignInputSchema,
+  createDeliveryAddressInputSchema,
+  customerOrderSchema,
+  deliveryAddressSummarySchema,
+  forgotPasswordInputSchema,
+  forgotPasswordResultSchema,
+  initiatePaymentInputSchema,
+  initiatePaymentResultSchema,
+  menuCategorySchema,
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
   menuItemSchema,
   notificationSchema,
   notificationCampaignSchema,
+  orderSummarySchema,
   outletAdminSchema,
   outletSummarySchema,
   profileSchema,
   profileUpdateResultSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
-  resendVerificationCodeInputSchema,
-  resendVerificationCodeResultSchema,
+  resendVerificationInputSchema,
+  resendVerificationResultSchema,
+  resetPasswordInputSchema,
+  resetPasswordResultSchema,
   updateMenuItemAvailabilityInputSchema,
   updateProfileInputSchema,
+  validateAddressInputSchema,
+  validateAddressResultSchema,
   userVerificationResultSchema,
   verifyProfileChangeInputSchema,
   verifyUserInputSchema,
@@ -30,8 +45,22 @@ import {
   type AdminOrdersQuery,
   type AdminOrdersResult,
   type AdminResult,
+  type ChangePasswordInput,
+  type ChangePasswordResult,
   type CreateAdminInput,
   type CreateNotificationCampaignInput,
+  type CreateDeliveryAddressInput,
+  type CustomerOrder,
+  type DeliveryAddressSummary,
+  type ForgotPasswordInput,
+  type ForgotPasswordResult,
+  type InitiatePaymentInput,
+  type InitiatePaymentResult,
+  type MenuCategorySummary,
+  type MenuItemSummary,
+  type OrderSummary,
+  type ResetPasswordInput,
+  type ResetPasswordResult,
   type LoginInput,
   type LoginResult,
   type LogoutResult,
@@ -44,10 +73,12 @@ import {
   type ProfileUpdateResult,
   type RegisterCustomerInput,
   type RegistrationResult,
-  type ResendVerificationCodeInput,
-  type ResendVerificationCodeResult,
+  type ResendVerificationInput,
+  type ResendVerificationResult,
   type UpdateMenuItemAvailabilityInput,
   type UpdateProfileInput,
+  type ValidateAddressInput,
+  type ValidateAddressResult,
   type UserVerificationResult,
   type VerifyProfileChangeInput,
   type VerifyUserInput,
@@ -125,9 +156,33 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
-    logout(): Promise<{ loggedOut: boolean }> {
-      return request("/api/v1/auth/logout", z.object({ loggedOut: z.boolean() }), {
+    logout(): Promise<LogoutResult> {
+      return request("/api/v1/auth/logout", logoutResultSchema, {
         method: "POST",
+      });
+    },
+    resetPassword(input: ResetPasswordInput): Promise<ResetPasswordResult> {
+      const body = resetPasswordInputSchema.parse(input);
+
+      return request("/api/v1/auth/reset-password", resetPasswordResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    forgotPassword(input: ForgotPasswordInput): Promise<ForgotPasswordResult> {
+      const body = forgotPasswordInputSchema.parse(input);
+
+      return request("/api/v1/auth/forgot-password", forgotPasswordResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    resendVerificationCode(input: ResendVerificationInput): Promise<ResendVerificationResult> {
+      const body = resendVerificationInputSchema.parse(input);
+
+      return request("/api/v1/auth/resend-verification-code", resendVerificationResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
       });
     },
     registerCustomer(input: RegisterCustomerInput): Promise<RegistrationResult> {
@@ -162,12 +217,26 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
-    resendVerificationCode(
-      input: ResendVerificationCodeInput,
-    ): Promise<ResendVerificationCodeResult> {
-      const body = resendVerificationCodeInputSchema.parse(input);
+    createDeliveryAddress(input: CreateDeliveryAddressInput): Promise<DeliveryAddressSummary> {
+      const body = createDeliveryAddressInputSchema.parse(input);
 
-      return request("/api/v1/auth/resend-verification-code", resendVerificationCodeResultSchema, {
+      return request("/api/v1/delivery/addresses", deliveryAddressSummarySchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    validateAddress(input: ValidateAddressInput): Promise<ValidateAddressResult> {
+      const body = validateAddressInputSchema.parse(input);
+
+      return request("/api/v1/delivery/validate-address", validateAddressResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    changePassword(input: ChangePasswordInput): Promise<ChangePasswordResult> {
+      const body = changePasswordInputSchema.parse(input);
+
+      return request("/api/v1/auth/change-password", changePasswordResultSchema, {
         method: "POST",
         body: JSON.stringify(body),
       });
@@ -175,10 +244,17 @@ export function createApiClient(options: ApiClientOptions) {
     listOutlets(): Promise<OutletSummary[]> {
       return request("/api/v1/outlets", z.array(outletSummarySchema));
     },
-    listMenuItems(input: { outletId?: string } = {}): Promise<MenuItem[]> {
-      const query = input.outletId ? `?outletId=${encodeURIComponent(input.outletId)}` : "";
-
-      return request(`/api/v1/menu-items${query}`, z.array(menuItemSchema));
+    listMenuCategories(outletId: string): Promise<MenuCategorySummary[]> {
+      return request(
+        `/api/v1/menu-categories?outletId=${encodeURIComponent(outletId)}`,
+        z.array(menuCategorySchema),
+      );
+    },
+    listMenuItems(input: { outletId: string }): Promise<MenuItemSummary[]> {
+      return request(
+        `/api/v1/menu-items?outletId=${encodeURIComponent(input.outletId)}`,
+        z.array(menuItemSchema),
+      );
     },
     updateMenuItemAvailability(
       id: string,
@@ -186,9 +262,33 @@ export function createApiClient(options: ApiClientOptions) {
     ): Promise<MenuItem> {
       const body = updateMenuItemAvailabilityInputSchema.parse(input);
 
-      return request(`/api/v1/menu-items/${id}/availability`, menuItemSchema, {
+      return request(`/api/v1/menu-items/${encodeURIComponent(id)}/availability`, menuItemSchema, {
         method: "PATCH",
         body: JSON.stringify(body),
+      });
+    },
+    listOrders(): Promise<OrderSummary[]> {
+      return request("/api/v1/orders", z.array(orderSummarySchema));
+    },
+    listCustomerOrders(): Promise<CustomerOrder[]> {
+      return request("/api/v1/orders", z.array(customerOrderSchema));
+    },
+    reorder(id: string): Promise<unknown> {
+      return request(`/api/v1/orders/${encodeURIComponent(id)}/reorder`, z.unknown(), {
+        method: "POST",
+      });
+    },
+    initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
+      const body = initiatePaymentInputSchema.parse(input);
+
+      return request("/api/v1/payments/initiate", initiatePaymentResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    deleteAccount(id: string): Promise<unknown> {
+      return request(`/api/v1/users/${encodeURIComponent(id)}`, z.unknown(), {
+        method: "DELETE",
       });
     },
     getAdminOverview(): Promise<AdminOverview> {

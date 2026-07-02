@@ -9,7 +9,7 @@ export function getMutationErrorMessage(
   }
 
   if (error instanceof ApiError) {
-    return statusMessages[error.status] ?? "Something went wrong. Please try again.";
+    return statusMessages[error.status] ?? error.message;
   }
 
   return "Something went wrong. Please try again.";

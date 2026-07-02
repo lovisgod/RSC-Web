@@ -3,14 +3,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@rsc/ui";
 
 import { forgotPasswordSchema, type ForgotPasswordFormData } from "@/src/lib/schemas/auth";
+import { apiClient } from "@/src/lib/api";
+import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { inputClass, labelClass } from "@/src/lib/form-styles";
 
 export function ForgotPasswordForm() {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -18,9 +23,10 @@ export function ForgotPasswordForm() {
   } = useForm<ForgotPasswordFormData>({ resolver: zodResolver(forgotPasswordSchema) });
 
   const mutation = useMutation({
-    mutationFn: async (_data: ForgotPasswordFormData) => {
-      // TODO: replace with apiClient.forgotPassword({ identifier: _data.identifier })
-      await new Promise((r) => setTimeout(r, 1000));
+    mutationFn: (data: ForgotPasswordFormData) =>
+      apiClient.forgotPassword({ identifier: data.identifier }),
+    onSuccess: (_, variables) => {
+      router.push(`/reset-password?identifier=${encodeURIComponent(variables.identifier)}`);
     },
   });
 
@@ -54,24 +60,11 @@ export function ForgotPasswordForm() {
 
       {mutation.isError && (
         <p className="text-center text-sm text-red-500">
-          {mutation.error instanceof Error
-            ? mutation.error.message
-            : "Something went wrong. Please try again."}
+          {getMutationErrorMessage(mutation.error)}
         </p>
       )}
 
-      {mutation.isSuccess && (
-        <p className="text-center text-sm text-green-600">
-          Reset code sent! Check your email or phone.
-        </p>
-      )}
-
-      <Button
-        tone="navy"
-        fullWidth
-        type="submit"
-        disabled={mutation.isPending || mutation.isSuccess}
-      >
+      <Button tone="navy" fullWidth type="submit" disabled={mutation.isPending}>
         {mutation.isPending ? "Sending…" : "Send reset code"}
       </Button>
 

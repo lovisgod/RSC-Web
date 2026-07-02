@@ -1,27 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { DUMMY_ACTIVE_ORDER, DUMMY_COMPLETED_ORDERS, type Order } from "@/src/lib/data/orders";
+import { apiClient } from "@/src/lib/api";
+import { isActiveOrder, isCompletedOrder, type Order } from "@/src/lib/data/orders";
 
-export function useActiveOrder() {
-  return useQuery<Order | null>({
-    queryKey: ["orders", "active"],
-    queryFn: async () => {
-      // TODO: replace with apiClient.getActiveOrder()
-      await new Promise((r) => setTimeout(r, 400));
-      return DUMMY_ACTIVE_ORDER;
-    },
-    staleTime: 30 * 1000,
+const ORDERS_QUERY = {
+  queryKey: ["orders"] as const,
+  queryFn: () => apiClient.listCustomerOrders(),
+  staleTime: 30 * 1000,
+};
+
+export function useActiveOrders() {
+  return useQuery({
+    ...ORDERS_QUERY,
+    select: (orders): Order[] => orders.filter(isActiveOrder),
   });
 }
 
 export function useCompletedOrders() {
-  return useQuery<Order[]>({
-    queryKey: ["orders", "completed"],
-    queryFn: async () => {
-      // TODO: replace with apiClient.getCompletedOrders()
-      await new Promise((r) => setTimeout(r, 400));
-      return DUMMY_COMPLETED_ORDERS;
-    },
-    staleTime: 60 * 1000,
+  return useQuery({
+    ...ORDERS_QUERY,
+    select: (orders): Order[] => orders.filter(isCompletedOrder),
   });
 }

@@ -13,7 +13,7 @@ import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { labelClass } from "@/src/lib/form-styles";
 
-const OTP_RESEND_SECONDS = 60;
+const OTP_RESEND_SECONDS = 600;
 
 const inputClass =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm tracking-widest placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
@@ -44,14 +44,15 @@ export function OtpVerificationForm() {
   });
 
   const resendMutation = useMutation({
-    mutationFn: async () => {
-      // TODO: wire up resend OTP endpoint when available
-      await new Promise((r) => setTimeout(r, 500));
-      setSeconds(OTP_RESEND_SECONDS);
-    },
+    mutationFn: () => apiClient.resendVerificationCode({ channel: "email", email }),
+    onSuccess: (data) => setSeconds(data.otpExpiresInSeconds),
   });
 
-  const pad = (n: number) => String(n).padStart(2, "0");
+  const formatCountdown = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
 
   // if (!email) {
   //   return (
@@ -115,7 +116,7 @@ export function OtpVerificationForm() {
       <p className="text-center text-sm text-gray-500">
         {seconds > 0 ? (
           <>
-            Resend code in <span className="font-medium">00:{pad(seconds)}</span>
+            Resend code in <span className="font-medium">{formatCountdown(seconds)}</span>
           </>
         ) : (
           <button

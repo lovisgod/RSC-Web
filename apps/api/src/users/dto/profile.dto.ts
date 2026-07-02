@@ -1,16 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
-import {
-  Allow,
-  IsEmail,
-  IsOptional,
-  IsString,
-  IsUrl,
-  Length,
-  Matches,
-  MaxLength,
-} from "class-validator";
+import { Allow, IsEmail, IsOptional, IsString, Length, Matches, MaxLength } from "class-validator";
 
 const trim = ({ value }: TransformFnParams): unknown =>
   typeof value === "string" ? value.trim() : value;
@@ -39,13 +30,6 @@ export class UpdateProfileDto {
   @IsEmail()
   @MaxLength(254)
   email?: string;
-
-  @ApiPropertyOptional({ example: "https://cdn.example.com/avatar.jpg", maxLength: 512 })
-  @Transform(trim)
-  @IsOptional()
-  @IsUrl({ require_tld: false })
-  @MaxLength(512)
-  avatarUrl?: string;
 }
 
 export class VerifyProfileChangeDto {

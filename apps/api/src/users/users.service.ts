@@ -31,7 +31,6 @@ export interface ProfileResult {
   name: string;
   role: UserRole;
   outletId: string | null;
-  avatarUrl: string | null;
   email: string;
   phone: string;
   verificationChannels: { email: boolean; phone: boolean };
@@ -90,10 +89,6 @@ export class UsersService {
 
     if (input.name !== undefined) {
       account.name = input.name;
-    }
-
-    if (input.avatarUrl !== undefined) {
-      account.avatarUrl = input.avatarUrl;
     }
 
     if (input.phone !== undefined) {
@@ -372,7 +367,6 @@ export class UsersService {
       name: user.name,
       role: user.role,
       outletId: user.outletId,
-      avatarUrl: user.avatarUrl,
       email: this.piiCrypto.decrypt(user.emailEncrypted),
       phone: this.piiCrypto.decrypt(user.phoneEncrypted),
       verificationChannels: {

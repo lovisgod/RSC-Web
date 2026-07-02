@@ -14,7 +14,7 @@ export function MenuItemCard({ item, onAdd }: MenuItemCardProps) {
         className="w-20 h-20 flex-shrink-0 rounded-xl flex items-center justify-center text-4xl"
         style={{ backgroundColor: item.bgColor }}
       >
-        {item.image.startsWith("/") ? (
+        {item.image.startsWith("/") || item.image.startsWith("http") ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.image} alt={item.name} className="w-12 h-12 object-contain" />
         ) : (

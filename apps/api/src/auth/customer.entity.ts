@@ -52,6 +52,9 @@ export class Customer {
   @Column({ name: "outlet_id", type: "uuid", nullable: true })
   outletId!: string | null;
 
+  @Column({ name: "avatar_url", type: "varchar", length: 512, nullable: true })
+  avatarUrl!: string | null;
+
   @Column({ name: "password_hash", type: "varchar", length: 161 })
   passwordHash!: string;
 
@@ -84,9 +87,6 @@ export class Customer {
 
   @Column({ name: "fcm_token", type: "varchar", length: 255, nullable: true })
   fcmToken!: string | null;
-
-  @Column({ name: "avatar_url", type: "varchar", length: 512, nullable: true })
-  avatarUrl!: string | null;
 
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
