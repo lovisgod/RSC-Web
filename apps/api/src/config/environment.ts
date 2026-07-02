@@ -50,6 +50,7 @@ export interface Environment {
   FIREBASE_PROJECT_ID?: string;
   FIREBASE_CLIENT_EMAIL?: string;
   FIREBASE_PRIVATE_KEY?: string;
+  FIREBASE_PRIVATE_KEY_BASE64?: string;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -177,11 +178,8 @@ const environmentSchema = Joi.object<Environment>({
     then: Joi.string().email().required(),
     otherwise: Joi.string().optional().allow(""),
   }),
-  FIREBASE_PRIVATE_KEY: Joi.when("PUSH_PROVIDER", {
-    is: "firebase",
-    then: Joi.string().min(100).required(),
-    otherwise: Joi.string().optional().allow(""),
-  }),
+  FIREBASE_PRIVATE_KEY: Joi.string().optional().allow(""),
+  FIREBASE_PRIVATE_KEY_BASE64: Joi.string().optional().allow(""),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {
@@ -192,6 +190,33 @@ export function validateEnvironment(config: Record<string, unknown>): Environmen
 
   if (result.error) {
     throw new Error(`Environment validation failed: ${result.error.message}`);
+  }
+
+  if (result.value.PUSH_PROVIDER === "firebase") {
+    const privateKey = result.value.FIREBASE_PRIVATE_KEY;
+    const privateKeyBase64 = result.value.FIREBASE_PRIVATE_KEY_BASE64;
+
+    if (!privateKey && !privateKeyBase64) {
+      throw new Error(
+        'Environment validation failed: "FIREBASE_PRIVATE_KEY" or "FIREBASE_PRIVATE_KEY_BASE64" is required when PUSH_PROVIDER=firebase',
+      );
+    }
+
+    if (privateKey && privateKey.length < 100) {
+      throw new Error(
+        'Environment validation failed: "FIREBASE_PRIVATE_KEY" length must be at least 100 characters long',
+      );
+    }
+
+    if (privateKeyBase64) {
+      const decoded = Buffer.from(privateKeyBase64, "base64").toString("utf8");
+
+      if (decoded.length < 100) {
+        throw new Error(
+          'Environment validation failed: "FIREBASE_PRIVATE_KEY_BASE64" must decode to a Firebase private key',
+        );
+      }
+    }
   }
 
   return result.value;
