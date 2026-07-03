@@ -9,6 +9,7 @@ import {
   customerOrderSchema,
   initiatePaymentInputSchema,
   initiatePaymentResultSchema,
+  platformChargesSchema,
   orderDetailSchema,
   orderSummarySchema,
   userProfileSchema,
@@ -43,6 +44,7 @@ import {
   type CustomerOrder,
   type InitiatePaymentInput,
   type InitiatePaymentResult,
+  type PlatformCharges,
   type OrderDetail,
   type OrderSummary,
   type UserProfile,
@@ -301,6 +303,9 @@ export function createApiClient(options: ApiClientOptions) {
         },
       );
     },
+    getPlatformCharges(): Promise<PlatformCharges> {
+      return request("/api/v1/payments/platform-charges", platformChargesSchema);
+    },
     initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
       const body = initiatePaymentInputSchema.parse(input);
 
@@ -308,6 +313,21 @@ export function createApiClient(options: ApiClientOptions) {
         method: "POST",
         body: JSON.stringify(body),
       });
+    },
+    listDeliveryAddresses(): Promise<DeliveryAddressSummary[]> {
+      return request("/api/v1/delivery/addresses", z.array(deliveryAddressSummarySchema));
+    },
+    deleteDeliveryAddress(id: string): Promise<unknown> {
+      return request(`/api/v1/delivery/addresses/${encodeURIComponent(id)}`, z.unknown(), {
+        method: "DELETE",
+      });
+    },
+    setDefaultDeliveryAddress(id: string): Promise<DeliveryAddressSummary> {
+      return request(
+        `/api/v1/delivery/addresses/${encodeURIComponent(id)}/default`,
+        deliveryAddressSummarySchema,
+        { method: "PATCH" },
+      );
     },
     deleteAccount(): Promise<unknown> {
       return request("/api/v1/users/me/deactivate", z.unknown(), {
