@@ -1,118 +1,176 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { useAllMenu } from "@/src/hooks/use-all-menu";
-import type { MenuItem } from "@/src/lib/data/outlet-menu";
+import { useMenuSearch } from "@/src/hooks/use-menu-search";
+import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
+import { buildOutletMenu, type MenuItem } from "@/src/lib/data/outlet-menu";
+import { toDisplayOutlet } from "@/src/lib/data/outlets";
 import { ItemDetailModal } from "@/src/components/outlet-detail/item-detail-modal";
 import { MenuSearchItemCard } from "@/src/components/menu-search/menu-search-item-card";
+import type { OutletSummary } from "@rsc/contracts";
 
-function OutletSection({
-  outletName,
-  items,
-  onViewOptions,
-}: {
-  outletName: string;
-  items: MenuItem[];
-  onViewOptions: (item: MenuItem) => void;
-}) {
-  return (
-    <section className="space-y-3">
-      <h2
-        className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest"
-        style={{ color: "var(--rsc-dark)" }}
-      >
-        <span>📍</span>
-        <span>{outletName}</span>
-      </h2>
-      {items.map((item) => (
-        <MenuSearchItemCard key={item.id} item={item} onViewOptions={() => onViewOptions(item)} />
-      ))}
-    </section>
-  );
-}
+const DEBOUNCE_MS = 500;
 
-function Skeleton() {
+function CardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
-      {[1, 2].map((o) => (
-        <div key={o} className="space-y-3">
-          <div className="h-4 w-28 bg-gray-200 rounded" />
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-gray-100 rounded-2xl" />
-          ))}
-        </div>
-      ))}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex items-start gap-3 p-3 animate-pulse">
+      <div className="w-20 h-20 flex-shrink-0 rounded-xl bg-gray-100" />
+      <div className="flex-1 space-y-2 pt-1">
+        <div className="h-3 w-20 bg-gray-100 rounded-full" />
+        <div className="h-4 w-40 bg-gray-200 rounded-full" />
+        <div className="h-3 w-32 bg-gray-100 rounded-full" />
+        <div className="h-3 w-16 bg-gray-200 rounded-full mt-2" />
+      </div>
     </div>
   );
 }
 
 type SelectedItem = { item: MenuItem; outletName: string };
 
+function resolveItemFromSummaries(
+  summaries: OutletSummary[],
+  outletId: string,
+  itemId: string,
+): MenuItem | null {
+  const idx = summaries.findIndex((s) => s.id === outletId);
+  if (idx === -1) return null;
+  const summary = summaries[idx]!;
+  const menu = buildOutletMenu(toDisplayOutlet(summary, idx), summary);
+  return menu.items.find((i) => i.id === itemId) ?? null;
+}
+
 export function MenuSearchView() {
+  const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<SelectedItem | null>(null);
+  const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const qc = useQueryClient();
 
-  const { data: menus, isPending } = useAllMenu();
+  function handleInput(value: string) {
+    setInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setQuery(value.trim()), DEBOUNCE_MS);
+  }
 
-  const q = query.trim().toLowerCase();
+  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useMenuSearch(query);
 
-  const filtered = (menus ?? [])
-    .map((menu) => ({
-      outletName: menu.outletName,
-      items: menu.items.filter(
-        (item) =>
-          !q || item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q),
-      ),
-    }))
-    .filter((section) => section.items.length > 0);
+  const allItems = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data]);
+  const total = data?.pages[0]?.total ?? null;
+
+  // outletId → name from outlets cache (best-effort; falls back to "Kitchen")
+  const outletNameMap = useMemo(() => {
+    const summaries = qc.getQueryData<OutletSummary[]>(OUTLETS_QUERY.queryKey);
+    const map = new Map<string, string>();
+    summaries?.forEach((s) => map.set(s.id, s.name));
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qc, data]);
+
+  // When "View options" is clicked:
+  //  - If outlets cache is warm → resolve modifier groups instantly and open modal
+  //  - If cold → ensure the cache is populated (single fetch) then open modal
+  async function handleViewOptions(outletId: string, itemId: string, outletName: string) {
+    setLoadingItemId(itemId);
+    try {
+      const summaries = await qc.ensureQueryData(OUTLETS_QUERY);
+      const full = resolveItemFromSummaries(summaries, outletId, itemId);
+      if (full) setSelected({ item: full, outletName });
+    } finally {
+      setLoadingItemId(null);
+    }
+  }
+
+  // Intersection observer → infinite scroll
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(handleObserver, { rootMargin: "120px" });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [handleObserver]);
+
+  const showEmpty = !isPending && allItems.length === 0;
 
   return (
     <>
       <div className="flex flex-col h-full">
-        {/* Top bar */}
+        {/* Search bar */}
         <div className="flex items-center gap-3 p-4 bg-white border-b border-gray-100 sticky top-0 z-10">
-          {/* <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label="Go back"
-            className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm text-gray-700 hover:bg-gray-50 transition-colors flex-shrink-0"
-          >
-            ←
-          </button> */}
-
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
             <input
               autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={input}
+              onChange={(e) => handleInput(e.target.value)}
               type="search"
-              placeholder="Search across all outlets..."
+              placeholder="Search all kitchens…"
               className="w-full pl-9 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-[var(--rsc-main)] focus:outline-none transition-colors"
             />
           </div>
         </div>
 
-        {/* Results */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Result count */}
+        {total !== null && !isPending && (
+          <p className="px-4 pt-3 text-xs text-gray-400">
+            {total === 0
+              ? "No results"
+              : `${total} item${total === 1 ? "" : "s"}${query ? ` for "${query}"` : ""}`}
+          </p>
+        )}
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {isPending ? (
-            <Skeleton />
-          ) : filtered.length === 0 ? (
+            Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
+          ) : showEmpty ? (
             <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
               <p className="text-3xl">🍽️</p>
               <p className="font-semibold text-gray-700">No items found</p>
-              {q && <p className="text-sm text-gray-400">Try a different search term.</p>}
+              {query && <p className="text-sm text-gray-400">Try a different search term.</p>}
             </div>
           ) : (
-            filtered.map((section) => (
-              <OutletSection
-                key={section.outletName}
-                outletName={section.outletName}
-                items={section.items}
-                onViewOptions={(item) => setSelected({ item, outletName: section.outletName })}
-              />
-            ))
+            <>
+              {allItems.map((raw) => {
+                const outletName = outletNameMap.get(raw.outletId) ?? "Kitchen";
+                return (
+                  <MenuSearchItemCard
+                    key={raw.id}
+                    item={raw}
+                    outletName={outletName}
+                    loading={loadingItemId === raw.id}
+                    onViewOptions={() => void handleViewOptions(raw.outletId, raw.id, outletName)}
+                  />
+                );
+              })}
+
+              {isFetchingNextPage && (
+                <>
+                  <CardSkeleton />
+                  <CardSkeleton />
+                </>
+              )}
+
+              <div ref={sentinelRef} className="h-1" />
+
+              {!hasNextPage && allItems.length > 0 && (
+                <p className="text-center text-xs text-gray-300 py-4">
+                  You&apos;ve seen everything
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

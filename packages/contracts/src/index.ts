@@ -548,6 +548,16 @@ export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
 export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
 
+export const paginatedMenuItemsSchema = z.object({
+  items: z.array(menuItemSchema),
+  total: z.int().nonnegative(),
+  limit: z.int().nonnegative(),
+  offset: z.int().nonnegative(),
+  hasMore: z.boolean(),
+});
+
+export type PaginatedMenuItems = z.infer<typeof paginatedMenuItemsSchema>;
+
 export const platformChargesSchema = z.object({
   platformCommissionBps: z.int().nonnegative(),
   defaultVatBps: z.int().nonnegative(),

@@ -44,6 +44,78 @@ function useElapsedMinutes(fromIso: string): number {
   return minutes;
 }
 
+// ─── Compact item list ────────────────────────────────────────────────────────
+
+function ItemList({ items }: { items: PosSubOrder["items"] }) {
+  return (
+    <ul className="mb-2.5 space-y-1.5">
+      {items.map((item, i) => (
+        <li key={i}>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-xs font-bold text-orange-500">{item.quantity}×</span>
+            <span className="text-xs font-semibold text-slate-600">
+              ₦{((item.quantity * item.priceMinor) / 100).toLocaleString("en-NG")}
+            </span>
+          </div>
+          <p className="text-sm text-slate-800">{item.name}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ─── Expanded order detail ────────────────────────────────────────────────────
+
+function OrderDetailPanel({ order }: { order: PosSubOrder }) {
+  return (
+    <div className="mb-2.5 space-y-2.5 rounded-lg bg-slate-50 p-2.5">
+      {order.items.map((item, i) => (
+        <div key={i}>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-xs font-bold text-orange-500">{item.quantity}×</span>
+            <span className="min-w-0 flex-1 text-xs font-semibold text-slate-800">{item.name}</span>
+            <span className="shrink-0 text-xs font-bold text-slate-600">
+              ₦{((item.quantity * item.priceMinor) / 100).toLocaleString("en-NG")}
+            </span>
+          </div>
+          {item.modifiers && item.modifiers.length > 0 && (
+            <ul className="ml-3 mt-1 space-y-0.5">
+              {item.modifiers.map((mod, j) => (
+                <li key={j} className="flex items-baseline gap-1.5 text-xs text-slate-500">
+                  <span className="shrink-0 text-slate-400">+</span>
+                  <span className="flex-1">{mod.name}</span>
+                  {mod.priceDeltaMinor > 0 && (
+                    <span className="shrink-0 text-slate-400">
+                      +₦{(mod.priceDeltaMinor / 100).toLocaleString("en-NG")}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+
+      {/* Total + delivery code */}
+      <div className="space-y-1 border-t border-slate-200 pt-2">
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total</span>
+          <span className="text-xs font-bold text-slate-800">
+            ₦{(order.totalAmountMinor / 100).toLocaleString("en-NG")}
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Mode</span>
+          <span className="text-xs font-medium text-slate-600">
+            {DELIVERY_MODE_EMOJI[order.deliveryMode] ?? "📦"}{" "}
+            {DELIVERY_MODE_LABEL[order.deliveryMode] ?? order.deliveryMode}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Shared drag shell ────────────────────────────────────────────────────────
 
 interface ShellProps {
@@ -51,7 +123,7 @@ interface ShellProps {
   isAdvancing: boolean;
   accentClass?: string;
   rightSlot?: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 function CardShell({ order, isAdvancing, accentClass, rightSlot, children }: ShellProps) {
@@ -60,6 +132,7 @@ function CardShell({ order, isAdvancing, accentClass, rightSlot, children }: She
     data: { order },
     disabled: isAdvancing,
   });
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <div
@@ -70,14 +143,19 @@ function CardShell({ order, isAdvancing, accentClass, rightSlot, children }: She
       <div className="flex">
         {accentClass && <div className={`w-1 shrink-0 ${accentClass}`} />}
         <div className="flex-1 p-3">
-          {/* Shared header */}
+          {/* Header */}
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1">
               <button
                 type="button"
-                className="grid h-6 w-5 shrink-0 cursor-grab place-items-center rounded text-slate-300 hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing disabled:cursor-not-allowed"
+                className={`grid h-6 w-5 shrink-0 cursor-grab place-items-center rounded active:cursor-grabbing disabled:cursor-not-allowed ${
+                  expanded
+                    ? "bg-slate-100 text-slate-600"
+                    : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
+                }`}
                 disabled={isAdvancing}
-                aria-label="Drag to reorder"
+                aria-label={expanded ? "Collapse order details" : "Show order details"}
+                onClick={() => setExpanded((v) => !v)}
                 {...listeners}
                 {...attributes}
               >
@@ -99,30 +177,14 @@ function CardShell({ order, isAdvancing, accentClass, rightSlot, children }: She
             </div>
           </div>
 
+          {/* Item list: compact or detailed */}
+          {expanded ? <OrderDetailPanel order={order} /> : <ItemList items={order.items} />}
+
+          {/* Action footer */}
           {children}
         </div>
       </div>
     </div>
-  );
-}
-
-// ─── Shared item list ─────────────────────────────────────────────────────────
-
-function ItemList({ items }: { items: PosSubOrder["items"] }) {
-  return (
-    <ul className="mb-2.5 space-y-1.5">
-      {items.map((item, i) => (
-        <li key={i}>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-xs font-bold text-orange-500">{item.quantity}x</span>
-            <span className="text-xs font-semibold text-slate-600">
-              ₦{((item.quantity * item.priceMinor) / 100).toLocaleString("en-NG")}
-            </span>
-          </div>
-          <p className="text-sm text-slate-800">{item.name}</p>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -139,7 +201,6 @@ interface KanbanCardProps {
 function IncomingCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
   return (
     <CardShell order={order} isAdvancing={isAdvancing} accentClass="bg-orange-500">
-      <ItemList items={order.items} />
       <div className="flex items-center justify-between gap-2 border-t border-slate-50 pt-2">
         <button
           type="button"
@@ -165,9 +226,7 @@ function IncomingCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
 // ─── Kitchen card (ACCEPTED / PREPARING) ─────────────────────────────────────
 
 function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
-  const elapsed = useElapsedMinutes(order.createdAt);
-  const modeLabel = DELIVERY_MODE_LABEL[order.deliveryMode] ?? order.deliveryMode;
-  const modeEmoji = DELIVERY_MODE_EMOJI[order.deliveryMode] ?? "📦";
+  const _elapsed = useElapsedMinutes(order.createdAt);
 
   async function handlePrint() {
     const result = await printReceipt({
@@ -198,17 +257,6 @@ function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
       accentClass="bg-yellow-400"
       rightSlot={targetSlot || undefined}
     >
-      <ItemList items={order.items} />
-
-      {/* <div className="mb-2 flex items-center gap-1.5">
-        <span className="rounded-md bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-500">
-          ⏱️ {elapsed}m elapsed
-        </span>
-        <span className="text-xs text-slate-400">
-          {modeEmoji} {modeLabel}
-        </span>
-      </div> */}
-
       <div className="flex items-center gap-2 border-t border-slate-50 pt-2">
         <button
           type="button"
@@ -232,12 +280,20 @@ function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
 
 // ─── Ready card ───────────────────────────────────────────────────────────────
 
-function ReadyCard({ order, isAdvancing }: Omit<KanbanCardProps, "onAdvance">) {
+const READY_ACTION_LABEL: Record<string, string> = {
+  DELIVERY: "Sent Out",
+  TAKEOUT: "Picked Up",
+  DINE_IN: "Served",
+};
+
+function ReadyCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
   const badge = (
     <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-emerald-600">
       Ready
     </span>
   );
+
+  const actionLabel = READY_ACTION_LABEL[order.deliveryMode] ?? "Complete";
 
   return (
     <CardShell
@@ -246,11 +302,20 @@ function ReadyCard({ order, isAdvancing }: Omit<KanbanCardProps, "onAdvance">) {
       accentClass="bg-emerald-500"
       rightSlot={badge}
     >
-      <ItemList items={order.items} />
-      <p className="border-t border-slate-50 pt-2 text-center text-xs font-medium text-slate-500">
-        {DELIVERY_MODE_EMOJI[order.deliveryMode] ?? "📦"}{" "}
-        {DELIVERY_MODE_LABEL[order.deliveryMode] ?? order.deliveryMode}
-      </p>
+      <div className="flex items-center justify-between gap-2 border-t border-slate-50 pt-2">
+        <p className="text-xs font-medium text-slate-500">
+          {DELIVERY_MODE_EMOJI[order.deliveryMode] ?? "📦"}{" "}
+          {DELIVERY_MODE_LABEL[order.deliveryMode] ?? order.deliveryMode}
+        </p>
+        <button
+          type="button"
+          disabled={isAdvancing}
+          onClick={() => onAdvance(order.id, "DELIVERED")}
+          className="rounded-lg bg-emerald-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+        >
+          {actionLabel}
+        </button>
+      </div>
     </CardShell>
   );
 }
@@ -262,7 +327,7 @@ export function KanbanCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
     return <KitchenCard order={order} onAdvance={onAdvance} isAdvancing={isAdvancing} />;
   }
   if (order.status === "READY") {
-    return <ReadyCard order={order} isAdvancing={isAdvancing} />;
+    return <ReadyCard order={order} onAdvance={onAdvance} isAdvancing={isAdvancing} />;
   }
   return <IncomingCard order={order} onAdvance={onAdvance} isAdvancing={isAdvancing} />;
 }

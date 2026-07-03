@@ -1436,6 +1436,93 @@ th {
   color: var(--rsc-text);
 }
 
+/* ── Staff panel ─────────────────────────────────────────────────── */
+
+.staff-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.staff-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.staff-panel__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rsc-navy) 12%, transparent);
+  color: var(--rsc-navy);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.staff-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.staff-item {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--rsc-border, #eceee8);
+}
+
+.staff-item:last-child {
+  border-bottom: 0;
+}
+
+.staff-item__avatar {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rsc-navy) 12%, transparent);
+  color: var(--rsc-navy);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.staff-item__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.staff-item__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--rsc-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-item__sub {
+  font-size: 0.8rem;
+  color: var(--rsc-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Admin onboard success state */
 .admin-success {
   display: flex;

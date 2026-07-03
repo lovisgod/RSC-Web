@@ -9,6 +9,7 @@ import {
   customerOrderSchema,
   initiatePaymentInputSchema,
   initiatePaymentResultSchema,
+  paginatedMenuItemsSchema,
   platformChargesSchema,
   orderDetailSchema,
   orderSummarySchema,
@@ -44,6 +45,7 @@ import {
   type CustomerOrder,
   type InitiatePaymentInput,
   type InitiatePaymentResult,
+  type PaginatedMenuItems,
   type PlatformCharges,
   type OrderDetail,
   type OrderSummary,
@@ -270,6 +272,19 @@ export function createApiClient(options: ApiClientOptions) {
         `/api/v1/menu-items?outletId=${encodeURIComponent(input.outletId)}`,
         z.array(menuItemSchema),
       );
+    },
+    searchMenuItems(params: {
+      q?: string;
+      outletId?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<PaginatedMenuItems> {
+      const sp = new URLSearchParams({ paginated: "true" });
+      if (params.q) sp.set("q", params.q);
+      if (params.outletId) sp.set("outletId", params.outletId);
+      if (params.limit != null) sp.set("limit", String(params.limit));
+      if (params.offset != null) sp.set("offset", String(params.offset));
+      return request(`/api/v1/menu-items?${sp.toString()}`, paginatedMenuItemsSchema);
     },
     updateMenuItemAvailability(
       id: string,

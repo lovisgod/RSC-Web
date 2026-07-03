@@ -1,0 +1,9 @@
+$ vite
+[31merror when starting dev server:
+Error: getaddrinfo ENOTFOUND outlet.localhost
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'outlet.localhost'
+}[39m

@@ -27,8 +27,12 @@ pnpm --filter @rsc/api migration:run
 pnpm dev
 ```
 
-API runs at `http://localhost:4000`, customer web at `http://localhost:3000`,
-and central admin at `http://localhost:5173`.
+API runs at `http://localhost:4000`. The frontends use separate local hostnames
+to isolate their HttpOnly authentication cookies:
+
+- customer web: `http://web.localhost:3000`
+- central admin: `http://admin.localhost:5173`
+- outlet admin: `http://outlet.localhost:5175`
 
 Deployed development URLs are `https://dev.rscapp.xyz`,
 `https://admin-dev.rscapp.xyz`, and `https://api-dev.rscapp.xyz`.

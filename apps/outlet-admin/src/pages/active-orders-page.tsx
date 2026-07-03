@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import type { MasterOrderStatus, SubOrderStatus } from "@rsc/contracts";
-import { useRef, useState } from "react";
+import { useState } from "react"; // kept for TakeoutVerifier
 
 import { KanbanColumn } from "../components/kanban-column";
 import { OutletPageHeader } from "../components/outlet-page-header";
@@ -26,8 +26,8 @@ const DRAG_TRANSITIONS: Record<string, Partial<Record<SubOrderStatus, MasterOrde
   ready: { ACCEPTED: "READY", PREPARING: "READY" },
 };
 
-// ─── Accept + prep-time modal ─────────────────────────────────────────────────
-
+// ─── Accept + prep-time modal (commented out — API does not accept preparationTimeMinutes yet) ───
+/*
 function AcceptOrderModal({
   onConfirm,
   onCancel,
@@ -82,6 +82,7 @@ function AcceptOrderModal({
     </div>
   );
 }
+*/
 
 // ─── Takeout hand-off verifier ────────────────────────────────────────────────
 
@@ -143,11 +144,6 @@ export function ActiveOrdersPage() {
   const { data: orders = [], isLoading } = useOrdersQueue(outletId);
   const { mutate: updateStatus, isPending: isAdvancing } = useUpdateOrderStatus(outletId);
 
-  // Holds the pending CONFIRMED transition until the prep-time modal is confirmed
-  const [pendingAccept, setPendingAccept] = useState<{ subOrderId: string } | null>(null);
-  // Local fallback for prep times set at acceptance time (survives until next poll)
-  const prepTimesRef = useRef<Map<string, number>>(new Map());
-
   useNewOrderAlert(orders);
 
   const sensors = useSensors(
@@ -157,19 +153,10 @@ export function ActiveOrdersPage() {
   );
 
   const incoming = orders.filter((o) => o.status === "PENDING");
-  const preparing = orders
-    .filter((o) => o.status === "ACCEPTED" || o.status === "PREPARING")
-    .map((o) => ({
-      ...o,
-      estimatedPrepTimeMinutes: o.estimatedPrepTimeMinutes ?? prepTimesRef.current.get(o.id),
-    }));
+  const preparing = orders.filter((o) => o.status === "ACCEPTED" || o.status === "PREPARING");
   const ready = orders.filter((o) => o.status === "READY");
 
   function handleAdvance(subOrderId: string, status: MasterOrderStatus) {
-    if (status === "CONFIRMED") {
-      setPendingAccept({ subOrderId });
-      return;
-    }
     updateStatus({ subOrderId, status });
   }
 
@@ -186,23 +173,7 @@ export function ActiveOrdersPage() {
       return;
     }
 
-    if (nextStatus === "CONFIRMED") {
-      setPendingAccept({ subOrderId: order.id });
-      return;
-    }
-
     updateStatus({ subOrderId: order.id, status: nextStatus });
-  }
-
-  function handleAcceptConfirm(prepTimeMinutes: number) {
-    if (!pendingAccept) return;
-    prepTimesRef.current.set(pendingAccept.subOrderId, prepTimeMinutes);
-    updateStatus({
-      subOrderId: pendingAccept.subOrderId,
-      status: "CONFIRMED",
-      preparationTimeMinutes: prepTimeMinutes,
-    });
-    setPendingAccept(null);
   }
 
   return (
@@ -256,9 +227,7 @@ export function ActiveOrdersPage() {
         </div>
       </DndContext>
 
-      {pendingAccept && (
-        <AcceptOrderModal onConfirm={handleAcceptConfirm} onCancel={() => setPendingAccept(null)} />
-      )}
+      {/* AcceptOrderModal commented out — API does not support preparationTimeMinutes yet */}
     </div>
   );
 }

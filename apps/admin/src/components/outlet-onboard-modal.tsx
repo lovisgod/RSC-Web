@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { createOutlet, updateOutlet } from "../lib/api";
+import { createOutlet, updateOutlet, uploadImage } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
 interface Props {
@@ -64,22 +64,34 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
   // Seed form when modal opens (add → empty, edit → outlet data)
+  const [uploadStep, setUploadStep] = useState(false);
+
   const {
     mutate,
     isPending,
     error,
     reset: resetMutation,
   } = useMutation({
-    mutationFn: () => {
-      const fd = new FormData();
-      fd.append("name", form.name.trim());
-      fd.append("description", form.description.trim());
-      fd.append("cuisineType", form.cuisineType.trim());
-      fd.append("isOnline", String(form.isOnline));
-      fd.append("momentSubaccountCode", form.momentSubaccountCode.trim());
-      if (imageFile) fd.append("imageUrl", imageFile);
+    mutationFn: async () => {
+      let resolvedImageUrl: string | undefined;
 
-      return isEditMode ? updateOutlet(outlet!.id, fd) : createOutlet(fd);
+      if (imageFile) {
+        setUploadStep(true);
+        const { url } = await uploadImage(imageFile);
+        resolvedImageUrl = url;
+        setUploadStep(false);
+      }
+
+      const body = {
+        name: form.name.trim(),
+        description: form.description.trim(),
+        cuisineType: form.cuisineType.trim(),
+        isOnline: form.isOnline,
+        momentSubaccountCode: form.momentSubaccountCode.trim(),
+        ...(resolvedImageUrl !== undefined && { imageUrl: resolvedImageUrl }),
+      };
+
+      return isEditMode ? updateOutlet(outlet!.id, body) : createOutlet(body);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "outlets"] });
@@ -295,9 +307,11 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
             </Button>
             <Button tone="navy" type="submit" disabled={isPending}>
               {isPending
-                ? isEditMode
-                  ? "Saving…"
-                  : "Onboarding…"
+                ? uploadStep
+                  ? "Uploading image…"
+                  : isEditMode
+                    ? "Saving…"
+                    : "Onboarding…"
                 : isEditMode
                   ? "Save Changes"
                   : "Onboard Outlet"}
