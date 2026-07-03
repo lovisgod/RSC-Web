@@ -61,6 +61,16 @@ export class PaymentsService {
     this.deliveryFeeMinor = paymentsConfig.deliveryFeeMinor;
   }
 
+  getPlatformCharges() {
+    return {
+      platformCommissionBps: this.platformCommissionBps,
+      defaultVatBps: this.vatBps,
+      deliveryFeeMinor: this.deliveryFeeMinor,
+      serviceFeeMinor: 0,
+      currency: "NGN" as const,
+    };
+  }
+
   async initiate(user: AuthenticatedUser, input: InitiatePaymentDto) {
     if (input.deliveryMode === "DELIVERY") {
       if (
