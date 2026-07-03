@@ -1,0 +1,3 @@
+C:\Users\PC\Projects\RSC-Web\apps\outlet-admin:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @rsc/outlet-admin@0.1.0 dev: `vite`
+Exit status 1

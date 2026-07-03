@@ -140,18 +140,33 @@ export const resetPassword = (body: {
   phoneCode?: string;
 }): Promise<ResetPasswordResult> => post("/api/v1/auth/reset-password", body);
 
+// ─── Media ────────────────────────────────────────────────────────────────────
+
+export const uploadImage = (file: File): Promise<{ url: string }> => {
+  const fd = new FormData();
+  fd.append("image", file);
+  return post("/api/v1/media/images", fd);
+};
+
 // ─── Outlets ──────────────────────────────────────────────────────────────────
+
+export interface OutletBody {
+  name: string;
+  description?: string;
+  cuisineType: string;
+  isOnline?: boolean;
+  momentSubaccountCode: string;
+  imageUrl?: string;
+}
 
 export const listOutlets = (): Promise<OutletSummary[]> => get("/api/v1/outlets");
 
 export const getOutlet = (id: string): Promise<OutletSummary> => get(`/api/v1/outlets/${id}`);
 
-/** POST — send FormData (multipart) for image upload */
-export const createOutlet = (body: FormData): Promise<OutletSummary> =>
+export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
   post("/api/v1/outlets", body);
 
-/** PATCH — multipart/FormData; imageUrl field carries the new image file if provided */
-export const updateOutlet = (id: string, body: FormData): Promise<OutletSummary> =>
+export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<OutletSummary> =>
   patchReq(`/api/v1/outlets/${id}`, body);
 
 /** PATCH — dedicated endpoint for toggling online status only */
@@ -229,6 +244,25 @@ export const sendPromoNotification = (body: SendPromoBody): Promise<{ sent: numb
 
 export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
   post("/api/v1/auth/admins", body);
+
+export interface OutletAdminUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: "ADMIN";
+  outletId: string;
+  isVerified?: boolean;
+  createdAt?: string;
+}
+
+export const listOutletAdmins = (outletId?: string): Promise<OutletAdminUser[]> => {
+  const qs = outletId ? `?outletId=${encodeURIComponent(outletId)}` : "";
+  return get(`/api/v1/users/outlet-admins${qs}`);
+};
+
+export const deleteOutletAdmin = (id: string): Promise<void> =>
+  http.delete(`/api/v1/users/outlet-admins/${id}`).then(() => undefined);
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 

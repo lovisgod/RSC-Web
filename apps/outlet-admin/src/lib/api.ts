@@ -168,10 +168,16 @@ export const verifyHandoffCode = (
 
 // ─── Orders / Sub-orders ──────────────────────────────────────────────────────
 
+export interface PosSubOrderItemModifier {
+  name: string;
+  priceDeltaMinor: number;
+}
+
 export interface PosSubOrderItem {
   name: string;
   quantity: number;
   priceMinor: number;
+  modifiers?: PosSubOrderItemModifier[];
 }
 
 export interface PosSubOrder {
@@ -244,6 +250,13 @@ function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
             name: li.itemNameSnapshot,
             quantity: li.quantity,
             priceMinor: li.unitPriceMinor,
+            modifiers:
+              li.modifiersSnapshot.length > 0
+                ? li.modifiersSnapshot.map((m) => ({
+                    name: m.name,
+                    priceDeltaMinor: m.priceDeltaMinor,
+                  }))
+                : undefined,
           })),
         totalAmountMinor: sub.subtotalMinor,
         createdAt: sub.createdAt,

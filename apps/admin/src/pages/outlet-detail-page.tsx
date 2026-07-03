@@ -1,6 +1,6 @@
 import { Button, EmptyState } from "@rsc/ui";
 import Skeleton from "@mui/material/Skeleton";
-import { ArrowLeft, Check, Copy, Pencil, Store, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Copy, Pencil, Store, Trash2, Users, X } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
@@ -8,7 +8,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { OutletAdminModal } from "../components/outlet-admin-modal";
 import { OutletOnboardModal } from "../components/outlet-onboard-modal";
 import { useDeleteOutlet } from "../hooks/use-delete-outlet";
+import { useDeleteOutletAdmin } from "../hooks/use-delete-outlet-admin";
 import { useOutlet } from "../hooks/use-outlet";
+import { useOutletAdmins } from "../hooks/use-outlet-admins";
+import type { OutletAdminUser } from "../lib/api";
 
 function OutletAvatar({ imageUrl, name }: { imageUrl: string | null; name: string }) {
   const [imgFailed, setImgFailed] = useState(false);
@@ -133,16 +136,79 @@ function DeleteConfirmModal({ name, isPending, onConfirm, onCancel }: DeleteConf
   );
 }
 
+interface StaffDeleteConfirmProps {
+  admin: OutletAdminUser;
+  isPending: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function StaffDeleteConfirmModal({
+  admin,
+  isPending,
+  onConfirm,
+  onCancel,
+}: StaffDeleteConfirmProps) {
+  return createPortal(
+    <div className="modal-overlay" aria-hidden="true" onClick={() => !isPending && onCancel()}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="staff-delete-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal__head">
+          <div>
+            <p className="kicker" style={{ margin: 0 }}>
+              Confirm action
+            </p>
+            <h2 id="staff-delete-title">Remove Staff Member</h2>
+          </div>
+          <button
+            type="button"
+            className="modal__close"
+            aria-label="Close"
+            disabled={isPending}
+            onClick={onCancel}
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="modal__body">
+          <p style={{ margin: "0 0 1.5rem", lineHeight: 1.55 }}>
+            Remove <strong>{admin.name}</strong> ({admin.email}) from this outlet? They will lose
+            access immediately.
+          </p>
+          <div className="modal__actions">
+            <Button tone="quiet" type="button" disabled={isPending} onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button tone="danger" type="button" disabled={isPending} onClick={onConfirm}>
+              {isPending ? "Removing…" : "Remove Staff"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function OutletDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const { data: outlet, isLoading } = useOutlet(id!);
+  const { data: staffList, isLoading: isStaffLoading } = useOutletAdmins(id!);
+
   const [editOpen, setEditOpen] = useState(false);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<OutletAdminUser | null>(null);
 
   const { mutate: deleteOutlet, isPending: isDeleting } = useDeleteOutlet();
+  const { mutate: removeStaff, isPending: isRemovingStaff } = useDeleteOutletAdmin(id!);
 
   function handleDeleteConfirm() {
     if (!outlet) return;
@@ -151,6 +217,13 @@ export function OutletDetailPage() {
         setDeleteConfirmOpen(false);
         navigate("/outlets");
       },
+    });
+  }
+
+  function handleStaffDeleteConfirm() {
+    if (!staffToDelete) return;
+    removeStaff(staffToDelete.id, {
+      onSuccess: () => setStaffToDelete(null),
     });
   }
 
@@ -168,6 +241,14 @@ export function OutletDetailPage() {
           isPending={isDeleting}
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteConfirmOpen(false)}
+        />
+      )}
+      {staffToDelete && (
+        <StaffDeleteConfirmModal
+          admin={staffToDelete}
+          isPending={isRemovingStaff}
+          onConfirm={handleStaffDeleteConfirm}
+          onCancel={() => setStaffToDelete(null)}
         />
       )}
 
@@ -256,6 +337,55 @@ export function OutletDetailPage() {
         ) : (
           <EmptyState icon={<Store size={32} />} heading="Outlet not found" />
         )}
+
+        {/* ── Staff section ─────────────────────────────────── */}
+        <div className="panel staff-panel">
+          <div className="staff-panel__head">
+            <h3 className="staff-panel__title">Outlet Staff</h3>
+            {staffList !== undefined && (
+              <span className="staff-panel__count">{staffList.length}</span>
+            )}
+          </div>
+
+          {isStaffLoading ? (
+            <ul className="staff-list">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <li key={i} className="staff-item">
+                  <Skeleton variant="circular" width={40} height={40} sx={{ flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <Skeleton variant="text" sx={{ fontSize: "0.9rem", width: "40%" }} />
+                    <Skeleton variant="text" sx={{ fontSize: "0.8rem", width: "60%" }} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : staffList && staffList.length > 0 ? (
+            <ul className="staff-list">
+              {staffList.map((admin) => (
+                <li key={admin.id} className="staff-item">
+                  <div className="staff-item__avatar" aria-hidden="true">
+                    {admin.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="staff-item__info">
+                    <span className="staff-item__name">{admin.name}</span>
+                    <span className="staff-item__sub">{admin.email}</span>
+                    {admin.phone && <span className="staff-item__sub">{admin.phone}</span>}
+                  </div>
+                  <button
+                    type="button"
+                    className="outlet-icon-btn outlet-icon-btn--delete"
+                    aria-label={`Remove ${admin.name}`}
+                    onClick={() => setStaffToDelete(admin)}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState icon={<Users size={28} />} heading="No staff assigned yet" />
+          )}
+        </div>
       </div>
     </>
   );
