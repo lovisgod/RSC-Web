@@ -1,6 +1,6 @@
 import { Button, EmptyState } from "@rsc/ui";
 import Skeleton from "@mui/material/Skeleton";
-import { ArrowLeft, Pencil, Store, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Copy, Pencil, Store, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
@@ -33,11 +33,48 @@ function OutletAvatar({ imageUrl, name }: { imageUrl: string | null; name: strin
   );
 }
 
-function MetaRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <button
+      type="button"
+      className={`copy-btn${copied ? " copy-btn--copied" : ""}`}
+      aria-label="Copy to clipboard"
+      onClick={handleCopy}
+    >
+      {copied ? <Check size={13} /> : <Copy size={13} />}
+    </button>
+  );
+}
+
+function MetaRow({
+  label,
+  value,
+  mono,
+  copyable,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  copyable?: boolean;
+}) {
   return (
     <div className="outlet-detail__meta-row">
       <span className="outlet-detail__meta-label">{label}</span>
-      <span className={`outlet-detail__meta-value${mono ? " text-mono" : ""}`}>{value}</span>
+      <span
+        className={`outlet-detail__meta-value${mono ? " text-mono" : ""}${copyable ? " copy-row" : ""}`}
+      >
+        {value}
+        {copyable && <CopyButton text={value} />}
+      </span>
     </div>
   );
 }
@@ -212,7 +249,7 @@ export function OutletDetailPage() {
 
               <div className="outlet-detail__meta">
                 <MetaRow label="Subaccount Code" value={outlet.momentSubaccountCode} />
-                <MetaRow label="Outlet ID" value={outlet.id} mono />
+                <MetaRow label="Outlet ID" value={outlet.id} mono copyable />
               </div>
             </div>
           </div>

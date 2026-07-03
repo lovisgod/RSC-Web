@@ -37,7 +37,7 @@ export function CheckoutView() {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => (step === 1 ? router.push("/cart") : setStep((s) => (s - 1) as Step))}
+          onClick={() => (step === 1 ? router.push("/cart") : router.push("/outlets"))}
           aria-label="Go back"
           className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm flex-shrink-0"
         >
@@ -67,7 +67,7 @@ export function CheckoutView() {
           {step === 2 && (
             <PaymentStep
               deliveryForm={delivery}
-              onBack={() => setStep(1)}
+              onBack={() => router.push("/outlets")}
               onSuccess={() => setStep(3)}
             />
           )}

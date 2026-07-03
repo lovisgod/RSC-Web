@@ -113,9 +113,13 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
   const unitPrice = item.priceMinor + extrasTotal;
   const total = unitPrice * quantity;
 
-  const allRequiredMet = item.modifierGroups
-    .filter((g) => g.isRequired)
-    .every((g) => (selections.get(g.id)?.size ?? 0) >= g.minSelections);
+  // Only check groups that are required AND have at least one selectable modifier.
+  // Groups with all modifiers unavailable are skipped — they can't be fulfilled.
+  const requiredGroups = item.modifierGroups.filter((g) => g.isRequired && g.modifiers.length > 0);
+  const unmetGroups = requiredGroups.filter(
+    (g) => (selections.get(g.id)?.size ?? 0) < g.minSelections,
+  );
+  const allRequiredMet = unmetGroups.length === 0;
 
   function handleAddToCart() {
     const selectedModifiers = item.modifierGroups.flatMap((g) =>
@@ -180,32 +184,40 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
         </div>
 
         {/* Sticky footer */}
-        <div className="p-4 border-t border-gray-100 flex items-center gap-4 flex-shrink-0">
-          {/* Quantity */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg font-bold transition-colors"
-              style={{ borderColor: "var(--rsc-dark)", color: "var(--rsc-dark)" }}
-            >
-              −
-            </button>
-            <span className="text-base font-bold w-5 text-center">{quantity}</span>
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => q + 1)}
-              className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg font-bold transition-colors"
-              style={{ borderColor: "var(--rsc-dark)", color: "var(--rsc-dark)" }}
-            >
-              +
-            </button>
+        <div className="p-4 border-t border-gray-100 flex-shrink-0 space-y-2">
+          <div className="flex items-center gap-4">
+            {/* Quantity */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg font-bold transition-colors"
+                style={{ borderColor: "var(--rsc-dark)", color: "var(--rsc-dark)" }}
+              >
+                −
+              </button>
+              <span className="text-base font-bold w-5 text-center">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg font-bold transition-colors"
+                style={{ borderColor: "var(--rsc-dark)", color: "var(--rsc-dark)" }}
+              >
+                +
+              </button>
+            </div>
+
+            {/* Add to cart */}
+            <Button tone="navy" fullWidth onClick={handleAddToCart} disabled={!allRequiredMet}>
+              Add to Unified Cart &nbsp;·&nbsp; {formatNaira(total)}
+            </Button>
           </div>
 
-          {/* Add to cart */}
-          <Button tone="navy" fullWidth onClick={handleAddToCart} disabled={!allRequiredMet}>
-            Add to Unified Cart &nbsp;·&nbsp; {formatNaira(total)}
-          </Button>
+          {unmetGroups.length > 0 && (
+            <p className="text-xs text-center text-amber-600">
+              Please select {unmetGroups.map((g) => g.name).join(" and ")} to continue
+            </p>
+          )}
         </div>
       </div>
     </div>

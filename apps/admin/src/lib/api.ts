@@ -4,15 +4,17 @@ import type {
   AdminOverview,
   AdminResult,
   CreateAdminInput,
+  CustomerOrder,
   ForgotPasswordResult,
   LoginResult,
   LogoutResult,
   MenuItem,
-  OrderSummary,
+  OrderLineItem,
   OutletSummary,
   RegistrationResult,
   ResendVerificationCodeResult,
   ResetPasswordResult,
+  SubOrderDetail,
   UserVerificationResult,
 } from "@rsc/contracts";
 
@@ -170,8 +172,45 @@ export const updateMenuItemAvailability = (
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-export const listOrders = (query?: string): Promise<OrderSummary[]> =>
-  get(`/api/v1/orders${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+export interface AdminOrdersQuery {
+  outletId?: string;
+  status?: string;
+  subOrderStatus?: string;
+  deliveryMode?: string;
+  customerId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface AdminOrderItem {
+  order: CustomerOrder;
+  subOrders: SubOrderDetail[];
+  lineItems: OrderLineItem[];
+}
+
+export interface AdminOrdersResult {
+  orders: AdminOrderItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export const listAdminOrders = (params?: AdminOrdersQuery): Promise<AdminOrdersResult> => {
+  const qs = new URLSearchParams();
+  if (params?.outletId) qs.set("outletId", params.outletId);
+  if (params?.status) qs.set("status", params.status);
+  if (params?.subOrderStatus) qs.set("subOrderStatus", params.subOrderStatus);
+  if (params?.deliveryMode) qs.set("deliveryMode", params.deliveryMode);
+  if (params?.customerId) qs.set("customerId", params.customerId);
+  if (params?.dateFrom) qs.set("dateFrom", params.dateFrom);
+  if (params?.dateTo) qs.set("dateTo", params.dateTo);
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  const query = qs.toString();
+  return get(`/api/v1/orders/admin${query ? `?${query}` : ""}`);
+};
 
 // ─── Notifications ────────────────────────────────────────────────────────────
 

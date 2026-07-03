@@ -781,6 +781,27 @@ th {
   color: var(--rsc-ink);
 }
 
+.orders-pagination-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--rsc-text-muted);
+  text-align: right;
+}
+
+.orders-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.orders-filter-select {
+  padding: 0.45rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  min-width: 140px;
+  width: auto !important;
+}
+
 .table-empty {
   padding: 0 !important;
   border-bottom: none !important;
@@ -824,6 +845,7 @@ th {
   border: 1px solid var(--rsc-line);
   border-radius: var(--rsc-radius);
   background: white;
+  cursor: pointer;
 }
 
 /* Side-actions wrapper — slides in from the left on double-tap */
@@ -987,6 +1009,255 @@ th {
 .outlet-toggle--pending {
   opacity: 0.55;
   cursor: wait;
+}
+
+/* ── Order Detail Modal ──────────────────────────────────────────────── */
+
+.modal--order {
+  width: min(680px, 100%);
+}
+
+.order-modal__status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.order-modal__body {
+  gap: 1rem;
+}
+
+.order-modal__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  background: var(--rsc-surface, #f9fafb);
+  border-radius: calc(var(--rsc-radius) - 2px);
+  border: 1px solid var(--rsc-border);
+}
+
+.order-modal__meta-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.order-modal__meta-label {
+  font-weight: 600;
+  color: var(--rsc-text-muted);
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.order-modal__meta-value {
+  color: var(--rsc-text);
+}
+
+.order-modal__section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rsc-text-muted);
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--rsc-border);
+}
+
+/* Per-outlet sub-order card */
+.order-modal__sub-card {
+  border: 1.5px solid var(--rsc-border);
+  border-radius: var(--rsc-radius);
+  /* overflow: hidden; */
+}
+
+.order-modal__sub-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: color-mix(in srgb, var(--rsc-navy) 4%, white);
+  border-bottom: 1px solid var(--rsc-border);
+}
+
+.order-modal__sub-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--rsc-navy-dark);
+}
+
+.order-modal__sub-subtotal {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #d97706;
+  white-space: nowrap;
+}
+
+/* Line items inside sub-order */
+.order-modal__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--rsc-border);
+}
+
+.order-modal__line {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--rsc-border);
+  font-size: 0.875rem;
+}
+
+.order-modal__line:last-child {
+  border-bottom: none;
+}
+
+.order-modal__line-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.order-modal__line-name {
+  font-weight: 600;
+  color: var(--rsc-text);
+}
+
+.order-modal__line-mods {
+  font-size: 0.75rem;
+  color: var(--rsc-text-muted);
+}
+
+.order-modal__line-price {
+  font-weight: 600;
+  color: var(--rsc-text);
+  white-space: nowrap;
+}
+
+/* Financial breakdown rows */
+.order-modal__sub-finance {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 1rem;
+}
+
+.order-modal__finance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  font-size: 0.8125rem;
+  border-bottom: 1px dashed var(--rsc-border);
+}
+
+.order-modal__finance-row:last-child {
+  border-bottom: none;
+}
+
+.order-modal__finance-label {
+  color: var(--rsc-text-muted);
+}
+
+.order-modal__finance-label code {
+  font-size: 0.775rem;
+  background: var(--rsc-border);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  color: var(--rsc-navy-dark);
+}
+
+.order-modal__finance-payout {
+  font-weight: 700;
+  color: #16a34a;
+  white-space: nowrap;
+}
+
+.order-modal__finance-commission {
+  font-weight: 700;
+  color: #dc2626;
+  white-space: nowrap;
+}
+
+/* Platform surpluses (dashed border) */
+.order-modal__surplus-card {
+  border: 1.5px dashed var(--rsc-navy);
+  border-radius: var(--rsc-radius);
+  overflow: hidden;
+}
+
+.order-modal__surplus-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--rsc-navy-dark);
+  background: color-mix(in srgb, var(--rsc-navy) 4%, white);
+  border-bottom: 1px dashed var(--rsc-navy);
+}
+
+.order-modal__surplus-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--rsc-text-muted);
+  border-bottom: 1px dashed var(--rsc-border);
+}
+
+.order-modal__surplus-row:last-child {
+  border-bottom: none;
+}
+
+.order-modal__surplus-row span:last-child {
+  font-weight: 600;
+  color: var(--rsc-text);
+}
+
+/* Grand total — pinned between scrollable body and footer */
+.order-modal__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--rsc-navy-dark);
+  color: white;
+  font-size: 0.9375rem;
+  flex-shrink: 0;
+}
+
+.order-modal__total strong {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+/* Footer */
+.order-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--rsc-border);
+  flex-shrink: 0;
 }
 
 /* ── Outlet Detail Page ───────────────────────────────────────────────── */
@@ -1827,11 +2098,51 @@ th {
   color: var(--rsc-ink);
 }
 
+/* Copy-to-clipboard button (used in order modal + outlet detail) */
+.copy-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--rsc-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--rsc-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.copy-btn:hover {
+  background: color-mix(in srgb, var(--rsc-navy) 8%, transparent);
+  color: var(--rsc-navy);
+  border-color: var(--rsc-navy);
+}
+
+.copy-btn--copied {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
 .modal__body {
   display: grid;
   gap: 1.25rem;
   padding: 1.5rem;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .modal__actions {

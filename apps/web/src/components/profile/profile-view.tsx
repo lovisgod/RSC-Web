@@ -4,15 +4,16 @@ import { Card } from "@rsc/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, KeyRound, Loader2, MapPin, MapPinCheck, X, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { changePasswordSchema, type ChangePasswordFormData } from "@/src/lib/schemas/auth";
 import { profileSchema, type ProfileFormData } from "@/src/lib/schemas/profile";
-import { deliveryAddressSchema, type DeliveryAddressFormData } from "@/src/lib/schemas/delivery";
+import { geocodeAddress, reverseGeocode, type GeocodingResult } from "@/src/lib/geocoding";
 import { useGeolocation } from "@/src/hooks/use-geolocation";
+import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useAddressStore } from "@/src/stores/address-store";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
@@ -203,42 +204,91 @@ function ProfileHeader() {
 
 // ── Default address modal ─────────────────────────────────────────────────────
 
-const inputClass =
+const addrInputClass =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none";
 
 function DefaultAddressModal({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient();
   const geo = useGeolocation();
-  const setDefaultAddress = useAddressStore((s) => s.setDefaultAddress);
+  const { data: savedAddresses = [] } = useDeliveryAddresses();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<DeliveryAddressFormData>({ resolver: zodResolver(deliveryAddressSchema) });
+  const [addressText, setAddressText] = useState("");
+  const [geocoding, setGeocoding] = useState(false);
+  const [geoResult, setGeoResult] = useState<GeocodingResult | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [reverseGeocoding, setReverseGeocoding] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const coords =
+    geo.coords ??
+    (geoResult ? { latitude: geoResult.latitude, longitude: geoResult.longitude } : null);
+
+  // When GPS is pinned, reverse geocode to fill the address text
+  useEffect(() => {
+    if (!geo.coords) return;
+    setGeoResult(null);
+    setGeoError(null);
+    setReverseGeocoding(true);
+    void reverseGeocode(geo.coords.latitude, geo.coords.longitude)
+      .then((result) => {
+        setReverseGeocoding(false);
+        if (result) {
+          setGeoResult(result);
+          setAddressText(result.displayName.split(",").slice(0, 2).join(", ").trim());
+        } else {
+          setAddressText("Current location");
+        }
+      })
+      .catch(() => setReverseGeocoding(false));
+  }, [geo.coords]);
+
+  function handleAddressChange(value: string) {
+    setAddressText(value);
+    setGeoResult(null);
+    setGeoError(null);
+    if (geo.coords) geo.reset();
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.trim().length < 5) return;
+
+    debounceRef.current = setTimeout(() => {
+      setGeocoding(true);
+      void geocodeAddress(value.trim())
+        .then((result) => {
+          setGeocoding(false);
+          if (result) setGeoResult(result);
+          else setGeoError("Address not found. Try a more specific address.");
+        })
+        .catch(() => {
+          setGeocoding(false);
+          setGeoError("Geocoding failed. Please try again.");
+        });
+    }, 1500);
+  }
 
   const mutation = useMutation({
-    mutationFn: (data: DeliveryAddressFormData) => {
-      if (!geo.coords) throw new Error("Location required");
+    mutationFn: () => {
+      if (!coords) throw new Error("Coordinates required");
+      const isAlreadyDefault = savedAddresses.some(
+        (a) =>
+          a.isDefault &&
+          Math.abs(a.latitude - coords.latitude) < 0.0001 &&
+          Math.abs(a.longitude - coords.longitude) < 0.0001,
+      );
+      if (isAlreadyDefault) return Promise.resolve(savedAddresses.find((a) => a.isDefault)!);
       return apiClient.createDeliveryAddress({
-        ...data,
-        latitude: geo.coords.latitude,
-        longitude: geo.coords.longitude,
+        label: geoResult?.label || (geo.coords ? "My Location" : addressText.slice(0, 30)),
+        addressLine: addressText || geoResult?.addressLine || "My Location",
+        city: geoResult?.city || "Lagos",
+        state: geoResult?.state || "Lagos State",
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         isDefault: true,
       });
     },
-    onSuccess: (saved) => {
-      setDefaultAddress({
-        label: saved.label,
-        addressLine: saved.addressLine,
-        city: saved.city,
-        state: saved.state,
-        latitude: saved.latitude,
-        longitude: saved.longitude,
-      });
-      reset();
-      geo.reset();
-      setTimeout(onClose, 2500);
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["delivery-addresses"] });
+      setTimeout(onClose, 2000);
     },
   });
 
@@ -246,7 +296,8 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
     if (e.target === e.currentTarget && !mutation.isPending) onClose();
   }
 
-  const canSubmit = !!geo.coords && !geo.locating && !mutation.isPending;
+  const busy = geocoding || geo.locating || reverseGeocoding;
+  const canSubmit = !!coords && !busy && !mutation.isPending;
 
   return (
     <div
@@ -264,7 +315,7 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -272,8 +323,8 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <div className="p-6">
-          {/* Pending */}
+        <div className="p-6 space-y-3">
+          {/* Saving */}
           {mutation.isPending && (
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="w-12 h-12 animate-spin" style={{ color: "var(--rsc-main)" }} />
@@ -285,99 +336,79 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
           {mutation.isSuccess && (
             <div className="flex flex-col items-center gap-3 py-8">
               <MapPinCheck className="w-14 h-14 text-green-500" />
-              <p className="text-base font-bold text-gray-900">Address saved!</p>
+              <p className="text-base font-bold text-gray-900">Default address saved!</p>
               <p className="text-sm text-gray-400 text-center">
-                Your default delivery address has been updated.
+                It will now appear as your quick-fill option at checkout.
               </p>
             </div>
           )}
 
           {/* Form */}
           {!mutation.isPending && !mutation.isSuccess && (
-            <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-3">
-              {/* Label */}
-              <div>
+            <>
+              {/* Address text input */}
+              <div className="relative">
                 <input
-                  {...register("label")}
-                  placeholder='Label (e.g. "Home", "Work")'
-                  className={inputClass}
+                  value={addressText}
+                  onChange={(e) => handleAddressChange(e.target.value)}
+                  placeholder="Type your delivery address…"
+                  className={addrInputClass}
                 />
-                {errors.label && (
-                  <p className="mt-1 text-xs text-red-500">{errors.label.message}</p>
+                {(geocoding || reverseGeocoding) && (
+                  <Loader2 className="absolute right-3 top-3.5 w-4 h-4 animate-spin text-gray-400" />
+                )}
+                {geoResult && !geocoding && (
+                  <CheckCircle2 className="absolute right-3 top-3.5 w-4 h-4 text-green-500" />
                 )}
               </div>
 
-              {/* Address line */}
-              <div>
-                <input
-                  {...register("addressLine")}
-                  placeholder="Street address"
-                  className={inputClass}
-                />
-                {errors.addressLine && (
-                  <p className="mt-1 text-xs text-red-500">{errors.addressLine.message}</p>
-                )}
+              {/* Divider */}
+              <div className="flex items-center gap-2 text-xs text-gray-300">
+                <span className="flex-1 h-px bg-gray-100" />
+                <span>or</span>
+                <span className="flex-1 h-px bg-gray-100" />
               </div>
 
-              {/* City + State */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <input {...register("city")} placeholder="City" className={inputClass} />
-                  {errors.city && (
-                    <p className="mt-1 text-xs text-red-500">{errors.city.message}</p>
-                  )}
-                </div>
-                <div>
-                  <input {...register("state")} placeholder="State" className={inputClass} />
-                  {errors.state && (
-                    <p className="mt-1 text-xs text-red-500">{errors.state.message}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Geolocation */}
+              {/* GPS pin button */}
               <button
                 type="button"
-                onClick={geo.detect}
-                disabled={geo.locating}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 border-2"
-                style={
-                  geo.coords
-                    ? { borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }
-                    : { borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }
-                }
+                onClick={geo.coords ? geo.reset : geo.detect}
+                disabled={geo.locating || reverseGeocoding}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold border-2 transition-opacity hover:opacity-90 disabled:opacity-60"
+                style={{ borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }}
               >
-                {geo.locating ? (
+                {geo.locating || reverseGeocoding ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Getting location…
+                    {geo.locating ? "Getting location…" : "Looking up address…"}
                   </>
                 ) : geo.coords ? (
                   <>
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-green-600">Location pinned</span>
+                    <span className="text-green-600">Location pinned — tap to clear</span>
                   </>
                 ) : (
                   <>
                     <MapPin className="w-4 h-4" />
-                    Pin My Location
+                    Pin My Current Location
                   </>
                 )}
               </button>
 
-              {geo.error && (
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
-                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-red-600">{geo.error}</p>
-                </div>
-              )}
-
-              {!geo.coords && !geo.error && (
-                <p className="text-xs text-center text-gray-400">
-                  Pin your location to attach coordinates to this address
+              {/* Coordinate confirmation */}
+              {coords && !busy && (
+                <p className="text-xs text-center text-green-600 font-medium">
+                  ✓ Coordinates ready ({coords.latitude.toFixed(4)}, {coords.longitude.toFixed(4)})
                 </p>
               )}
 
+              {/* Errors */}
+              {(geoError ?? geo.error) && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
+                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-600">{geoError ?? geo.error}</p>
+                </div>
+              )}
               {mutation.isError && (
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
                   <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
@@ -387,19 +418,22 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
                 </div>
               )}
 
-              {!canSubmit && !geo.error && (
-                <p className="text-xs text-center text-gray-400">Pin your location before saving</p>
+              {!coords && !busy && !(geoError ?? geo.error) && (
+                <p className="text-xs text-center text-gray-400">
+                  Type an address or pin your location to continue
+                </p>
               )}
 
               <button
-                type="submit"
+                type="button"
+                onClick={() => mutation.mutate()}
                 disabled={!canSubmit}
                 className="w-full py-3 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: "var(--rsc-main)" }}
               >
-                Save as Default Address
+                Set as Default Address
               </button>
-            </form>
+            </>
           )}
         </div>
       </div>
@@ -411,14 +445,22 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
 
 function DefaultAddressCard() {
   const [open, setOpen] = useState(false);
+  const { data: savedAddresses = [] } = useDeliveryAddresses();
+  const defaultAddr = savedAddresses.find((a) => a.isDefault) ?? null;
 
   return (
     <>
       <Card>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <h3 className="font-semibold text-gray-900">Default Delivery Address</h3>
-            <p className="text-sm text-gray-400 mt-0.5">Your saved address for quick checkout.</p>
+            {defaultAddr ? (
+              <p className="text-sm text-gray-500 mt-0.5 truncate">
+                {defaultAddr.addressLine}, {defaultAddr.city}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-400 mt-0.5">No default address set.</p>
+            )}
           </div>
           <button
             type="button"
@@ -426,7 +468,7 @@ function DefaultAddressCard() {
             className="text-sm font-semibold hover:underline flex-shrink-0"
             style={{ color: "var(--rsc-main)" }}
           >
-            Set Address
+            {defaultAddr ? "Change" : "Set Address"}
           </button>
         </div>
       </Card>

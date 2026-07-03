@@ -547,3 +547,13 @@ export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
 export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
 export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
+
+export const platformChargesSchema = z.object({
+  platformCommissionBps: z.int().nonnegative(),
+  defaultVatBps: z.int().nonnegative(),
+  deliveryFeeMinor: z.int().nonnegative(),
+  serviceFeeMinor: z.int().nonnegative(),
+  currency: currencySchema,
+});
+
+export type PlatformCharges = z.infer<typeof platformChargesSchema>;

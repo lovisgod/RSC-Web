@@ -13,5 +13,7 @@ export function getMutationErrorMessage(
     return statusMessages[error.status] ?? error.message;
   }
 
+  if (error instanceof Error) return error.message;
+
   return "Something went wrong. Please try again.";
 }
