@@ -250,17 +250,20 @@ function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
             name: li.itemNameSnapshot,
             quantity: li.quantity,
             priceMinor: li.unitPriceMinor,
-            modifiers:
-              li.modifiersSnapshot.length > 0
-                ? li.modifiersSnapshot.map((m) => ({
+            ...(li.modifiersSnapshot.length > 0
+              ? {
+                  modifiers: li.modifiersSnapshot.map((m) => ({
                     name: m.name,
                     priceDeltaMinor: m.priceDeltaMinor,
-                  }))
-                : undefined,
+                  })),
+                }
+              : {}),
           })),
         totalAmountMinor: sub.subtotalMinor,
         createdAt: sub.createdAt,
-        estimatedPrepTimeMinutes: sub.preparationTimeMinutes,
+        ...(sub.preparationTimeMinutes !== undefined
+          ? { estimatedPrepTimeMinutes: sub.preparationTimeMinutes }
+          : {}),
       })),
   );
 }

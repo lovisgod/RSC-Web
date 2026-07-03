@@ -148,15 +148,16 @@ function AddItemModal({
           outletId,
           categoryId,
           name: name.trim(),
-          description: description.trim() || undefined,
-          deliveryTimeRange: deliveryTimeRange.trim() || undefined,
+          ...(description.trim() ? { description: description.trim() } : {}),
+          ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
           priceMinor,
           isAvailable,
           sortOrder: parseInt(sortOrder, 10) || 0,
-          modifierGroupIds:
-            selectedModifierGroupIds.length > 0 ? selectedModifierGroupIds : undefined,
+          ...(selectedModifierGroupIds.length > 0
+            ? { modifierGroupIds: selectedModifierGroupIds }
+            : {}),
         },
-        imageFile: imageFile ?? undefined,
+        ...(imageFile ? { imageFile } : {}),
       },
       {
         onSuccess: onClose,
@@ -416,16 +417,17 @@ function EditItemModal({
           outletId,
           categoryId,
           name: name.trim(),
-          description: description.trim() || undefined,
-          imageUrl: item.imageUrl ?? undefined,
-          deliveryTimeRange: deliveryTimeRange.trim() || undefined,
+          ...(description.trim() ? { description: description.trim() } : {}),
+          ...(item.imageUrl ? { imageUrl: item.imageUrl } : {}),
+          ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
           priceMinor,
           isAvailable,
           sortOrder: parseInt(sortOrder, 10) || 0,
-          modifierGroupIds:
-            selectedModifierGroupIds.length > 0 ? selectedModifierGroupIds : undefined,
+          ...(selectedModifierGroupIds.length > 0
+            ? { modifierGroupIds: selectedModifierGroupIds }
+            : {}),
         },
-        imageFile: imageFile ?? undefined,
+        ...(imageFile ? { imageFile } : {}),
       },
       { onSuccess: onClose, onError: triggerShake },
     );
@@ -699,7 +701,7 @@ export function MenuPage() {
         <MenuItemDetail
           itemId={selectedItemId}
           outletId={outletId}
-          categoryName={selectedCategoryName}
+          {...(selectedCategoryName ? { categoryName: selectedCategoryName } : {})}
           onBack={() => setSelectedItemId(null)}
           onEdit={setEditingItem}
         />

@@ -41,3 +41,26 @@ export const DEFAULT_DELIVERY: DeliveryForm = {
 export const CHECKOUT_STEPS = ["Cart", "Fulfillment", "Payment", "Confirmation"] as const;
 
 export const VAT_RATE = 0.075;
+
+/** Snapshot of cart + server totals captured at payment initiation.
+ *  Keeps the sidebar populated after the local cart is cleared. */
+export interface OrderSnapshot {
+  groups: Array<{
+    outletId: string;
+    outletName: string;
+    items: Array<{
+      id: string;
+      name: string;
+      quantity: number;
+      notes: string;
+      unitPriceMinor: number;
+    }>;
+  }>;
+  totals: {
+    subtotalMinor: number;
+    deliveryFeeMinor: number;
+    serviceFeeMinor: number;
+    vatMinor: number;
+    totalMinor: number;
+  };
+}

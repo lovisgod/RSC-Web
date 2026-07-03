@@ -14,6 +14,7 @@ import {
   type DeliveryForm,
   type DeliveryZone,
   type FulfillmentMode,
+  type OrderSnapshot,
 } from "@/src/lib/data/checkout";
 import { geocodeAddress } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
@@ -44,7 +45,7 @@ export function FulfillmentStep({
   onComplete,
 }: {
   initial: DeliveryForm;
-  onComplete: (data: DeliveryForm, orderId: string) => void;
+  onComplete: (data: DeliveryForm, orderId: string, snapshot: OrderSnapshot) => void;
 }) {
   const { data: cart } = useCart();
   const clearCart = useCartStore((s) => s.clear);
@@ -246,6 +247,21 @@ export function FulfillmentStep({
       );
     },
     onSuccess: (result) => {
+      // Snapshot cart before clearing so the sidebar stays populated on later steps
+      const snapshot: OrderSnapshot = {
+        groups: cart.groups.map((g) => ({
+          outletId: g.outletId,
+          outletName: g.outletName,
+          items: g.items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            notes: item.notes,
+            unitPriceMinor: item.unitPriceMinor,
+          })),
+        })),
+        totals: result.totals,
+      };
       clearCart();
       onComplete(
         {
@@ -258,6 +274,7 @@ export function FulfillmentStep({
           instructions,
         },
         result.reference,
+        snapshot,
       );
     },
   });

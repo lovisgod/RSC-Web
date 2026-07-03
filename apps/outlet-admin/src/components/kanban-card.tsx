@@ -2,7 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { MasterOrderStatus, SubOrderStatus } from "@rsc/contracts";
 import { GripVertical } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { printReceipt } from "../lib/native-bridge";
 import type { PosSubOrder } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
@@ -27,22 +27,6 @@ const DELIVERY_MODE_EMOJI: Record<string, string> = {
   TAKEOUT: "🛍️",
   DINE_IN: "🍽️",
 };
-
-// ─── Elapsed timer ────────────────────────────────────────────────────────────
-
-function useElapsedMinutes(fromIso: string): number {
-  const [minutes, setMinutes] = useState(() =>
-    Math.floor((Date.now() - new Date(fromIso).getTime()) / 60_000),
-  );
-  useEffect(() => {
-    const id = setInterval(
-      () => setMinutes(Math.floor((Date.now() - new Date(fromIso).getTime()) / 60_000)),
-      30_000,
-    );
-    return () => clearInterval(id);
-  }, [fromIso]);
-  return minutes;
-}
 
 // ─── Compact item list ────────────────────────────────────────────────────────
 
@@ -226,8 +210,6 @@ function IncomingCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
 // ─── Kitchen card (ACCEPTED / PREPARING) ─────────────────────────────────────
 
 function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
-  const _elapsed = useElapsedMinutes(order.createdAt);
-
   async function handlePrint() {
     const result = await printReceipt({
       orderId: order.id,

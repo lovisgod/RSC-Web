@@ -446,6 +446,8 @@ export const subOrderDetailSchema = z.object({
   outletId: z.uuid(),
   status: z.string(),
   subtotalMinor: z.int().nonnegative(),
+  commissionMinor: z.int().nonnegative(),
+  netMinor: z.int().nonnegative(),
   currency: currencySchema,
   createdAt: z.iso.datetime(),
 });
@@ -461,6 +463,13 @@ export const orderLineItemSchema = z.object({
   quantity: z.int().positive(),
   lineTotalMinor: z.int().nonnegative(),
   currency: currencySchema,
+  modifiersSnapshot: z.array(
+    z.object({
+      id: z.uuid(),
+      name: z.string(),
+      priceDeltaMinor: z.int().nonnegative(),
+    }),
+  ),
 });
 
 export const orderDetailSchema = z.object({
