@@ -18,7 +18,10 @@ export function useUpdateMenuItem(outletId: string) {
         const uploaded = await uploadMenuItemImage(itemId, imageFile);
         imageUrl = uploaded.imageUrl ?? imageUrl;
       }
-      return updateMenuItem(itemId, { ...body, imageUrl });
+      return updateMenuItem(itemId, {
+        ...body,
+        ...(imageUrl ? { imageUrl } : {}),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pos", "outlet", outletId] });

@@ -23,7 +23,11 @@ export function useUpdateOrderStatus(outletId: string) {
       subOrderId: string;
       status: MasterOrderStatus;
       preparationTimeMinutes?: number;
-    }) => updateSubOrderStatus(subOrderId, { status, preparationTimeMinutes }),
+    }) =>
+      updateSubOrderStatus(subOrderId, {
+        status,
+        ...(preparationTimeMinutes !== undefined ? { preparationTimeMinutes } : {}),
+      }),
     onMutate: async ({ subOrderId, status }) => {
       const queryKey = ["pos", "orders", outletId] as const;
       await queryClient.cancelQueries({ queryKey });

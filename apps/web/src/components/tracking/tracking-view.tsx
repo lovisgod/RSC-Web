@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Card, EmptyState } from "@rsc/ui";
 import { ChevronDown } from "lucide-react";
@@ -194,13 +194,7 @@ export function TrackingView({ orderId }: { orderId: string | null }) {
   const { data: activeOrders, isPending } = useActiveOrders();
 
   // Pre-expand: URL param first, then default to first active order
-  const [expandedId, setExpandedId] = useState<string | null>(orderId);
-
-  useEffect(() => {
-    if (!expandedId && activeOrders && activeOrders.length > 0) {
-      setExpandedId(activeOrders[0]!.id);
-    }
-  }, [expandedId, activeOrders]);
+  const [expandedId, setExpandedId] = useState<string | null | undefined>(orderId ?? undefined);
 
   if (isPending) {
     return <p className="text-sm text-gray-400 py-8 text-center">Checking for active orders…</p>;
@@ -210,13 +204,15 @@ export function TrackingView({ orderId }: { orderId: string | null }) {
     return <NoActiveOrder />;
   }
 
+  const visibleExpandedId = expandedId === undefined ? activeOrders[0]!.id : expandedId;
+
   return (
     <div className="space-y-3">
       {activeOrders.map((order) => (
         <AccordionOrderItem
           key={order.id}
           order={order}
-          isOpen={expandedId === order.id}
+          isOpen={visibleExpandedId === order.id}
           onToggle={() => setExpandedId((prev) => (prev === order.id ? null : order.id))}
         />
       ))}

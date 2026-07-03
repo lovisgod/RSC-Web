@@ -226,11 +226,18 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
   // When GPS is pinned, reverse geocode to fill the address text
   useEffect(() => {
     if (!geo.coords) return;
-    setGeoResult(null);
-    setGeoError(null);
-    setReverseGeocoding(true);
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setGeoResult(null);
+      setGeoError(null);
+      setReverseGeocoding(true);
+    });
+
     void reverseGeocode(geo.coords.latitude, geo.coords.longitude)
       .then((result) => {
+        if (cancelled) return;
         setReverseGeocoding(false);
         if (result) {
           setGeoResult(result);
@@ -239,7 +246,13 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
           setAddressText("Current location");
         }
       })
-      .catch(() => setReverseGeocoding(false));
+      .catch(() => {
+        if (!cancelled) setReverseGeocoding(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [geo.coords]);
 
   function handleAddressChange(value: string) {
@@ -635,12 +648,6 @@ function DeleteAccountCard() {
   const signOut = useAuthStore((s) => s.signOut);
   const clearCart = useCartStore((s) => s.clear);
   const clearAddress = useAddressStore((s) => s.clear);
-
-  const { data: profile } = useQuery({
-    queryKey: ["profile"],
-    queryFn: () => apiClient.getProfile(),
-    staleTime: 5 * 60 * 1000,
-  });
 
   const mutation = useMutation({
     mutationFn: () => apiClient.deleteAccount(),

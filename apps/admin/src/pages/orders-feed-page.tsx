@@ -53,9 +53,9 @@ export function OrdersFeedPage() {
   const outletById = Object.fromEntries((outlets ?? []).map((o) => [o.id, o]));
 
   const { data, isLoading } = useOrdersFeed({
-    outletId: selectedOutletId,
-    status: status || undefined,
-    deliveryMode: deliveryMode || undefined,
+    ...(selectedOutletId ? { outletId: selectedOutletId } : {}),
+    ...(status ? { status } : {}),
+    ...(deliveryMode ? { deliveryMode } : {}),
   });
 
   const orders = data?.orders ?? [];

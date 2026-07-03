@@ -21,13 +21,13 @@ export function useRiderLocationStream(
   orderId: string | null,
   enabled: boolean,
 ): RiderLocation | null {
-  const [location, setLocation] = useState<RiderLocation | null>(null);
+  const [streamLocation, setStreamLocation] = useState<{
+    orderId: string;
+    location: RiderLocation;
+  } | null>(null);
 
   useEffect(() => {
-    if (!orderId || !enabled) {
-      setLocation(null);
-      return;
-    }
+    if (!orderId || !enabled) return;
 
     const es = new EventSource(
       `/api/v1/orders/${encodeURIComponent(orderId)}/rider-location/stream`,
@@ -38,7 +38,7 @@ export function useRiderLocationStream(
         const raw: unknown = JSON.parse(event.data as string);
         if (raw && typeof raw === "object" && "latitude" in raw) {
           const parsed = riderLocationSchema.safeParse(raw);
-          if (parsed.success) setLocation(parsed.data);
+          if (parsed.success) setStreamLocation({ orderId, location: parsed.data });
         }
       } catch {
         // ignore parse failures — empty `{}` ticks are expected
@@ -52,5 +52,5 @@ export function useRiderLocationStream(
     return () => es.close();
   }, [orderId, enabled]);
 
-  return location;
+  return enabled && orderId && streamLocation?.orderId === orderId ? streamLocation.location : null;
 }
