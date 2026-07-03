@@ -145,6 +145,7 @@ describe("customer registration contracts", () => {
         user: {
           id: "2abf9577-027c-4936-83a8-e004fd56a46e",
           role: "CUSTOMER",
+          outletId: null,
         },
         accessTokenExpiresInSeconds: 900,
         refreshTokenExpiresInSeconds: 604800,
