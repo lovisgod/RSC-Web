@@ -19,6 +19,8 @@ Endpoints:
 - `GET http://localhost:4000/api/v1/health/ready`
 - Swagger UI: `http://localhost:4000/api/docs`
 - OpenAPI JSON: `http://localhost:4000/api/openapi.json`
+- Realtime Socket.io contract: `GET /api/v1/realtime/contract` and
+  `docs/realtime.md`
 
 ## Customer registration and verification
 

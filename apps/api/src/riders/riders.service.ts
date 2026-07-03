@@ -26,6 +26,10 @@ export class RidersService {
       throw new ForbiddenException("Only riders can record rider locations");
     }
 
+    if (input.masterOrderId) {
+      await this.ensureCanRecordOrderLocation(user.id, input.masterOrderId);
+    }
+
     const rows = await this.dataSource.query<RiderLocation[]>(
       `
         INSERT INTO rider_locations (rider_id, master_order_id, geom)
@@ -46,6 +50,30 @@ export class RidersService {
     });
 
     return location;
+  }
+
+  private async ensureCanRecordOrderLocation(
+    riderId: string,
+    masterOrderId: string,
+  ): Promise<void> {
+    const rows = await this.dataSource.query<Array<{ riderId: string | null }>>(
+      `
+        SELECT rider_id AS "riderId"
+        FROM master_orders
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [masterOrderId],
+    );
+    const order = rows[0];
+
+    if (!order) {
+      throw new ForbiddenException("Cannot record location for an unknown order");
+    }
+
+    if (order.riderId && order.riderId !== riderId) {
+      throw new ForbiddenException("Cannot record location for another rider's order");
+    }
   }
 
   listMine(user: AuthenticatedUser): Promise<RiderLocation[]> {

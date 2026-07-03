@@ -5,11 +5,13 @@ import { AuthModule } from "../auth/auth.module";
 import { Customer } from "../auth/customer.entity";
 import { MasterOrder } from "../orders/master-order.entity";
 import { SubOrder } from "../orders/sub-order.entity";
+import { RealtimeController } from "./realtime.controller";
 import { RealtimeGateway } from "./realtime.gateway";
 import { RealtimeService } from "./realtime.service";
 
 @Module({
   imports: [AuthModule, TypeOrmModule.forFeature([Customer, MasterOrder, SubOrder])],
+  controllers: [RealtimeController],
   providers: [RealtimeGateway, RealtimeService],
   exports: [RealtimeService],
 })
