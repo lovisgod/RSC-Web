@@ -574,6 +574,11 @@ export const orderDetailSchema = z.object({
   latestRiderLocation: riderLocationSchema.nullable(),
 });
 
+export const uploadedImageSchema = z.object({
+  url: z.url(),
+  publicId: z.string().min(1),
+});
+
 export const notificationSchema = z.object({
   id: z.uuid(),
   recipientId: z.uuid(),
@@ -583,6 +588,45 @@ export const notificationSchema = z.object({
   body: z.string().trim().min(1),
   isRead: z.boolean(),
   createdAt: z.iso.datetime(),
+});
+
+export const notificationCampaignTargetSegmentSchema = z.enum([
+  "ALL_CUSTOMERS",
+  "ACTIVE_CUSTOMERS",
+  "CUSTOMERS_WITH_DEVICE_TOKEN",
+]);
+
+export const notificationCampaignStatusSchema = z.enum([
+  "SCHEDULED",
+  "DISPATCHING",
+  "SENT",
+  "FAILED",
+]);
+
+export const createNotificationCampaignInputSchema = z.object({
+  title: z.string().trim().min(2).max(160),
+  body: z.string().trim().min(2).max(2_000),
+  targetSegment: notificationCampaignTargetSegmentSchema,
+  scheduledAt: z.iso.datetime(),
+  deepLink: z.string().trim().max(512).optional(),
+});
+
+export const notificationCampaignSchema = z.object({
+  id: z.uuid(),
+  createdById: z.uuid(),
+  title: z.string(),
+  body: z.string(),
+  targetSegment: notificationCampaignTargetSegmentSchema,
+  deepLink: z.string().nullable(),
+  scheduledAt: z.iso.datetime(),
+  status: notificationCampaignStatusSchema,
+  totalTargeted: z.int().nonnegative(),
+  sentCount: z.int().nonnegative(),
+  failedCount: z.int().nonnegative(),
+  dispatchedAt: z.iso.datetime().nullable(),
+  failureReason: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 
 export const adminOverviewSchema = z.object({
@@ -651,6 +695,12 @@ export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
+export type NotificationCampaignTargetSegment = z.infer<
+  typeof notificationCampaignTargetSegmentSchema
+>;
+export type NotificationCampaignStatus = z.infer<typeof notificationCampaignStatusSchema>;
+export type CreateNotificationCampaignInput = z.infer<typeof createNotificationCampaignInputSchema>;
+export type NotificationCampaign = z.infer<typeof notificationCampaignSchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;
 export type RiderLocation = z.infer<typeof riderLocationSchema>;
@@ -658,6 +708,7 @@ export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
 export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
 export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
+export type UploadedImage = z.infer<typeof uploadedImageSchema>;
 
 export const paginatedMenuItemsSchema = menuItemsPageSchema;
 

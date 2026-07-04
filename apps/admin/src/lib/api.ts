@@ -9,6 +9,8 @@ import type {
   LoginResult,
   LogoutResult,
   MenuItem,
+  NotificationCampaign,
+  CreateNotificationCampaignInput,
   OrderLineItem,
   OutletSummary,
   RegistrationResult,
@@ -239,6 +241,13 @@ export interface SendPromoBody {
 
 export const sendPromoNotification = (body: SendPromoBody): Promise<{ sent: number }> =>
   post("/api/v1/notifications/promos", body);
+
+export const listNotificationCampaigns = (): Promise<NotificationCampaign[]> =>
+  get("/api/v1/notifications/campaigns");
+
+export const scheduleNotificationCampaign = (
+  body: CreateNotificationCampaignInput,
+): Promise<NotificationCampaign> => post("/api/v1/notifications/campaigns", body);
 
 // ─── Admin accounts ───────────────────────────────────────────────────────────
 
