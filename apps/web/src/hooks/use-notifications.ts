@@ -6,6 +6,5 @@ export function useNotifications() {
   return useQuery({
     queryKey: ["notifications"],
     queryFn: () => apiClient.listNotifications(),
-    staleTime: 60 * 1000,
   });
 }

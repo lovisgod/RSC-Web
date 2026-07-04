@@ -27,7 +27,7 @@ export function Toaster() {
 
 function ToastMessage({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
   useEffect(() => {
-    const id = window.setTimeout(onDismiss, 4500);
+    const id = window.setTimeout(onDismiss, 4000);
     return () => window.clearTimeout(id);
   }, [onDismiss]);
 
@@ -35,9 +35,17 @@ function ToastMessage({ item, onDismiss }: { item: ToastItem; onDismiss: () => v
     <div
       role="alert"
       aria-live="assertive"
-      className={`fixed bottom-4 right-4 z-50 min-w-[280px] max-w-sm rounded-2xl px-4 py-3 text-sm font-medium shadow-2xl ${SEVERITY_CLASSES[item.severity]}`}
+      className={`fixed bottom-4 right-4 z-50 flex min-w-[280px] max-w-sm items-start gap-3 rounded-2xl px-4 py-3 text-sm font-medium shadow-2xl ${SEVERITY_CLASSES[item.severity]}`}
     >
-      {item.message}
+      <span className="flex-1">{item.message}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss"
+        className="mt-px shrink-0 opacity-70 transition hover:opacity-100"
+      >
+        ✕
+      </button>
     </div>
   );
 }

@@ -3,8 +3,10 @@
 import { Button, Card } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { ApiError } from "@rsc/api-client";
 import { apiClient } from "@/src/lib/api";
 import { formatNaira } from "@/src/lib/data/cart";
 import { getStatusConfig, type Order } from "@/src/lib/data/orders";
@@ -24,16 +26,24 @@ function formatDate(iso: string): string {
 
 export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const status = getStatusConfig(order.status);
 
   const reorderMutation = useMutation({
     mutationFn: () => apiClient.reorder(order.id),
-    onSuccess: () => {
-      toast.success("Reorder placed! Check your active orders.");
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+      } else {
+        toast.success("Reorder placed!");
+        router.push("/orders");
+      }
     },
-    onError: () => {
-      toast.error("Could not place reorder. Please try again.");
+    onError: (err) => {
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not place reorder. Please try again.",
+      );
     },
   });
 
@@ -83,7 +93,12 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
             {reorderMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reorder"}
           </Button>
         ) : (
-          <Button tone="primary" type="button">
+          <Button
+            tone="primary"
+            type="button"
+            className="!rounded-lg !px-4"
+            onClick={() => router.push(`/tracking?orderId=${order.id}`)}
+          >
             Track
           </Button>
         )}
