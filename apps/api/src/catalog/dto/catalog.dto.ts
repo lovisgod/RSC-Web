@@ -39,6 +39,13 @@ export class CreateOutletDto {
   @MaxLength(2_000)
   description?: string;
 
+  @ApiPropertyOptional({ example: "12 Admiralty Way, Lekki Phase 1" })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(1_000)
+  address?: string;
+
   @ApiProperty({ example: "Italian" })
   @Transform(trim)
   @IsString()

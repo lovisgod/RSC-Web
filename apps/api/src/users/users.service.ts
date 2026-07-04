@@ -23,6 +23,7 @@ import { SMS_SENDER, type SmsSender } from "../auth/sms/sms-sender";
 import { UserRole } from "../auth/user-role.enum";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { MediaService, type UploadedImageFile } from "../media/media.service";
+import type { OutletAdminQueryDto } from "./dto/outlet-admin-query.dto";
 import type { CreateRiderDto } from "./dto/rider.dto";
 import type { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
 
@@ -263,13 +264,19 @@ export class UsersService {
     };
   }
 
-  async listOutletAdmins(actor: AuthenticatedUser): Promise<OutletAdminResult[]> {
+  async listOutletAdmins(
+    actor: AuthenticatedUser,
+    query: OutletAdminQueryDto = {},
+  ): Promise<OutletAdminResult[]> {
     if (actor.role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException("Only super admins can list outlet admins");
     }
 
     const admins = await this.users.find({
-      where: { role: UserRole.ADMIN },
+      where: {
+        role: UserRole.ADMIN,
+        ...(query.outletId ? { outletId: query.outletId } : {}),
+      },
       order: { createdAt: "DESC" },
     });
 

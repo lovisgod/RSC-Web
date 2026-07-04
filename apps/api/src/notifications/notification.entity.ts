@@ -28,6 +28,9 @@ export class Notification {
   @Column({ type: "text" })
   body!: string;
 
+  @Column({ type: "jsonb", default: () => "'{}'::jsonb" })
+  data!: Record<string, unknown>;
+
   @Column({ name: "is_read", type: "boolean", default: false })
   isRead!: boolean;
 

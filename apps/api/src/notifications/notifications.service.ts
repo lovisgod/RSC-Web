@@ -105,10 +105,11 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
           token: recipient.fcmToken,
           title: input.title,
           body: input.body,
-          data: {
+          data: stringifyPushData({
+            ...(input.data ?? {}),
             notificationId: notification.id,
             type: notification.type,
-          },
+          }),
         });
       } catch (error) {
         this.logger.warn(
@@ -303,6 +304,15 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
 
     return query.getMany();
   }
+}
+
+function stringifyPushData(input: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(input).map(([key, value]) => [
+      key,
+      typeof value === "string" ? value : JSON.stringify(value),
+    ]),
+  );
 }
 
 interface NotificationCampaignJob {

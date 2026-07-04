@@ -4,6 +4,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthModule } from "../auth/auth.module";
 import { Customer } from "../auth/customer.entity";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { Outlet } from "../outlets/outlet.entity";
 import { PaymentsModule } from "../payments/payments.module";
 import { RealtimeModule } from "../realtime/realtime.module";
 import { MasterOrder } from "./master-order.entity";
@@ -19,7 +20,14 @@ import { SubOrder } from "./sub-order.entity";
     NotificationsModule,
     PaymentsModule,
     RealtimeModule,
-    TypeOrmModule.forFeature([Customer, MasterOrder, SubOrder, OrderLineItem, OrderStatusEvent]),
+    TypeOrmModule.forFeature([
+      Customer,
+      Outlet,
+      MasterOrder,
+      SubOrder,
+      OrderLineItem,
+      OrderStatusEvent,
+    ]),
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

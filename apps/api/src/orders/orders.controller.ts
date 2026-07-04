@@ -70,6 +70,19 @@ export class OrdersController {
     return this.orders.getMine(request.user!, id);
   }
 
+  @Get(":id/dispatch")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RIDER)
+  @ApiMessage("Rider dispatch retrieved")
+  @ApiOperation({
+    summary: "Get rider dispatch detail",
+    description:
+      "Returns pickup outlets, pickup codes, items, drop-off details, and order identifiers for a rider dispatch screen. Riders can only view dispatches assigned to them.",
+  })
+  getDispatch(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
+    return this.orders.getDispatch(request.user!, id);
+  }
+
   @Post(":id/reorder")
   @ApiMessage("Reorder initiated")
   @ApiOperation({

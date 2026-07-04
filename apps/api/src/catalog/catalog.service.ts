@@ -86,6 +86,7 @@ export class CatalogService {
       this.outlets.create({
         name: input.name,
         description: input.description ?? null,
+        address: input.address ?? null,
         cuisineType: input.cuisineType,
         imageUrl: input.imageUrl ?? null,
         isOnline: input.isOnline ?? true,
@@ -109,6 +110,7 @@ export class CatalogService {
     Object.assign(outlet, {
       ...input,
       description: input.description === undefined ? outlet.description : input.description,
+      address: input.address === undefined ? outlet.address : input.address,
       imageUrl: input.imageUrl === undefined ? outlet.imageUrl : input.imageUrl,
     });
 
