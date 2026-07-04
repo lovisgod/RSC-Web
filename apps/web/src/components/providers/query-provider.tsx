@@ -26,7 +26,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         mutationCache: new MutationCache({ onError: handleGlobalError }),
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000,
+            staleTime: 0,
             retry: (failureCount, error) => {
               if (error instanceof ApiError && error.status === 401) return false;
               return failureCount < 1;

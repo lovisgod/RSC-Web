@@ -1,13 +1,23 @@
 import axios, { type AxiosError } from "axios";
-import type {
-  LoginResult,
-  LogoutResult,
-  MenuItem,
-  MenuCategorySummary,
-  OutletSummary,
-  SubOrderStatus,
-  UploadedImage,
+import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
+import {
+  changePasswordInputSchema,
+  changePasswordResultSchema,
+  type ChangePasswordInput,
+  type ChangePasswordResult,
+  type ItemModifierGroup,
+  type LoginResult,
+  type LogoutResult,
+  type MasterOrderStatus,
+  type MenuItem,
+  type OutletSummary,
+  type SubOrderStatus,
+  type UploadedImage,
+  userProfileSchema,
+  type UserProfile,
 } from "@rsc/contracts";
+
+import { authStore } from "../stores/auth-store";
 
 // ─── Axios instance ───────────────────────────────────────────────────────────
 
@@ -17,11 +27,55 @@ export const http = axios.create({
   headers: { Accept: "application/json" },
 });
 
+const PUBLIC_AUTH_ENDPOINTS = ["/api/v1/auth/login"];
+
+let isRedirectingToLogin = false;
+
+function redirectOnUnauthorized(error: AxiosError) {
+  const path = error.config?.url ?? "";
+
+  if (
+    error.response?.status !== 401 ||
+    typeof window === "undefined" ||
+    isRedirectingToLogin ||
+    window.location.pathname === "/login" ||
+    PUBLIC_AUTH_ENDPOINTS.some((endpoint) => path.startsWith(endpoint))
+  ) {
+    return;
+  }
+
+  isRedirectingToLogin = true;
+  authStore.setUser(null);
+  window.location.replace("/login");
+}
+
+function redirectOnServerError(error: AxiosError) {
+  if (
+    (error.response?.status ?? 0) < 500 ||
+    typeof window === "undefined" ||
+    isRedirectingToLogin ||
+    window.location.pathname === "/login" ||
+    !authStore.isAuthenticated()
+  ) {
+    return;
+  }
+
+  isRedirectingToLogin = true;
+  authStore.setUser(null);
+  window.location.replace("/login");
+}
+
 // Unwrap API errors into plain Error so TanStack mutation.error is always Error
 http.interceptors.response.use(
   (res) => res,
   (err: AxiosError<{ message?: string }>) => {
-    throw new Error(err.response?.data?.message ?? err.message ?? "An unexpected error occurred");
+    redirectOnUnauthorized(err);
+    redirectOnServerError(err);
+    throw new Error(
+      (err.response?.status ?? 0) >= 500
+        ? SERVER_ERROR_MESSAGE
+        : (err.response?.data?.message ?? err.message ?? "An unexpected error occurred"),
+    );
   },
 );
 
@@ -44,6 +98,16 @@ export const login = (body: { identifier: string; password: string }): Promise<L
 
 export const logout = (): Promise<LogoutResult> => post("/api/v1/auth/logout");
 
+export const changePassword = async (body: ChangePasswordInput): Promise<ChangePasswordResult> => {
+  const payload = changePasswordInputSchema.parse(body);
+  return changePasswordResultSchema.parse(
+    await post<unknown>("/api/v1/auth/change-password", payload),
+  );
+};
+
+export const getProfile = async (): Promise<UserProfile> =>
+  userProfileSchema.parse(await get<unknown>("/api/v1/users/me"));
+
 // ─── Outlet ───────────────────────────────────────────────────────────────────
 
 export const getOutletById = (outletId: string): Promise<OutletSummary> =>
@@ -56,33 +120,62 @@ export const toggleOutletOnlineStatus = (
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────
 
-export const listMenuCategories = (outletId: string): Promise<MenuCategorySummary[]> =>
-  get(`/api/v1/outlets/${outletId}/menu/categories`);
-
-export const listMenuItems = (outletId: string, categoryId?: string): Promise<MenuItem[]> =>
-  get(
-    categoryId
-      ? `/api/v1/outlets/${outletId}/menu/items?categoryId=${categoryId}`
-      : `/api/v1/outlets/${outletId}/menu/items`,
-  );
-
 export const toggleMenuItemAvailability = (
-  outletId: string,
   itemId: string,
   body: { isAvailable: boolean },
-): Promise<MenuItem> =>
-  patchReq(`/api/v1/outlets/${outletId}/menu/items/${itemId}/availability`, body);
+): Promise<MenuItem> => patchReq(`/api/v1/menu-items/${itemId}/availability`, body);
 
 export interface CreateMenuItemBody {
+  outletId: string;
   categoryId: string;
   name: string;
-  description?: string | undefined;
+  description?: string;
+  deliveryTimeRange?: string;
   priceMinor: number;
-  emoji?: string | undefined;
+  isAvailable: boolean;
+  sortOrder?: number;
+  modifierGroupIds?: string[];
 }
 
-export const createMenuItem = (outletId: string, body: CreateMenuItemBody): Promise<MenuItem> =>
-  post(`/api/v1/outlets/${outletId}/menu/items`, body);
+// Step 1: create the item as JSON → returns item with id
+export const createMenuItem = (body: CreateMenuItemBody): Promise<MenuItem> =>
+  post("/api/v1/menu-items", body);
+
+// Step 2: upload image using the id returned by step 1
+export const uploadMenuItemImage = (itemId: string, file: File): Promise<MenuItem> => {
+  const form = new FormData();
+  form.append("file", file);
+  return http
+    .post<Envelope<MenuItem>>(`/api/v1/menu-items/${itemId}/image`, form)
+    .then((r) => r.data.data);
+};
+
+export interface UpdateMenuItemBody {
+  outletId: string;
+  categoryId: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  deliveryTimeRange?: string;
+  priceMinor: number;
+  isAvailable: boolean;
+  sortOrder?: number;
+  modifierGroupIds?: string[];
+}
+
+export const updateMenuItem = (itemId: string, body: UpdateMenuItemBody): Promise<MenuItem> =>
+  patchReq(`/api/v1/menu-items/${itemId}`, body);
+
+export const deleteMenuItem = (itemId: string): Promise<void> =>
+  http.delete(`/api/v1/menu-items/${itemId}`).then(() => undefined);
+
+export const getMenuItemById = (itemId: string): Promise<MenuItem> =>
+  get(`/api/v1/menu-items/${itemId}`);
+
+// ─── Item modifier groups ─────────────────────────────────────────────────────
+
+export const listItemModifierGroups = (): Promise<ItemModifierGroup[]> =>
+  get("/api/v1/item-modifier-groups");
 
 export const uploadImage = (file: File): Promise<UploadedImage> => {
   const body = new FormData();
@@ -97,30 +190,117 @@ export const verifyHandoffCode = (
 ): Promise<{ verified: boolean; orderId?: string }> =>
   post(`/api/v1/outlets/${outletId}/orders/verify-handoff`, body);
 
-// ─── Sub-orders ───────────────────────────────────────────────────────────────
+// ─── Orders / Sub-orders ──────────────────────────────────────────────────────
+
+export interface PosSubOrderItemModifier {
+  name: string;
+  priceDeltaMinor: number;
+}
 
 export interface PosSubOrderItem {
   name: string;
   quantity: number;
   priceMinor: number;
+  modifiers?: PosSubOrderItemModifier[];
 }
 
 export interface PosSubOrder {
   id: string;
   masterOrderId: string;
-  status: string;
+  status: SubOrderStatus;
+  deliveryMode: string;
+  deliveryCode: string;
   items: PosSubOrderItem[];
   totalAmountMinor: number;
-  customerNote: string | null;
   createdAt: string;
+  estimatedPrepTimeMinutes?: number;
 }
 
-export const listSubOrders = (outletId: string): Promise<PosSubOrder[]> =>
-  get(`/api/v1/outlets/${outletId}/sub-orders`);
+// ─── GET /api/v1/orders/admin response types ──────────────────────────────────
 
+interface AdminLineItem {
+  id: string;
+  subOrderId: string;
+  outletId: string;
+  itemNameSnapshot: string;
+  quantity: number;
+  unitPriceMinor: number;
+  lineTotalMinor: number;
+  modifiersSnapshot: { id: string; name: string; priceDeltaMinor: number }[];
+}
+
+interface AdminSubOrder {
+  id: string;
+  masterOrderId: string;
+  outletId: string;
+  status: string;
+  subtotalMinor: number;
+  currency: string;
+  createdAt: string;
+  preparationTimeMinutes?: number;
+}
+
+interface AdminOrderEntry {
+  order: {
+    id: string;
+    deliveryMode: string;
+    deliveryCode: string;
+    createdAt: string;
+  };
+  subOrders: AdminSubOrder[];
+  lineItems: AdminLineItem[];
+}
+
+interface AdminOrdersData {
+  orders: AdminOrderEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
+  return data.orders.flatMap(({ order, subOrders, lineItems }) =>
+    subOrders
+      .filter((sub) => sub.outletId === outletId)
+      .map((sub) => ({
+        id: sub.id,
+        masterOrderId: order.id,
+        status: sub.status as SubOrderStatus,
+        deliveryMode: order.deliveryMode,
+        deliveryCode: order.deliveryCode,
+        items: lineItems
+          .filter((li) => li.subOrderId === sub.id)
+          .map((li) => ({
+            name: li.itemNameSnapshot,
+            quantity: li.quantity,
+            priceMinor: li.unitPriceMinor,
+            ...(li.modifiersSnapshot.length > 0
+              ? {
+                  modifiers: li.modifiersSnapshot.map((m) => ({
+                    name: m.name,
+                    priceDeltaMinor: m.priceDeltaMinor,
+                  })),
+                }
+              : {}),
+          })),
+        totalAmountMinor: sub.subtotalMinor,
+        createdAt: sub.createdAt,
+        ...(sub.preparationTimeMinutes !== undefined
+          ? { estimatedPrepTimeMinutes: sub.preparationTimeMinutes }
+          : {}),
+      })),
+  );
+}
+
+export const listAdminOrders = (outletId: string): Promise<PosSubOrder[]> =>
+  get<AdminOrdersData>(`/api/v1/orders/admin?outletId=${encodeURIComponent(outletId)}`).then(
+    (data) => toSubOrders(data, outletId),
+  );
+
+// PATCH /api/v1/orders/{subOrderId}/status
+// Body accepts MasterOrderStatus values; the server maps them to sub-order status internally:
+//   CONFIRMED → ACCEPTED | PARTIALLY_READY → PREPARING | READY → READY | DELIVERED → COLLECTED
 export const updateSubOrderStatus = (
-  outletId: string,
   subOrderId: string,
-  body: { status: SubOrderStatus },
-): Promise<PosSubOrder> =>
-  patchReq(`/api/v1/outlets/${outletId}/sub-orders/${subOrderId}/status`, body);
+  body: { status: MasterOrderStatus; preparationTimeMinutes?: number },
+): Promise<unknown> => patchReq(`/api/v1/orders/${subOrderId}/status`, body);

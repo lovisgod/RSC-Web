@@ -1,22 +1,35 @@
 import axios, { type AxiosError } from "axios";
-import type {
-  AdminOverview,
-  AdminResult,
-  CreateAdminInput,
-  CreateNotificationCampaignInput,
-  ForgotPasswordResult,
-  LoginResult,
-  LogoutResult,
-  MenuItem,
-  NotificationCampaign,
-  OrderSummary,
-  OutletSummary,
-  RegistrationResult,
-  ResendVerificationCodeResult,
-  ResetPasswordResult,
-  UploadedImage,
-  UserVerificationResult,
+import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
+import {
+  operationsQueueSchema,
+  operationsStatsQuerySchema,
+  operationsSummarySchema,
+  orderPulseQuerySchema,
+  orderPulseSchema,
+  type OperationsQueue,
+  type OperationsStatsQuery,
+  type OperationsSummary,
+  type OrderPulse,
+  type OrderPulseQuery,
+  type AdminResult,
+  type CreateAdminInput,
+  type CustomerOrder,
+  type ForgotPasswordResult,
+  type LoginResult,
+  type LogoutResult,
+  type MenuItem,
+  type NotificationCampaign,
+  type CreateNotificationCampaignInput,
+  type OrderLineItem,
+  type OutletSummary,
+  type RegistrationResult,
+  type ResendVerificationCodeResult,
+  type ResetPasswordResult,
+  type SubOrderDetail,
+  type UserVerificationResult,
 } from "@rsc/contracts";
+
+import { authStore } from "../stores/auth-store";
 
 // ─── Axios instance ───────────────────────────────────────────────────────────
 
@@ -26,11 +39,62 @@ export const http = axios.create({
   headers: { Accept: "application/json" },
 });
 
+const PUBLIC_AUTH_ENDPOINTS = [
+  "/api/v1/auth/login",
+  "/api/v1/auth/register",
+  "/api/v1/auth/verify-user",
+  "/api/v1/auth/resend-verification-code",
+  "/api/v1/auth/forgot-password",
+  "/api/v1/auth/reset-password",
+];
+
+let isRedirectingToLogin = false;
+
+function redirectOnUnauthorized(error: AxiosError) {
+  const path = error.config?.url ?? "";
+
+  if (
+    error.response?.status !== 401 ||
+    typeof window === "undefined" ||
+    isRedirectingToLogin ||
+    window.location.pathname === "/login" ||
+    PUBLIC_AUTH_ENDPOINTS.some((endpoint) => path.startsWith(endpoint))
+  ) {
+    return;
+  }
+
+  isRedirectingToLogin = true;
+  authStore.setUser(null);
+  window.location.replace("/login");
+}
+
+function redirectOnServerError(error: AxiosError) {
+  if (
+    (error.response?.status ?? 0) < 500 ||
+    typeof window === "undefined" ||
+    isRedirectingToLogin ||
+    window.location.pathname === "/login" ||
+    !authStore.isAuthenticated()
+  ) {
+    return;
+  }
+
+  isRedirectingToLogin = true;
+  authStore.setUser(null);
+  window.location.replace("/login");
+}
+
 // Unwrap API errors into plain Error so TanStack mutation.error is always Error
 http.interceptors.response.use(
   (res) => res,
   (err: AxiosError<{ message?: string }>) => {
-    throw new Error(err.response?.data?.message ?? err.message ?? "An unexpected error occurred");
+    redirectOnUnauthorized(err);
+    redirectOnServerError(err);
+    throw new Error(
+      (err.response?.status ?? 0) >= 500
+        ? SERVER_ERROR_MESSAGE
+        : (err.response?.data?.message ?? err.message ?? "An unexpected error occurred"),
+    );
   },
 );
 
@@ -87,18 +151,33 @@ export const resetPassword = (body: {
   phoneCode?: string;
 }): Promise<ResetPasswordResult> => post("/api/v1/auth/reset-password", body);
 
+// ─── Media ────────────────────────────────────────────────────────────────────
+
+export const uploadImage = (file: File): Promise<{ url: string }> => {
+  const fd = new FormData();
+  fd.append("image", file);
+  return post("/api/v1/media/images", fd);
+};
+
 // ─── Outlets ──────────────────────────────────────────────────────────────────
+
+export interface OutletBody {
+  name: string;
+  description?: string;
+  cuisineType: string;
+  isOnline?: boolean;
+  momentSubaccountCode: string;
+  imageUrl?: string;
+}
 
 export const listOutlets = (): Promise<OutletSummary[]> => get("/api/v1/outlets");
 
 export const getOutlet = (id: string): Promise<OutletSummary> => get(`/api/v1/outlets/${id}`);
 
-/** POST — send FormData (multipart) for image upload */
-export const createOutlet = (body: FormData): Promise<OutletSummary> =>
+export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
   post("/api/v1/outlets", body);
 
-/** PATCH — multipart/FormData; imageUrl field carries the new image file if provided */
-export const updateOutlet = (id: string, body: FormData): Promise<OutletSummary> =>
+export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<OutletSummary> =>
   patchReq(`/api/v1/outlets/${id}`, body);
 
 /** PATCH — dedicated endpoint for toggling online status only */
@@ -117,17 +196,47 @@ export const updateMenuItemAvailability = (
   body: { isAvailable: boolean },
 ): Promise<MenuItem> => patchReq(`/api/v1/menu-items/${id}/availability`, body);
 
-export const uploadImage = (file: File): Promise<UploadedImage> => {
-  const body = new FormData();
-  body.append("file", file);
-
-  return post("/api/v1/media/images", body);
-};
-
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-export const listOrders = (query?: string): Promise<OrderSummary[]> =>
-  get(`/api/v1/orders${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+export interface AdminOrdersQuery {
+  outletId?: string;
+  status?: string;
+  subOrderStatus?: string;
+  deliveryMode?: string;
+  customerId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface AdminOrderItem {
+  order: CustomerOrder;
+  subOrders: SubOrderDetail[];
+  lineItems: OrderLineItem[];
+}
+
+export interface AdminOrdersResult {
+  orders: AdminOrderItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export const listAdminOrders = (params?: AdminOrdersQuery): Promise<AdminOrdersResult> => {
+  const qs = new URLSearchParams();
+  if (params?.outletId) qs.set("outletId", params.outletId);
+  if (params?.status) qs.set("status", params.status);
+  if (params?.subOrderStatus) qs.set("subOrderStatus", params.subOrderStatus);
+  if (params?.deliveryMode) qs.set("deliveryMode", params.deliveryMode);
+  if (params?.customerId) qs.set("customerId", params.customerId);
+  if (params?.dateFrom) qs.set("dateFrom", params.dateFrom);
+  if (params?.dateTo) qs.set("dateTo", params.dateTo);
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  const query = qs.toString();
+  return get(`/api/v1/orders/admin${query ? `?${query}` : ""}`);
+};
 
 // ─── Notifications ────────────────────────────────────────────────────────────
 
@@ -142,23 +251,68 @@ export interface SendPromoBody {
 export const sendPromoNotification = (body: SendPromoBody): Promise<{ sent: number }> =>
   post("/api/v1/notifications/promos", body);
 
+export const listNotificationCampaigns = (): Promise<NotificationCampaign[]> =>
+  get("/api/v1/notifications/campaigns");
+
 export const scheduleNotificationCampaign = (
   body: CreateNotificationCampaignInput,
 ): Promise<NotificationCampaign> => post("/api/v1/notifications/campaigns", body);
-
-export const listNotificationCampaigns = (): Promise<NotificationCampaign[]> =>
-  get("/api/v1/notifications/campaigns");
 
 // ─── Admin accounts ───────────────────────────────────────────────────────────
 
 export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
   post("/api/v1/auth/admins", body);
 
+export interface OutletAdminUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: "ADMIN";
+  outletId: string;
+  isVerified?: boolean;
+  createdAt?: string;
+}
+
+export const listOutletAdmins = (outletId?: string): Promise<OutletAdminUser[]> => {
+  const qs = outletId ? `?outletId=${encodeURIComponent(outletId)}` : "";
+  return get(`/api/v1/users/outlet-admins${qs}`);
+};
+
+export const deleteOutletAdmin = (id: string): Promise<void> =>
+  http.delete(`/api/v1/users/outlet-admins/${id}`).then(() => undefined);
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
-export const getAdminOverview = (): Promise<AdminOverview> => get("/api/v1/admin/overview");
+function statsQuery(input: OperationsStatsQuery | OrderPulseQuery): string {
+  const params = new URLSearchParams();
+  if (input.outletId) params.set("outletId", input.outletId);
+  if ("range" in input && input.range) params.set("range", input.range);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
 
-export const apiClient = {
-  scheduleNotificationCampaign,
-  listNotificationCampaigns,
+export const getOperationsSummary = async (
+  input: OperationsStatsQuery = {},
+): Promise<OperationsSummary> => {
+  const query = operationsStatsQuerySchema.parse(input);
+  return operationsSummarySchema.parse(
+    await get<unknown>(`/api/v1/stats/operations/summary${statsQuery(query)}`),
+  );
+};
+
+export const getOrderPulse = async (input: OrderPulseQuery = {}): Promise<OrderPulse> => {
+  const query = orderPulseQuerySchema.parse(input);
+  return orderPulseSchema.parse(
+    await get<unknown>(`/api/v1/stats/operations/order-pulse${statsQuery(query)}`),
+  );
+};
+
+export const getOperationsQueue = async (
+  input: OperationsStatsQuery = {},
+): Promise<OperationsQueue> => {
+  const query = operationsStatsQuerySchema.parse(input);
+  return operationsQueueSchema.parse(
+    await get<unknown>(`/api/v1/stats/operations/queue${statsQuery(query)}`),
+  );
 };

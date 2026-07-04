@@ -24,11 +24,10 @@ export function LoginPage() {
   const { mutate, isPending, error, reset } = useMutation({
     mutationFn: () => login({ identifier: identifier.trim(), password }),
     onSuccess: (data) => {
-      authStore.setUser({ id: data.user.id, role: data.user.role, outletId: null });
+      authStore.setUser({ id: data.user.id, role: data.user.role, outletId: data.user.outletId });
       toastBus.emit("Welcome back!", "success");
       navigate("/", { replace: true });
     },
-    onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
 
   function handleSubmit(e: React.FormEvent) {

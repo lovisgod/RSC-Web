@@ -1,5 +1,6 @@
 @import "swiper/css";
 @import "swiper/css/pagination";
+@import "leaflet/dist/leaflet.css";
 
 @tailwind base;
 @tailwind components;

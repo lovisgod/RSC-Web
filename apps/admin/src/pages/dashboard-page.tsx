@@ -1,32 +1,19 @@
-import { Button, MetricCard, formatMoney } from "@rsc/ui";
 import Skeleton from "@mui/material/Skeleton";
-import { ArrowDownRight, ArrowUpRight, Clock3 } from "lucide-react";
+import type { OrderPulseRange } from "@rsc/contracts";
+import { Button, MetricCard } from "@rsc/ui";
+import { AlertTriangle, ArrowRight, BarChart3, PauseCircle } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { OperationsQueue, type QueueItem } from "../components/operations-queue";
 import { PageHeading } from "../components/page-heading";
 import { ServiceVolumeChart } from "../components/service-volume-chart";
-import { useAdminOverview } from "../hooks/use-admin-overview";
+import {
+  useOperationsQueue,
+  useOperationsSummary,
+  useOrderPulse,
+} from "../hooks/use-operations-stats";
 import { useLiveClock } from "../hooks/use-live-clock";
-
-const chartBars = [36, 54, 42, 68, 91, 76, 100, 84, 64, 48, 71, 57] as const;
-const chartLegend = ["12pm", "3pm", "6pm", "9pm"] as const;
-
-const queueItems: QueueItem[] = [
-  {
-    icon: <Clock3 aria-hidden="true" size={18} />,
-    label: "6 delayed kitchen tickets",
-    detail: "Oldest delay is 17 minutes",
-    tone: "danger",
-  },
-  { icon: "₦", label: "3 settlements need review", detail: "Two periods close today" },
-  { icon: "!", label: "1 outlet is paused", detail: "Fire & Spice Lekki" },
-];
-
-const outletRows = [
-  { name: "Fire & Spice", orders: 128, revenue: "₦2.84m", prep: "24 min", direction: "up" },
-  { name: "Garden Bowl", orders: 96, revenue: "₦1.72m", prep: "18 min", direction: "up" },
-  { name: "Sweet Room", orders: 75, revenue: "₦1.18m", prep: "31 min", direction: "down" },
-] as const;
 
 const CARD_RADIUS = "var(--rsc-radius)";
 
@@ -41,11 +28,39 @@ function MetricSkeleton() {
 }
 
 export function DashboardPage() {
-  const { data: overview, isLoading } = useAdminOverview();
+  const [pulseRange, setPulseRange] = useState<OrderPulseRange>("TODAY");
+  const summary = useOperationsSummary();
+  const pulse = useOrderPulse(pulseRange);
+  const queue = useOperationsQueue();
   const clock = useLiveClock();
 
   const [weekday, datePart] = clock.split(",");
   const kicker = `${weekday},${datePart?.split("·")[0]}`.trim();
+  const latestUpdate = Math.max(summary.dataUpdatedAt, pulse.dataUpdatedAt, queue.dataUpdatedAt);
+
+  const queueItems: QueueItem[] = [];
+  if (queue.data?.delayedKitchenTickets) {
+    queueItems.push({
+      icon: <AlertTriangle aria-hidden="true" size={18} />,
+      label: `${queue.data.delayedKitchenTickets} delayed kitchen ${
+        queue.data.delayedKitchenTickets === 1 ? "ticket" : "tickets"
+      }`,
+      detail:
+        queue.data.oldestDelayMinutes === null
+          ? "Delay age is not available"
+          : `Oldest delay is ${queue.data.oldestDelayMinutes} minutes`,
+      tone: "danger",
+    });
+  }
+  if (queue.data?.pausedOutlets) {
+    queueItems.push({
+      icon: <PauseCircle aria-hidden="true" size={18} />,
+      label: `${queue.data.pausedOutlets} paused ${
+        queue.data.pausedOutlets === 1 ? "outlet" : "outlets"
+      }`,
+      detail: "Currently unavailable to customers",
+    });
+  }
 
   return (
     <>
@@ -53,96 +68,93 @@ export function DashboardPage() {
         kicker={kicker}
         title="Good evening. Here's the whole service."
         description={
-          overview
-            ? `Live figures · last updated ${new Date(overview.generatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
-            : "Operational figures are illustrative until the API contract is connected."
+          latestUpdate > 0
+            ? `Live operational figures · updated ${new Date(latestUpdate).toLocaleTimeString(
+                "en-GB",
+                { hour: "2-digit", minute: "2-digit" },
+              )}`
+            : "Live operational figures refresh every 30 seconds."
         }
-        action={<Button>View live orders</Button>}
+        action={
+          <Link className="live-orders-cta" to="/orders">
+            <span>View live orders</span>
+            <ArrowRight aria-hidden="true" size={18} />
+          </Link>
+        }
       />
 
-      <section className="metric-grid" aria-label="Platform overview">
-        {isLoading ? (
+      {summary.isError && (
+        <section className="live-board-error" role="alert">
+          <div>
+            <strong>Platform summary is unavailable</strong>
+            <p>We could not load the current operational totals.</p>
+          </div>
+          <Button tone="quiet" onClick={() => void summary.refetch()}>
+            Try again
+          </Button>
+        </section>
+      )}
+
+      <section className="metric-grid" aria-label="Platform operations summary">
+        {summary.isPending ? (
           <>
             <MetricSkeleton />
             <MetricSkeleton />
             <MetricSkeleton />
-            <MetricSkeleton />
           </>
-        ) : (
+        ) : summary.data ? (
           <>
             <MetricCard
               label="Active outlets"
-              value={overview?.activeOutlets ?? "—"}
-              detail="All configured outlets"
+              value={summary.data.activeOutlets}
+              detail="Currently accepting orders"
             />
             <MetricCard
               label="Open master orders"
-              value={overview?.openMasterOrders ?? "—"}
-              detail="Across active kitchen tickets"
+              value={summary.data.openMasterOrders}
+              detail="Not delivered or cancelled"
             />
             <MetricCard
               label="Delayed sub-orders"
-              value={overview?.delayedSubOrders ?? "—"}
-              detail="Needs operations attention"
+              value={summary.data.delayedSubOrders}
+              detail="Kitchen tickets delayed over 15 minutes"
               tone="warning"
             />
-            <MetricCard
-              label="Pending settlements"
-              value={overview ? formatMoney(overview.pendingSettlements) : "—"}
-              detail="Awaiting finance review"
-            />
           </>
-        )}
+        ) : null}
+        <MetricCard label="Pending settlements" value="—" detail="Finance endpoint coming soon" />
       </section>
 
       <section className="dashboard-grid">
-        <ServiceVolumeChart bars={chartBars} legend={chartLegend} />
+        <ServiceVolumeChart
+          points={pulse.data?.points ?? []}
+          range={pulseRange}
+          isLoading={pulse.isPending}
+          isError={pulse.isError}
+          onRangeChange={setPulseRange}
+          onRetry={() => void pulse.refetch()}
+        />
 
-        <OperationsQueue items={queueItems} />
+        <OperationsQueue
+          items={queueItems}
+          isLoading={queue.isPending}
+          isError={queue.isError}
+          onRetry={() => void queue.refetch()}
+        />
 
-        <article className="panel panel--full">
-          <div className="panel__heading">
-            <div>
-              <p className="kicker">Outlet performance</p>
-              <h2>Today at a glance</h2>
-            </div>
-            <Button tone="quiet">Open report</Button>
+        <article className="panel panel--full data-placeholder">
+          <span className="data-placeholder__icon">
+            <BarChart3 aria-hidden="true" size={24} />
+          </span>
+          <div>
+            <p className="kicker">Outlet performance</p>
+            <h2>Performance reporting is coming soon</h2>
+            <p>
+              Orders, revenue, preparation time, and outlet trends will appear here when the
+              reporting endpoint is available.
+            </p>
           </div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Outlet</th>
-                  <th>Orders</th>
-                  <th>Revenue</th>
-                  <th>Avg. prep</th>
-                  <th>Trend</th>
-                </tr>
-              </thead>
-              <tbody>
-                {outletRows.map((row) => (
-                  <tr key={row.name}>
-                    <td>
-                      <strong>{row.name}</strong>
-                    </td>
-                    <td>{row.orders}</td>
-                    <td>{row.revenue}</td>
-                    <td>{row.prep}</td>
-                    <td>
-                      <span className={`trend trend--${row.direction}`}>
-                        {row.direction === "up" ? (
-                          <ArrowUpRight aria-hidden="true" size={16} />
-                        ) : (
-                          <ArrowDownRight aria-hidden="true" size={16} />
-                        )}
-                        {row.direction === "up" ? "Healthy" : "Watch"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <span className="data-placeholder__badge">Awaiting endpoint</span>
         </article>
       </section>
     </>

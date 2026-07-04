@@ -140,18 +140,6 @@ export const adminResultSchema = z.object({
   temporaryPassword: z.string().min(8),
 });
 
-export const outletAdminSchema = z.object({
-  id: z.uuid(),
-  name: z.string().min(1),
-  role: z.literal("ADMIN"),
-  outletId: z.uuid(),
-  email: z.email(),
-  phone: z.string().min(1),
-  status: customerStatusSchema,
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-});
-
 export const resendVerificationCodeInputSchema = z.discriminatedUnion("channel", [
   z
     .object({
@@ -190,6 +178,25 @@ export const moneySchema = z.object({
 });
 
 // outletSummarySchema is defined after menuItem / modifier schemas (below) to avoid TDZ
+
+export const userProfileSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  role: z.string(),
+  outletId: z.uuid().nullable(),
+  email: z.string(),
+  phone: z.string(),
+  verificationChannels: z.object({ email: z.boolean(), phone: z.boolean() }),
+  pendingVerificationChannels: z.object({ email: z.boolean(), phone: z.boolean() }),
+});
+
+export const updateProfileInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+  })
+  .strict();
 
 export const createDeliveryAddressInputSchema = z
   .object({
@@ -321,11 +328,6 @@ export const menuItemsPageSchema = z.object({
   hasMore: z.boolean(),
 });
 
-export const uploadedImageSchema = z.object({
-  url: z.url(),
-  publicId: z.string().min(1),
-});
-
 export const updateMenuItemAvailabilityInputSchema = z
   .object({
     isAvailable: z.boolean(),
@@ -363,21 +365,16 @@ export const menuItemModifierGroupSchema = z.object({
 export const outletSummarySchema = z.object({
   id: z.uuid(),
   name: z.string().min(1),
-  slug: z.string().min(1).optional(),
   cuisineType: z.string().min(1),
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
   isOnline: z.boolean(),
-  vatBps: z.int().min(0).max(10_000).default(0),
-  latitude: z.coerce.number().min(-90).max(90).optional(),
-  longitude: z.coerce.number().min(-180).max(180).optional(),
-  deliveryRadiusKm: z.coerce.number().positive().optional(),
-  momentSubaccountCode: z.string().optional(),
-  menuCategories: z.array(menuCategorySchema).optional(),
-  menuItems: z.array(menuItemSchema).optional(),
-  itemModifierGroups: z.array(itemModifierGroupSchema).optional(),
-  itemModifiers: z.array(itemModifierSchema).optional(),
-  menuItemModifierGroups: z.array(menuItemModifierGroupSchema).optional(),
+  momentSubaccountCode: z.string(),
+  menuCategories: z.array(menuCategorySchema),
+  menuItems: z.array(menuItemSchema),
+  itemModifierGroups: z.array(itemModifierGroupSchema),
+  itemModifiers: z.array(itemModifierSchema),
+  menuItemModifierGroups: z.array(menuItemModifierGroupSchema),
 });
 
 export const masterOrderStatusSchema = z.enum([
@@ -401,42 +398,6 @@ export const subOrderStatusSchema = z.enum([
 ]);
 
 export const deliveryModeSchema = z.enum(["DELIVERY", "TAKEOUT"]);
-
-export const orderSummarySchema = z.object({
-  id: z.uuid(),
-  status: masterOrderStatusSchema,
-  deliveryAddress: z.string().nullable(),
-  subOrders: z.array(
-    z.object({
-      outletName: z.string(),
-    }),
-  ),
-  totalAmountMinor: z.int().nonnegative(),
-  createdAt: z.iso.datetime(),
-});
-
-export const customerOrderSchema = z.object({
-  id: z.uuid(),
-  customerId: z.uuid(),
-  riderId: z.uuid().nullable(),
-  status: masterOrderStatusSchema,
-  subtotalMinor: z.int().nonnegative(),
-  deliveryFeeMinor: z.int().nonnegative(),
-  serviceFeeMinor: z.int().nonnegative(),
-  vatMinor: z.int().nonnegative(),
-  discountMinor: z.int().nonnegative(),
-  totalMinor: z.int().nonnegative(),
-  currency: currencySchema,
-  deliveryMode: deliveryModeSchema,
-  deliveryAddress: z.string().nullable(),
-  deliveryLatitude: z.number().nullable(),
-  deliveryLongitude: z.number().nullable(),
-  paymentReference: z.string().nullable(),
-  deliveryCode: z.string().nullable(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  deletedAt: z.iso.datetime().nullable(),
-});
 
 export const adminOrdersQuerySchema = z
   .object({
@@ -519,60 +480,136 @@ export const adminOrdersResultSchema = z.object({
   offset: z.int().min(0),
 });
 
-export const adminOverviewSchema = z.object({
-  generatedAt: z.iso.datetime(),
-  activeOutlets: z.int().nonnegative(),
-  openMasterOrders: z.int().nonnegative(),
-  delayedSubOrders: z.int().nonnegative(),
-  pendingSettlements: moneySchema,
-});
-
-export const profileSchema = z.object({
+export const orderSummarySchema = z.object({
   id: z.uuid(),
-  name: z.string().min(1),
-  role: userRoleSchema,
-  outletId: z.uuid().nullable(),
-  avatarUrl: z.url().nullable(),
-  email: z.email(),
-  phone: z.string().min(1),
-  verificationChannels: z.object({
-    email: z.boolean(),
-    phone: z.boolean(),
-  }),
-  pendingVerificationChannels: z.object({
-    email: z.boolean(),
-    phone: z.boolean(),
-  }),
+  status: masterOrderStatusSchema,
+  deliveryAddress: z.string().nullable(),
+  subOrders: z.array(
+    z.object({
+      outletName: z.string(),
+    }),
+  ),
+  totalAmountMinor: z.int().nonnegative(),
+  createdAt: z.iso.datetime(),
 });
 
-export const userProfileSchema = profileSchema;
-
-export const updateProfileInputSchema = z
+export const customerOrderSchema = z
   .object({
-    name: z.string().trim().min(2).max(120).optional(),
-    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN).optional(),
-    email: z.string().trim().toLowerCase().pipe(z.email().max(254)).optional(),
-    avatarUrl: z.url().max(512).optional(),
+    id: z.uuid(),
+    customerId: z.uuid(),
+    riderId: z.uuid().nullable(),
+    status: z.string().trim().min(1),
+    subtotalMinor: z.coerce.number().int().nonnegative(),
+    deliveryFeeMinor: z.coerce.number().int().nonnegative().default(0),
+    serviceFeeMinor: z.coerce.number().int().nonnegative().default(0),
+    vatMinor: z.coerce.number().int().nonnegative().default(0),
+    discountMinor: z.coerce.number().int().nonnegative().default(0),
+    totalMinor: z.coerce.number().int().nonnegative(),
+    currency: currencySchema.default("NGN"),
+    deliveryMode: z.enum(["DELIVERY", "TAKEOUT"]),
+    deliveryAddress: z.string().nullable(),
+    deliveryLatitude: z.coerce.number().min(-90).max(90).nullable(),
+    deliveryLongitude: z.coerce.number().min(-180).max(180).nullable(),
+    paymentReference: z.string().nullable(),
+    deliveryCode: z.string().nullable(),
+    createdAt: z.string().min(1),
+    updatedAt: z.string().min(1),
+    deletedAt: z.iso.datetime().nullable(),
   })
-  .strict();
+  .passthrough();
 
-export const profileUpdateResultSchema = profileSchema.extend({
-  otpExpiresInSeconds: z.int().positive().nullable(),
+export const riderLocationSchema = z
+  .object({
+    riderId: z.uuid().nullable(),
+    masterOrderId: z.uuid().nullable(),
+    latitude: z.coerce.number().min(-90).max(90),
+    longitude: z.coerce.number().min(-180).max(180),
+    recordedAt: z.string().min(1),
+  })
+  .passthrough();
+
+export const orderStatusEventSchema = z.object({
+  id: z.uuid(),
+  masterOrderId: z.uuid(),
+  subOrderId: z.uuid().nullable(),
+  masterStatus: z.string().nullable(),
+  subOrderStatus: z.string().nullable(),
+  note: z.string().nullable(),
+  createdAt: z.iso.datetime(),
 });
 
-export const verifyProfileChangeInputSchema = z
+export const subOrderDetailSchema = z
   .object({
-    code: z.string().regex(/^\d{6}$/),
+    id: z.uuid(),
+    masterOrderId: z.uuid(),
+    outletId: z.uuid(),
+    status: z.string().min(1),
+    subtotalMinor: z.coerce.number().int().nonnegative(),
+    commissionMinor: z.coerce.number().int().nonnegative().default(0),
+    netMinor: z.coerce.number().int().nonnegative().default(0),
+    currency: currencySchema.default("NGN"),
+    createdAt: z.string().min(1),
   })
-  .strict();
+  .passthrough();
+
+export const orderLineItemSchema = z
+  .object({
+    id: z.uuid(),
+    masterOrderId: z.uuid(),
+    subOrderId: z.uuid(),
+    outletId: z.uuid(),
+    menuItemId: z.uuid().nullable(),
+    itemNameSnapshot: z.string().min(1),
+    unitPriceMinor: z.coerce.number().int(),
+    quantity: z.coerce.number().int().positive(),
+    lineTotalMinor: z.coerce.number().int(),
+    currency: currencySchema.default("NGN"),
+    modifiersSnapshot: z
+      .array(
+        z
+          .object({
+            id: z.uuid().optional(),
+            name: z.string().min(1),
+            priceDeltaMinor: z.coerce.number().int().default(0),
+          })
+          .passthrough(),
+      )
+      .nullish()
+      .transform((value) => value ?? []),
+  })
+  .passthrough();
+
+export const orderDetailSchema = z
+  .object({
+    order: customerOrderSchema,
+    subOrders: z
+      .array(subOrderDetailSchema)
+      .nullish()
+      .transform((value) => value ?? []),
+    lineItems: z
+      .array(orderLineItemSchema)
+      .nullish()
+      .transform((value) => value ?? []),
+    events: z
+      .array(orderStatusEventSchema)
+      .nullish()
+      .transform((value) => value ?? []),
+    latestRiderLocation: riderLocationSchema.nullish().transform((value) => value ?? null),
+  })
+  .passthrough();
+
+export const uploadedImageSchema = z.object({
+  url: z.url(),
+  publicId: z.string().min(1),
+});
 
 export const notificationSchema = z.object({
   id: z.uuid(),
   recipientId: z.uuid(),
-  recipientRole: userRoleSchema,
-  type: z.string().min(1),
-  title: z.string().min(1),
-  body: z.string().min(1),
+  recipientRole: z.string().trim().min(1),
+  type: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+  body: z.string().trim().min(1),
   isRead: z.boolean(),
   createdAt: z.iso.datetime(),
 });
@@ -590,21 +627,19 @@ export const notificationCampaignStatusSchema = z.enum([
   "FAILED",
 ]);
 
-export const createNotificationCampaignInputSchema = z
-  .object({
-    title: z.string().trim().min(2).max(160),
-    body: z.string().trim().min(2).max(2_000),
-    targetSegment: notificationCampaignTargetSegmentSchema,
-    scheduledAt: z.iso.datetime(),
-    deepLink: z.string().trim().max(512).optional(),
-  })
-  .strict();
+export const createNotificationCampaignInputSchema = z.object({
+  title: z.string().trim().min(2).max(160),
+  body: z.string().trim().min(2).max(2_000),
+  targetSegment: notificationCampaignTargetSegmentSchema,
+  scheduledAt: z.iso.datetime(),
+  deepLink: z.string().trim().max(512).optional(),
+});
 
 export const notificationCampaignSchema = z.object({
   id: z.uuid(),
   createdById: z.uuid(),
-  title: z.string().min(1),
-  body: z.string().min(1),
+  title: z.string(),
+  body: z.string(),
   targetSegment: notificationCampaignTargetSegmentSchema,
   deepLink: z.string().nullable(),
   scheduledAt: z.iso.datetime(),
@@ -616,6 +651,56 @@ export const notificationCampaignSchema = z.object({
   failureReason: z.string().nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
+});
+
+export const operationsStatsQuerySchema = z
+  .object({
+    outletId: z.uuid().optional(),
+  })
+  .strict();
+
+export const orderPulseRangeSchema = z.enum(["TODAY", "LAST_7_DAYS", "LAST_30_DAYS"]);
+
+export const orderPulseQuerySchema = operationsStatsQuerySchema.extend({
+  range: orderPulseRangeSchema.optional(),
+});
+
+export const operationsSummarySchema = z.object({
+  activeOutlets: z.int().nonnegative(),
+  openMasterOrders: z.int().nonnegative(),
+  delayedSubOrders: z.int().nonnegative(),
+});
+
+export const orderPulsePointSchema = z.object({
+  bucketStart: z.iso.datetime(),
+  label: z.string().min(1),
+  orderCount: z.int().nonnegative(),
+});
+
+export const orderPulseSchema = z.object({
+  range: orderPulseRangeSchema,
+  outletId: z.uuid().nullable(),
+  points: z.array(orderPulsePointSchema),
+});
+
+export const operationsQueueItemSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("DELAYED_KITCHEN_TICKETS"),
+    count: z.int().nonnegative(),
+    oldestDelayMinutes: z.int().nonnegative().nullable(),
+  }),
+  z.object({
+    type: z.literal("PAUSED_OUTLETS"),
+    count: z.int().nonnegative(),
+  }),
+]);
+
+export const operationsQueueSchema = z.object({
+  outletId: z.uuid().nullable(),
+  delayedKitchenTickets: z.int().nonnegative(),
+  oldestDelayMinutes: z.int().nonnegative().nullable(),
+  pausedOutlets: z.int().nonnegative(),
+  items: z.array(operationsQueueItemSchema),
 });
 
 export type Money = z.infer<typeof moneySchema>;
@@ -644,7 +729,6 @@ export type LoginResult = z.infer<typeof loginResultSchema>;
 export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
-export type OutletAdmin = z.infer<typeof outletAdminSchema>;
 export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
 export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
@@ -663,12 +747,16 @@ export type AdminOrderSubOrder = z.infer<typeof adminOrderSubOrderSchema>;
 export type AdminOrderLineItem = z.infer<typeof adminOrderLineItemSchema>;
 export type AdminOrderSummary = z.infer<typeof adminOrderSummarySchema>;
 export type AdminOrdersResult = z.infer<typeof adminOrdersResultSchema>;
-export type AdminOverview = z.infer<typeof adminOverviewSchema>;
-export type Profile = z.infer<typeof profileSchema>;
+export type OperationsStatsQuery = z.infer<typeof operationsStatsQuerySchema>;
+export type OrderPulseRange = z.infer<typeof orderPulseRangeSchema>;
+export type OrderPulseQuery = z.infer<typeof orderPulseQuerySchema>;
+export type OperationsSummary = z.infer<typeof operationsSummarySchema>;
+export type OrderPulsePoint = z.infer<typeof orderPulsePointSchema>;
+export type OrderPulse = z.infer<typeof orderPulseSchema>;
+export type OperationsQueueItem = z.infer<typeof operationsQueueItemSchema>;
+export type OperationsQueue = z.infer<typeof operationsQueueSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
-export type ProfileUpdateResult = z.infer<typeof profileUpdateResultSchema>;
-export type VerifyProfileChangeInput = z.infer<typeof verifyProfileChangeInputSchema>;
 export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInputSchema>;
 export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema>;
 export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
@@ -680,12 +768,31 @@ export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
-export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
-export type MenuItemSummary = z.infer<typeof menuItemSchema>;
-export type UploadedImage = z.infer<typeof uploadedImageSchema>;
 export type NotificationCampaignTargetSegment = z.infer<
   typeof notificationCampaignTargetSegmentSchema
 >;
 export type NotificationCampaignStatus = z.infer<typeof notificationCampaignStatusSchema>;
 export type CreateNotificationCampaignInput = z.infer<typeof createNotificationCampaignInputSchema>;
 export type NotificationCampaign = z.infer<typeof notificationCampaignSchema>;
+export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
+export type MenuItemSummary = z.infer<typeof menuItemSchema>;
+export type RiderLocation = z.infer<typeof riderLocationSchema>;
+export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
+export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
+export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
+export type OrderDetail = z.infer<typeof orderDetailSchema>;
+export type UploadedImage = z.infer<typeof uploadedImageSchema>;
+
+export const paginatedMenuItemsSchema = menuItemsPageSchema;
+
+export type PaginatedMenuItems = z.infer<typeof paginatedMenuItemsSchema>;
+
+export const platformChargesSchema = z.object({
+  platformCommissionBps: z.int().nonnegative(),
+  defaultVatBps: z.int().nonnegative(),
+  deliveryFeeMinor: z.int().nonnegative(),
+  serviceFeeMinor: z.int().nonnegative(),
+  currency: currencySchema,
+});
+
+export type PlatformCharges = z.infer<typeof platformChargesSchema>;

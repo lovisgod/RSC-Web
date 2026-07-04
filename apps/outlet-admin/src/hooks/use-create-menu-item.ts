@@ -1,14 +1,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createMenuItem, type CreateMenuItemBody } from "../lib/api";
+import { createMenuItem, uploadMenuItemImage, type CreateMenuItemBody } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
+
+interface CreateMenuItemArgs {
+  body: CreateMenuItemBody;
+  imageFile?: File;
+}
 
 export function useCreateMenuItem(outletId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: CreateMenuItemBody) => createMenuItem(outletId, body),
+    mutationFn: async ({ body, imageFile }: CreateMenuItemArgs) => {
+      const item = await createMenuItem(body);
+      if (imageFile) {
+        await uploadMenuItemImage(item.id, imageFile);
+      }
+      return item;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pos", "menu", "items", outletId] });
+      queryClient.invalidateQueries({ queryKey: ["pos", "outlet", outletId] });
       toastBus.emit("Menu item created", "success");
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),

@@ -7,9 +7,9 @@ export function useToggleItemAvailability(outletId: string) {
 
   return useMutation({
     mutationFn: ({ itemId, isAvailable }: { itemId: string; isAvailable: boolean }) =>
-      toggleMenuItemAvailability(outletId, itemId, { isAvailable }),
+      toggleMenuItemAvailability(itemId, { isAvailable }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pos", "menu", "items", outletId] });
+      queryClient.invalidateQueries({ queryKey: ["pos", "outlet", outletId] });
       toastBus.emit("Item availability updated", "success");
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),

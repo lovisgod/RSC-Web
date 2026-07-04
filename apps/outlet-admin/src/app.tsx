@@ -1,5 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { BarChart2, ClipboardList, LogOut, Menu, Store, UtensilsCrossed, X } from "lucide-react";
+import {
+  BarChart2,
+  ClipboardList,
+  LogOut,
+  Menu,
+  Settings,
+  Store,
+  UtensilsCrossed,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Navigate,
@@ -13,13 +22,16 @@ import {
 
 import { Toaster } from "./components/toaster";
 import { useAuth } from "./hooks/use-auth";
+import { useOrdersQueue } from "./hooks/use-orders-queue";
 import { useOutletInfo } from "./hooks/use-outlet-info";
+import { useProfile } from "./hooks/use-profile";
 import { logout as apiLogout } from "./lib/api";
 import { toastBus } from "./lib/toast-bus";
 import { ActiveOrdersPage } from "./pages/active-orders-page";
 import { EarningsPage } from "./pages/earnings-page";
 import { LoginPage } from "./pages/login-page";
 import { MenuPage } from "./pages/menu-page";
+import { SettingsPage } from "./pages/settings-page";
 
 const navigation = [
   { label: "Active Orders", to: "/", icon: ClipboardList },
@@ -72,8 +84,9 @@ function OutletIdentity() {
   );
 }
 
-function StaffFooter() {
+function StaffFooter({ onNavigate }: NavigationPanelProps) {
   const { user, logout } = useAuth();
+  const { data: profile } = useProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -94,23 +107,33 @@ function StaffFooter() {
     }
   }
 
-  const initial = user?.role?.charAt(0).toUpperCase() ?? "S";
-
   return (
     <div className="mt-auto border-t border-white/10 pt-4">
       <div className="flex items-center gap-3 rounded-xl px-2 py-2">
-        <span
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-black"
-          style={{ backgroundColor: "var(--rsc-brand)", color: "var(--rsc-panel)" }}
-          aria-hidden="true"
+        <NavLink
+          to="/settings"
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            [
+              "grid h-9 w-9 shrink-0 place-items-center rounded-lg transition",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+              "focus-visible:outline-[var(--rsc-brand-light)]",
+              isActive ? "bg-[var(--rsc-brand)]" : "bg-white/10 hover:bg-white/15",
+            ].join(" ")
+          }
+          style={{ color: "var(--rsc-panel)" }}
+          aria-label="Open settings"
+          title="Settings"
         >
-          {initial}
-        </span>
+          <Settings size={17} aria-hidden="true" />
+        </NavLink>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-xs font-bold text-[var(--rsc-panel)]">
-            Outlet staff
+            {profile?.name ?? "Outlet staff"}
           </span>
-          <span className="block truncate text-[11px] text-white/50">{user?.role ?? "Staff"}</span>
+          <span className="block truncate text-[11px] text-white/50">
+            {profile?.role ?? user?.role ?? "Staff"}
+          </span>
         </span>
         <button
           type="button"
@@ -129,6 +152,10 @@ function StaffFooter() {
 }
 
 function NavigationPanel({ onNavigate }: NavigationPanelProps) {
+  const { user } = useAuth();
+  const { data: orders = [] } = useOrdersQueue(user?.outletId ?? "");
+  const activeOrderCount = orders.length;
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Brand />
@@ -173,7 +200,18 @@ function NavigationPanel({ onNavigate }: NavigationPanelProps) {
                 <span className="min-w-0 flex-1 truncate" style={{ color: "var(--rsc-panel)" }}>
                   {label}
                 </span>
-                {isActive && (
+                {to === "/" && activeOrderCount > 0 && (
+                  <span
+                    className="grid h-5 min-w-[1.25rem] shrink-0 place-items-center rounded-full px-1 text-[10px] font-bold"
+                    style={{
+                      backgroundColor: isActive ? "rgb(255 255 255 / 0.2)" : "var(--rsc-brand)",
+                      color: "var(--rsc-panel)",
+                    }}
+                  >
+                    {activeOrderCount}
+                  </span>
+                )}
+                {isActive && activeOrderCount === 0 && (
                   <span
                     className="h-1.5 w-1.5 shrink-0 rounded-full"
                     style={{ backgroundColor: "var(--rsc-panel)" }}
@@ -186,7 +224,7 @@ function NavigationPanel({ onNavigate }: NavigationPanelProps) {
         ))}
       </nav>
 
-      <StaffFooter />
+      <StaffFooter {...(onNavigate ? { onNavigate } : {})} />
     </div>
   );
 }
@@ -196,7 +234,8 @@ function AppShell() {
   const [isDesktopNavVisible, setIsDesktopNavVisible] = useState(true);
   const location = useLocation();
   const currentRoute = navigation.find(({ to }) => to === location.pathname);
-  const pageTitle = currentRoute?.label ?? "Outlet Admin";
+  const pageTitle =
+    location.pathname === "/settings" ? "Settings" : (currentRoute?.label ?? "Outlet Admin");
 
   useEffect(() => {
     if (!isMobileNavOpen) return;
@@ -305,6 +344,7 @@ export function App() {
           <Route index element={<ActiveOrdersPage />} />
           <Route path="menu" element={<MenuPage />} />
           <Route path="earnings" element={<EarningsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

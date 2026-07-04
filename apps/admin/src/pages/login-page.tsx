@@ -29,7 +29,6 @@ export function LoginPage() {
       toastBus.emit("Welcome back!", "success");
       navigate("/", { replace: true });
     },
-    onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -103,10 +102,6 @@ export function LoginPage() {
             </Button>
           </div>
         </form>
-
-        <p className="auth-footer">
-          Don&apos;t have an account? <Link to="/register">Create admin account</Link>
-        </p>
       </div>
     </div>
   );
