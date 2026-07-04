@@ -177,6 +177,7 @@ export class PaymentsService {
           manager.create(SubOrder, {
             masterOrderId: masterOrder.id,
             outletId: route.outletId,
+            pickupCode: randomSixDigitCode(),
             subtotalMinor: route.grossMinor,
             commissionMinor: route.commissionMinor,
             netMinor: route.netMinor,

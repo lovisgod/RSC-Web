@@ -6,6 +6,7 @@ import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
 import type { NotificationsService } from "../notifications/notifications.service";
+import { Outlet } from "../outlets/outlet.entity";
 import type { PaymentsService } from "../payments/payments.service";
 import type { RealtimeService } from "../realtime/realtime.service";
 import { MasterOrder } from "./master-order.entity";
@@ -32,6 +33,7 @@ function createService(input: {
   orders?: MasterOrder[];
   availableRiders?: Array<{ id: string; assignmentCount: number }>;
   riders?: Customer[];
+  outlets?: Outlet[];
   total?: number;
   subOrders?: SubOrder[];
   lineItems?: OrderLineItem[];
@@ -60,6 +62,9 @@ function createService(input: {
       Promise.resolve((input.orders ?? []).find((order) => order.id === id) ?? null),
     ),
     save: vi.fn((order: MasterOrder) => Promise.resolve(order)),
+  };
+  const outlets = {
+    findBy: vi.fn().mockResolvedValue(input.outlets ?? []),
   };
   const subOrders = {
     find: vi.fn().mockResolvedValue(input.subOrders ?? []),
@@ -93,6 +98,7 @@ function createService(input: {
   };
   const service = new OrdersService(
     users as unknown as Repository<Customer>,
+    outlets as unknown as Repository<Outlet>,
     masterOrders as unknown as Repository<MasterOrder>,
     subOrders as unknown as Repository<SubOrder>,
     lineItems as unknown as Repository<OrderLineItem>,
@@ -272,6 +278,15 @@ describe(OrdersService.name, () => {
       adminOutletId: outletId,
       orders: [order],
       availableRiders: [{ id: riderId, assignmentCount: 1 }],
+      outlets: [
+        Object.assign(new Outlet(), {
+          id: outletId,
+          name: "Outlet One",
+          address: "12 Admiralty Way",
+          latitude: 6.4474,
+          longitude: 3.4542,
+        }),
+      ],
       subOrders: [outletSubOrder],
     });
 

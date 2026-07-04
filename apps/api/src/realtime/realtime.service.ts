@@ -11,6 +11,7 @@ export interface OrderStatusUpdateEvent {
   riderId: string | null;
   status: MasterOrderStatus;
   updatedAt: Date;
+  riderLocationTracking?: "START" | "STOP";
 }
 
 export type RiderLocationUpdateEvent = LatestLocation;

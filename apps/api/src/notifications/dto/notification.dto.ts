@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsIn,
   IsOptional,
+  IsObject,
   IsString,
   IsUUID,
   Length,
@@ -43,6 +44,11 @@ export class CreateNotificationDto {
   @IsString()
   @Length(2, 2_000)
   body!: string;
+
+  @ApiProperty({ example: { deepLink: "rsc://orders/order-id" }, required: false })
+  @IsOptional()
+  @IsObject()
+  data?: Record<string, unknown>;
 }
 
 export class RegisterDeviceTokenDto {

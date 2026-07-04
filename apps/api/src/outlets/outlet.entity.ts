@@ -18,6 +18,9 @@ export class Outlet {
   @Column({ type: "text", nullable: true })
   description!: string | null;
 
+  @Column({ type: "text", nullable: true })
+  address!: string | null;
+
   @Column({ name: "cuisine_type", length: 100 })
   cuisineType!: string;
 

@@ -11,6 +11,7 @@ import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
 import { NotificationsService } from "../notifications/notifications.service";
+import { Outlet } from "../outlets/outlet.entity";
 import { RealtimeService } from "../realtime/realtime.service";
 import type { InitiatePaymentDto } from "../payments/dto/payment.dto";
 import { PaymentsService } from "../payments/payments.service";
@@ -45,6 +46,33 @@ export interface AdminOrderListResult {
   offset: number;
 }
 
+export interface RiderDispatch {
+  orderId: string;
+  status: MasterOrderStatus;
+  deliveryCodeRequired: true;
+  deliveryAddress: string | null;
+  deliveryLatitude: number | null;
+  deliveryLongitude: number | null;
+  customerId: string;
+  riderId: string | null;
+  outlets: Array<{
+    subOrderId: string;
+    outletId: string;
+    outletName: string;
+    pickupAddress: string | null;
+    pickupLatitude: number;
+    pickupLongitude: number;
+    pickupCode: string;
+    status: SubOrderStatus;
+    items: Array<{
+      id: string;
+      name: string;
+      quantity: number;
+      modifiers: unknown[];
+    }>;
+  }>;
+}
+
 interface FairAvailableRiderRow {
   id: string;
   assignmentCount: number;
@@ -54,6 +82,7 @@ interface FairAvailableRiderRow {
 export class OrdersService {
   constructor(
     @InjectRepository(Customer) private readonly users: Repository<Customer>,
+    @InjectRepository(Outlet) private readonly outlets: Repository<Outlet>,
     @InjectRepository(MasterOrder) private readonly masterOrders: Repository<MasterOrder>,
     @InjectRepository(SubOrder) private readonly subOrders: Repository<SubOrder>,
     @InjectRepository(OrderLineItem) private readonly lineItems: Repository<OrderLineItem>,
@@ -242,6 +271,9 @@ export class OrdersService {
       riderId: order.riderId,
       status: order.status,
       updatedAt: order.updatedAt,
+      ...(input.status === MasterOrderStatus.OUT_FOR_DELIVERY
+        ? { riderLocationTracking: "START" as const }
+        : {}),
     });
 
     return this.buildOrderDetail(order);
@@ -262,12 +294,33 @@ export class OrdersService {
       user.id,
       input.note ?? `Available rider assigned fairly (${rider.assignmentCount} recent assignments)`,
     );
+    const dispatch = await this.buildRiderDispatch(order);
     await this.notifications.createAndPush({
       recipientId: rider.id,
       recipientRole: UserRole.RIDER,
       type: "ORDER_ASSIGNMENT",
       title: "New delivery assigned",
-      body: "A delivery order has been assigned to you.",
+      body: this.formatDispatchNotificationBody(dispatch),
+      data: {
+        deepLink: `rsc://rider/dispatch/${order.id}`,
+        masterOrderId: order.id,
+        pickupCodes: dispatch.outlets.map((outlet) => outlet.pickupCode).join(","),
+        outletNames: dispatch.outlets.map((outlet) => outlet.outletName).join(", "),
+        dropOff: {
+          address: dispatch.deliveryAddress,
+          latitude: dispatch.deliveryLatitude,
+          longitude: dispatch.deliveryLongitude,
+        },
+        outlets: dispatch.outlets.map((outlet) => ({
+          subOrderId: outlet.subOrderId,
+          outletId: outlet.outletId,
+          name: outlet.outletName,
+          address: outlet.pickupAddress,
+          latitude: outlet.pickupLatitude,
+          longitude: outlet.pickupLongitude,
+          pickupCode: outlet.pickupCode,
+        })),
+      },
     });
     this.realtime.emitOrderStatusUpdate({
       masterOrderId: order.id,
@@ -278,6 +331,24 @@ export class OrdersService {
     });
 
     return this.buildOrderDetail(order);
+  }
+
+  async getDispatch(user: AuthenticatedUser, id: string): Promise<RiderDispatch> {
+    const order = await this.masterOrders.findOneBy({ id });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    if (user.role === UserRole.RIDER) {
+      if (order.riderId !== user.id) {
+        throw new ForbiddenException("Cannot view another rider's dispatch");
+      }
+    } else {
+      await this.requireOperationalOrder(user, id);
+    }
+
+    return this.buildRiderDispatch(order);
   }
 
   private async updateOutletSubOrderStatus(
@@ -319,6 +390,7 @@ export class OrdersService {
       riderId: order.riderId,
       status: order.status,
       updatedAt: order.updatedAt,
+      riderLocationTracking: "STOP",
     });
 
     return this.buildOrderDetail(order);
@@ -377,6 +449,59 @@ export class OrdersService {
     ]);
 
     return { order, subOrders, lineItems, events, latestRiderLocation };
+  }
+
+  private async buildRiderDispatch(order: MasterOrder): Promise<RiderDispatch> {
+    const [subOrders, lineItems] = await Promise.all([
+      this.subOrders.find({ where: { masterOrderId: order.id }, order: { createdAt: "ASC" } }),
+      this.lineItems.find({ where: { masterOrderId: order.id }, order: { createdAt: "ASC" } }),
+    ]);
+    const outlets = subOrders.length
+      ? await this.outlets.findBy({ id: In(subOrders.map((subOrder) => subOrder.outletId)) })
+      : [];
+    const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
+
+    return {
+      orderId: order.id,
+      status: order.status,
+      deliveryCodeRequired: true,
+      deliveryAddress: order.deliveryAddress,
+      deliveryLatitude: order.deliveryLatitude,
+      deliveryLongitude: order.deliveryLongitude,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      outlets: subOrders.map((subOrder) => {
+        const outlet = outletById.get(subOrder.outletId);
+
+        return {
+          subOrderId: subOrder.id,
+          outletId: subOrder.outletId,
+          outletName: outlet?.name ?? "Outlet",
+          pickupAddress: outlet?.address ?? null,
+          pickupLatitude: outlet?.latitude ?? 0,
+          pickupLongitude: outlet?.longitude ?? 0,
+          pickupCode: subOrder.pickupCode,
+          status: subOrder.status,
+          items: lineItems
+            .filter((lineItem) => lineItem.subOrderId === subOrder.id)
+            .map((lineItem) => ({
+              id: lineItem.id,
+              name: lineItem.itemNameSnapshot,
+              quantity: lineItem.quantity,
+              modifiers: lineItem.modifiersSnapshot,
+            })),
+        };
+      }),
+    };
+  }
+
+  private formatDispatchNotificationBody(dispatch: RiderDispatch): string {
+    const outletSummary = dispatch.outlets
+      .map((outlet) => `${outlet.outletName} (${outlet.pickupCode})`)
+      .join(", ");
+    const dropOff = dispatch.deliveryAddress ?? "customer drop-off";
+
+    return `Order ${dispatch.orderId}: pick up from ${outletSummary}. Drop off: ${dropOff}.`;
   }
 
   private async requireCustomerOrder(user: AuthenticatedUser, id: string): Promise<MasterOrder> {
