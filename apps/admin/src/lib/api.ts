@@ -1,23 +1,32 @@
 import axios, { type AxiosError } from "axios";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
-import type {
-  AdminOverview,
-  AdminResult,
-  CreateAdminInput,
-  CustomerOrder,
-  ForgotPasswordResult,
-  LoginResult,
-  LogoutResult,
-  MenuItem,
-  NotificationCampaign,
-  CreateNotificationCampaignInput,
-  OrderLineItem,
-  OutletSummary,
-  RegistrationResult,
-  ResendVerificationCodeResult,
-  ResetPasswordResult,
-  SubOrderDetail,
-  UserVerificationResult,
+import {
+  operationsQueueSchema,
+  operationsStatsQuerySchema,
+  operationsSummarySchema,
+  orderPulseQuerySchema,
+  orderPulseSchema,
+  type OperationsQueue,
+  type OperationsStatsQuery,
+  type OperationsSummary,
+  type OrderPulse,
+  type OrderPulseQuery,
+  type AdminResult,
+  type CreateAdminInput,
+  type CustomerOrder,
+  type ForgotPasswordResult,
+  type LoginResult,
+  type LogoutResult,
+  type MenuItem,
+  type NotificationCampaign,
+  type CreateNotificationCampaignInput,
+  type OrderLineItem,
+  type OutletSummary,
+  type RegistrationResult,
+  type ResendVerificationCodeResult,
+  type ResetPasswordResult,
+  type SubOrderDetail,
+  type UserVerificationResult,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
@@ -275,4 +284,35 @@ export const deleteOutletAdmin = (id: string): Promise<void> =>
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
-export const getAdminOverview = (): Promise<AdminOverview> => get("/api/v1/admin/overview");
+function statsQuery(input: OperationsStatsQuery | OrderPulseQuery): string {
+  const params = new URLSearchParams();
+  if (input.outletId) params.set("outletId", input.outletId);
+  if ("range" in input && input.range) params.set("range", input.range);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+export const getOperationsSummary = async (
+  input: OperationsStatsQuery = {},
+): Promise<OperationsSummary> => {
+  const query = operationsStatsQuerySchema.parse(input);
+  return operationsSummarySchema.parse(
+    await get<unknown>(`/api/v1/stats/operations/summary${statsQuery(query)}`),
+  );
+};
+
+export const getOrderPulse = async (input: OrderPulseQuery = {}): Promise<OrderPulse> => {
+  const query = orderPulseQuerySchema.parse(input);
+  return orderPulseSchema.parse(
+    await get<unknown>(`/api/v1/stats/operations/order-pulse${statsQuery(query)}`),
+  );
+};
+
+export const getOperationsQueue = async (
+  input: OperationsStatsQuery = {},
+): Promise<OperationsQueue> => {
+  const query = operationsStatsQuerySchema.parse(input);
+  return operationsQueueSchema.parse(
+    await get<unknown>(`/api/v1/stats/operations/queue${statsQuery(query)}`),
+  );
+};
