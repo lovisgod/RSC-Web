@@ -1,31 +1,33 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
-import L from "leaflet";
 
 import type { RiderLocation } from "@rsc/contracts";
+import L from "leaflet";
+import { CircleMarker, MapContainer, TileLayer, useMap } from "react-leaflet";
 
-// DivIcon markers — avoids webpack icon path issues
-const riderIcon = L.divIcon({
-  html: `<div style="width:18px;height:18px;background:#f97316;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 5px rgba(249,115,22,0.25)"></div>`,
-  className: "",
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
-
-const customerIcon = L.divIcon({
-  html: `<div style="width:16px;height:16px;background:#3b82f6;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(59,130,246,0.2)"></div>`,
-  className: "",
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-});
-
-function PanOnUpdate({ position }: { position: [number, number] }) {
+function FitTrackingView({
+  riderPosition,
+  customerPosition,
+}: {
+  riderPosition: [number, number];
+  customerPosition: [number, number] | null;
+}) {
   const map = useMap();
+
   useEffect(() => {
-    map.panTo(position, { animate: true });
-  }, [map, position]);
+    if (customerPosition) {
+      map.fitBounds(L.latLngBounds([riderPosition, customerPosition]), {
+        animate: true,
+        maxZoom: 16,
+        padding: [36, 36],
+      });
+      return;
+    }
+
+    map.setView(riderPosition, 15, { animate: true });
+  }, [customerPosition, map, riderPosition]);
+
   return null;
 }
 
@@ -35,22 +37,43 @@ interface TrackingMapProps {
 }
 
 export default function TrackingMap({ riderLocation, customerLatLng }: TrackingMapProps) {
-  const riderPos: [number, number] = [riderLocation.latitude, riderLocation.longitude];
+  const riderPosition: [number, number] = [riderLocation.latitude, riderLocation.longitude];
 
   return (
     <MapContainer
-      center={riderPos}
+      center={riderPosition}
       zoom={15}
-      style={{ height: "260px", width: "100%", borderRadius: "12px", zIndex: 0 }}
+      className="h-[280px] w-full"
+      style={{ zIndex: 0 }}
       scrollWheelZoom={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Marker position={riderPos} icon={riderIcon} />
-      {customerLatLng && <Marker position={customerLatLng} icon={customerIcon} />}
-      <PanOnUpdate position={riderPos} />
+      <CircleMarker
+        center={riderPosition}
+        radius={9}
+        pathOptions={{
+          color: "#ffffff",
+          fillColor: "#d4832a",
+          fillOpacity: 1,
+          weight: 3,
+        }}
+      />
+      {customerLatLng && (
+        <CircleMarker
+          center={customerLatLng}
+          radius={8}
+          pathOptions={{
+            color: "#ffffff",
+            fillColor: "#1e3160",
+            fillOpacity: 1,
+            weight: 3,
+          }}
+        />
+      )}
+      <FitTrackingView riderPosition={riderPosition} customerPosition={customerLatLng} />
     </MapContainer>
   );
 }

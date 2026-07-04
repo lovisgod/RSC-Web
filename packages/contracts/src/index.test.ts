@@ -5,16 +5,19 @@ import {
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
   createAdminInputSchema,
+  customerOrderSchema,
   loginInputSchema,
   menuItemsPageSchema,
   loginResultSchema,
   menuItemSchema,
   moneySchema,
+  orderDetailSchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
   resendVerificationCodeInputSchema,
   resendVerificationCodeResultSchema,
+  riderLocationSchema,
   userVerificationResultSchema,
   updateMenuItemAvailabilityInputSchema,
   uploadedImageSchema,
@@ -45,6 +48,64 @@ describe("media contracts", () => {
       url: "https://res.cloudinary.com/rsc/image/upload/menu/item.webp",
       publicId: "uploads/menu-item",
     });
+  });
+});
+
+describe("customer tracking contracts", () => {
+  const order = {
+    id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+    customerId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    riderId: null,
+    status: "AWAITING_HANDOFF",
+    subtotalMinor: "100000",
+    totalMinor: "100000",
+    deliveryMode: "DELIVERY",
+    deliveryAddress: null,
+    deliveryLatitude: null,
+    deliveryLongitude: null,
+    paymentReference: null,
+    deliveryCode: null,
+    createdAt: "2026-07-04T10:00:00.000Z",
+    updatedAt: "2026-07-04T10:00:00.000Z",
+    deletedAt: null,
+    futureField: true,
+  };
+
+  it("accepts nullable delivery fields, numeric strings, and future statuses", () => {
+    expect(customerOrderSchema.parse(order)).toMatchObject({
+      status: "AWAITING_HANDOFF",
+      subtotalMinor: 100000,
+      deliveryFeeMinor: 0,
+      paymentReference: null,
+      deliveryCode: null,
+      futureField: true,
+    });
+  });
+
+  it("normalizes missing order-detail collections", () => {
+    expect(
+      orderDetailSchema.parse({
+        order,
+        latestRiderLocation: null,
+      }),
+    ).toMatchObject({
+      subOrders: [],
+      lineItems: [],
+      events: [],
+      latestRiderLocation: null,
+    });
+  });
+
+  it("rejects invalid rider coordinates", () => {
+    expect(() =>
+      riderLocationSchema.parse({
+        riderId: null,
+        masterOrderId: order.id,
+        latitude: 120,
+        longitude: 3.3792,
+        recordedAt: "2026-07-04T10:00:00.000Z",
+      }),
+    ).toThrow();
   });
 });
 

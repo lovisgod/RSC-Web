@@ -11,7 +11,12 @@ const ORDERS_QUERY = {
 export function useActiveOrders() {
   return useQuery({
     ...ORDERS_QUERY,
-    select: (orders): Order[] => orders.filter(isActiveOrder),
+    select: (orders): Order[] =>
+      orders
+        .filter(isActiveOrder)
+        .sort(
+          (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+        ),
   });
 }
 
