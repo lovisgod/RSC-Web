@@ -308,6 +308,9 @@ export const menuItemSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable(),
   imageUrl: z.url().nullable(),
+  deliveryTimeRange: z.string().nullable().optional(),
+  ratingAverage: z.coerce.number().min(0).max(5).default(0),
+  ratingCount: z.int().nonnegative().default(0),
   priceMinor: z.int().nonnegative(),
   currency: currencySchema,
   isAvailable: z.boolean(),
@@ -315,6 +318,14 @@ export const menuItemSchema = z.object({
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
+});
+
+export const menuItemsPageSchema = z.object({
+  items: z.array(menuItemSchema),
+  total: z.int().nonnegative(),
+  limit: z.int().min(1).max(100),
+  offset: z.int().min(0),
+  hasMore: z.boolean(),
 });
 
 export const updateMenuItemAvailabilityInputSchema = z
@@ -385,6 +396,89 @@ export const subOrderStatusSchema = z.enum([
   "DISPATCHED",
   "REJECTED",
 ]);
+
+export const deliveryModeSchema = z.enum(["DELIVERY", "TAKEOUT"]);
+
+export const adminOrdersQuerySchema = z
+  .object({
+    outletId: z.uuid().optional(),
+    status: masterOrderStatusSchema.optional(),
+    subOrderStatus: subOrderStatusSchema.optional(),
+    deliveryMode: deliveryModeSchema.optional(),
+    customerId: z.uuid().optional(),
+    dateFrom: z.iso.datetime().optional(),
+    dateTo: z.iso.datetime().optional(),
+    limit: z.int().min(1).max(100).optional(),
+    offset: z.int().min(0).optional(),
+  })
+  .strict();
+
+export const adminOrderMasterSchema = z.object({
+  id: z.uuid(),
+  customerId: z.uuid(),
+  riderId: z.uuid().nullable(),
+  status: masterOrderStatusSchema,
+  subtotalMinor: z.int().nonnegative(),
+  deliveryFeeMinor: z.int().nonnegative(),
+  serviceFeeMinor: z.int().nonnegative(),
+  vatMinor: z.int().nonnegative(),
+  discountMinor: z.int().nonnegative(),
+  totalMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  deliveryMode: deliveryModeSchema,
+  deliveryAddress: z.string().nullable(),
+  deliveryLatitude: z.number().nullable(),
+  deliveryLongitude: z.number().nullable(),
+  paymentReference: z.string().nullable(),
+  deliveryCode: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
+
+export const adminOrderSubOrderSchema = z.object({
+  id: z.uuid(),
+  masterOrderId: z.uuid(),
+  outletId: z.uuid(),
+  status: subOrderStatusSchema,
+  subtotalMinor: z.int().nonnegative(),
+  commissionMinor: z.int().nonnegative(),
+  netMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
+
+export const adminOrderLineItemSchema = z.object({
+  id: z.uuid(),
+  masterOrderId: z.uuid(),
+  subOrderId: z.uuid(),
+  outletId: z.uuid(),
+  menuItemId: z.uuid().nullable(),
+  itemNameSnapshot: z.string().min(1),
+  unitPriceMinor: z.int().nonnegative(),
+  quantity: z.int().positive(),
+  lineTotalMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  modifiersSnapshot: z.array(z.unknown()),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
+
+export const adminOrderSummarySchema = z.object({
+  order: adminOrderMasterSchema,
+  subOrders: z.array(adminOrderSubOrderSchema),
+  lineItems: z.array(adminOrderLineItemSchema),
+});
+
+export const adminOrdersResultSchema = z.object({
+  orders: z.array(adminOrderSummarySchema),
+  total: z.int().nonnegative(),
+  limit: z.int().min(1).max(100),
+  offset: z.int().min(0),
+});
 
 export const orderSummarySchema = z.object({
   id: z.uuid(),
@@ -532,9 +626,17 @@ export type ItemModifierGroup = z.infer<typeof itemModifierGroupSchema>;
 export type ItemModifier = z.infer<typeof itemModifierSchema>;
 export type MenuItemModifierGroup = z.infer<typeof menuItemModifierGroupSchema>;
 export type MenuItem = z.infer<typeof menuItemSchema>;
+export type MenuItemsPage = z.infer<typeof menuItemsPageSchema>;
 export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
+export type DeliveryMode = z.infer<typeof deliveryModeSchema>;
+export type AdminOrdersQuery = z.infer<typeof adminOrdersQuerySchema>;
+export type AdminOrderMaster = z.infer<typeof adminOrderMasterSchema>;
+export type AdminOrderSubOrder = z.infer<typeof adminOrderSubOrderSchema>;
+export type AdminOrderLineItem = z.infer<typeof adminOrderLineItemSchema>;
+export type AdminOrderSummary = z.infer<typeof adminOrderSummarySchema>;
+export type AdminOrdersResult = z.infer<typeof adminOrdersResultSchema>;
 export type AdminOverview = z.infer<typeof adminOverviewSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
@@ -557,13 +659,7 @@ export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
 export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
 
-export const paginatedMenuItemsSchema = z.object({
-  items: z.array(menuItemSchema),
-  total: z.int().nonnegative(),
-  limit: z.int().nonnegative(),
-  offset: z.int().nonnegative(),
-  hasMore: z.boolean(),
-});
+export const paginatedMenuItemsSchema = menuItemsPageSchema;
 
 export type PaginatedMenuItems = z.infer<typeof paginatedMenuItemsSchema>;
 

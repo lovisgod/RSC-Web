@@ -1,0 +1,9 @@
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://web.localhost:3000
+- Network:       http://web.localhost:3000
+- Environments: .env.local
+✓ Ready in 2.7s
+Creating turbopack project { dir: 'C:\\Users\\PC\\Projects\\RSC-Web\\apps\\web', testMode: true }
+
+ GET /outlets 200 in 2.9s (next.js: 1100ms, application-code: 1753ms)
+ GET /outlets 200 in 522ms (next.js: 58ms, application-code: 464ms)
