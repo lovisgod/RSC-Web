@@ -45,9 +45,9 @@ export interface AdminOrderListResult {
   offset: number;
 }
 
-interface ClosestFreeRiderRow {
+interface FairAvailableRiderRow {
   id: string;
-  distanceMeters: number;
+  assignmentCount: number;
 }
 
 @Injectable()
@@ -253,14 +253,14 @@ export class OrdersService {
     }
 
     const order = await this.requireOperationalOrder(user, id);
-    const rider = await this.findClosestFreeRider(user, order);
+    const rider = await this.findFairAvailableRider(user, order);
 
     order.riderId = rider.id;
     await this.masterOrders.save(order);
     await this.recordStatusEvent(
       order,
       user.id,
-      input.note ?? `Closest free rider assigned (${Math.round(rider.distanceMeters)}m away)`,
+      input.note ?? `Available rider assigned fairly (${rider.assignmentCount} recent assignments)`,
     );
     await this.notifications.createAndPush({
       recipientId: rider.id,
@@ -418,22 +418,17 @@ export class OrdersService {
     throw new ForbiddenException("Order operations require admin or rider access");
   }
 
-  private async findClosestFreeRider(
+  private async findFairAvailableRider(
     user: AuthenticatedUser,
     order: MasterOrder,
-  ): Promise<ClosestFreeRiderRow> {
+  ): Promise<FairAvailableRiderRow> {
     if (order.deliveryMode !== "DELIVERY") {
       throw new BadRequestException("Riders can only be assigned to delivery orders");
     }
 
-    if (order.deliveryLatitude === null || order.deliveryLongitude === null) {
-      throw new BadRequestException("Delivery coordinates are required to assign a rider");
-    }
-
-    const params: Array<string | number | string[]> = [
-      order.deliveryLongitude,
-      order.deliveryLatitude,
+    const params: Array<string | string[]> = [
       [MasterOrderStatus.DELIVERED, MasterOrderStatus.CANCELLED],
+      ["AVAILABLE", "ACTIVE"],
     ];
     let outletFilter = "";
 
@@ -453,37 +448,31 @@ export class OrdersService {
       outletFilter = `AND u.outlet_id = $${params.length}`;
     }
 
-    const rows = await this.dataSource.query<ClosestFreeRiderRow[]>(
+    const rows = await this.dataSource.query<FairAvailableRiderRow[]>(
       `
-        WITH latest_locations AS (
-          SELECT DISTINCT ON (rider_id)
-            rider_id,
-            geom,
-            recorded_at
-          FROM rider_locations
-          ORDER BY rider_id, recorded_at DESC
-        )
         SELECT
           u.id,
-          ST_Distance(
-            latest_locations.geom::geography,
-            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-          ) AS "distanceMeters"
+          COUNT(recent_orders.id)::integer AS "assignmentCount"
         FROM users u
-        INNER JOIN latest_locations ON latest_locations.rider_id = u.id
+        LEFT JOIN master_orders recent_orders
+          ON recent_orders.rider_id = u.id
+          AND recent_orders.created_at >= NOW() - INTERVAL '24 hours'
+          AND recent_orders.status <> 'CANCELLED'
+          AND recent_orders.deleted_at IS NULL
         WHERE u.role = 'RIDER'
           AND u.status = 'ACTIVE'
-          AND u.rider_status = 'ACTIVE'
+          AND u.rider_status = ANY($2)
           AND u.deleted_at IS NULL
           ${outletFilter}
           AND NOT EXISTS (
             SELECT 1
             FROM master_orders active_orders
             WHERE active_orders.rider_id = u.id
-              AND active_orders.status <> ALL($3)
+              AND active_orders.status <> ALL($1)
               AND active_orders.deleted_at IS NULL
           )
-        ORDER BY "distanceMeters" ASC
+        GROUP BY u.id, u.created_at
+        ORDER BY "assignmentCount" ASC, MAX(recent_orders.created_at) ASC NULLS FIRST, u.created_at ASC
         LIMIT 1
       `,
       params,
@@ -492,7 +481,7 @@ export class OrdersService {
     const rider = rows[0];
 
     if (!rider) {
-      throw new NotFoundException("No free rider with a recent location was found");
+      throw new NotFoundException("No available free rider was found");
     }
 
     return rider;

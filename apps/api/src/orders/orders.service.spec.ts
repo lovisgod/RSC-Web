@@ -30,7 +30,7 @@ function createMasterOrderQueryBuilder(orders: MasterOrder[], total: number) {
 function createService(input: {
   adminOutletId?: string | null;
   orders?: MasterOrder[];
-  closestFreeRiders?: Array<{ id: string; distanceMeters: number }>;
+  availableRiders?: Array<{ id: string; assignmentCount: number }>;
   riders?: Customer[];
   total?: number;
   subOrders?: SubOrder[];
@@ -88,7 +88,7 @@ function createService(input: {
   };
   const dataSource = {
     query: vi.fn((sql: string) =>
-      Promise.resolve(sql.includes("FROM users u") ? (input.closestFreeRiders ?? []) : []),
+      Promise.resolve(sql.includes("FROM users u") ? (input.availableRiders ?? []) : []),
     ),
   };
   const service = new OrdersService(
@@ -250,7 +250,7 @@ describe(OrdersService.name, () => {
     );
   });
 
-  it("allows outlet admins to assign the closest free rider from their outlet", async () => {
+  it("allows outlet admins to assign a fair available rider from their outlet", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
@@ -271,7 +271,7 @@ describe(OrdersService.name, () => {
     const { service, masterOrders, notifications, realtime, dataSource } = createService({
       adminOutletId: outletId,
       orders: [order],
-      closestFreeRiders: [{ id: riderId, distanceMeters: 245.8 }],
+      availableRiders: [{ id: riderId, assignmentCount: 1 }],
       subOrders: [outletSubOrder],
     });
 
@@ -290,12 +290,12 @@ describe(OrdersService.name, () => {
       expect.objectContaining({ masterOrderId: order.id, riderId }),
     );
     expect(dataSource.query).toHaveBeenCalledWith(
-      expect.stringContaining("ST_Distance"),
-      expect.arrayContaining([order.deliveryLongitude, order.deliveryLatitude, outletId]),
+      expect.stringContaining('ORDER BY "assignmentCount" ASC'),
+      expect.arrayContaining([expect.arrayContaining(["DELIVERED", "CANCELLED"]), outletId]),
     );
   });
 
-  it("returns not found when no free rider has a latest location", async () => {
+  it("returns not found when no available free rider exists", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
@@ -314,10 +314,12 @@ describe(OrdersService.name, () => {
     const { service } = createService({
       adminOutletId: outletId,
       orders: [order],
-      closestFreeRiders: [],
+      availableRiders: [],
       subOrders: [outletSubOrder],
     });
 
-    await expect(service.assignRider(adminUser, order.id, {})).rejects.toThrow("No free rider");
+    await expect(service.assignRider(adminUser, order.id, {})).rejects.toThrow(
+      "No available free rider",
+    );
   });
 });
