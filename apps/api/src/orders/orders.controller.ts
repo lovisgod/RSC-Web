@@ -24,6 +24,7 @@ import {
   AssignOrderRiderDto,
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
+  PickupSubOrderDto,
   UpdateOrderStatusDto,
 } from "./dto/orders.dto";
 import { OrdersService } from "./orders.service";
@@ -126,6 +127,24 @@ export class OrdersController {
     @Body() input: AssignOrderRiderDto,
   ) {
     return this.orders.assignRider(request.user!, id, input);
+  }
+
+  @Patch(":id/sub-orders/:subOrderId/pickup")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.RIDER)
+  @ApiMessage("Sub-order pickup confirmed")
+  @ApiOperation({
+    summary: "Confirm pickup for one outlet sub-order",
+    description:
+      "Rider-only endpoint for marking one outlet pickup as collected while other outlet pickups on the same master order may still be pending.",
+  })
+  pickupSubOrder(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Param("subOrderId") subOrderId: string,
+    @Body() input: PickupSubOrderDto,
+  ) {
+    return this.orders.pickupSubOrder(request.user!, id, subOrderId, input);
   }
 
   @Post(":id/complete-delivery")

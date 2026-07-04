@@ -24,6 +24,7 @@ import type {
   AssignOrderRiderDto,
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
+  PickupSubOrderDto,
   UpdateOrderStatusDto,
 } from "./dto/orders.dto";
 
@@ -351,6 +352,69 @@ export class OrdersService {
     return this.buildRiderDispatch(order);
   }
 
+  async pickupSubOrder(
+    user: AuthenticatedUser,
+    id: string,
+    subOrderId: string,
+    input: PickupSubOrderDto,
+  ) {
+    if (user.role !== UserRole.RIDER) {
+      throw new ForbiddenException("Only riders can confirm pickups");
+    }
+
+    const order = await this.masterOrders.findOneBy({ id });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    if (order.riderId && order.riderId !== user.id) {
+      throw new ForbiddenException("Cannot pick up another rider's order");
+    }
+
+    const subOrder = await this.subOrders.findOneBy({ id: subOrderId, masterOrderId: id });
+
+    if (!subOrder) {
+      throw new NotFoundException("Sub-order not found");
+    }
+
+    if (subOrder.status === SubOrderStatus.REJECTED) {
+      throw new BadRequestException("Rejected sub-orders cannot be picked up");
+    }
+
+    order.riderId = order.riderId ?? user.id;
+    subOrder.status = SubOrderStatus.COLLECTED;
+    await this.subOrders.save(subOrder);
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+
+    if (derivedStatus !== order.status || order.riderId === user.id) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
+
+    await this.recordStatusEvent(
+      order,
+      user.id,
+      input.note ?? "Sub-order pickup confirmed",
+      subOrder,
+    );
+    await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+      ...(order.status === MasterOrderStatus.OUT_FOR_DELIVERY
+        ? { riderLocationTracking: "START" as const }
+        : {}),
+    });
+
+    return this.buildOrderDetail(order);
+  }
+
   private async updateOutletSubOrderStatus(
     user: AuthenticatedUser,
     id: string,
@@ -662,7 +726,14 @@ export class OrdersService {
       return MasterOrderStatus.READY;
     }
 
-    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.READY)) {
+    if (
+      subOrders.some(
+        (subOrder) =>
+          subOrder.status === SubOrderStatus.READY ||
+          subOrder.status === SubOrderStatus.COLLECTED ||
+          subOrder.status === SubOrderStatus.DISPATCHED,
+      )
+    ) {
       return MasterOrderStatus.PARTIALLY_READY;
     }
 

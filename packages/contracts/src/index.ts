@@ -237,7 +237,20 @@ export const geofenceZoneSchema = z.object({
   polygon: z.unknown(),
   isActive: z.boolean(),
   createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
+
+export const geofencePolygonCoordinatesSchema = z.array(z.array(z.tuple([z.number(), z.number()])));
+
+export const createGeofenceZoneInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    coordinates: geofencePolygonCoordinatesSchema,
+    isActive: z.boolean().optional(),
+  })
+  .strict();
+
+export const updateGeofenceZoneInputSchema = createGeofenceZoneInputSchema.partial().strict();
 
 export const changePasswordInputSchema = z
   .object({
@@ -553,6 +566,25 @@ export const profileSchema = z.object({
   }),
 });
 
+export const platformChargesSchema = z.object({
+  platformCommissionBps: z.int().min(0).max(10_000),
+  defaultVatBps: z.int().min(0).max(10_000),
+  deliveryFeeMinor: z.int().nonnegative(),
+  serviceFeeMinor: z.int().nonnegative(),
+  currency: currencySchema,
+});
+
+export const updatePlatformChargesInputSchema = platformChargesSchema
+  .omit({ currency: true })
+  .partial()
+  .strict();
+
+export const pickupSubOrderInputSchema = z
+  .object({
+    note: z.string().max(500).optional(),
+  })
+  .strict();
+
 export const userProfileSchema = profileSchema;
 
 export const updateProfileInputSchema = z
@@ -699,10 +731,15 @@ export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema
 export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
 export type ValidateAddressResult = z.infer<typeof validateAddressResultSchema>;
 export type GeofenceZone = z.infer<typeof geofenceZoneSchema>;
+export type CreateGeofenceZoneInput = z.infer<typeof createGeofenceZoneInputSchema>;
+export type UpdateGeofenceZoneInput = z.infer<typeof updateGeofenceZoneInputSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
 export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
 export type InitiatePaymentInput = z.infer<typeof initiatePaymentInputSchema>;
 export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
+export type PlatformCharges = z.infer<typeof platformChargesSchema>;
+export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
+export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;

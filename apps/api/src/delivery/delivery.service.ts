@@ -9,6 +9,7 @@ import type {
   UpdateDeliveryAddressDto,
   ValidateAddressDto,
 } from "./dto/delivery-address.dto";
+import type { CreateGeofenceZoneDto, UpdateGeofenceZoneDto } from "./dto/geofence-zone.dto";
 
 export interface AddressValidationResult {
   deliverable: boolean;
@@ -21,6 +22,7 @@ export interface GeofenceZoneResult {
   polygon: unknown;
   isActive: boolean;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 @Injectable()
@@ -160,6 +162,92 @@ export class DeliveryService {
   }
 
   async listGeofenceZones(): Promise<GeofenceZoneResult[]> {
+    return this.queryGeofenceZones(`WHERE is_active = true ORDER BY name ASC`);
+  }
+
+  async getGeofenceZone(id: string): Promise<GeofenceZoneResult> {
+    const zones = await this.queryGeofenceZones(`WHERE id = $1 LIMIT 1`, [id]);
+    const zone = zones[0];
+
+    if (!zone) {
+      throw new NotFoundException("Geofence zone not found");
+    }
+
+    return zone;
+  }
+
+  async createGeofenceZone(input: CreateGeofenceZoneDto): Promise<GeofenceZoneResult> {
+    const [zone] = await this.dataSource.query<GeofenceZoneResult[]>(
+      `
+        INSERT INTO geofence_zones (name, polygon, is_active, updated_at)
+        VALUES ($1, ST_SetSRID(ST_GeomFromGeoJSON($2), 4326), $3, now())
+        RETURNING
+          id,
+          name,
+          ST_AsGeoJSON(polygon)::json AS polygon,
+          is_active AS "isActive",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+      `,
+      [
+        input.name,
+        JSON.stringify({ type: "Polygon", coordinates: input.coordinates }),
+        input.isActive ?? true,
+      ],
+    );
+
+    return normalizeGeofenceZone(zone!);
+  }
+
+  async updateGeofenceZone(id: string, input: UpdateGeofenceZoneDto): Promise<GeofenceZoneResult> {
+    const existing = await this.getGeofenceZone(id);
+    const [zone] = await this.dataSource.query<GeofenceZoneResult[]>(
+      `
+        UPDATE geofence_zones
+        SET
+          name = $2,
+          polygon = CASE
+            WHEN $3::text IS NULL THEN polygon
+            ELSE ST_SetSRID(ST_GeomFromGeoJSON($3), 4326)
+          END,
+          is_active = $4,
+          updated_at = now()
+        WHERE id = $1
+        RETURNING
+          id,
+          name,
+          ST_AsGeoJSON(polygon)::json AS polygon,
+          is_active AS "isActive",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+      `,
+      [
+        id,
+        input.name ?? existing.name,
+        input.coordinates
+          ? JSON.stringify({ type: "Polygon", coordinates: input.coordinates })
+          : null,
+        input.isActive ?? existing.isActive,
+      ],
+    );
+
+    return normalizeGeofenceZone(zone!);
+  }
+
+  async deleteGeofenceZone(id: string): Promise<{ deleted: true }> {
+    await this.getGeofenceZone(id);
+    await this.dataSource.query(
+      `UPDATE geofence_zones SET is_active = false, updated_at = now() WHERE id = $1`,
+      [id],
+    );
+
+    return { deleted: true };
+  }
+
+  private async queryGeofenceZones(
+    whereClause: string,
+    params: unknown[] = [],
+  ): Promise<GeofenceZoneResult[]> {
     const rows = await this.dataSource.query<
       Array<{
         id: string;
@@ -167,6 +255,7 @@ export class DeliveryService {
         polygon: string;
         isActive: boolean;
         createdAt: Date;
+        updatedAt: Date;
       }>
     >(
       `
@@ -175,20 +264,23 @@ export class DeliveryService {
           name,
           ST_AsGeoJSON(polygon)::json AS polygon,
           is_active AS "isActive",
-          created_at AS "createdAt"
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
         FROM geofence_zones
-        WHERE is_active = true
-        ORDER BY name ASC
+        ${whereClause}
       `,
+      params,
     );
 
-    return rows.map((zone) => {
-      const polygon: unknown =
-        typeof zone.polygon === "string" ? parseGeoJson(zone.polygon) : zone.polygon;
-
-      return { ...zone, polygon };
-    });
+    return rows.map(normalizeGeofenceZone);
   }
+}
+
+function normalizeGeofenceZone(zone: GeofenceZoneResult): GeofenceZoneResult {
+  const polygon: unknown =
+    typeof zone.polygon === "string" ? parseGeoJson(zone.polygon) : zone.polygon;
+
+  return { ...zone, polygon };
 }
 
 function parseGeoJson(value: string): unknown {
