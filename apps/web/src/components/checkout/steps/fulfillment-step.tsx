@@ -1,9 +1,10 @@
 "use client";
 
+import { type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
-import { useMutation } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, MapPin, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Loader2, Star, XCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
@@ -13,9 +14,12 @@ import {
   type DeliveryForm,
   type DeliveryZone,
   type FulfillmentMode,
+  type OrderSnapshot,
 } from "@/src/lib/data/checkout";
+import { geocodeAddress } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
-import { useAddressStore } from "@/src/stores/address-store";
+import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
+import { useCartStore } from "@/src/stores/cart-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -41,13 +45,17 @@ export function FulfillmentStep({
   onComplete,
 }: {
   initial: DeliveryForm;
-  onComplete: (data: DeliveryForm, orderId: string) => void;
+  onComplete: (data: DeliveryForm, orderId: string, snapshot: OrderSnapshot) => void;
 }) {
   const { data: cart } = useCart();
-  const savedDefault = useAddressStore((s) => s.defaultAddress);
+  const clearCart = useCartStore((s) => s.clear);
+  const qc = useQueryClient();
+
+  const { data: savedAddresses = [] } = useDeliveryAddresses();
+  const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? null;
 
   const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
-  const [address, setAddress] = useState(initial.address);
+  const [addressText, setAddressText] = useState(initial.address);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [instructions, setInstructions] = useState(initial.instructions);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
@@ -56,8 +64,24 @@ export function FulfillmentStep({
       : null,
   );
   const [zone, setZone] = useState<DeliveryZone | null>(initial.zone);
-  const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null);
+  const [showNoDefaultHint, setShowNoDefaultHint] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const filteredAddresses = savedAddresses.filter((addr) => {
+    if (!addressText.trim()) return true;
+    const q = addressText.toLowerCase();
+    return (
+      addr.label.toLowerCase().includes(q) ||
+      addr.addressLine.toLowerCase().includes(q) ||
+      addr.city.toLowerCase().includes(q) ||
+      addr.state.toLowerCase().includes(q)
+    );
+  });
 
   const validateMutation = useMutation({
     mutationFn: (input: { latitude: number; longitude: number }) =>
@@ -77,39 +101,111 @@ export function FulfillmentStep({
     },
   });
 
-  function handleDetectLocation() {
-    if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser.");
-      return;
-    }
-
-    setLocating(true);
-    setLocationError(null);
+  function resetValidation() {
     setZone(null);
+    setLocationError(null);
+    setSelectedSavedId(null);
     validateMutation.reset();
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setCoords({ latitude, longitude });
-        setLocating(false);
-        validateMutation.mutate({ latitude, longitude });
-      },
-      (error) => {
-        setLocating(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationError(
-            "Location access denied. Please enable location permissions and try again.",
-          );
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          setLocationError("Your location could not be determined. Please try again.");
-        } else {
-          setLocationError("Location request timed out. Please try again.");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-    );
   }
+
+  function selectSavedAddress(addr: DeliveryAddressSummary) {
+    setSelectedSavedId(addr.id);
+    setAddressText(`${addr.addressLine}, ${addr.city}, ${addr.state}`);
+    setCoords({ latitude: addr.latitude, longitude: addr.longitude });
+    setZone(null);
+    setLocationError(null);
+    setShowNoDefaultHint(false);
+    setShowDropdown(false);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    validateMutation.mutate({ latitude: addr.latitude, longitude: addr.longitude });
+  }
+
+  function handleInputFocus() {
+    setShowDropdown(true);
+  }
+
+  function handleInputBlur() {
+    blurTimerRef.current = setTimeout(() => setShowDropdown(false), 150);
+  }
+
+  function handleDropdownMouseDown() {
+    if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+  }
+
+  function handleUseDefault() {
+    if (defaultAddress) {
+      selectSavedAddress(defaultAddress);
+    } else {
+      setShowNoDefaultHint(true);
+    }
+  }
+
+  function handleAddressChange(value: string) {
+    setAddressText(value);
+    setSelectedSavedId(null);
+    resetValidation();
+    setShowNoDefaultHint(false);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value.trim() || value.trim().length < 5) return;
+
+    debounceRef.current = setTimeout(() => {
+      void runGeocode(value.trim());
+    }, 1500);
+  }
+
+  async function runGeocode(query: string) {
+    setGeocoding(true);
+    setLocationError(null);
+    try {
+      const result = await geocodeAddress(query);
+      if (!result) {
+        setGeocoding(false);
+        setLocationError("Address not found. Try a more specific address.");
+        return;
+      }
+      const { latitude, longitude, addressLine, city, state, label } = result;
+      setCoords({ latitude, longitude });
+      setGeocoding(false);
+
+      validateMutation.mutate(
+        { latitude, longitude },
+        {
+          onSuccess: (data) => {
+            if (!data.deliverable) return;
+            const isAlreadySaved = savedAddresses.some(
+              (a) =>
+                Math.abs(a.latitude - latitude) < 0.0001 &&
+                Math.abs(a.longitude - longitude) < 0.0001,
+            );
+            if (isAlreadySaved) return;
+            void apiClient
+              .createDeliveryAddress({
+                label: label || addressLine.slice(0, 30),
+                addressLine,
+                city: city || "Lagos",
+                state: state || "Lagos State",
+                latitude,
+                longitude,
+                isDefault: savedAddresses.length === 0,
+              })
+              .then(() => qc.invalidateQueries({ queryKey: ["delivery-addresses"] }))
+              .catch((err: unknown) => console.error("[address save]", err));
+          },
+        },
+      );
+    } catch {
+      setGeocoding(false);
+      setLocationError("Geocoding failed. Please try again.");
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+    };
+  }, []);
 
   const subtotal = cart ? cartSubtotalMinor(cart) : 0;
   const deliveryFee = mode === "delivery" && cart ? cart.deliveryFeeMinor : 0;
@@ -117,17 +213,22 @@ export function FulfillmentStep({
   const grandTotal = subtotal + deliveryFee + vat;
 
   const initiateMutation = useMutation({
+    onError: (err) => {
+      console.error("[initiatePayment error]", err);
+    },
     mutationFn: () => {
-      const items = cart
-        ? cart.groups.flatMap((g) =>
-            g.items.map((item) => ({
-              menuItemId: item.id,
-              quantity: item.quantity,
-              modifiers: item.modifiers,
-              ...(item.notes ? { customerNote: item.notes } : {}),
-            })),
-          )
-        : [];
+      const items = cart.groups.flatMap((g) =>
+        g.items.map((item) => ({
+          menuItemId: item.id,
+          quantity: item.quantity,
+          modifiers: item.modifiers ?? [],
+          ...(item.notes ? { customerNote: item.notes } : {}),
+        })),
+      );
+
+      if (items.length === 0) {
+        throw new Error("Your cart is empty. Add items before placing an order.");
+      }
 
       const base = {
         items,
@@ -138,7 +239,7 @@ export function FulfillmentStep({
         mode === "delivery"
           ? {
               ...base,
-              deliveryAddress: address,
+              deliveryAddress: addressText,
               deliveryLatitude: coords!.latitude,
               deliveryLongitude: coords!.longitude,
             }
@@ -146,10 +247,26 @@ export function FulfillmentStep({
       );
     },
     onSuccess: (result) => {
+      // Snapshot cart before clearing so the sidebar stays populated on later steps
+      const snapshot: OrderSnapshot = {
+        groups: cart.groups.map((g) => ({
+          outletId: g.outletId,
+          outletName: g.outletName,
+          items: g.items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            notes: item.notes,
+            unitPriceMinor: item.unitPriceMinor,
+          })),
+        })),
+        totals: result.totals,
+      };
+      clearCart();
       onComplete(
         {
           mode,
-          address,
+          address: addressText,
           latitude: coords?.latitude ?? null,
           longitude: coords?.longitude ?? null,
           zone,
@@ -157,13 +274,15 @@ export function FulfillmentStep({
           instructions,
         },
         result.reference,
+        snapshot,
       );
     },
   });
 
-  const isDetecting = locating || validateMutation.isPending;
+  const isValidating = geocoding || validateMutation.isPending;
   const isValidated = zone !== null;
-  const canProceed = mode === "takeout" || isValidated;
+  const cartItemCount = cart.groups.reduce((n, g) => n + g.items.length, 0);
+  const canProceed = cartItemCount > 0 && (mode === "takeout" || isValidated);
 
   return (
     <div className="space-y-6">
@@ -187,70 +306,100 @@ export function FulfillmentStep({
       {/* Delivery address — only shown in delivery mode */}
       {mode === "delivery" && (
         <div>
-          <SectionLabel icon="/icons/png/round-pushpin_1f4cd.png" text="Delivery Address" />
+          <div className="flex items-center justify-between mb-2">
+            <SectionLabel icon="/icons/png/round-pushpin_1f4cd.png" text="Delivery Address" />
+            <button
+              type="button"
+              onClick={handleUseDefault}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                defaultAddress
+                  ? "border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5"
+                  : "border-gray-200 text-gray-400"
+              }`}
+            >
+              <Star className="w-3 h-3" fill={defaultAddress ? "currentColor" : "none"} />
+              {defaultAddress ? `Use ${defaultAddress.label}` : "No Default Set"}
+            </button>
+          </div>
+
           <div className="bg-blue-50 rounded-2xl p-4 space-y-3">
-            {/* Address text input */}
-            <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-transparent focus-within:border-[var(--rsc-main)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/icons/png/house_1f3e0.png"
-                alt="Address"
-                className="w-5 h-5 object-contain flex-shrink-0"
-              />
-              <input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter your delivery address"
-                className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
-              />
-            </div>
+            {/* No-default hint */}
+            {showNoDefaultHint && !defaultAddress && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-700">
+                Type your address below — once verified it will be saved as your default.
+              </div>
+            )}
 
-            {/* Action buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                tone="quiet"
-                fullWidth
-                type="button"
-                disabled={!savedDefault}
-                onClick={() => {
-                  if (!savedDefault) return;
-                  setAddress(
-                    `${savedDefault.addressLine}, ${savedDefault.city}, ${savedDefault.state}`,
-                  );
-                  setCoords({
-                    latitude: savedDefault.latitude,
-                    longitude: savedDefault.longitude,
-                  });
-                  setZone(null);
-                  setLocationError(null);
-                  validateMutation.mutate({
-                    latitude: savedDefault.latitude,
-                    longitude: savedDefault.longitude,
-                  });
-                }}
+            {/* Address combobox */}
+            <div className="relative">
+              <div
+                className={`flex items-center gap-3 bg-white rounded-xl px-4 py-3 border transition-colors ${
+                  isValidated
+                    ? "border-green-400"
+                    : locationError
+                      ? "border-red-300"
+                      : "border-transparent focus-within:border-[var(--rsc-main)]"
+                }`}
               >
-                {savedDefault ? `Use ${savedDefault.label}` : "No Default Set"}
-              </Button>
-
-              <button
-                type="button"
-                onClick={handleDetectLocation}
-                disabled={isDetecting}
-                className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                style={{ backgroundColor: "var(--rsc-main)" }}
-              >
-                {isDetecting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {locating ? "Locating…" : "Validating…"}
-                  </>
-                ) : (
-                  <>
-                    <MapPin className="w-4 h-4" />
-                    Use My Location
-                  </>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icons/png/house_1f3e0.png"
+                  alt="Address"
+                  className="w-5 h-5 object-contain flex-shrink-0"
+                />
+                <input
+                  value={addressText}
+                  onChange={(e) => handleAddressChange(e.target.value)}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                  placeholder="Type or select your delivery address…"
+                  className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                />
+                {isValidating && (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-400 flex-shrink-0" />
                 )}
-              </button>
+                {isValidated && !isValidating && (
+                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                )}
+              </div>
+
+              {/* Saved address dropdown */}
+              {showDropdown && filteredAddresses.length > 0 && (
+                <div
+                  onMouseDown={handleDropdownMouseDown}
+                  className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
+                >
+                  {filteredAddresses.map((addr) => (
+                    <button
+                      key={addr.id}
+                      type="button"
+                      onClick={() => selectSavedAddress(addr)}
+                      className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${
+                        selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/5" : ""
+                      }`}
+                    >
+                      <span className="mt-0.5 flex-shrink-0 text-gray-400">
+                        {addr.isDefault ? (
+                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src="/icons/png/round-pushpin_1f4cd.png"
+                            alt=""
+                            className="w-4 h-4 object-contain"
+                          />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{addr.label}</p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {addr.addressLine}, {addr.city}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Validation success */}
@@ -273,10 +422,15 @@ export function FulfillmentStep({
             )}
 
             {/* Idle hint */}
-            {!isValidated && !locationError && !isDetecting && (
+            {!isValidated && !locationError && !isValidating && !addressText && (
               <p className="text-xs text-center text-gray-400">
-                Tap &quot;Use My Location&quot; to confirm your delivery zone
+                Type your address — it will be verified automatically
               </p>
+            )}
+
+            {/* Geocoding in progress hint */}
+            {geocoding && (
+              <p className="text-xs text-center text-gray-400">Finding your address…</p>
             )}
 
             {/* On behalf checkbox */}

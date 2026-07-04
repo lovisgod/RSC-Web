@@ -67,17 +67,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="sidebar__footer">
-        <NavLink to="/settings" onClick={onNavigate}>
-          <Settings aria-hidden="true" size={19} />
-          <span>Settings</span>
-        </NavLink>
-        <OperatorFooter />
+        <OperatorFooter {...(onNavigate ? { onNavigate } : {})} />
       </div>
     </>
   );
 }
 
-function OperatorFooter() {
+function OperatorFooter({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -101,7 +97,11 @@ function OperatorFooter() {
 
   return (
     <div className="operator">
-      <span className="operator__avatar">{user?.role?.charAt(0) ?? "A"}</span>
+      {/* <span className="operator__avatar">{user?.role?.charAt(0) ?? "A"}</span> */}
+      <NavLink to="/settings" onClick={onNavigate}>
+        <Settings aria-hidden="true" size={19} />
+        {/* <span>Settings</span> */}
+      </NavLink>
       <span>
         <strong>{user?.role ?? "Admin"}</strong>
         {/* <small>Platform access</small> */}

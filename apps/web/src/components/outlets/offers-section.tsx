@@ -90,15 +90,21 @@ export function OffersSection() {
     );
   }
 
-  const visible = notifications.filter((notification) => !dismissed.has(notification.id));
+  const ALLOWED_TYPES = new Set(["PROMO", "SPECIAL_PERIOD", "DISCOUNT"]);
+  const visible = notifications.filter(
+    (n) => ALLOWED_TYPES.has(n.type.toUpperCase()) && !dismissed.has(n.id),
+  );
   if (visible.length === 0) return null;
 
   function dismiss(id: string) {
     setDismissed((current) => new Set([...current, id]));
   }
 
+  const useDesktopSwiper = visible.length > 2;
+
   return (
     <section className="mb-6" aria-label="Offers and announcements">
+      {/* Mobile: always swipe */}
       <div className="sm:hidden">
         <Swiper
           modules={[Pagination]}
@@ -115,14 +121,33 @@ export function OffersSection() {
         </Swiper>
       </div>
 
-      <div className="hidden gap-3 sm:grid sm:grid-cols-2">
-        {visible.map((notification) => (
-          <OfferCard
-            key={notification.id}
-            notification={notification}
-            onDismiss={() => dismiss(notification.id)}
-          />
-        ))}
+      {/* Desktop: grid when ≤2, swiper when >2 */}
+      <div className="hidden sm:block">
+        {useDesktopSwiper ? (
+          <Swiper
+            modules={[Pagination]}
+            slidesPerView={2.1}
+            spaceBetween={12}
+            pagination={{ clickable: true }}
+            className="!pb-8"
+          >
+            {visible.map((notification) => (
+              <SwiperSlide key={notification.id} className="!h-auto">
+                <OfferCard notification={notification} onDismiss={() => dismiss(notification.id)} />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {visible.map((notification) => (
+              <OfferCard
+                key={notification.id}
+                notification={notification}
+                onDismiss={() => dismiss(notification.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

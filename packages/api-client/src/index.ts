@@ -1,7 +1,4 @@
 import {
-  adminOverviewSchema,
-  adminOrdersQuerySchema,
-  adminOrdersResultSchema,
   adminResultSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
@@ -10,97 +7,104 @@ import {
   createAdminInputSchema,
   createGeofenceZoneInputSchema,
   createNotificationCampaignInputSchema,
-  createDeliveryAddressInputSchema,
   customerOrderSchema,
-  deliveryAddressSummarySchema,
-  forgotPasswordInputSchema,
-  forgotPasswordResultSchema,
   geofenceZoneSchema,
   initiatePaymentInputSchema,
   initiatePaymentResultSchema,
+  notificationCampaignSchema,
+  notificationPreferencesSchema,
+  paginatedMenuItemsSchema,
+  pickupSubOrderInputSchema,
+  platformChargesSchema,
+  orderDetailSchema,
+  orderSummarySchema,
+  outletAdminSchema,
+  userProfileSchema,
+  updateProfileInputSchema,
+  updateGeofenceZoneInputSchema,
+  updateMenuItemAvailabilityInputSchema,
+  updateNotificationPreferencesInputSchema,
+  updatePlatformChargesInputSchema,
+  createDeliveryAddressInputSchema,
+  deliveryAddressSummarySchema,
+  validateAddressInputSchema,
+  validateAddressResultSchema,
+  forgotPasswordInputSchema,
+  forgotPasswordResultSchema,
   menuCategorySchema,
+  resetPasswordInputSchema,
+  resetPasswordResultSchema,
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
-  menuItemsPageSchema,
   menuItemSchema,
-  notificationCampaignSchema,
-  notificationPreferencesSchema,
   notificationSchema,
-  orderSummarySchema,
-  outletAdminSchema,
+  operationsQueueSchema,
+  operationsStatsQuerySchema,
+  operationsSummarySchema,
+  orderPulseQuerySchema,
+  orderPulseSchema,
   outletSummarySchema,
-  pickupSubOrderInputSchema,
-  platformChargesSchema,
-  profileSchema,
-  profileUpdateResultSchema,
+  riderLocationSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
   resendVerificationInputSchema,
   resendVerificationResultSchema,
-  resetPasswordInputSchema,
-  resetPasswordResultSchema,
   uploadedImageSchema,
-  updateMenuItemAvailabilityInputSchema,
-  updateNotificationPreferencesInputSchema,
-  updateGeofenceZoneInputSchema,
-  updatePlatformChargesInputSchema,
-  updateProfileInputSchema,
-  validateAddressInputSchema,
-  validateAddressResultSchema,
   userVerificationResultSchema,
-  verifyProfileChangeInputSchema,
   verifyUserInputSchema,
-  type AdminOverview,
-  type AdminOrdersQuery,
-  type AdminOrdersResult,
   type AdminResult,
   type ChangePasswordInput,
   type ChangePasswordResult,
   type CreateAdminInput,
   type CreateGeofenceZoneInput,
   type CreateNotificationCampaignInput,
-  type CreateDeliveryAddressInput,
   type CustomerOrder,
-  type DeliveryAddressSummary,
-  type ForgotPasswordInput,
-  type ForgotPasswordResult,
   type GeofenceZone,
   type InitiatePaymentInput,
   type InitiatePaymentResult,
-  type MenuCategorySummary,
-  type MenuItemsPage,
-  type MenuItemSummary,
+  type NotificationCampaign,
+  type NotificationPreferences,
+  type PaginatedMenuItems,
+  type PickupSubOrderInput,
+  type PlatformCharges,
+  type OrderDetail,
   type OrderSummary,
+  type OutletAdmin,
+  type UserProfile,
+  type UpdateProfileInput,
+  type UpdateGeofenceZoneInput,
+  type UpdateMenuItemAvailabilityInput,
+  type UpdateNotificationPreferencesInput,
+  type UpdatePlatformChargesInput,
+  type CreateDeliveryAddressInput,
+  type DeliveryAddressSummary,
+  type ValidateAddressInput,
+  type ValidateAddressResult,
+  type ForgotPasswordInput,
+  type ForgotPasswordResult,
+  type MenuCategorySummary,
+  type MenuItemSummary,
   type ResetPasswordInput,
   type ResetPasswordResult,
-  type UploadedImage,
   type LoginInput,
   type LoginResult,
   type LogoutResult,
   type MenuItem,
   type Notification,
-  type NotificationCampaign,
-  type NotificationPreferences,
-  type OutletAdmin,
+  type OperationsQueue,
+  type OperationsStatsQuery,
+  type OperationsSummary,
+  type OrderPulse,
+  type OrderPulseQuery,
   type OutletSummary,
-  type PickupSubOrderInput,
-  type PlatformCharges,
-  type Profile,
-  type ProfileUpdateResult,
+  type RiderLocation,
   type RegisterCustomerInput,
   type RegistrationResult,
   type ResendVerificationInput,
   type ResendVerificationResult,
-  type UpdateMenuItemAvailabilityInput,
-  type UpdateNotificationPreferencesInput,
-  type UpdateGeofenceZoneInput,
-  type UpdatePlatformChargesInput,
-  type UpdateProfileInput,
-  type ValidateAddressInput,
-  type ValidateAddressResult,
+  type UploadedImage,
   type UserVerificationResult,
-  type VerifyProfileChangeInput,
   type VerifyUserInput,
 } from "@rsc/contracts";
 import { z } from "zod";
@@ -116,15 +120,29 @@ export class ApiError extends Error {
   }
 }
 
+export class ApiContractError extends Error {
+  constructor(
+    message: string,
+    readonly issues: z.ZodIssue[],
+  ) {
+    super(message);
+    this.name = "ApiContractError";
+  }
+}
+
+export const SERVER_ERROR_MESSAGE = "Error encountered. Please try again later.";
+
 export interface ApiClientOptions {
-  baseUrl?: string;
+  baseUrl: string;
   fetch?: typeof globalThis.fetch;
   getAccessToken?: () => Promise<string | null> | string | null;
+  onUnauthorized?: (path: string) => Promise<void> | void;
+  onServerError?: (path: string, status: number) => Promise<void> | void;
 }
 
 export function createApiClient(options: ApiClientOptions) {
   const requestFetch = options.fetch ?? globalThis.fetch;
-  const baseUrl = (options.baseUrl ?? "http://localhost:4000").replace(/\/$/, "");
+  const baseUrl = options.baseUrl.replace(/\/$/, "");
 
   async function request<T>(
     path: string,
@@ -160,22 +178,49 @@ export function createApiClient(options: ApiClientOptions) {
       credentials: "include",
     });
 
+    if (response.status === 401) {
+      try {
+        await options.onUnauthorized?.(path);
+      } catch {
+        // Redirect/session cleanup failures must not hide the API response.
+      }
+    }
+
+    if (response.status >= 500) {
+      try {
+        await options.onServerError?.(path, response.status);
+      } catch {
+        // Session cleanup/redirect failures must not hide the API response.
+      }
+    }
+
     if (!response.ok) {
       const errorPayload: unknown = await response.json().catch(() => null);
       const parsedError = apiErrorResponseSchema.safeParse(errorPayload);
 
       throw new ApiError(
-        parsedError.success
-          ? parsedError.data.message
-          : `API request failed with status ${response.status}`,
+        response.status >= 500
+          ? SERVER_ERROR_MESSAGE
+          : parsedError.success
+            ? parsedError.data.message
+            : `API request failed with status ${response.status}`,
         response.status,
         response.headers.get("x-request-id"),
       );
     }
 
-    const envelope = apiResponseSchema(schema).parse(await response.json());
+    const payload: unknown = await response.json();
+    const parsedEnvelope = apiResponseSchema(schema).safeParse(payload);
 
-    return envelope.data;
+    if (!parsedEnvelope.success) {
+      console.error("API contract validation failed", parsedEnvelope.error.flatten());
+      throw new ApiContractError(
+        "The server returned an unexpected response.",
+        parsedEnvelope.error.issues,
+      );
+    }
+
+    return parsedEnvelope.data.data;
   }
 
   return {
@@ -259,6 +304,17 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    getProfile(): Promise<UserProfile> {
+      return request("/api/v1/users/me", userProfileSchema);
+    },
+    updateProfile(input: UpdateProfileInput): Promise<UserProfile> {
+      const body = updateProfileInputSchema.parse(input);
+
+      return request("/api/v1/users/me", userProfileSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     createDeliveryAddress(input: CreateDeliveryAddressInput): Promise<DeliveryAddressSummary> {
       const body = createDeliveryAddressInputSchema.parse(input);
 
@@ -328,37 +384,24 @@ export function createApiClient(options: ApiClientOptions) {
         z.array(menuCategorySchema),
       );
     },
-    listMenuItems(input: { outletId?: string; q?: string } = {}): Promise<MenuItemSummary[]> {
-      const params = new URLSearchParams();
-      if (input.outletId) {
-        params.set("outletId", input.outletId);
-      }
-      if (input.q) {
-        params.set("q", input.q);
-      }
-      const query = params.toString();
-
-      return request(`/api/v1/menu-items${query ? `?${query}` : ""}`, z.array(menuItemSchema));
+    listMenuItems(input: { outletId: string }): Promise<MenuItemSummary[]> {
+      return request(
+        `/api/v1/menu-items?outletId=${encodeURIComponent(input.outletId)}`,
+        z.array(menuItemSchema),
+      );
     },
-    listMenuItemsPage(
-      input: { outletId?: string; q?: string; limit?: number; offset?: number } = {},
-    ): Promise<MenuItemsPage> {
-      const params = new URLSearchParams();
-      params.set("paginated", "true");
-      if (input.outletId) {
-        params.set("outletId", input.outletId);
-      }
-      if (input.q) {
-        params.set("q", input.q);
-      }
-      if (input.limit !== undefined) {
-        params.set("limit", String(input.limit));
-      }
-      if (input.offset !== undefined) {
-        params.set("offset", String(input.offset));
-      }
-
-      return request(`/api/v1/menu-items?${params.toString()}`, menuItemsPageSchema);
+    searchMenuItems(params: {
+      q?: string;
+      outletId?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<PaginatedMenuItems> {
+      const sp = new URLSearchParams({ paginated: "true" });
+      if (params.q) sp.set("q", params.q);
+      if (params.outletId) sp.set("outletId", params.outletId);
+      if (params.limit != null) sp.set("limit", String(params.limit));
+      if (params.offset != null) sp.set("offset", String(params.offset));
+      return request(`/api/v1/menu-items?${sp.toString()}`, paginatedMenuItemsSchema);
     },
     updateMenuItemAvailability(
       id: string,
@@ -386,86 +429,14 @@ export function createApiClient(options: ApiClientOptions) {
     listCustomerOrders(): Promise<CustomerOrder[]> {
       return request("/api/v1/orders", z.array(customerOrderSchema));
     },
-    reorder(id: string): Promise<unknown> {
-      return request(`/api/v1/orders/${encodeURIComponent(id)}/reorder`, z.unknown(), {
-        method: "POST",
-      });
+    getOrder(id: string): Promise<OrderDetail> {
+      return request(`/api/v1/orders/${encodeURIComponent(id)}`, orderDetailSchema);
     },
-    initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
-      const body = initiatePaymentInputSchema.parse(input);
-
-      return request("/api/v1/payments/initiate", initiatePaymentResultSchema, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-    },
-    getPlatformCharges(): Promise<PlatformCharges> {
-      return request("/api/v1/payments/platform-charges", platformChargesSchema);
-    },
-    updatePlatformCharges(input: UpdatePlatformChargesInput): Promise<PlatformCharges> {
-      const body = updatePlatformChargesInputSchema.parse(input);
-
-      return request("/api/v1/payments/platform-charges", platformChargesSchema, {
-        method: "PATCH",
-        body: JSON.stringify(body),
-      });
-    },
-    pickupSubOrder(
-      id: string,
-      subOrderId: string,
-      input: PickupSubOrderInput = {},
-    ): Promise<unknown> {
-      const body = pickupSubOrderInputSchema.parse(input);
-
+    getRiderLocation(id: string): Promise<RiderLocation | null> {
       return request(
-        `/api/v1/orders/${encodeURIComponent(id)}/sub-orders/${encodeURIComponent(subOrderId)}/pickup`,
-        z.unknown(),
-        {
-          method: "PATCH",
-          body: JSON.stringify(body),
-        },
+        `/api/v1/orders/${encodeURIComponent(id)}/rider-location`,
+        riderLocationSchema.nullable(),
       );
-    },
-    deleteAccount(id: string): Promise<unknown> {
-      return request(`/api/v1/users/${encodeURIComponent(id)}`, z.unknown(), {
-        method: "DELETE",
-      });
-    },
-    getAdminOverview(): Promise<AdminOverview> {
-      return request("/api/v1/admin/overview", adminOverviewSchema);
-    },
-    listAdminOrders(input: AdminOrdersQuery = {}): Promise<AdminOrdersResult> {
-      const filters = adminOrdersQuerySchema.parse(input);
-      const params = new URLSearchParams();
-
-      for (const [key, value] of Object.entries(filters)) {
-        if (value !== undefined) {
-          params.set(key, String(value));
-        }
-      }
-
-      const query = params.toString();
-
-      return request(`/api/v1/orders/admin${query ? `?${query}` : ""}`, adminOrdersResultSchema);
-    },
-    getProfile(): Promise<Profile> {
-      return request("/api/v1/users/me", profileSchema);
-    },
-    updateProfile(input: UpdateProfileInput): Promise<ProfileUpdateResult> {
-      const body = updateProfileInputSchema.parse(input);
-
-      return request("/api/v1/users/me", profileUpdateResultSchema, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-    },
-    verifyProfileChange(input: VerifyProfileChangeInput): Promise<Profile> {
-      const body = verifyProfileChangeInputSchema.parse(input);
-
-      return request("/api/v1/users/me/verify-change", profileSchema, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
     },
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
@@ -495,6 +466,100 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listNotificationCampaigns(): Promise<NotificationCampaign[]> {
       return request("/api/v1/notifications/campaigns", z.array(notificationCampaignSchema));
+    },
+    reorder(id: string): Promise<InitiatePaymentResult> {
+      return request(
+        `/api/v1/orders/${encodeURIComponent(id)}/reorder`,
+        initiatePaymentResultSchema,
+        {
+          method: "POST",
+        },
+      );
+    },
+    getPlatformCharges(): Promise<PlatformCharges> {
+      return request("/api/v1/payments/platform-charges", platformChargesSchema);
+    },
+    updatePlatformCharges(input: UpdatePlatformChargesInput): Promise<PlatformCharges> {
+      const body = updatePlatformChargesInputSchema.parse(input);
+
+      return request("/api/v1/payments/platform-charges", platformChargesSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
+    },
+    initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
+      const body = initiatePaymentInputSchema.parse(input);
+
+      return request("/api/v1/payments/initiate", initiatePaymentResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    pickupSubOrder(
+      id: string,
+      subOrderId: string,
+      input: PickupSubOrderInput = {},
+    ): Promise<unknown> {
+      const body = pickupSubOrderInputSchema.parse(input);
+
+      return request(
+        `/api/v1/orders/${encodeURIComponent(id)}/sub-orders/${encodeURIComponent(subOrderId)}/pickup`,
+        z.unknown(),
+        {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        },
+      );
+    },
+    listDeliveryAddresses(): Promise<DeliveryAddressSummary[]> {
+      return request("/api/v1/delivery/addresses", z.array(deliveryAddressSummarySchema));
+    },
+    deleteDeliveryAddress(id: string): Promise<unknown> {
+      return request(`/api/v1/delivery/addresses/${encodeURIComponent(id)}`, z.unknown(), {
+        method: "DELETE",
+      });
+    },
+    setDefaultDeliveryAddress(id: string): Promise<DeliveryAddressSummary> {
+      return request(
+        `/api/v1/delivery/addresses/${encodeURIComponent(id)}/default`,
+        deliveryAddressSummarySchema,
+        { method: "PATCH" },
+      );
+    },
+    deleteAccount(): Promise<unknown> {
+      return request("/api/v1/users/me/deactivate", z.unknown(), {
+        method: "POST",
+      });
+    },
+    deleteUser(id: string): Promise<unknown> {
+      return request(`/api/v1/users/${encodeURIComponent(id)}`, z.unknown(), {
+        method: "DELETE",
+      });
+    },
+    getOperationsSummary(input: OperationsStatsQuery = {}): Promise<OperationsSummary> {
+      const query = operationsStatsQuerySchema.parse(input);
+      const params = new URLSearchParams();
+      if (query.outletId) params.set("outletId", query.outletId);
+      const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
+      return request(`/api/v1/stats/operations/summary${suffix}`, operationsSummarySchema);
+    },
+    getOrderPulse(input: OrderPulseQuery = {}): Promise<OrderPulse> {
+      const query = orderPulseQuerySchema.parse(input);
+      const params = new URLSearchParams();
+      if (query.outletId) params.set("outletId", query.outletId);
+      if (query.range) params.set("range", query.range);
+      const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
+      return request(`/api/v1/stats/operations/order-pulse${suffix}`, orderPulseSchema);
+    },
+    getOperationsQueue(input: OperationsStatsQuery = {}): Promise<OperationsQueue> {
+      const query = operationsStatsQuerySchema.parse(input);
+      const params = new URLSearchParams();
+      if (query.outletId) params.set("outletId", query.outletId);
+      const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
+      return request(`/api/v1/stats/operations/queue${suffix}`, operationsQueueSchema);
     },
   };
 }

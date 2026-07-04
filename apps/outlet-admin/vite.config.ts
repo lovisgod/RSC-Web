@@ -5,7 +5,8 @@ import { defineConfig, searchForWorkspaceRoot } from "vite";
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
-    host: "127.0.0.1",
+    host: "0.0.0.0",
+    allowedHosts: ["outlet.localhost"],
     port: 5175,
     strictPort: true,
     fs: {
@@ -20,7 +21,8 @@ export default defineConfig({
     },
   },
   preview: {
-    host: "127.0.0.1",
+    host: "0.0.0.0",
+    allowedHosts: ["outlet.localhost"],
     port: 4175,
     strictPort: true,
   },

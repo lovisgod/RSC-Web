@@ -2,14 +2,21 @@ import type { CustomerOrder } from "@rsc/contracts";
 
 export type Order = CustomerOrder;
 
-const COMPLETED_STATUS = "COMPLETED";
+export const ACTIVE_ORDER_STATUSES = new Set([
+  "CONFIRMED",
+  "PARTIALLY_READY",
+  "READY",
+  "OUT_FOR_DELIVERY",
+]);
+
+const COMPLETED_ORDER_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
 
 export function isActiveOrder(order: Order): boolean {
-  return order.status.toUpperCase() !== COMPLETED_STATUS;
+  return ACTIVE_ORDER_STATUSES.has(order.status.toUpperCase());
 }
 
 export function isCompletedOrder(order: Order): boolean {
-  return order.status.toUpperCase() === COMPLETED_STATUS;
+  return COMPLETED_ORDER_STATUSES.has(order.status.toUpperCase());
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -18,7 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   PARTIALLY_READY: { label: "Partially ready", color: "#fff", bg: "var(--rsc-dark)" },
   READY: { label: "Ready for pickup", color: "#fff", bg: "var(--rsc-main)" },
   OUT_FOR_DELIVERY: { label: "Out for delivery", color: "#fff", bg: "var(--rsc-dark)" },
-  COMPLETED: { label: "Completed", color: "#fff", bg: "var(--rsc-main)" },
+  DELIVERED: { label: "Delivered", color: "#fff", bg: "var(--rsc-main)" },
   CANCELLED: { label: "Cancelled", color: "#fff", bg: "#6b7280" },
 };
 
@@ -32,8 +39,8 @@ export function getStatusConfig(status: string) {
         .split("_")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" "),
-      color: "#fff",
-      bg: "var(--rsc-navy-light)",
+      color: "#4b5563",
+      bg: "#f3f4f6",
     }
   );
 }
