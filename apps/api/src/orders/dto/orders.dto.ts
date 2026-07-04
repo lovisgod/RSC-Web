@@ -92,12 +92,15 @@ export class UpdateOrderStatusDto {
   @IsEnum(MasterOrderStatus)
   status!: MasterOrderStatus;
 
-  @ApiPropertyOptional({ format: "uuid" })
-  @IsOptional()
-  @IsUUID()
-  riderId?: string;
-
   @ApiPropertyOptional({ example: "Rider assigned" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}
+
+export class AssignOrderRiderDto {
+  @ApiPropertyOptional({ example: "Automatically assigned nearest rider" })
   @IsOptional()
   @IsString()
   @MaxLength(500)

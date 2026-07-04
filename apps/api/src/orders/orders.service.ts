@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, In, Repository } from "typeorm";
 
@@ -15,6 +20,7 @@ import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
 import { OrderStatusEvent } from "./order-status-event.entity";
 import { SubOrder } from "./sub-order.entity";
 import type {
+  AssignOrderRiderDto,
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
   UpdateOrderStatusDto,
@@ -37,6 +43,11 @@ export interface AdminOrderListResult {
   total: number;
   limit: number;
   offset: number;
+}
+
+interface ClosestFreeRiderRow {
+  id: string;
+  distanceMeters: number;
 }
 
 @Injectable()
@@ -219,14 +230,45 @@ export class OrdersService {
         throw new ForbiddenException("Cannot update another rider's order");
       }
       order.riderId = order.riderId ?? user.id;
-    } else if (input.riderId) {
-      order.riderId = input.riderId;
     }
 
     order.status = input.status;
     await this.masterOrders.save(order);
     await this.recordStatusEvent(order, user.id, input.note ?? null);
     await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return this.buildOrderDetail(order);
+  }
+
+  async assignRider(user: AuthenticatedUser, id: string, input: AssignOrderRiderDto) {
+    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Only admins can assign riders");
+    }
+
+    const order = await this.requireOperationalOrder(user, id);
+    const rider = await this.findClosestFreeRider(user, order);
+
+    order.riderId = rider.id;
+    await this.masterOrders.save(order);
+    await this.recordStatusEvent(
+      order,
+      user.id,
+      input.note ?? `Closest free rider assigned (${Math.round(rider.distanceMeters)}m away)`,
+    );
+    await this.notifications.createAndPush({
+      recipientId: rider.id,
+      recipientRole: UserRole.RIDER,
+      type: "ORDER_ASSIGNMENT",
+      title: "New delivery assigned",
+      body: "A delivery order has been assigned to you.",
+    });
     this.realtime.emitOrderStatusUpdate({
       masterOrderId: order.id,
       customerId: order.customerId,
@@ -374,6 +416,86 @@ export class OrdersService {
     }
 
     throw new ForbiddenException("Order operations require admin or rider access");
+  }
+
+  private async findClosestFreeRider(
+    user: AuthenticatedUser,
+    order: MasterOrder,
+  ): Promise<ClosestFreeRiderRow> {
+    if (order.deliveryMode !== "DELIVERY") {
+      throw new BadRequestException("Riders can only be assigned to delivery orders");
+    }
+
+    if (order.deliveryLatitude === null || order.deliveryLongitude === null) {
+      throw new BadRequestException("Delivery coordinates are required to assign a rider");
+    }
+
+    const params: Array<string | number | string[]> = [
+      order.deliveryLongitude,
+      order.deliveryLatitude,
+      [MasterOrderStatus.DELIVERED, MasterOrderStatus.CANCELLED],
+    ];
+    let outletFilter = "";
+
+    if (user.role === UserRole.ADMIN) {
+      const outletId = await this.requireAdminOutletId(user);
+
+      const subOrder = await this.subOrders.findOneBy({
+        masterOrderId: order.id,
+        outletId,
+      });
+
+      if (!subOrder) {
+        throw new ForbiddenException("Cannot assign rider to another outlet's order");
+      }
+
+      params.push(outletId);
+      outletFilter = `AND u.outlet_id = $${params.length}`;
+    }
+
+    const rows = await this.dataSource.query<ClosestFreeRiderRow[]>(
+      `
+        WITH latest_locations AS (
+          SELECT DISTINCT ON (rider_id)
+            rider_id,
+            geom,
+            recorded_at
+          FROM rider_locations
+          ORDER BY rider_id, recorded_at DESC
+        )
+        SELECT
+          u.id,
+          ST_Distance(
+            latest_locations.geom::geography,
+            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+          ) AS "distanceMeters"
+        FROM users u
+        INNER JOIN latest_locations ON latest_locations.rider_id = u.id
+        WHERE u.role = 'RIDER'
+          AND u.status = 'ACTIVE'
+          AND u.rider_status = 'ACTIVE'
+          AND u.deleted_at IS NULL
+          ${outletFilter}
+          AND NOT EXISTS (
+            SELECT 1
+            FROM master_orders active_orders
+            WHERE active_orders.rider_id = u.id
+              AND active_orders.status <> ALL($3)
+              AND active_orders.deleted_at IS NULL
+          )
+        ORDER BY "distanceMeters" ASC
+        LIMIT 1
+      `,
+      params,
+    );
+
+    const rider = rows[0];
+
+    if (!rider) {
+      throw new NotFoundException("No free rider with a recent location was found");
+    }
+
+    return rider;
   }
 
   private async requireAdminOutletId(user: AuthenticatedUser): Promise<string> {
