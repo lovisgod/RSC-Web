@@ -35,6 +35,12 @@ export class DeliveryController {
     return this.delivery.validateAddress(input);
   }
 
+  @Get("geofence-zones")
+  @ApiMessage("Geofence zones retrieved")
+  listGeofenceZones() {
+    return this.delivery.listGeofenceZones();
+  }
+
   @Get("addresses")
   @ApiBearerAuth()
   @UseGuards(AuthGuard)

@@ -14,6 +14,7 @@ import {
   deliveryAddressSummarySchema,
   forgotPasswordInputSchema,
   forgotPasswordResultSchema,
+  geofenceZoneSchema,
   initiatePaymentInputSchema,
   initiatePaymentResultSchema,
   menuCategorySchema,
@@ -22,8 +23,9 @@ import {
   logoutResultSchema,
   menuItemsPageSchema,
   menuItemSchema,
-  notificationSchema,
   notificationCampaignSchema,
+  notificationPreferencesSchema,
+  notificationSchema,
   orderSummarySchema,
   outletAdminSchema,
   outletSummarySchema,
@@ -37,6 +39,7 @@ import {
   resetPasswordResultSchema,
   uploadedImageSchema,
   updateMenuItemAvailabilityInputSchema,
+  updateNotificationPreferencesInputSchema,
   updateProfileInputSchema,
   validateAddressInputSchema,
   validateAddressResultSchema,
@@ -56,6 +59,7 @@ import {
   type DeliveryAddressSummary,
   type ForgotPasswordInput,
   type ForgotPasswordResult,
+  type GeofenceZone,
   type InitiatePaymentInput,
   type InitiatePaymentResult,
   type MenuCategorySummary,
@@ -71,6 +75,7 @@ import {
   type MenuItem,
   type Notification,
   type NotificationCampaign,
+  type NotificationPreferences,
   type OutletAdmin,
   type OutletSummary,
   type Profile,
@@ -80,6 +85,7 @@ import {
   type ResendVerificationInput,
   type ResendVerificationResult,
   type UpdateMenuItemAvailabilityInput,
+  type UpdateNotificationPreferencesInput,
   type UpdateProfileInput,
   type ValidateAddressInput,
   type ValidateAddressResult,
@@ -248,6 +254,9 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    listGeofenceZones(): Promise<GeofenceZone[]> {
+      return request("/api/v1/delivery/geofence-zones", z.array(geofenceZoneSchema));
+    },
     changePassword(input: ChangePasswordInput): Promise<ChangePasswordResult> {
       const body = changePasswordInputSchema.parse(input);
 
@@ -379,6 +388,19 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
+    },
+    getNotificationPreferences(): Promise<NotificationPreferences> {
+      return request("/api/v1/notifications/preferences", notificationPreferencesSchema);
+    },
+    updateNotificationPreferences(
+      input: UpdateNotificationPreferencesInput,
+    ): Promise<NotificationPreferences> {
+      const body = updateNotificationPreferencesInputSchema.parse(input);
+
+      return request("/api/v1/notifications/preferences", notificationPreferencesSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
     },
     scheduleNotificationCampaign(
       input: CreateNotificationCampaignInput,

@@ -15,6 +15,14 @@ export interface AddressValidationResult {
   zone: { id: string; name: string } | null;
 }
 
+export interface GeofenceZoneResult {
+  id: string;
+  name: string;
+  polygon: unknown;
+  isActive: boolean;
+  createdAt: Date;
+}
+
 @Injectable()
 export class DeliveryService {
   constructor(
@@ -150,4 +158,39 @@ export class DeliveryService {
 
     return { deliverable: Boolean(zone), zone };
   }
+
+  async listGeofenceZones(): Promise<GeofenceZoneResult[]> {
+    const rows = await this.dataSource.query<
+      Array<{
+        id: string;
+        name: string;
+        polygon: string;
+        isActive: boolean;
+        createdAt: Date;
+      }>
+    >(
+      `
+        SELECT
+          id,
+          name,
+          ST_AsGeoJSON(polygon)::json AS polygon,
+          is_active AS "isActive",
+          created_at AS "createdAt"
+        FROM geofence_zones
+        WHERE is_active = true
+        ORDER BY name ASC
+      `,
+    );
+
+    return rows.map((zone) => {
+      const polygon: unknown =
+        typeof zone.polygon === "string" ? parseGeoJson(zone.polygon) : zone.polygon;
+
+      return { ...zone, polygon };
+    });
+  }
+}
+
+function parseGeoJson(value: string): unknown {
+  return JSON.parse(value) as unknown;
 }
