@@ -8,6 +8,7 @@ import type {
   MenuItem,
   OutletSummary,
   SubOrderStatus,
+  UploadedImage,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
@@ -159,6 +160,13 @@ export const getMenuItemById = (itemId: string): Promise<MenuItem> =>
 
 export const listItemModifierGroups = (): Promise<ItemModifierGroup[]> =>
   get("/api/v1/item-modifier-groups");
+
+export const uploadImage = (file: File): Promise<UploadedImage> => {
+  const body = new FormData();
+  body.append("file", file);
+
+  return post("/api/v1/media/images", body);
+};
 
 export const verifyHandoffCode = (
   outletId: string,

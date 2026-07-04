@@ -10,6 +10,7 @@ import { ItemModifierGroup } from "./item-modifier-group.entity";
 import { ItemModifier } from "./item-modifier.entity";
 import { MenuCategory } from "./menu-category.entity";
 import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
+import { MenuItemRating } from "./menu-item-rating.entity";
 import { MenuItem } from "./menu-item.entity";
 
 describe(CatalogService.name, () => {
@@ -43,6 +44,12 @@ describe(CatalogService.name, () => {
     save: ReturnType<typeof vi.fn>;
     softRemove: ReturnType<typeof vi.fn>;
   };
+  let ratings: {
+    findOneBy: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+    createQueryBuilder: ReturnType<typeof vi.fn>;
+  };
   let groups: {
     find: ReturnType<typeof vi.fn>;
     findOneBy: ReturnType<typeof vi.fn>;
@@ -64,6 +71,7 @@ describe(CatalogService.name, () => {
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
   };
+  let media: { uploadImage: ReturnType<typeof vi.fn> };
   let service: CatalogService;
 
   beforeEach(() => {
@@ -106,6 +114,17 @@ describe(CatalogService.name, () => {
       save: vi.fn((value: MenuItem) => Promise.resolve(value)),
       softRemove: vi.fn().mockResolvedValue(undefined),
     };
+    ratings = {
+      findOneBy: vi.fn().mockResolvedValue(null),
+      create: vi.fn((value: Partial<MenuItemRating>) => Object.assign(new MenuItemRating(), value)),
+      save: vi.fn((value: MenuItemRating) => Promise.resolve(value)),
+      createQueryBuilder: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        addSelect: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        getRawOne: vi.fn().mockResolvedValue({ average: "5.00", count: "1" }),
+      })),
+    };
     groups = {
       find: vi.fn().mockResolvedValue([]),
       findOneBy: vi.fn().mockResolvedValue(Object.assign(new ItemModifierGroup(), { outletId })),
@@ -131,14 +150,22 @@ describe(CatalogService.name, () => {
       ),
       save: vi.fn().mockResolvedValue(undefined),
     };
+    media = {
+      uploadImage: vi.fn().mockResolvedValue({
+        url: "https://res.cloudinary.com/rsc/image/upload/menu/item.jpg",
+        publicId: "rsc/menu-items/item",
+      }),
+    };
     service = new CatalogService(
       outlets as unknown as Repository<Outlet>,
       users as unknown as Repository<Customer>,
       categories as unknown as Repository<MenuCategory>,
       items as unknown as Repository<MenuItem>,
+      ratings as unknown as Repository<MenuItemRating>,
       groups as unknown as Repository<ItemModifierGroup>,
       modifiers as unknown as Repository<ItemModifier>,
       itemGroups as unknown as Repository<MenuItemModifierGroup>,
+      media as never,
     );
   });
 

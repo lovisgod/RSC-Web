@@ -1,19 +1,24 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
 import { NotificationsService } from "../notifications/notifications.service";
+import { RealtimeService } from "../realtime/realtime.service";
 import type { InitiatePaymentDto } from "../payments/dto/payment.dto";
 import { PaymentsService } from "../payments/payments.service";
 import { MasterOrder } from "./master-order.entity";
 import { OrderLineItem } from "./order-line-item.entity";
-import { MasterOrderStatus } from "./order-status.enum";
+import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
 import { OrderStatusEvent } from "./order-status-event.entity";
 import { SubOrder } from "./sub-order.entity";
-import type { CompleteDeliveryDto, UpdateOrderStatusDto } from "./dto/orders.dto";
+import type {
+  CompleteDeliveryDto,
+  ListAdminOrdersQueryDto,
+  UpdateOrderStatusDto,
+} from "./dto/orders.dto";
 
 export interface LatestLocation {
   riderId: string;
@@ -21,6 +26,17 @@ export interface LatestLocation {
   latitude: number;
   longitude: number;
   recordedAt: Date;
+}
+
+export interface AdminOrderListResult {
+  orders: Array<{
+    order: MasterOrder;
+    subOrders: SubOrder[];
+    lineItems: OrderLineItem[];
+  }>;
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 @Injectable()
@@ -35,6 +51,7 @@ export class OrdersService {
     private readonly dataSource: DataSource,
     private readonly payments: PaymentsService,
     private readonly notifications: NotificationsService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   listMine(user: AuthenticatedUser): Promise<MasterOrder[]> {
@@ -42,6 +59,114 @@ export class OrdersService {
       where: { customerId: user.id },
       order: { createdAt: "DESC" },
     });
+  }
+
+  async listAdmin(
+    user: AuthenticatedUser,
+    query: ListAdminOrdersQueryDto,
+  ): Promise<AdminOrderListResult> {
+    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Order listing requires admin access");
+    }
+
+    const scopedOutletId =
+      user.role === UserRole.ADMIN ? await this.requireAdminOutletId(user) : query.outletId;
+
+    if (user.role === UserRole.ADMIN && query.outletId && query.outletId !== scopedOutletId) {
+      throw new ForbiddenException("Cannot view another outlet's orders");
+    }
+
+    const limit = query.limit ?? 50;
+    const offset = query.offset ?? 0;
+    const orderQuery = this.masterOrders
+      .createQueryBuilder("masterOrder")
+      .orderBy("masterOrder.createdAt", "DESC")
+      .take(limit)
+      .skip(offset);
+
+    if (query.status) {
+      orderQuery.andWhere("masterOrder.status = :status", { status: query.status });
+    }
+
+    if (query.deliveryMode) {
+      orderQuery.andWhere("masterOrder.deliveryMode = :deliveryMode", {
+        deliveryMode: query.deliveryMode,
+      });
+    }
+
+    if (query.customerId) {
+      orderQuery.andWhere("masterOrder.customerId = :customerId", { customerId: query.customerId });
+    }
+
+    if (query.dateFrom) {
+      orderQuery.andWhere("masterOrder.createdAt >= :dateFrom", {
+        dateFrom: new Date(query.dateFrom),
+      });
+    }
+
+    if (query.dateTo) {
+      orderQuery.andWhere("masterOrder.createdAt <= :dateTo", { dateTo: new Date(query.dateTo) });
+    }
+
+    if (scopedOutletId || query.subOrderStatus) {
+      const clauses = ['adminSubOrder.master_order_id = "masterOrder"."id"'];
+      const params: Record<string, string> = {};
+
+      if (scopedOutletId) {
+        clauses.push("adminSubOrder.outlet_id = :outletId");
+        params.outletId = scopedOutletId;
+      }
+
+      if (query.subOrderStatus) {
+        clauses.push("adminSubOrder.status = :subOrderStatus");
+        params.subOrderStatus = query.subOrderStatus;
+      }
+
+      orderQuery.andWhere(
+        `EXISTS (SELECT 1 FROM sub_orders adminSubOrder WHERE ${clauses.join(" AND ")})`,
+        params,
+      );
+    }
+
+    const [orders, total] = await orderQuery.getManyAndCount();
+    const orderIds = orders.map((order) => order.id);
+
+    if (orderIds.length === 0) {
+      return { orders: [], total, limit, offset };
+    }
+
+    const subOrderWhere = {
+      masterOrderId: In(orderIds),
+      ...(scopedOutletId ? { outletId: scopedOutletId } : {}),
+      ...(query.subOrderStatus ? { status: query.subOrderStatus } : {}),
+    };
+    const subOrders = await this.subOrders.find({
+      where: subOrderWhere,
+      order: { createdAt: "ASC" },
+    });
+    const subOrderIds = subOrders.map((subOrder) => subOrder.id);
+    const lineItems =
+      subOrderIds.length > 0
+        ? await this.lineItems.find({
+            where: {
+              masterOrderId: In(orderIds),
+              subOrderId: In(subOrderIds),
+              ...(scopedOutletId ? { outletId: scopedOutletId } : {}),
+            },
+            order: { createdAt: "ASC" },
+          })
+        : [];
+
+    return {
+      orders: orders.map((order) => ({
+        order,
+        subOrders: subOrders.filter((subOrder) => subOrder.masterOrderId === order.id),
+        lineItems: lineItems.filter((lineItem) => lineItem.masterOrderId === order.id),
+      })),
+      total,
+      limit,
+      offset,
+    };
   }
 
   async getMine(user: AuthenticatedUser, id: string) {
@@ -83,6 +208,10 @@ export class OrdersService {
       throw new ForbiddenException("Use the delivery completion code to mark delivery complete");
     }
 
+    if (user.role === UserRole.ADMIN) {
+      return this.updateOutletSubOrderStatus(user, id, input);
+    }
+
     const order = await this.requireOperationalOrder(user, id);
 
     if (user.role === UserRole.RIDER) {
@@ -98,6 +227,57 @@ export class OrdersService {
     await this.masterOrders.save(order);
     await this.recordStatusEvent(order, user.id, input.note ?? null);
     await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return this.buildOrderDetail(order);
+  }
+
+  private async updateOutletSubOrderStatus(
+    user: AuthenticatedUser,
+    id: string,
+    input: UpdateOrderStatusDto,
+  ) {
+    const outletId = await this.requireAdminOutletId(user);
+    const subOrder =
+      (await this.subOrders.findOneBy({ id, outletId })) ??
+      (await this.subOrders.findOneBy({ masterOrderId: id, outletId }));
+
+    if (!subOrder) {
+      throw new NotFoundException("Order not found");
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: subOrder.masterOrderId });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    subOrder.status = this.toSubOrderStatus(input.status);
+    await this.subOrders.save(subOrder);
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+
+    if (derivedStatus !== order.status) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
+
+    await this.recordStatusEvent(order, user.id, input.note ?? null, subOrder);
+    await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
 
     return this.buildOrderDetail(order);
   }
@@ -126,6 +306,13 @@ export class OrdersService {
     await this.masterOrders.save(order);
     await this.recordStatusEvent(order, user.id, "Delivery completed with customer code");
     await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
 
     return this.buildOrderDetail(order);
   }
@@ -172,18 +359,11 @@ export class OrdersService {
     }
 
     if (user.role === UserRole.ADMIN) {
-      const admin = await this.users.findOne({
-        where: { id: user.id, role: UserRole.ADMIN },
-        select: { id: true, outletId: true },
-      });
-
-      if (!admin?.outletId) {
-        throw new ForbiddenException("Outlet admin is not linked to an outlet");
-      }
+      const outletId = await this.requireAdminOutletId(user);
 
       const subOrder = await this.subOrders.findOneBy({
         masterOrderId: id,
-        outletId: admin.outletId,
+        outletId,
       });
 
       if (!subOrder) {
@@ -196,15 +376,75 @@ export class OrdersService {
     throw new ForbiddenException("Order operations require admin or rider access");
   }
 
+  private async requireAdminOutletId(user: AuthenticatedUser): Promise<string> {
+    const admin = await this.users.findOne({
+      where: { id: user.id, role: UserRole.ADMIN },
+      select: { id: true, outletId: true },
+    });
+
+    if (!admin?.outletId) {
+      throw new ForbiddenException("Outlet admin is not linked to an outlet");
+    }
+
+    return admin.outletId;
+  }
+
+  private toSubOrderStatus(status: MasterOrderStatus): SubOrderStatus {
+    const statusMap: Record<MasterOrderStatus, SubOrderStatus> = {
+      [MasterOrderStatus.PENDING_PAYMENT]: SubOrderStatus.PENDING,
+      [MasterOrderStatus.CONFIRMED]: SubOrderStatus.ACCEPTED,
+      [MasterOrderStatus.PARTIALLY_READY]: SubOrderStatus.READY,
+      [MasterOrderStatus.READY]: SubOrderStatus.READY,
+      [MasterOrderStatus.OUT_FOR_DELIVERY]: SubOrderStatus.DISPATCHED,
+      [MasterOrderStatus.DELIVERED]: SubOrderStatus.COLLECTED,
+      [MasterOrderStatus.CANCELLED]: SubOrderStatus.REJECTED,
+    };
+
+    return statusMap[status];
+  }
+
+  private deriveMasterStatus(subOrders: SubOrder[]): MasterOrderStatus {
+    if (subOrders.length === 0) {
+      return MasterOrderStatus.CONFIRMED;
+    }
+
+    if (subOrders.every((subOrder) => subOrder.status === SubOrderStatus.REJECTED)) {
+      return MasterOrderStatus.CANCELLED;
+    }
+
+    if (
+      subOrders.every(
+        (subOrder) =>
+          subOrder.status === SubOrderStatus.DISPATCHED ||
+          subOrder.status === SubOrderStatus.COLLECTED,
+      )
+    ) {
+      return MasterOrderStatus.OUT_FOR_DELIVERY;
+    }
+
+    if (subOrders.every((subOrder) => subOrder.status === SubOrderStatus.READY)) {
+      return MasterOrderStatus.READY;
+    }
+
+    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.READY)) {
+      return MasterOrderStatus.PARTIALLY_READY;
+    }
+
+    return MasterOrderStatus.CONFIRMED;
+  }
+
   private async recordStatusEvent(
     order: MasterOrder,
     actorId: string | null,
     note: string | null,
+    subOrder?: SubOrder,
   ): Promise<void> {
     await this.statusEvents.save(
       this.statusEvents.create({
         masterOrderId: order.id,
+        subOrderId: subOrder?.id ?? null,
         masterStatus: order.status,
+        subOrderStatus: subOrder?.status ?? null,
         actorId,
         note,
       }),

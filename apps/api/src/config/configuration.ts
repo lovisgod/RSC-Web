@@ -48,6 +48,15 @@ export interface ApplicationConfig {
       replyTo: string;
     };
   };
+  media: {
+    provider: "noop" | "cloudinary";
+    cloudinary: {
+      cloudName: string;
+      apiKey: string;
+      apiSecret: string;
+      folder: string;
+    };
+  };
   payments: {
     provider: "local" | "paystack";
     paystack: {
@@ -75,6 +84,18 @@ function parseOrigins(value: string): string[] {
     .filter(Boolean);
 }
 
+function resolveFirebasePrivateKey(): string {
+  if (process.env.FIREBASE_PRIVATE_KEY) {
+    return process.env.FIREBASE_PRIVATE_KEY.replaceAll("\\n", "\n");
+  }
+
+  if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
+    return Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, "base64").toString("utf8");
+  }
+
+  return "";
+}
+
 export default function configuration(): ApplicationConfig {
   return {
     app: {
@@ -82,7 +103,8 @@ export default function configuration(): ApplicationConfig {
       port: Number(process.env.PORT ?? 4000),
       version: process.env.APP_VERSION ?? "development",
       corsOrigins: parseOrigins(
-        process.env.CORS_ORIGINS ?? "http://localhost:3000,http://localhost:5173",
+        process.env.CORS_ORIGINS ??
+          "http://localhost:3000,http://localhost:5173,http://localhost:5175",
       ),
       swaggerEnabled: process.env.SWAGGER_ENABLED !== "false",
     },
@@ -133,6 +155,15 @@ export default function configuration(): ApplicationConfig {
         replyTo: process.env.RESEND_REPLY_TO ?? "",
       },
     },
+    media: {
+      provider: process.env.MEDIA_PROVIDER === "cloudinary" ? "cloudinary" : "noop",
+      cloudinary: {
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
+        apiKey: process.env.CLOUDINARY_API_KEY ?? "",
+        apiSecret: process.env.CLOUDINARY_API_SECRET ?? "",
+        folder: process.env.CLOUDINARY_FOLDER ?? "rsc",
+      },
+    },
     payments: {
       provider: process.env.PAYMENT_PROVIDER === "paystack" ? "paystack" : "local",
       paystack: {
@@ -148,7 +179,7 @@ export default function configuration(): ApplicationConfig {
       firebase: {
         projectId: process.env.FIREBASE_PROJECT_ID ?? "",
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "",
-        privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? "").replaceAll("\\n", "\n"),
+        privateKey: resolveFirebasePrivateKey(),
       },
     },
   };

@@ -35,6 +35,11 @@ export interface Environment {
   RESEND_API_KEY?: string;
   RESEND_FROM?: string;
   RESEND_REPLY_TO?: string;
+  MEDIA_PROVIDER: "noop" | "cloudinary";
+  CLOUDINARY_CLOUD_NAME?: string;
+  CLOUDINARY_API_KEY?: string;
+  CLOUDINARY_API_SECRET?: string;
+  CLOUDINARY_FOLDER: string;
   PAYMENT_PROVIDER: "local" | "paystack";
   PAYSTACK_SECRET_KEY?: string;
   PAYSTACK_BASE_URL: string;
@@ -45,6 +50,7 @@ export interface Environment {
   FIREBASE_PROJECT_ID?: string;
   FIREBASE_CLIENT_EMAIL?: string;
   FIREBASE_PRIVATE_KEY?: string;
+  FIREBASE_PRIVATE_KEY_BASE64?: string;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -60,7 +66,9 @@ const environmentSchema = Joi.object<Environment>({
   PORT: Joi.number().port().default(4000),
   APP_VERSION: Joi.string().default("development"),
   LOG_LEVEL: Joi.string().valid("fatal", "error", "warn", "log", "debug", "verbose").default("log"),
-  CORS_ORIGINS: Joi.string().default("http://localhost:3000,http://localhost:5173"),
+  CORS_ORIGINS: Joi.string().default(
+    "http://localhost:3000,http://localhost:5173,http://localhost:5175",
+  ),
   DATABASE_URL: Joi.string()
     .uri({ scheme: ["postgres", "postgresql"] })
     .required(),
@@ -132,6 +140,23 @@ const environmentSchema = Joi.object<Environment>({
     otherwise: Joi.string().optional().allow(""),
   }),
   RESEND_REPLY_TO: Joi.string().email().optional().allow(""),
+  MEDIA_PROVIDER: Joi.string().valid("noop", "cloudinary").default("noop"),
+  CLOUDINARY_CLOUD_NAME: Joi.when("MEDIA_PROVIDER", {
+    is: "cloudinary",
+    then: Joi.string().min(2).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  CLOUDINARY_API_KEY: Joi.when("MEDIA_PROVIDER", {
+    is: "cloudinary",
+    then: Joi.string().min(2).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  CLOUDINARY_API_SECRET: Joi.when("MEDIA_PROVIDER", {
+    is: "cloudinary",
+    then: Joi.string().min(2).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  CLOUDINARY_FOLDER: Joi.string().min(1).default("rsc"),
   PAYMENT_PROVIDER: Joi.string().valid("local", "paystack").default("local"),
   PAYSTACK_SECRET_KEY: Joi.when("PAYMENT_PROVIDER", {
     is: "paystack",
@@ -155,11 +180,8 @@ const environmentSchema = Joi.object<Environment>({
     then: Joi.string().email().required(),
     otherwise: Joi.string().optional().allow(""),
   }),
-  FIREBASE_PRIVATE_KEY: Joi.when("PUSH_PROVIDER", {
-    is: "firebase",
-    then: Joi.string().min(100).required(),
-    otherwise: Joi.string().optional().allow(""),
-  }),
+  FIREBASE_PRIVATE_KEY: Joi.string().optional().allow(""),
+  FIREBASE_PRIVATE_KEY_BASE64: Joi.string().optional().allow(""),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {
@@ -170,6 +192,33 @@ export function validateEnvironment(config: Record<string, unknown>): Environmen
 
   if (result.error) {
     throw new Error(`Environment validation failed: ${result.error.message}`);
+  }
+
+  if (result.value.PUSH_PROVIDER === "firebase") {
+    const privateKey = result.value.FIREBASE_PRIVATE_KEY;
+    const privateKeyBase64 = result.value.FIREBASE_PRIVATE_KEY_BASE64;
+
+    if (!privateKey && !privateKeyBase64) {
+      throw new Error(
+        'Environment validation failed: "FIREBASE_PRIVATE_KEY" or "FIREBASE_PRIVATE_KEY_BASE64" is required when PUSH_PROVIDER=firebase',
+      );
+    }
+
+    if (privateKey && privateKey.length < 100) {
+      throw new Error(
+        'Environment validation failed: "FIREBASE_PRIVATE_KEY" length must be at least 100 characters long',
+      );
+    }
+
+    if (privateKeyBase64) {
+      const decoded = Buffer.from(privateKeyBase64, "base64").toString("utf8");
+
+      if (decoded.length < 100) {
+        throw new Error(
+          'Environment validation failed: "FIREBASE_PRIVATE_KEY_BASE64" must decode to a Firebase private key',
+        );
+      }
+    }
   }
 
   return result.value;

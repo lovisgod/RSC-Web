@@ -8,9 +8,12 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
@@ -18,9 +21,12 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import type { UploadedImageFile } from "../media/media.service";
 import { CatalogService } from "./catalog.service";
 import {
   CreateMenuItemDto,
+  ListMenuItemsQueryDto,
+  RateMenuItemDto,
   UpdateMenuItemAvailabilityDto,
   UpdateMenuItemDto,
 } from "./dto/catalog.dto";
@@ -32,8 +38,10 @@ export class MenuItemsController {
 
   @Get()
   @ApiMessage("Menu items retrieved")
-  list(@Query("outletId") outletId?: string) {
-    return this.catalog.listPublicItems(outletId);
+  list(@Query() query: ListMenuItemsQueryDto) {
+    return query.paginated
+      ? this.catalog.listPublicItemsPage(query)
+      : this.catalog.listPublicItems(query);
   }
 
   @Get(":id")
@@ -75,6 +83,46 @@ export class MenuItemsController {
     @Body() input: UpdateMenuItemAvailabilityDto,
   ) {
     return this.catalog.updateItemAvailability(request.user!, id, input);
+  }
+
+  @Post(":id/image")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @UseInterceptors(FileInterceptor("file"))
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["file"],
+      properties: {
+        file: {
+          type: "string",
+          format: "binary",
+        },
+      },
+    },
+  })
+  @ApiMessage("Menu item image uploaded successfully")
+  uploadImage(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @UploadedFile() file: UploadedImageFile,
+  ) {
+    return this.catalog.uploadItemImage(request.user!, id, file);
+  }
+
+  @Post(":id/rating")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  @ApiMessage("Menu item rated successfully")
+  rate(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() input: RateMenuItemDto,
+  ) {
+    return this.catalog.rateItem(request.user!, id, input);
   }
 
   @Delete(":id")

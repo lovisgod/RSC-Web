@@ -22,6 +22,7 @@ import { normalizeNigerianPhoneNumber } from "../auth/phone-number";
 import { SMS_SENDER, type SmsSender } from "../auth/sms/sms-sender";
 import { UserRole } from "../auth/user-role.enum";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
+import { MediaService, type UploadedImageFile } from "../media/media.service";
 import type { CreateRiderDto } from "./dto/rider.dto";
 import type { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
 
@@ -30,6 +31,7 @@ export interface ProfileResult {
   name: string;
   role: UserRole;
   outletId: string | null;
+  avatarUrl: string | null;
   email: string;
   phone: string;
   verificationChannels: { email: boolean; phone: boolean };
@@ -51,6 +53,18 @@ export interface RiderResult {
   temporaryPassword: string;
 }
 
+export interface OutletAdminResult {
+  id: string;
+  name: string;
+  role: UserRole.ADMIN;
+  outletId: string;
+  email: string;
+  phone: string;
+  status: CustomerStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -60,6 +74,7 @@ export class UsersService {
     private readonly phoneOtp: PhoneOtpService,
     @Inject(SMS_SENDER) private readonly smsSender: SmsSender,
     @Inject(EMAIL_SENDER) private readonly emailSender: EmailSender,
+    private readonly media: MediaService,
   ) {}
 
   async getProfile(user: AuthenticatedUser): Promise<ProfileResult> {
@@ -88,7 +103,7 @@ export class UsersService {
         account.pendingPhoneEncrypted = this.piiCrypto.encrypt(phone);
         account.pendingPhoneHash = phoneHash;
         await this.phoneOtp.revoke(account.id);
-        await this.phoneOtp.store(account.id, code);
+        await this.phoneOtp.storeProfileChangePhone(account.id, code);
         await this.smsSender.sendPhoneVerification({
           phone,
           code,
@@ -109,7 +124,7 @@ export class UsersService {
         account.pendingEmailEncrypted = this.piiCrypto.encrypt(email);
         account.pendingEmailHash = emailHash;
         await this.phoneOtp.revokeEmail(account.id);
-        await this.phoneOtp.storeEmail(account.id, code);
+        await this.phoneOtp.storeProfileChangeEmail(account.id, code);
         await this.emailSender.sendWelcomeVerification({
           email,
           name: account.name,
@@ -133,16 +148,15 @@ export class UsersService {
     input: VerifyProfileChangeDto,
   ): Promise<ProfileResult> {
     const account = await this.requireUser(user.id);
+    const verification = await this.phoneOtp.verifyProfileChangeCode(input.code);
 
-    if (input.channel === "phone") {
+    if (verification.result !== "VERIFIED" || verification.customerId !== account.id) {
+      throw new UnauthorizedException("Invalid or expired verification code");
+    }
+
+    if (verification.channel === "phone") {
       if (!account.pendingPhoneEncrypted || !account.pendingPhoneHash) {
         throw new BadRequestException("No pending phone change");
-      }
-
-      const verification = await this.phoneOtp.verify(account.id, input.code);
-
-      if (verification !== "VERIFIED") {
-        throw new UnauthorizedException("Invalid or expired verification code");
       }
 
       account.phoneEncrypted = account.pendingPhoneEncrypted;
@@ -155,12 +169,6 @@ export class UsersService {
         throw new BadRequestException("No pending email change");
       }
 
-      const verification = await this.phoneOtp.verifyEmail(account.id, input.code);
-
-      if (verification !== "VERIFIED") {
-        throw new UnauthorizedException("Invalid or expired verification code");
-      }
-
       account.emailEncrypted = account.pendingEmailEncrypted;
       account.emailHash = account.pendingEmailHash;
       account.emailVerifiedAt = new Date();
@@ -169,6 +177,29 @@ export class UsersService {
     }
 
     return this.toProfile(await this.saveUser(account));
+  }
+
+  async uploadAvatar(user: AuthenticatedUser, file: UploadedImageFile): Promise<ProfileResult> {
+    const account = await this.requireUser(user.id);
+    const upload = await this.media.uploadImage({
+      file,
+      folder: "user-avatars",
+      publicIdPrefix: account.id,
+    });
+
+    account.avatarUrl = upload.url;
+
+    return this.toProfile(await this.saveUser(account));
+  }
+
+  async deactivateAccount(user: AuthenticatedUser): Promise<{ deactivated: true }> {
+    const account = await this.requireUser(user.id);
+
+    account.status = CustomerStatus.SUSPENDED;
+    await this.users.save(account);
+    await this.users.softRemove(account);
+
+    return { deactivated: true };
   }
 
   async createRider(actor: AuthenticatedUser, input: CreateRiderDto): Promise<RiderResult> {
@@ -232,6 +263,59 @@ export class UsersService {
     };
   }
 
+  async listOutletAdmins(actor: AuthenticatedUser): Promise<OutletAdminResult[]> {
+    if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only super admins can list outlet admins");
+    }
+
+    const admins = await this.users.find({
+      where: { role: UserRole.ADMIN },
+      order: { createdAt: "DESC" },
+    });
+
+    return admins.map((admin) => this.toOutletAdmin(admin));
+  }
+
+  async deleteOutletAdmin(actor: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
+    if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only super admins can delete outlet admins");
+    }
+
+    if (actor.id === id) {
+      throw new BadRequestException("Super admin cannot delete their own account");
+    }
+
+    const admin = await this.users.findOneBy({ id, role: UserRole.ADMIN });
+
+    if (!admin) {
+      throw new BadRequestException("Outlet admin not found");
+    }
+
+    await this.users.softRemove(admin);
+
+    return { deleted: true };
+  }
+
+  async deleteUser(actor: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
+    if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only super admins can delete users");
+    }
+
+    if (actor.id === id) {
+      throw new BadRequestException("Super admin cannot delete their own account");
+    }
+
+    const user = await this.users.findOneBy({ id });
+
+    if (!user) {
+      throw new BadRequestException("User not found");
+    }
+
+    await this.users.softRemove(user);
+
+    return { deleted: true };
+  }
+
   private async requireUser(id: string): Promise<Customer> {
     const user = await this.users.findOneBy({ id });
 
@@ -284,6 +368,7 @@ export class UsersService {
       name: user.name,
       role: user.role,
       outletId: user.outletId,
+      avatarUrl: user.avatarUrl,
       email: this.piiCrypto.decrypt(user.emailEncrypted),
       phone: this.piiCrypto.decrypt(user.phoneEncrypted),
       verificationChannels: {
@@ -294,6 +379,24 @@ export class UsersService {
         email: Boolean(user.pendingEmailHash),
         phone: Boolean(user.pendingPhoneHash),
       },
+    };
+  }
+
+  private toOutletAdmin(user: Customer): OutletAdminResult {
+    if (!user.outletId) {
+      throw new BadRequestException("Outlet admin is not linked to an outlet");
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      role: UserRole.ADMIN,
+      outletId: user.outletId,
+      email: this.piiCrypto.decrypt(user.emailEncrypted),
+      phone: this.piiCrypto.decrypt(user.phoneEncrypted),
+      status: user.status,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
   }
 
