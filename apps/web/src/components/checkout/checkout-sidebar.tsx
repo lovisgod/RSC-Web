@@ -35,9 +35,6 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
     // Use server-calculated totals from the initiatePayment response
     const { totals, groups } = snapshot;
     const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : "7.5";
-    const commPct = charges
-      ? (charges.platformCommissionBps / 100).toFixed(2).replace(/\.?0+$/, "")
-      : "10";
 
     return (
       <Card style={{ padding: 0 }} className="overflow-hidden">
