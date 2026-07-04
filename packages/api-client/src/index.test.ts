@@ -52,6 +52,7 @@ describe("registration API client", () => {
     type: "PROMO",
     title: "Weekend discount",
     body: "Use code WEEKEND for a discount this weekend.",
+    data: {},
     isRead: false,
     createdAt: "2026-07-01T08:00:00.000Z",
   };
