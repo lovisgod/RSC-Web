@@ -1,2 +1,0 @@
-$ next dev --hostname web.localhost
-[browser] ⨯ unhandledRejection: ChunkLoadError: Failed to load chunk /_next/static/chunks/16ro_%40tanstack_query-devtools_build_06n4mp0._.js from module [project]/node_modules/.pnpm/@tanstack+query-devtools@5.101.1/node_modules/@tanstack/query-devtools/build/DevtoolsComponent/I4EE2JD6.js [app-client] (ecmascript, async loader)
