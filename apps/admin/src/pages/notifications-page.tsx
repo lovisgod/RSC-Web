@@ -8,7 +8,7 @@ import { AlertCircle, CalendarClock, Loader2, Send, Smartphone } from "lucide-re
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 
-import { apiClient } from "../lib/api";
+import { listNotificationCampaigns, scheduleNotificationCampaign } from "../lib/api";
 
 const campaignsQueryKey = ["notification-campaigns"] as const;
 
@@ -61,12 +61,11 @@ export function NotificationsPage() {
 
   const campaigns = useQuery({
     queryKey: campaignsQueryKey,
-    queryFn: () => apiClient.listNotificationCampaigns(),
+    queryFn: listNotificationCampaigns,
   });
 
   const scheduleCampaign = useMutation({
-    mutationFn: (input: CreateNotificationCampaignInput) =>
-      apiClient.scheduleNotificationCampaign(input),
+    mutationFn: (input: CreateNotificationCampaignInput) => scheduleNotificationCampaign(input),
     onSuccess: async () => {
       setTitle("");
       setBody("");

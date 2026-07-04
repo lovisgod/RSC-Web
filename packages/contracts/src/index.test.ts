@@ -17,6 +17,7 @@ import {
   resendVerificationCodeResultSchema,
   userVerificationResultSchema,
   updateMenuItemAvailabilityInputSchema,
+  uploadedImageSchema,
   verifyUserInputSchema,
 } from "./index";
 
@@ -30,6 +31,20 @@ describe("moneySchema", () => {
 
   it("rejects decimal minor units", () => {
     expect(() => moneySchema.parse({ amountMinor: 12.5, currency: "NGN" })).toThrow();
+  });
+});
+
+describe("media contracts", () => {
+  it("documents uploaded image responses", () => {
+    expect(
+      uploadedImageSchema.parse({
+        url: "https://res.cloudinary.com/rsc/image/upload/menu/item.webp",
+        publicId: "uploads/menu-item",
+      }),
+    ).toEqual({
+      url: "https://res.cloudinary.com/rsc/image/upload/menu/item.webp",
+      publicId: "uploads/menu-item",
+    });
   });
 });
 
