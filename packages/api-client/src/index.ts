@@ -1,5 +1,4 @@
 import {
-  adminOverviewSchema,
   adminResultSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
@@ -30,6 +29,11 @@ import {
   logoutResultSchema,
   menuItemSchema,
   notificationSchema,
+  operationsQueueSchema,
+  operationsStatsQuerySchema,
+  operationsSummarySchema,
+  orderPulseQuerySchema,
+  orderPulseSchema,
   outletSummarySchema,
   riderLocationSchema,
   registerCustomerInputSchema,
@@ -38,7 +42,6 @@ import {
   resendVerificationResultSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
-  type AdminOverview,
   type AdminResult,
   type ChangePasswordInput,
   type ChangePasswordResult,
@@ -68,6 +71,11 @@ import {
   type LogoutResult,
   type MenuItem,
   type Notification,
+  type OperationsQueue,
+  type OperationsStatsQuery,
+  type OperationsSummary,
+  type OrderPulse,
+  type OrderPulseQuery,
   type OutletSummary,
   type RiderLocation,
   type RegisterCustomerInput,
@@ -376,8 +384,30 @@ export function createApiClient(options: ApiClientOptions) {
         method: "POST",
       });
     },
-    getAdminOverview(): Promise<AdminOverview> {
-      return request("/api/v1/admin/overview", adminOverviewSchema);
+    getOperationsSummary(input: OperationsStatsQuery = {}): Promise<OperationsSummary> {
+      const query = operationsStatsQuerySchema.parse(input);
+      const params = new URLSearchParams();
+      if (query.outletId) params.set("outletId", query.outletId);
+      const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
+      return request(`/api/v1/stats/operations/summary${suffix}`, operationsSummarySchema);
+    },
+    getOrderPulse(input: OrderPulseQuery = {}): Promise<OrderPulse> {
+      const query = orderPulseQuerySchema.parse(input);
+      const params = new URLSearchParams();
+      if (query.outletId) params.set("outletId", query.outletId);
+      if (query.range) params.set("range", query.range);
+      const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
+      return request(`/api/v1/stats/operations/order-pulse${suffix}`, orderPulseSchema);
+    },
+    getOperationsQueue(input: OperationsStatsQuery = {}): Promise<OperationsQueue> {
+      const query = operationsStatsQuerySchema.parse(input);
+      const params = new URLSearchParams();
+      if (query.outletId) params.set("outletId", query.outletId);
+      const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
+      return request(`/api/v1/stats/operations/queue${suffix}`, operationsQueueSchema);
     },
   };
 }

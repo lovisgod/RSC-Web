@@ -1,14 +1,20 @@
 import axios, { type AxiosError } from "axios";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
-import type {
-  ItemModifierGroup,
-  LoginResult,
-  LogoutResult,
-  MasterOrderStatus,
-  MenuItem,
-  OutletSummary,
-  SubOrderStatus,
-  UploadedImage,
+import {
+  changePasswordInputSchema,
+  changePasswordResultSchema,
+  type ChangePasswordInput,
+  type ChangePasswordResult,
+  type ItemModifierGroup,
+  type LoginResult,
+  type LogoutResult,
+  type MasterOrderStatus,
+  type MenuItem,
+  type OutletSummary,
+  type SubOrderStatus,
+  type UploadedImage,
+  userProfileSchema,
+  type UserProfile,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
@@ -91,6 +97,16 @@ export const login = (body: { identifier: string; password: string }): Promise<L
   post("/api/v1/auth/login", body);
 
 export const logout = (): Promise<LogoutResult> => post("/api/v1/auth/logout");
+
+export const changePassword = async (body: ChangePasswordInput): Promise<ChangePasswordResult> => {
+  const payload = changePasswordInputSchema.parse(body);
+  return changePasswordResultSchema.parse(
+    await post<unknown>("/api/v1/auth/change-password", payload),
+  );
+};
+
+export const getProfile = async (): Promise<UserProfile> =>
+  userProfileSchema.parse(await get<unknown>("/api/v1/users/me"));
 
 // ─── Outlet ───────────────────────────────────────────────────────────────────
 

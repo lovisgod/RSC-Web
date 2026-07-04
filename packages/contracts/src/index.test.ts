@@ -12,6 +12,9 @@ import {
   menuItemSchema,
   moneySchema,
   orderDetailSchema,
+  operationsQueueSchema,
+  operationsSummarySchema,
+  orderPulseSchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -48,6 +51,54 @@ describe("media contracts", () => {
       url: "https://res.cloudinary.com/rsc/image/upload/menu/item.webp",
       publicId: "uploads/menu-item",
     });
+  });
+});
+
+describe("operations stats contracts", () => {
+  it("documents the operations summary", () => {
+    expect(
+      operationsSummarySchema.parse({
+        activeOutlets: 4,
+        openMasterOrders: 17,
+        delayedSubOrders: 2,
+      }),
+    ).toEqual({
+      activeOutlets: 4,
+      openMasterOrders: 17,
+      delayedSubOrders: 2,
+    });
+  });
+
+  it("documents order pulse and queue responses", () => {
+    expect(
+      orderPulseSchema.parse({
+        range: "TODAY",
+        outletId: null,
+        points: [
+          {
+            bucketStart: "2026-07-04T12:00:00.000Z",
+            label: "12 PM",
+            orderCount: 8,
+          },
+        ],
+      }),
+    ).toBeTruthy();
+    expect(
+      operationsQueueSchema.parse({
+        outletId: null,
+        delayedKitchenTickets: 2,
+        oldestDelayMinutes: 19,
+        pausedOutlets: 1,
+        items: [
+          {
+            type: "DELAYED_KITCHEN_TICKETS",
+            count: 2,
+            oldestDelayMinutes: 19,
+          },
+          { type: "PAUSED_OUTLETS", count: 1 },
+        ],
+      }),
+    ).toBeTruthy();
   });
 });
 

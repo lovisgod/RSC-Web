@@ -328,6 +328,81 @@ describe("registration API client", () => {
     );
   });
 
+  it("requests all operations stats endpoints", async () => {
+    const responses = [
+      {
+        data: { activeOutlets: 4, openMasterOrders: 17, delayedSubOrders: 2 },
+        message: "Operations summary retrieved",
+        status: 200,
+      },
+      {
+        data: {
+          range: "LAST_7_DAYS",
+          outletId: null,
+          points: [
+            {
+              bucketStart: "2026-07-04T00:00:00.000Z",
+              label: "Jul 4",
+              orderCount: 8,
+            },
+          ],
+        },
+        message: "Order pulse retrieved",
+        status: 200,
+      },
+      {
+        data: {
+          outletId: null,
+          delayedKitchenTickets: 2,
+          oldestDelayMinutes: 19,
+          pausedOutlets: 1,
+          items: [
+            {
+              type: "DELAYED_KITCHEN_TICKETS",
+              count: 2,
+              oldestDelayMinutes: 19,
+            },
+            { type: "PAUSED_OUTLETS", count: 1 },
+          ],
+        },
+        message: "Operations queue retrieved",
+        status: 200,
+      },
+    ];
+    const requestFetch = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(responses.shift()), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscdev.tech",
+      fetch: requestFetch,
+    });
+
+    await client.getOperationsSummary();
+    await client.getOrderPulse({ range: "LAST_7_DAYS" });
+    await client.getOperationsQueue();
+
+    expect(requestFetch).toHaveBeenNthCalledWith(
+      1,
+      "https://api-dev.rscdev.tech/api/v1/stats/operations/summary",
+      expect.objectContaining({ credentials: "include" }),
+    );
+    expect(requestFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://api-dev.rscdev.tech/api/v1/stats/operations/order-pulse?range=LAST_7_DAYS",
+      expect.objectContaining({ credentials: "include" }),
+    );
+    expect(requestFetch).toHaveBeenNthCalledWith(
+      3,
+      "https://api-dev.rscdev.tech/api/v1/stats/operations/queue",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("sanitizes server errors and notifies the host application", async () => {
     const onServerError = vi.fn();
     const requestFetch = vi

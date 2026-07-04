@@ -653,12 +653,54 @@ export const notificationCampaignSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
-export const adminOverviewSchema = z.object({
-  generatedAt: z.iso.datetime(),
+export const operationsStatsQuerySchema = z
+  .object({
+    outletId: z.uuid().optional(),
+  })
+  .strict();
+
+export const orderPulseRangeSchema = z.enum(["TODAY", "LAST_7_DAYS", "LAST_30_DAYS"]);
+
+export const orderPulseQuerySchema = operationsStatsQuerySchema.extend({
+  range: orderPulseRangeSchema.optional(),
+});
+
+export const operationsSummarySchema = z.object({
   activeOutlets: z.int().nonnegative(),
   openMasterOrders: z.int().nonnegative(),
   delayedSubOrders: z.int().nonnegative(),
-  pendingSettlements: moneySchema,
+});
+
+export const orderPulsePointSchema = z.object({
+  bucketStart: z.iso.datetime(),
+  label: z.string().min(1),
+  orderCount: z.int().nonnegative(),
+});
+
+export const orderPulseSchema = z.object({
+  range: orderPulseRangeSchema,
+  outletId: z.uuid().nullable(),
+  points: z.array(orderPulsePointSchema),
+});
+
+export const operationsQueueItemSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("DELAYED_KITCHEN_TICKETS"),
+    count: z.int().nonnegative(),
+    oldestDelayMinutes: z.int().nonnegative().nullable(),
+  }),
+  z.object({
+    type: z.literal("PAUSED_OUTLETS"),
+    count: z.int().nonnegative(),
+  }),
+]);
+
+export const operationsQueueSchema = z.object({
+  outletId: z.uuid().nullable(),
+  delayedKitchenTickets: z.int().nonnegative(),
+  oldestDelayMinutes: z.int().nonnegative().nullable(),
+  pausedOutlets: z.int().nonnegative(),
+  items: z.array(operationsQueueItemSchema),
 });
 
 export type Money = z.infer<typeof moneySchema>;
@@ -705,7 +747,14 @@ export type AdminOrderSubOrder = z.infer<typeof adminOrderSubOrderSchema>;
 export type AdminOrderLineItem = z.infer<typeof adminOrderLineItemSchema>;
 export type AdminOrderSummary = z.infer<typeof adminOrderSummarySchema>;
 export type AdminOrdersResult = z.infer<typeof adminOrdersResultSchema>;
-export type AdminOverview = z.infer<typeof adminOverviewSchema>;
+export type OperationsStatsQuery = z.infer<typeof operationsStatsQuerySchema>;
+export type OrderPulseRange = z.infer<typeof orderPulseRangeSchema>;
+export type OrderPulseQuery = z.infer<typeof orderPulseQuerySchema>;
+export type OperationsSummary = z.infer<typeof operationsSummarySchema>;
+export type OrderPulsePoint = z.infer<typeof orderPulsePointSchema>;
+export type OrderPulse = z.infer<typeof orderPulseSchema>;
+export type OperationsQueueItem = z.infer<typeof operationsQueueItemSchema>;
+export type OperationsQueue = z.infer<typeof operationsQueueSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
 export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInputSchema>;
