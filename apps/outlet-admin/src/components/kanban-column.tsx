@@ -1,19 +1,22 @@
-import type { SubOrderStatus } from "@rsc/contracts";
+import { useDroppable } from "@dnd-kit/core";
+import type { MasterOrderStatus } from "@rsc/contracts";
 import type { PosSubOrder } from "../lib/api";
 import { KanbanCard } from "./kanban-card";
 
 interface KanbanColumnProps {
+  id: string;
   title: string;
   badge: number;
   badgeColor: string;
   orders: PosSubOrder[];
   isLoading: boolean;
   emptyText: string;
-  onAdvance: (id: string, status: SubOrderStatus) => void;
+  onAdvance: (subOrderId: string, status: MasterOrderStatus) => void;
   isAdvancing: boolean;
 }
 
 export function KanbanColumn({
+  id,
   title,
   badge,
   badgeColor,
@@ -23,8 +26,15 @@ export function KanbanColumn({
   onAdvance,
   isAdvancing,
 }: KanbanColumnProps) {
+  const { isOver, setNodeRef } = useDroppable({ id });
+
   return (
-    <div className="flex flex-col rounded-xl border border-slate-100 bg-slate-50">
+    <div
+      ref={setNodeRef}
+      className={`flex flex-col rounded-xl border bg-slate-50 transition-colors ${
+        isOver ? "border-orange-300 bg-orange-50/40" : "border-slate-100"
+      }`}
+    >
       <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
         <span className="text-xs font-bold uppercase tracking-widest text-slate-500">{title}</span>
         <span

@@ -39,7 +39,7 @@ apps/admin/src/
 ├── hooks/
 │   ├── use-auth.ts           # Reads authStore via useSyncExternalStore
 │   ├── use-live-clock.ts     # Ticking clock string for the topbar
-│   ├── use-admin-overview.ts # GET /api/v1/admin/overview — 30s polling
+│   ├── use-operations-stats.ts # GET /api/v1/stats/operations/* — 30s polling
 │   ├── use-outlets-live.ts   # GET /api/v1/outlets — 15s polling
 │   ├── use-toggle-outlet-status.ts  # PATCH /api/v1/outlets/:id
 │   └── use-delete-outlet.ts  # DELETE /api/v1/outlets/:id
@@ -62,7 +62,6 @@ apps/admin/src/
     ├── password-input.tsx        # Input + show/hide toggle
     ├── otp-input.tsx             # 6-box OTP entry
     ├── page-heading.tsx
-    ├── overview-metrics.tsx
     ├── service-volume-chart.tsx
     └── operations-queue.tsx
 ```
@@ -192,7 +191,9 @@ refetchOnWindowFocus: false;
 All admin queries are namespaced under `["admin", ...]`:
 
 ```ts
-["admin", "outlets"][("admin", "overview")][("admin", "orders")]; // outlet list // dashboard metrics // orders (when built)
+["admin", "outlets"];
+["admin", "stats", "operations", ...];
+["admin", "orders"];
 ```
 
 Invalidate after mutations:
@@ -203,10 +204,12 @@ queryClient.invalidateQueries({ queryKey: ["admin", "outlets"] });
 
 ### Real-time polling
 
-| Hook               | Interval   |
-| ------------------ | ---------- |
-| `useOutletsLive`   | 15 seconds |
-| `useAdminOverview` | 30 seconds |
+| Hook                   | Interval   |
+| ---------------------- | ---------- |
+| `useOutletsLive`       | 15 seconds |
+| `useOperationsSummary` | 30 seconds |
+| `useOrderPulse`        | 30 seconds |
+| `useOperationsQueue`   | 30 seconds |
 
 ---
 

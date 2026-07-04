@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { OutletsView } from "@/src/components/outlets/outlets-view";
 import { OffersSection } from "@/src/components/outlets/offers-section";
 
-export const metadata: Metadata = { title: "RSC Food Kitchens" };
+export const metadata: Metadata = { title: "Kitchens" };
 
 export default function OutletsPage() {
   return (
