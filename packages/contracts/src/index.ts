@@ -493,36 +493,40 @@ export const orderSummarySchema = z.object({
   createdAt: z.iso.datetime(),
 });
 
-export const customerOrderSchema = z.object({
-  id: z.uuid(),
-  customerId: z.uuid(),
-  riderId: z.uuid().nullable(),
-  status: z.string().trim().min(1),
-  subtotalMinor: z.int().nonnegative(),
-  deliveryFeeMinor: z.int().nonnegative(),
-  serviceFeeMinor: z.int().nonnegative(),
-  vatMinor: z.int().nonnegative(),
-  discountMinor: z.int().nonnegative(),
-  totalMinor: z.int().nonnegative(),
-  currency: currencySchema,
-  deliveryMode: z.enum(["DELIVERY", "TAKEOUT"]),
-  deliveryAddress: z.string().nullable(),
-  deliveryLatitude: z.number().nullable(),
-  deliveryLongitude: z.number().nullable(),
-  paymentReference: z.string(),
-  deliveryCode: z.string(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  deletedAt: z.iso.datetime().nullable(),
-});
+export const customerOrderSchema = z
+  .object({
+    id: z.uuid(),
+    customerId: z.uuid(),
+    riderId: z.uuid().nullable(),
+    status: z.string().trim().min(1),
+    subtotalMinor: z.coerce.number().int().nonnegative(),
+    deliveryFeeMinor: z.coerce.number().int().nonnegative().default(0),
+    serviceFeeMinor: z.coerce.number().int().nonnegative().default(0),
+    vatMinor: z.coerce.number().int().nonnegative().default(0),
+    discountMinor: z.coerce.number().int().nonnegative().default(0),
+    totalMinor: z.coerce.number().int().nonnegative(),
+    currency: currencySchema.default("NGN"),
+    deliveryMode: z.enum(["DELIVERY", "TAKEOUT"]),
+    deliveryAddress: z.string().nullable(),
+    deliveryLatitude: z.coerce.number().min(-90).max(90).nullable(),
+    deliveryLongitude: z.coerce.number().min(-180).max(180).nullable(),
+    paymentReference: z.string().nullable(),
+    deliveryCode: z.string().nullable(),
+    createdAt: z.string().min(1),
+    updatedAt: z.string().min(1),
+    deletedAt: z.iso.datetime().nullable(),
+  })
+  .passthrough();
 
-export const riderLocationSchema = z.object({
-  riderId: z.uuid(),
-  masterOrderId: z.uuid().nullable(),
-  latitude: z.number(),
-  longitude: z.number(),
-  recordedAt: z.iso.datetime(),
-});
+export const riderLocationSchema = z
+  .object({
+    riderId: z.uuid().nullable(),
+    masterOrderId: z.uuid().nullable(),
+    latitude: z.coerce.number().min(-90).max(90),
+    longitude: z.coerce.number().min(-180).max(180),
+    recordedAt: z.string().min(1),
+  })
+  .passthrough();
 
 export const orderStatusEventSchema = z.object({
   id: z.uuid(),
@@ -534,45 +538,65 @@ export const orderStatusEventSchema = z.object({
   createdAt: z.iso.datetime(),
 });
 
-export const subOrderDetailSchema = z.object({
-  id: z.uuid(),
-  masterOrderId: z.uuid(),
-  outletId: z.uuid(),
-  status: z.string(),
-  subtotalMinor: z.int().nonnegative(),
-  commissionMinor: z.int().nonnegative(),
-  netMinor: z.int().nonnegative(),
-  currency: currencySchema,
-  createdAt: z.iso.datetime(),
-});
+export const subOrderDetailSchema = z
+  .object({
+    id: z.uuid(),
+    masterOrderId: z.uuid(),
+    outletId: z.uuid(),
+    status: z.string().min(1),
+    subtotalMinor: z.coerce.number().int().nonnegative(),
+    commissionMinor: z.coerce.number().int().nonnegative().default(0),
+    netMinor: z.coerce.number().int().nonnegative().default(0),
+    currency: currencySchema.default("NGN"),
+    createdAt: z.string().min(1),
+  })
+  .passthrough();
 
-export const orderLineItemSchema = z.object({
-  id: z.uuid(),
-  masterOrderId: z.uuid(),
-  subOrderId: z.uuid(),
-  outletId: z.uuid(),
-  menuItemId: z.uuid().nullable(),
-  itemNameSnapshot: z.string(),
-  unitPriceMinor: z.int().nonnegative(),
-  quantity: z.int().positive(),
-  lineTotalMinor: z.int().nonnegative(),
-  currency: currencySchema,
-  modifiersSnapshot: z.array(
-    z.object({
-      id: z.uuid(),
-      name: z.string(),
-      priceDeltaMinor: z.int().nonnegative(),
-    }),
-  ),
-});
+export const orderLineItemSchema = z
+  .object({
+    id: z.uuid(),
+    masterOrderId: z.uuid(),
+    subOrderId: z.uuid(),
+    outletId: z.uuid(),
+    menuItemId: z.uuid().nullable(),
+    itemNameSnapshot: z.string().min(1),
+    unitPriceMinor: z.coerce.number().int(),
+    quantity: z.coerce.number().int().positive(),
+    lineTotalMinor: z.coerce.number().int(),
+    currency: currencySchema.default("NGN"),
+    modifiersSnapshot: z
+      .array(
+        z
+          .object({
+            id: z.uuid().optional(),
+            name: z.string().min(1),
+            priceDeltaMinor: z.coerce.number().int().default(0),
+          })
+          .passthrough(),
+      )
+      .nullish()
+      .transform((value) => value ?? []),
+  })
+  .passthrough();
 
-export const orderDetailSchema = z.object({
-  order: customerOrderSchema,
-  subOrders: z.array(subOrderDetailSchema),
-  lineItems: z.array(orderLineItemSchema),
-  events: z.array(orderStatusEventSchema),
-  latestRiderLocation: riderLocationSchema.nullable(),
-});
+export const orderDetailSchema = z
+  .object({
+    order: customerOrderSchema,
+    subOrders: z
+      .array(subOrderDetailSchema)
+      .nullish()
+      .transform((value) => value ?? []),
+    lineItems: z
+      .array(orderLineItemSchema)
+      .nullish()
+      .transform((value) => value ?? []),
+    events: z
+      .array(orderStatusEventSchema)
+      .nullish()
+      .transform((value) => value ?? []),
+    latestRiderLocation: riderLocationSchema.nullish().transform((value) => value ?? null),
+  })
+  .passthrough();
 
 export const uploadedImageSchema = z.object({
   url: z.url(),

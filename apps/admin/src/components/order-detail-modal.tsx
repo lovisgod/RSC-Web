@@ -126,8 +126,14 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                 className="order-modal__meta-value text-mono copy-row"
                 style={{ fontSize: "0.8rem" }}
               >
-                {order.paymentReference}
-                <CopyButton text={order.paymentReference} />
+                {order.paymentReference ? (
+                  <>
+                    {order.paymentReference}
+                    <CopyButton text={order.paymentReference} />
+                  </>
+                ) : (
+                  <em style={{ color: "var(--rsc-text-muted)" }}>Not available</em>
+                )}
               </span>
             </div>
           </div>

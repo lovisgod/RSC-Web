@@ -31,6 +31,7 @@ import {
   menuItemSchema,
   notificationSchema,
   outletSummarySchema,
+  riderLocationSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
   resendVerificationInputSchema,
@@ -68,6 +69,7 @@ import {
   type MenuItem,
   type Notification,
   type OutletSummary,
+  type RiderLocation,
   type RegisterCustomerInput,
   type RegistrationResult,
   type ResendVerificationInput,
@@ -85,6 +87,16 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = "ApiError";
+  }
+}
+
+export class ApiContractError extends Error {
+  constructor(
+    message: string,
+    readonly issues: z.ZodIssue[],
+  ) {
+    super(message);
+    this.name = "ApiContractError";
   }
 }
 
@@ -156,9 +168,18 @@ export function createApiClient(options: ApiClientOptions) {
       );
     }
 
-    const envelope = apiResponseSchema(schema).parse(await response.json());
+    const payload: unknown = await response.json();
+    const parsedEnvelope = apiResponseSchema(schema).safeParse(payload);
 
-    return envelope.data;
+    if (!parsedEnvelope.success) {
+      console.error("API contract validation failed", parsedEnvelope.error.flatten());
+      throw new ApiContractError(
+        "The server returned an unexpected response.",
+        parsedEnvelope.error.issues,
+      );
+    }
+
+    return parsedEnvelope.data.data;
   }
 
   return {
@@ -305,6 +326,12 @@ export function createApiClient(options: ApiClientOptions) {
     },
     getOrder(id: string): Promise<OrderDetail> {
       return request(`/api/v1/orders/${encodeURIComponent(id)}`, orderDetailSchema);
+    },
+    getRiderLocation(id: string): Promise<RiderLocation | null> {
+      return request(
+        `/api/v1/orders/${encodeURIComponent(id)}/rider-location`,
+        riderLocationSchema.nullable(),
+      );
     },
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));

@@ -96,7 +96,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "outlets"] });
       toastBus.emit(isEditMode ? "Outlet updated" : "Outlet onboarded", "success");
-      handleClose();
+      onClose();
     },
     onError: (err: Error) => {
       toastBus.emit(err.message, "error");

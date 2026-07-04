@@ -3,54 +3,85 @@
 import { useEffect, useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
+import type { RiderLocation } from "@rsc/contracts";
 
 import { apiClient } from "@/src/lib/api";
-import type { RiderLocation } from "@rsc/contracts";
-import { riderLocationSchema } from "@rsc/contracts";
+import { ACTIVE_ORDER_STATUSES } from "@/src/lib/data/orders";
+import { parseRiderLocationEvent } from "@/src/lib/data/rider-location";
 
 export function useOrderDetail(orderId: string | null) {
   return useQuery({
     queryKey: ["order", orderId],
     queryFn: () => apiClient.getOrder(orderId!),
     enabled: !!orderId,
-    refetchInterval: 30_000,
+    refetchInterval: (query) => {
+      const status = query.state.data?.order.status.toUpperCase();
+      return status && ACTIVE_ORDER_STATUSES.has(status) ? 12_000 : false;
+    },
+    refetchOnWindowFocus: true,
   });
 }
 
-export function useRiderLocationStream(
-  orderId: string | null,
-  enabled: boolean,
-): RiderLocation | null {
-  const [streamLocation, setStreamLocation] = useState<{
+type TrackingConnection = "connecting" | "live" | "reconnecting" | "idle";
+
+export function useRiderTracking(orderId: string | null, enabled: boolean) {
+  const [streamState, setStreamState] = useState<{
     orderId: string;
-    location: RiderLocation;
+    location: RiderLocation | null;
+    connection: TrackingConnection;
   } | null>(null);
 
-  useEffect(() => {
-    if (!orderId || !enabled) return;
+  const latestLocationQuery = useQuery({
+    queryKey: ["order", orderId, "rider-location"],
+    queryFn: () => apiClient.getRiderLocation(orderId!),
+    enabled: !!orderId && enabled,
+    refetchInterval:
+      streamState?.orderId === orderId && streamState.connection === "reconnecting"
+        ? 10_000
+        : false,
+    retry: 1,
+  });
 
-    const es = new EventSource(
+  useEffect(() => {
+    if (!orderId || !enabled || !latestLocationQuery.isFetched) return;
+
+    const stream = new EventSource(
       `/api/v1/orders/${encodeURIComponent(orderId)}/rider-location/stream`,
+      { withCredentials: true },
     );
 
-    es.onmessage = (event) => {
-      try {
-        const raw: unknown = JSON.parse(event.data as string);
-        if (raw && typeof raw === "object" && "latitude" in raw) {
-          const parsed = riderLocationSchema.safeParse(raw);
-          if (parsed.success) setStreamLocation({ orderId, location: parsed.data });
-        }
-      } catch {
-        // ignore parse failures — empty `{}` ticks are expected
-      }
+    stream.onmessage = (event) => {
+      const location = parseRiderLocationEvent(event.data);
+      if (!location) return;
+
+      setStreamState({ orderId, location, connection: "live" });
     };
 
-    es.onerror = () => {
-      es.close();
+    stream.onerror = () => {
+      stream.close();
+      setStreamState((current) => ({
+        orderId,
+        location: current?.orderId === orderId ? current.location : null,
+        connection: "reconnecting",
+      }));
     };
 
-    return () => es.close();
-  }, [orderId, enabled]);
+    return () => stream.close();
+  }, [enabled, latestLocationQuery.isFetched, orderId]);
 
-  return enabled && orderId && streamLocation?.orderId === orderId ? streamLocation.location : null;
+  const streamLocation = streamState?.orderId === orderId ? streamState.location : null;
+  const location = streamLocation ?? latestLocationQuery.data ?? null;
+  const connection: TrackingConnection =
+    !enabled || !orderId
+      ? "idle"
+      : streamState?.orderId === orderId
+        ? streamState.connection
+        : "connecting";
+
+  return {
+    location,
+    connection,
+    isLoading: latestLocationQuery.isPending && !location,
+    isUnavailable: latestLocationQuery.isFetched && !location && latestLocationQuery.isError,
+  };
 }

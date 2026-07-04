@@ -10,6 +10,8 @@ coverage
 !.env.example
 .DS_Store
 pnpm-debug.log*
+**/.dev-logs/
+**/.tmp-dev-logs/
 .env.deploy
 deploy/local/data
 appendonlydir/

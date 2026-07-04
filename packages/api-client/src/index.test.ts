@@ -294,6 +294,40 @@ describe("registration API client", () => {
     expect(onUnauthorized).toHaveBeenCalledWith("/api/v1/outlets");
   });
 
+  it("gets the latest rider location for a master order", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            riderId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+            masterOrderId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+            latitude: 6.5244,
+            longitude: 3.3792,
+            recordedAt: "2026-07-04T10:00:00.000Z",
+          },
+          message: "Latest rider location retrieved",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscdev.tech",
+      fetch: requestFetch,
+    });
+
+    await expect(
+      client.getRiderLocation("4273e96c-2887-49a5-a6d5-269f007f04f0"),
+    ).resolves.toMatchObject({
+      latitude: 6.5244,
+      longitude: 3.3792,
+    });
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscdev.tech/api/v1/orders/4273e96c-2887-49a5-a6d5-269f007f04f0/rider-location",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("sanitizes server errors and notifies the host application", async () => {
     const onServerError = vi.fn();
     const requestFetch = vi

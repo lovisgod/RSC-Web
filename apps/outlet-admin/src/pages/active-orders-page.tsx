@@ -204,7 +204,7 @@ export function ActiveOrdersPage() {
           />
           <KanbanColumn
             id="preparing"
-            title="Kitchen Preparing"
+            title="Outlet Preparing"
             badge={preparing.length}
             badgeColor="bg-orange-500"
             orders={preparing}
