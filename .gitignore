@@ -14,3 +14,4 @@ pnpm-debug.log*
 deploy/local/data
 appendonlydir/
 dump.rdb
+.log
