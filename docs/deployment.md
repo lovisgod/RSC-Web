@@ -83,11 +83,12 @@ staging domains are access-restricted or API rate limiting is in place.
 In Namecheap **Advanced DNS**, add these records. They point to the same Dokploy
 server; Traefik routes each hostname to the correct staging container.
 
-| Type     | Host            | Value          | TTL       |
-| -------- | --------------- | -------------- | --------- |
-| A Record | `staging`       | `72.61.202.26` | Automatic |
-| A Record | `admin-staging` | `72.61.202.26` | Automatic |
-| A Record | `api-staging`   | `72.61.202.26` | Automatic |
+| Type     | Host                   | Value          | TTL       |
+| -------- | ---------------------- | -------------- | --------- |
+| A Record | `staging`              | `72.61.202.26` | Automatic |
+| A Record | `admin-staging`        | `72.61.202.26` | Automatic |
+| A Record | `api-staging`          | `72.61.202.26` | Automatic |
+| A Record | `outlet-admin-staging` | `72.61.202.26` | Automatic |
 
 Remove conflicting parking, URL redirect, CNAME, or duplicate A records for
 these three hosts.
@@ -96,11 +97,12 @@ these three hosts.
 
 In the staging Compose service's **Domains** tab, add:
 
-| Service         | Domain                     | Port   |
-| --------------- | -------------------------- | ------ |
-| `customer-web`  | `staging.rscapp.xyz`       | `3000` |
-| `central-admin` | `admin-staging.rscapp.xyz` | `8080` |
-| `api`           | `api-staging.rscapp.xyz`   | `4000` |
+| Service         | Domain                            | Port   |
+| --------------- | --------------------------------- | ------ |
+| `customer-web`  | `staging.rscapp.xyz`              | `3000` |
+| `central-admin` | `admin-staging.rscapp.xyz`        | `8080` |
+| `api`           | `api-staging.rscapp.xyz`          | `4000` |
+| `outlet-admin`  | `outlet-admin-staging.rscapp.xyz` | `5175` |
 
 For every domain use external path `/`, internal path `/`, **Strip path Off**,
 HTTPS **On**, and a Let's Encrypt certificate. Save the domains, then redeploy
@@ -112,9 +114,10 @@ Verify DNS before requesting certificates:
 dig +short staging.rscapp.xyz
 dig +short admin-staging.rscapp.xyz
 dig +short api-staging.rscapp.xyz
+dig +short outlet-admin-staging.rscapp.xyz
 ```
 
-All three commands must return `72.61.202.26`. After deployment, verify:
+All four commands must return `72.61.202.26`. After deployment, verify:
 
 ```text
 https://staging.rscapp.xyz
@@ -135,11 +138,11 @@ Open the Compose service's **Environment** tab and add:
 
 ```dotenv
 DEPLOY_ENV=development
-PUBLIC_API_URL=https://api-dev.rscapp.xyz
+PUBLIC_API_URL=https://api-dev.rscdev.tech
 APP_VERSION=development
 POSTGRES_PASSWORD=replace-with-a-long-random-value
 REDIS_PASSWORD=replace-with-a-different-long-random-value
-CORS_ORIGINS=https://dev.rscapp.xyz,https://admin-dev.rscapp.xyz
+CORS_ORIGINS=https://dev.rscdev.tech,https://admin-dev.rscdev.tech,https://outlet-admin-dev.rscdev.tech
 SWAGGER_ENABLED=true
 PII_ENCRYPTION_KEY=replace-with-output-of-openssl-rand-base64-32
 PII_HASH_PEPPER=replace-with-output-of-openssl-rand-hex-32
@@ -160,7 +163,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=replace-with-gmail-address
 SMTP_PASS=replace-with-gmail-app-password
-SMTP_FROM=RSC <noreply@rscapp.xyz>
+SMTP_FROM=RSC <noreply@rscdev.tech>
 ```
 
 Generate the server-side passwords and security secrets locally, then paste the
@@ -211,20 +214,22 @@ services through the private Compose network.
 
 In Namecheap **Advanced DNS**, add all three development records:
 
-| Type     | Host        | Value          | TTL       |
-| -------- | ----------- | -------------- | --------- |
-| A Record | `dev`       | `72.61.202.26` | Automatic |
-| A Record | `admin-dev` | `72.61.202.26` | Automatic |
-| A Record | `api-dev`   | `72.61.202.26` | Automatic |
+| Type     | Host               | Value          | TTL       |
+| -------- | ------------------ | -------------- | --------- |
+| A Record | `dev`              | `72.61.202.26` | Automatic |
+| A Record | `admin-dev`        | `72.61.202.26` | Automatic |
+| A Record | `api-dev`          | `72.61.202.26` | Automatic |
+| A Record | `outlet-admin-dev` | `72.61.202.26` | Automatic |
 
 Remove conflicting parking, URL redirect, CNAME, or duplicate A records for
 these hosts. In Dokploy **Domains**, add all three routes:
 
-| Service         | Domain                 | Port   |
-| --------------- | ---------------------- | ------ |
-| `customer-web`  | `dev.rscapp.xyz`       | `3000` |
-| `central-admin` | `admin-dev.rscapp.xyz` | `8080` |
-| `api`           | `api-dev.rscapp.xyz`   | `4000` |
+| Service         | Domain                        | Port   |
+| --------------- | ----------------------------- | ------ |
+| `customer-web`  | `dev.rscapp.xyz`              | `3000` |
+| `central-admin` | `admin-dev.rscapp.xyz`        | `8080` |
+| `api`           | `api-dev.rscapp.xyz`          | `4000` |
+| `outlet-admin`  | `outlet-admin-dev.rscapp.xyz` | `5175` |
 
 For every route use external path `/`, internal path `/`, **Strip path Off**,
 HTTPS **On**, and a Let's Encrypt certificate.

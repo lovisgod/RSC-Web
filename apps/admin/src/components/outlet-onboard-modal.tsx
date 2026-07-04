@@ -47,7 +47,7 @@ function getInitialForm(outlet?: OutletSummary): FormState {
     description: outlet.description ?? "",
     cuisineType: outlet.cuisineType,
     isOnline: outlet.isOnline,
-    momentSubaccountCode: outlet.momentSubaccountCode,
+    momentSubaccountCode: outlet.momentSubaccountCode ?? "",
   };
 }
 

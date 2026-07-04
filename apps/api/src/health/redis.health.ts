@@ -15,7 +15,7 @@ export class RedisHealthIndicator {
     const indicator = this.healthIndicatorService.check(key);
 
     try {
-      if (this.redis.status === "wait") {
+      if (this.redis.status !== "ready" && this.redis.status !== "connecting") {
         await this.redis.connect();
       }
 

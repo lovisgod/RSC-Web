@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   Index,
   PrimaryGeneratedColumn,
@@ -51,6 +52,9 @@ export class Customer {
   @Column({ name: "outlet_id", type: "uuid", nullable: true })
   outletId!: string | null;
 
+  @Column({ name: "avatar_url", type: "varchar", length: 512, nullable: true })
+  avatarUrl!: string | null;
+
   @Column({ name: "password_hash", type: "varchar", length: 161 })
   passwordHash!: string;
 
@@ -89,4 +93,7 @@ export class Customer {
 
   @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
   updatedAt!: Date;
+
+  @DeleteDateColumn({ name: "deleted_at", type: "timestamptz", nullable: true })
+  deletedAt!: Date | null;
 }

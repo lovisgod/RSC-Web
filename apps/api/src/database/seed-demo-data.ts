@@ -44,6 +44,9 @@ const outlets = [
     cuisineType: "Italian",
     imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
     momentSubaccountCode: "MOMENT_FARFALLINO",
+    latitude: 6.4281,
+    longitude: 3.4219,
+    deliveryRadiusKm: 12,
     phoneSeed: 31000,
     emailPrefix: "farfallino",
     categories: [
@@ -105,6 +108,9 @@ const outlets = [
     cuisineType: "Nigerian Grill",
     imageUrl: "https://images.unsplash.com/photo-1544025162-d76694265947",
     momentSubaccountCode: "MOMENT_SALMAS",
+    latitude: 6.4474,
+    longitude: 3.4542,
+    deliveryRadiusKm: 15,
     phoneSeed: 32000,
     emailPrefix: "salmas",
     categories: [
@@ -234,6 +240,9 @@ async function upsertOutlet(seed: (typeof outlets)[number]): Promise<Outlet> {
   outlet.cuisineType = seed.cuisineType;
   outlet.imageUrl = seed.imageUrl;
   outlet.isOnline = true;
+  outlet.latitude = seed.latitude;
+  outlet.longitude = seed.longitude;
+  outlet.deliveryRadiusKm = seed.deliveryRadiusKm;
 
   return outletsRepository.save(outlet);
 }
