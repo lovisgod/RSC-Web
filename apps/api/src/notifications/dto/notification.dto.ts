@@ -3,6 +3,7 @@ import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
 import {
   IsDateString,
+  IsBoolean,
   IsEnum,
   IsIn,
   IsOptional,
@@ -58,6 +59,32 @@ export class RegisterDeviceTokenDto {
   token!: string;
 }
 
+export class UpdateNotificationPreferencesDto {
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  promotions?: boolean;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  discounts?: boolean;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  seasonalOffers?: boolean;
+
+  @ApiProperty({
+    example: true,
+    required: false,
+    description: "Operational order-status notifications are always enabled by the API.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  orderStatus?: boolean;
+}
+
 export class CreatePromoNotificationDto {
   @ApiProperty({ example: "SPECIAL_PERIOD" })
   @Transform(trim)
@@ -86,6 +113,12 @@ export class CreatePromoNotificationDto {
   @IsString()
   @MaxLength(80)
   promoCode?: string;
+
+  @ApiProperty({ example: "rsc://outlets/outlet-id", required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  deepLink?: string;
 }
 
 export class CreateNotificationCampaignDto {

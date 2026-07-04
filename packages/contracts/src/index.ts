@@ -231,6 +231,14 @@ export const validateAddressResultSchema = z.object({
     .nullable(),
 });
 
+export const geofenceZoneSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  polygon: z.unknown(),
+  isActive: z.boolean(),
+  createdAt: z.iso.datetime(),
+});
+
 export const changePasswordInputSchema = z
   .object({
     currentPassword: z.string().min(1),
@@ -573,9 +581,26 @@ export const notificationSchema = z.object({
   type: z.string().min(1),
   title: z.string().min(1),
   body: z.string().min(1),
+  data: z.record(z.string(), z.unknown()).default({}),
   isRead: z.boolean(),
   createdAt: z.iso.datetime(),
 });
+
+export const notificationPreferencesSchema = z.object({
+  promotions: z.boolean(),
+  discounts: z.boolean(),
+  seasonalOffers: z.boolean(),
+  orderStatus: z.literal(true),
+});
+
+export const updateNotificationPreferencesInputSchema = z
+  .object({
+    promotions: z.boolean().optional(),
+    discounts: z.boolean().optional(),
+    seasonalOffers: z.boolean().optional(),
+    orderStatus: z.boolean().optional(),
+  })
+  .strict();
 
 export const notificationCampaignTargetSegmentSchema = z.enum([
   "ALL_CUSTOMERS",
@@ -673,6 +698,7 @@ export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInp
 export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema>;
 export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
 export type ValidateAddressResult = z.infer<typeof validateAddressResultSchema>;
+export type GeofenceZone = z.infer<typeof geofenceZoneSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
 export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
 export type InitiatePaymentInput = z.infer<typeof initiatePaymentInputSchema>;
@@ -680,6 +706,10 @@ export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
+export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
+export type UpdateNotificationPreferencesInput = z.infer<
+  typeof updateNotificationPreferencesInputSchema
+>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;
 export type UploadedImage = z.infer<typeof uploadedImageSchema>;
