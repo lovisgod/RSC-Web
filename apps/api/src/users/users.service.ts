@@ -237,7 +237,7 @@ export class UsersService {
       outletId,
       vehicleType: input.vehicleType ?? null,
       plateNumber: input.plateNumber ?? null,
-      riderStatus: "ACTIVE",
+      riderStatus: "AVAILABLE",
       phoneVerifiedAt: now,
       emailVerifiedAt: now,
     });

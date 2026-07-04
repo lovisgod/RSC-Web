@@ -100,7 +100,7 @@ export class UpdateOrderStatusDto {
 }
 
 export class AssignOrderRiderDto {
-  @ApiPropertyOptional({ example: "Automatically assigned nearest rider" })
+  @ApiPropertyOptional({ example: "Automatically assigned available rider" })
   @IsOptional()
   @IsString()
   @MaxLength(500)

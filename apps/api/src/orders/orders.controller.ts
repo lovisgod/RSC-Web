@@ -103,9 +103,9 @@ export class OrdersController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Order rider assigned")
   @ApiOperation({
-    summary: "Automatically assign the closest free rider to an order",
+    summary: "Automatically assign an available rider to an order",
     description:
-      "Operational endpoint for linking a master order to the closest active rider with a latest location and no active assigned delivery. Super admins search all active riders. Outlet admins search active riders linked to their outlet, and only for orders that include their outlet.",
+      "Operational endpoint for linking a master order to an available rider using fair distribution. The backend chooses a free rider with the fewest recent assignments. Super admins search all available riders. Outlet admins search available riders linked to their outlet, and only for orders that include their outlet.",
   })
   assignRider(
     @Req() request: AuthenticatedRequest,
