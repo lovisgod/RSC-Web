@@ -113,3 +113,11 @@ export class CompleteDeliveryDto {
   @Matches(/^\d{6}$/)
   code!: string;
 }
+
+export class PickupSubOrderDto {
+  @ApiPropertyOptional({ example: "Picked up from outlet counter" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}

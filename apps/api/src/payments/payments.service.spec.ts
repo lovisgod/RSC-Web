@@ -26,7 +26,7 @@ describe(PaymentsService.name, () => {
   let menuItems: { findBy: ReturnType<typeof vi.fn> };
   let modifiers: { findBy: ReturnType<typeof vi.fn> };
   let outlets: { findBy: ReturnType<typeof vi.fn> };
-  let dataSource: { transaction: ReturnType<typeof vi.fn> };
+  let dataSource: { query: ReturnType<typeof vi.fn>; transaction: ReturnType<typeof vi.fn> };
   let delivery: { validateAddress: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe(PaymentsService.name, () => {
         }),
       ]),
     };
-    dataSource = { transaction: vi.fn() };
+    dataSource = { query: vi.fn().mockResolvedValue([]), transaction: vi.fn() };
     delivery = {
       validateAddress: vi.fn().mockResolvedValue({
         deliverable: true,
