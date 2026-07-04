@@ -21,6 +21,7 @@ import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import {
+  AssignOrderRiderDto,
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
   UpdateOrderStatusDto,
@@ -95,6 +96,23 @@ export class OrdersController {
     @Body() input: UpdateOrderStatusDto,
   ) {
     return this.orders.updateStatus(request.user!, id, input);
+  }
+
+  @Patch(":id/rider")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Order rider assigned")
+  @ApiOperation({
+    summary: "Automatically assign the closest free rider to an order",
+    description:
+      "Operational endpoint for linking a master order to the closest active rider with a latest location and no active assigned delivery. Super admins search all active riders. Outlet admins search active riders linked to their outlet, and only for orders that include their outlet.",
+  })
+  assignRider(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() input: AssignOrderRiderDto,
+  ) {
+    return this.orders.assignRider(request.user!, id, input);
   }
 
   @Post(":id/complete-delivery")

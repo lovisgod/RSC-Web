@@ -512,5 +512,5 @@ export class AuthService {
 }
 
 function generateTemporaryPassword(): string {
-  return `${randomBytes(12).toString("base64url")}Aa1!`;
+  return `${randomBytes(12).toString("base64url")}Aa1`;
 }
