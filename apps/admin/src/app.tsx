@@ -44,7 +44,6 @@ const routeTitles: Record<string, string> = {
   "/outlets": "Outlet & System Control",
   "/finance": "Reconciliation & Payouts Ledger",
   "/promotions": "Promotions Push Composer",
-  "/settings": "Settings",
 };
 
 function getPageTitle(pathname: string): string {
@@ -67,13 +66,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="sidebar__footer">
-        <OperatorFooter {...(onNavigate ? { onNavigate } : {})} />
+        <OperatorFooter />
       </div>
     </>
   );
 }
 
-function OperatorFooter({ onNavigate }: { onNavigate?: () => void }) {
+function OperatorFooter() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -98,10 +97,15 @@ function OperatorFooter({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="operator">
       {/* <span className="operator__avatar">{user?.role?.charAt(0) ?? "A"}</span> */}
-      <NavLink to="/settings" onClick={onNavigate}>
+      <button
+        type="button"
+        className="operator-settings-btn"
+        aria-label="Settings unavailable"
+        title="Settings unavailable"
+        disabled
+      >
         <Settings aria-hidden="true" size={19} />
-        {/* <span>Settings</span> */}
-      </NavLink>
+      </button>
       <span>
         <strong>{user?.role ?? "Admin"}</strong>
         {/* <small>Platform access</small> */}
@@ -202,14 +206,7 @@ function AdminShell() {
             <Route path="/outlets/:id" element={<OutletDetailPage />} />
             <Route path="/finance" element={<FinancialReconciliationPage />} />
             <Route path="/promotions" element={<PromotionsPage />} />
-            <Route
-              path="/settings"
-              element={
-                <div className="placeholder">
-                  <h1>Settings</h1>
-                </div>
-              }
-            />
+            <Route path="/settings" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </div>

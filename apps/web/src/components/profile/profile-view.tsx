@@ -3,7 +3,16 @@
 import { Card } from "@rsc/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, KeyRound, Loader2, MapPin, MapPinCheck, X, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  LogOut,
+  MapPin,
+  MapPinCheck,
+  X,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -20,8 +29,6 @@ import { useCartStore } from "@/src/stores/cart-store";
 import { PasswordInput } from "@/src/components/shared/password-input";
 
 import { OrdersView } from "@/src/components/orders/orders-view";
-import { LucideLogOut } from "lucide-react";
-
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "U";
@@ -97,7 +104,7 @@ function ProfileHeader() {
         {loggingOut ? (
           <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
-          <LucideLogOut className="w-5 h-5 rotate-180" />
+          <LogOut className="h-5 w-5" aria-hidden="true" />
         )}
       </button>
       {/* Avatar */}
