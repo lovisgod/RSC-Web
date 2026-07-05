@@ -8,6 +8,7 @@ import { OrderDetailModal } from "../components/order-detail-modal";
 import { useOrdersFeed } from "../hooks/use-orders-feed";
 import { useOutletsLive } from "../hooks/use-outlets-live";
 import type { AdminOrderItem } from "../lib/api";
+import { orderStatusClass } from "../lib/order-status";
 
 const COLUMNS = 7;
 
@@ -24,19 +25,6 @@ const STATUS_OPTIONS: { value: MasterOrderStatus | ""; label: string }[] = [
 
 function statusLabel(status: string): string {
   return STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
-}
-
-function statusBadgeClass(status: string): string {
-  switch (status) {
-    case "DELIVERED":
-      return "badge--paid";
-    case "CANCELLED":
-      return "badge--failed";
-    case "PENDING_PAYMENT":
-      return "badge--pending";
-    default:
-      return "";
-  }
 }
 
 export function OrdersFeedPage() {
@@ -161,7 +149,7 @@ export function OrdersFeedPage() {
                       </td>
                       <td>₦{(order.totalMinor / 100).toLocaleString()}</td>
                       <td>
-                        <span className={`badge ${statusBadgeClass(order.status)}`}>
+                        <span className={`badge order-status ${orderStatusClass(order.status)}`}>
                           {statusLabel(order.status)}
                         </span>
                       </td>

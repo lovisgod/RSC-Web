@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { cartItemCount } from "@/src/lib/data/cart";
@@ -97,9 +98,10 @@ export function SideNav() {
         <button
           type="button"
           onClick={handleLogout}
+          aria-label="Sign out"
           className="flex items-center gap-3 px-3 py-3 w-full rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
         >
-          <span className="text-lg leading-none">🚪</span>
+          <LogOut className="h-5 w-5" aria-hidden="true" />
           <span>Logout</span>
         </button>
       </div>
