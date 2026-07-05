@@ -788,11 +788,17 @@ export const paginatedMenuItemsSchema = menuItemsPageSchema;
 export type PaginatedMenuItems = z.infer<typeof paginatedMenuItemsSchema>;
 
 export const platformChargesSchema = z.object({
-  platformCommissionBps: z.int().nonnegative(),
-  defaultVatBps: z.int().nonnegative(),
+  platformCommissionBps: z.int().min(0).max(10_000),
+  defaultVatBps: z.int().min(0).max(10_000),
   deliveryFeeMinor: z.int().nonnegative(),
   serviceFeeMinor: z.int().nonnegative(),
   currency: currencySchema,
 });
 
+export const updatePlatformChargesInputSchema = platformChargesSchema
+  .omit({ currency: true })
+  .partial()
+  .strict();
+
 export type PlatformCharges = z.infer<typeof platformChargesSchema>;
+export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
