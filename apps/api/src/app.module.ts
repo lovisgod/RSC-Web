@@ -18,6 +18,7 @@ import { RealtimeModule } from "./realtime/realtime.module";
 import { RedisModule } from "./redis/redis.module";
 import { DeliveryModule } from "./delivery/delivery.module";
 import { RidersModule } from "./riders/riders.module";
+import { StatsModule } from "./stats/stats.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
@@ -38,6 +39,7 @@ import { UsersModule } from "./users/users.module";
     MediaModule,
     NotificationsModule,
     RidersModule,
+    StatsModule,
     RealtimeModule,
     PaymentsModule,
     OrdersModule,

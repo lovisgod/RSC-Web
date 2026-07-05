@@ -88,6 +88,9 @@ export class Customer {
   @Column({ name: "fcm_token", type: "varchar", length: 255, nullable: true })
   fcmToken!: string | null;
 
+  @Column({ name: "notification_preferences", type: "jsonb", default: () => "'{}'::jsonb" })
+  notificationPreferences!: Record<string, unknown>;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

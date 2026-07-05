@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { ApiError } from "@rsc/api-client";
 
 import { useAuthStore } from "@/src/stores/auth-store";
+import { OutletRealtimeBridge } from "@/src/components/providers/outlet-realtime-bridge";
 
 function handleGlobalError(error: unknown) {
   if (
@@ -41,6 +42,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={client}>
+      <OutletRealtimeBridge />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

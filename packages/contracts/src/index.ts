@@ -140,6 +140,18 @@ export const adminResultSchema = z.object({
   temporaryPassword: z.string().min(8),
 });
 
+export const outletAdminSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  role: z.literal("ADMIN"),
+  outletId: z.uuid(),
+  email: z.email(),
+  phone: z.string().min(1),
+  status: customerStatusSchema,
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
 export const resendVerificationCodeInputSchema = z.discriminatedUnion("channel", [
   z
     .object({
@@ -237,6 +249,27 @@ export const validateAddressResultSchema = z.object({
     })
     .nullable(),
 });
+
+export const geofenceZoneSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  polygon: z.unknown(),
+  isActive: z.boolean(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const geofencePolygonCoordinatesSchema = z.array(z.array(z.tuple([z.number(), z.number()])));
+
+export const createGeofenceZoneInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    coordinates: geofencePolygonCoordinatesSchema,
+    isActive: z.boolean().optional(),
+  })
+  .strict();
+
+export const updateGeofenceZoneInputSchema = createGeofenceZoneInputSchema.partial().strict();
 
 export const changePasswordInputSchema = z
   .object({
@@ -610,9 +643,26 @@ export const notificationSchema = z.object({
   type: z.string().trim().min(1),
   title: z.string().trim().min(1),
   body: z.string().trim().min(1),
+  data: z.record(z.string(), z.unknown()).default({}),
   isRead: z.boolean(),
   createdAt: z.iso.datetime(),
 });
+
+export const notificationPreferencesSchema = z.object({
+  promotions: z.boolean(),
+  discounts: z.boolean(),
+  seasonalOffers: z.boolean(),
+  orderStatus: z.literal(true),
+});
+
+export const updateNotificationPreferencesInputSchema = z
+  .object({
+    promotions: z.boolean().optional(),
+    discounts: z.boolean().optional(),
+    seasonalOffers: z.boolean().optional(),
+    orderStatus: z.boolean().optional(),
+  })
+  .strict();
 
 export const notificationCampaignTargetSegmentSchema = z.enum([
   "ALL_CUSTOMERS",
@@ -729,6 +779,7 @@ export type LoginResult = z.infer<typeof loginResultSchema>;
 export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
+export type OutletAdmin = z.infer<typeof outletAdminSchema>;
 export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
 export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
@@ -761,6 +812,9 @@ export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInp
 export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema>;
 export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
 export type ValidateAddressResult = z.infer<typeof validateAddressResultSchema>;
+export type GeofenceZone = z.infer<typeof geofenceZoneSchema>;
+export type CreateGeofenceZoneInput = z.infer<typeof createGeofenceZoneInputSchema>;
+export type UpdateGeofenceZoneInput = z.infer<typeof updateGeofenceZoneInputSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
 export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
 export type InitiatePaymentInput = z.infer<typeof initiatePaymentInputSchema>;
@@ -768,6 +822,10 @@ export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
+export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
+export type UpdateNotificationPreferencesInput = z.infer<
+  typeof updateNotificationPreferencesInputSchema
+>;
 export type NotificationCampaignTargetSegment = z.infer<
   typeof notificationCampaignTargetSegmentSchema
 >;
@@ -800,5 +858,12 @@ export const updatePlatformChargesInputSchema = platformChargesSchema
   .partial()
   .strict();
 
+export const pickupSubOrderInputSchema = z
+  .object({
+    note: z.string().max(500).optional(),
+  })
+  .strict();
+
 export type PlatformCharges = z.infer<typeof platformChargesSchema>;
 export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
+export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;

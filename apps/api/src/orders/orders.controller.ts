@@ -21,8 +21,10 @@ import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import {
+  AssignOrderRiderDto,
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
+  PickupSubOrderDto,
   UpdateOrderStatusDto,
 } from "./dto/orders.dto";
 import { OrdersService } from "./orders.service";
@@ -69,6 +71,19 @@ export class OrdersController {
     return this.orders.getMine(request.user!, id);
   }
 
+  @Get(":id/dispatch")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RIDER)
+  @ApiMessage("Rider dispatch retrieved")
+  @ApiOperation({
+    summary: "Get rider dispatch detail",
+    description:
+      "Returns pickup outlets, pickup codes, items, drop-off details, and order identifiers for a rider dispatch screen. Riders can only view dispatches assigned to them.",
+  })
+  getDispatch(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
+    return this.orders.getDispatch(request.user!, id);
+  }
+
   @Post(":id/reorder")
   @ApiMessage("Reorder initiated")
   @ApiOperation({
@@ -95,6 +110,41 @@ export class OrdersController {
     @Body() input: UpdateOrderStatusDto,
   ) {
     return this.orders.updateStatus(request.user!, id, input);
+  }
+
+  @Patch(":id/rider")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Order rider assigned")
+  @ApiOperation({
+    summary: "Automatically assign an available rider to an order",
+    description:
+      "Operational endpoint for linking a master order to an available rider using fair distribution. The backend chooses a free rider with the fewest recent assignments. Super admins search all available riders. Outlet admins search available riders linked to their outlet, and only for orders that include their outlet.",
+  })
+  assignRider(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() input: AssignOrderRiderDto,
+  ) {
+    return this.orders.assignRider(request.user!, id, input);
+  }
+
+  @Patch(":id/sub-orders/:subOrderId/pickup")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.RIDER)
+  @ApiMessage("Sub-order pickup confirmed")
+  @ApiOperation({
+    summary: "Confirm pickup for one outlet sub-order",
+    description:
+      "Rider-only endpoint for marking one outlet pickup as collected while other outlet pickups on the same master order may still be pending.",
+  })
+  pickupSubOrder(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Param("subOrderId") subOrderId: string,
+    @Body() input: PickupSubOrderDto,
+  ) {
+    return this.orders.pickupSubOrder(request.user!, id, subOrderId, input);
   }
 
   @Post(":id/complete-delivery")

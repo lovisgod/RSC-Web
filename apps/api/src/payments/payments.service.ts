@@ -19,6 +19,7 @@ import { OrderLineItem } from "../orders/order-line-item.entity";
 import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
 import type { InitiatePaymentDto } from "./dto/payment.dto";
+import type { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
 import { PAYMENT_ADAPTER, type PaymentAdapter, type PaymentSplitRoute } from "./payment-adapter";
 
@@ -30,6 +31,22 @@ interface PricedLine {
   quantity: number;
   lineTotalMinor: number;
   modifiersSnapshot: Array<{ id: string; name: string; priceDeltaMinor: number }>;
+}
+
+export interface PlatformCharges {
+  platformCommissionBps: number;
+  defaultVatBps: number;
+  deliveryFeeMinor: number;
+  serviceFeeMinor: number;
+  currency: "NGN";
+}
+
+interface PlatformChargesRow {
+  platformCommissionBps: number;
+  defaultVatBps: number;
+  deliveryFeeMinor: number;
+  serviceFeeMinor: number;
+  currency: "NGN";
 }
 
 @Injectable()
@@ -61,6 +78,74 @@ export class PaymentsService {
     this.deliveryFeeMinor = paymentsConfig.deliveryFeeMinor;
   }
 
+  async getPlatformCharges(): Promise<PlatformCharges> {
+    const [row] = await this.dataSource.query<PlatformChargesRow[]>(
+      `
+        SELECT
+          platform_commission_bps AS "platformCommissionBps",
+          default_vat_bps AS "defaultVatBps",
+          delivery_fee_minor AS "deliveryFeeMinor",
+          service_fee_minor AS "serviceFeeMinor",
+          currency
+        FROM platform_charges
+        WHERE id = 1
+        LIMIT 1
+      `,
+    );
+
+    return row ?? this.defaultPlatformCharges();
+  }
+
+  async updatePlatformCharges(input: UpdatePlatformChargesDto): Promise<PlatformCharges> {
+    const current = await this.getPlatformCharges();
+    const next = {
+      platformCommissionBps: input.platformCommissionBps ?? current.platformCommissionBps,
+      defaultVatBps: input.defaultVatBps ?? current.defaultVatBps,
+      deliveryFeeMinor: input.deliveryFeeMinor ?? current.deliveryFeeMinor,
+      serviceFeeMinor: input.serviceFeeMinor ?? current.serviceFeeMinor,
+      currency: "NGN" as const,
+    };
+    const [row] = await this.dataSource.query<PlatformChargesRow[]>(
+      `
+        INSERT INTO platform_charges (
+          id,
+          platform_commission_bps,
+          default_vat_bps,
+          delivery_fee_minor,
+          service_fee_minor,
+          currency,
+          updated_at
+        )
+        VALUES (1, $1, $2, $3, $4, 'NGN', now())
+        ON CONFLICT (id) DO UPDATE SET
+          platform_commission_bps = EXCLUDED.platform_commission_bps,
+          default_vat_bps = EXCLUDED.default_vat_bps,
+          delivery_fee_minor = EXCLUDED.delivery_fee_minor,
+          service_fee_minor = EXCLUDED.service_fee_minor,
+          updated_at = now()
+        RETURNING
+          platform_commission_bps AS "platformCommissionBps",
+          default_vat_bps AS "defaultVatBps",
+          delivery_fee_minor AS "deliveryFeeMinor",
+          service_fee_minor AS "serviceFeeMinor",
+          currency
+      `,
+      [next.platformCommissionBps, next.defaultVatBps, next.deliveryFeeMinor, next.serviceFeeMinor],
+    );
+
+    return row ?? next;
+  }
+
+  private defaultPlatformCharges(): PlatformCharges {
+    return {
+      platformCommissionBps: this.platformCommissionBps,
+      defaultVatBps: this.vatBps,
+      deliveryFeeMinor: this.deliveryFeeMinor,
+      serviceFeeMinor: 0,
+      currency: "NGN" as const,
+    };
+  }
+
   async initiate(user: AuthenticatedUser, input: InitiatePaymentDto) {
     if (input.deliveryMode === "DELIVERY") {
       if (
@@ -88,6 +173,7 @@ export class PaymentsService {
     }
 
     const pricedLines = await this.priceCart(input);
+    const platformCharges = await this.getPlatformCharges();
     const grouped = new Map<string, PricedLine[]>();
 
     for (const line of pricedLines) {
@@ -98,25 +184,30 @@ export class PaymentsService {
     const outlets = await this.outlets.findBy({ id: In(outletIds) });
     const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
 
+    this.ensureOutletsAreOnline(outletIds, outletById);
+
     if (input.deliveryMode === "DELIVERY") {
       this.ensureOutletsCanDeliver(input, outletIds, outletById);
     }
 
     const subtotalMinor = pricedLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
-    const deliveryFeeMinor = input.deliveryMode === "DELIVERY" ? this.deliveryFeeMinor : 0;
-    const serviceFeeMinor = 0;
+    const deliveryFeeMinor =
+      input.deliveryMode === "DELIVERY" ? platformCharges.deliveryFeeMinor : 0;
+    const serviceFeeMinor = platformCharges.serviceFeeMinor;
     const vatMinor = outletIds.reduce((sum, outletId) => {
       const outletSubtotalMinor = grouped
         .get(outletId)!
         .reduce((lineSum, line) => lineSum + line.lineTotalMinor, 0);
-      const vatBps = outletById.get(outletId)?.vatBps ?? this.vatBps;
+      const vatBps = outletById.get(outletId)?.vatBps ?? platformCharges.defaultVatBps;
 
       return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
     }, 0);
     const totalMinor = subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor;
     const splitRoutes: PaymentSplitRoute[] = outletIds.map((outletId) => {
       const grossMinor = grouped.get(outletId)!.reduce((sum, line) => sum + line.lineTotalMinor, 0);
-      const commissionMinor = Math.round((grossMinor * this.platformCommissionBps) / 10_000);
+      const commissionMinor = Math.round(
+        (grossMinor * platformCharges.platformCommissionBps) / 10_000,
+      );
 
       return {
         outletId,
@@ -167,6 +258,7 @@ export class PaymentsService {
           manager.create(SubOrder, {
             masterOrderId: masterOrder.id,
             outletId: route.outletId,
+            pickupCode: randomSixDigitCode(),
             subtotalMinor: route.grossMinor,
             commissionMinor: route.commissionMinor,
             netMinor: route.netMinor,
@@ -307,6 +399,16 @@ export class PaymentsService {
         throw new BadRequestException(
           `Delivery address is outside ${outlet.name}'s delivery radius`,
         );
+      }
+    }
+  }
+
+  private ensureOutletsAreOnline(outletIds: string[], outletById: Map<string, Outlet>): void {
+    for (const outletId of outletIds) {
+      const outlet = outletById.get(outletId);
+
+      if (!outlet || !outlet.isOnline) {
+        throw new BadRequestException("One or more outlets are currently offline");
       }
     }
   }

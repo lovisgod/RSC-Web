@@ -1,5 +1,7 @@
 import type { OutletSummary } from "@rsc/contracts";
 
+import { computeOutletMetrics } from "@/src/lib/data/outlet-menu";
+
 export interface Outlet {
   id: string;
   name: string;
@@ -25,6 +27,7 @@ const PALETTE = [
 /** Maps an API OutletSummary to the local display Outlet type. */
 export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
   const palette = PALETTE[index % PALETTE.length]!;
+  const metrics = computeOutletMetrics(summary.menuItems);
   return {
     id: summary.id,
     name: summary.name,
@@ -33,5 +36,6 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     image: summary.imageUrl ?? palette.image,
     isOnline: summary.isOnline,
     ...(!summary.isOnline ? { tag: "Offline" } : {}),
+    ...metrics,
   };
 }

@@ -20,13 +20,15 @@ import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { changePasswordSchema, type ChangePasswordFormData } from "@/src/lib/schemas/auth";
 import { profileSchema, type ProfileFormData } from "@/src/lib/schemas/profile";
-import { geocodeAddress, reverseGeocode, type GeocodingResult } from "@/src/lib/geocoding";
+import { reverseGeocode, type GeocodingResult } from "@/src/lib/geocoding";
 import { useGeolocation } from "@/src/hooks/use-geolocation";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
+import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
 import { useAddressStore } from "@/src/stores/address-store";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { PasswordInput } from "@/src/components/shared/password-input";
+import type { GooglePlaceSuggestion } from "@/src/lib/google-places";
 
 import { OrdersView } from "@/src/components/orders/orders-view";
 function getInitials(name: string): string {
@@ -220,11 +222,10 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
   const { data: savedAddresses = [] } = useDeliveryAddresses();
 
   const [addressText, setAddressText] = useState("");
-  const [geocoding, setGeocoding] = useState(false);
   const [geoResult, setGeoResult] = useState<GeocodingResult | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [reverseGeocoding, setReverseGeocoding] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const places = useGooglePlacesAutocomplete(addressText, !geo.coords);
 
   const coords =
     geo.coords ??
@@ -267,23 +268,21 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
     setGeoResult(null);
     setGeoError(null);
     if (geo.coords) geo.reset();
+  }
 
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (value.trim().length < 5) return;
-
-    debounceRef.current = setTimeout(() => {
-      setGeocoding(true);
-      void geocodeAddress(value.trim())
-        .then((result) => {
-          setGeocoding(false);
-          if (result) setGeoResult(result);
-          else setGeoError("Address not found. Try a more specific address.");
-        })
-        .catch(() => {
-          setGeocoding(false);
-          setGeoError("Geocoding failed. Please try again.");
-        });
-    }, 1500);
+  async function selectGoogleSuggestion(suggestion: GooglePlaceSuggestion) {
+    setGeoError(null);
+    try {
+      const result = await places.selectSuggestion(suggestion);
+      if (!result) {
+        setGeoError("That address has no exact coordinates. Pick another suggestion.");
+        return;
+      }
+      setGeoResult(result);
+      setAddressText(result.displayName || result.addressLine);
+    } catch {
+      setGeoError("Could not load this address. Please pick another suggestion.");
+    }
   }
 
   const mutation = useMutation({
@@ -316,7 +315,7 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
     if (e.target === e.currentTarget && !mutation.isPending) onClose();
   }
 
-  const busy = geocoding || geo.locating || reverseGeocoding;
+  const busy = places.isLoading || geo.locating || reverseGeocoding;
   const canSubmit = !!coords && !busy && !mutation.isPending;
 
   return (
@@ -374,11 +373,31 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
                   placeholder="Type your delivery address…"
                   className={addrInputClass}
                 />
-                {(geocoding || reverseGeocoding) && (
+                {(places.isLoading || reverseGeocoding) && (
                   <Loader2 className="absolute right-3 top-3.5 w-4 h-4 animate-spin text-gray-400" />
                 )}
-                {geoResult && !geocoding && (
+                {geoResult && !places.isLoading && (
                   <CheckCircle2 className="absolute right-3 top-3.5 w-4 h-4 text-green-500" />
+                )}
+                {!geo.coords && places.suggestions.length > 0 && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden">
+                    {places.suggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.id}
+                        type="button"
+                        onClick={() => void selectGoogleSuggestion(suggestion)}
+                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                      >
+                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
+                            {suggestion.description}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate">Google exact address</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -428,6 +447,14 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
                   <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-red-600">{geoError ?? geo.error}</p>
                 </div>
+              )}
+              {!places.isConfigured && (
+                <p className="text-xs text-center text-amber-600">
+                  Google Places is not configured yet.
+                </p>
+              )}
+              {places.error && !geoError && (
+                <p className="text-xs text-center text-red-500">{places.error}</p>
               )}
               {mutation.isError && (
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">

@@ -7,6 +7,7 @@ import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
 import { MediaService, type UploadedImageFile } from "../media/media.service";
 import { Outlet } from "../outlets/outlet.entity";
+import { RealtimeService } from "../realtime/realtime.service";
 import { ItemModifierGroup } from "./item-modifier-group.entity";
 import { ItemModifier } from "./item-modifier.entity";
 import { MenuCategory } from "./menu-category.entity";
@@ -51,6 +52,7 @@ export class CatalogService {
     @InjectRepository(MenuItemModifierGroup)
     private readonly itemGroups: Repository<MenuItemModifierGroup>,
     private readonly media: MediaService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   async listOutlets(user: AuthenticatedUser): Promise<Outlet[]> {
@@ -86,6 +88,7 @@ export class CatalogService {
       this.outlets.create({
         name: input.name,
         description: input.description ?? null,
+        address: input.address ?? null,
         cuisineType: input.cuisineType,
         imageUrl: input.imageUrl ?? null,
         isOnline: input.isOnline ?? true,
@@ -109,6 +112,7 @@ export class CatalogService {
     Object.assign(outlet, {
       ...input,
       description: input.description === undefined ? outlet.description : input.description,
+      address: input.address === undefined ? outlet.address : input.address,
       imageUrl: input.imageUrl === undefined ? outlet.imageUrl : input.imageUrl,
     });
 
@@ -118,8 +122,15 @@ export class CatalogService {
   async updateOutletOnlineStatus(id: string, input: UpdateOutletOnlineStatusDto): Promise<Outlet> {
     const outlet = await this.requireOutlet(id);
     outlet.isOnline = input.isOnline;
+    const saved = await this.outlets.save(outlet);
 
-    return this.outlets.save(outlet);
+    this.realtime.emitOutletStatusUpdate({
+      outletId: saved.id,
+      isOnline: saved.isOnline,
+      updatedAt: saved.updatedAt,
+    });
+
+    return saved;
   }
 
   async deleteOutlet(id: string): Promise<{ deleted: true }> {

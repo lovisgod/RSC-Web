@@ -21,10 +21,25 @@ import type {
   CreateNotificationCampaignDto,
   CreateNotificationDto,
   CreatePromoNotificationDto,
+  UpdateNotificationPreferencesDto,
 } from "./dto/notification.dto";
 import { NotificationCampaign } from "./notification-campaign.entity";
 import { Notification } from "./notification.entity";
 import { PUSH_SENDER, type PushSender } from "./push-sender";
+
+export interface NotificationPreferences {
+  promotions: boolean;
+  discounts: boolean;
+  seasonalOffers: boolean;
+  orderStatus: true;
+}
+
+const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  promotions: true,
+  discounts: true,
+  seasonalOffers: true,
+  orderStatus: true,
+};
 
 @Injectable()
 export class NotificationsService implements OnModuleInit, OnModuleDestroy {
@@ -96,19 +111,20 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     const notification = await this.notifications.save(this.notifications.create(input));
     const recipient = await this.users.findOne({
       where: { id: input.recipientId, role: input.recipientRole },
-      select: { id: true, fcmToken: true },
+      select: { id: true, fcmToken: true, notificationPreferences: true },
     });
 
-    if (recipient?.fcmToken) {
+    if (recipient?.fcmToken && shouldDeliverByPreference(recipient, input.type)) {
       try {
         await this.pushSender.send({
           token: recipient.fcmToken,
           title: input.title,
           body: input.body,
-          data: {
+          data: stringifyPushData({
+            ...(input.data ?? {}),
             notificationId: notification.id,
             type: notification.type,
-          },
+          }),
         });
       } catch (error) {
         this.logger.warn(
@@ -144,6 +160,10 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         type: input.type,
         title: input.title,
         body: input.body,
+        data: {
+          ...(input.promoCode ? { promoCode: input.promoCode } : {}),
+          ...(input.deepLink ? { deepLink: input.deepLink } : {}),
+        },
       });
     }
 
@@ -182,6 +202,44 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     await this.users.update({ id: user.id }, { fcmToken: token });
 
     return { registered: true };
+  }
+
+  async getPreferences(user: AuthenticatedUser): Promise<NotificationPreferences> {
+    const account = await this.users.findOne({
+      where: { id: user.id },
+      select: { id: true, notificationPreferences: true },
+    });
+
+    if (!account) {
+      throw new NotFoundException("User not found");
+    }
+
+    return normalizePreferences(account.notificationPreferences);
+  }
+
+  async updatePreferences(
+    user: AuthenticatedUser,
+    input: UpdateNotificationPreferencesDto,
+  ): Promise<NotificationPreferences> {
+    const account = await this.users.findOne({
+      where: { id: user.id },
+      select: { id: true, notificationPreferences: true },
+    });
+
+    if (!account) {
+      throw new NotFoundException("User not found");
+    }
+
+    const next = normalizePreferences({
+      ...normalizePreferences(account.notificationPreferences),
+      ...input,
+      orderStatus: true,
+    });
+
+    account.notificationPreferences = next as unknown as Record<string, unknown>;
+    await this.users.save(account);
+
+    return next;
   }
 
   async markRead(user: AuthenticatedUser, id: string): Promise<Notification> {
@@ -233,6 +291,10 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       let failedCount = 0;
 
       for (const recipient of recipients) {
+        if (!shouldDeliverByPreference(recipient, "CAMPAIGN")) {
+          continue;
+        }
+
         const notification = await this.notifications.save(
           this.notifications.create({
             recipientId: recipient.id,
@@ -240,6 +302,9 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
             type: "CAMPAIGN",
             title: campaign.title,
             body: campaign.body,
+            data: {
+              ...(campaign.deepLink ? { deepLink: campaign.deepLink } : {}),
+            },
           }),
         );
 
@@ -291,6 +356,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     const query = this.users
       .createQueryBuilder("user")
       .select(["user.id", "user.role", "user.fcmToken"])
+      .addSelect("user.notificationPreferences")
       .where("user.role = :role", { role: UserRole.CUSTOMER });
 
     if (campaign.targetSegment === "ACTIVE_CUSTOMERS") {
@@ -305,6 +371,62 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 }
 
+function normalizePreferences(value: unknown): NotificationPreferences {
+  const input =
+    typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
+
+  return {
+    promotions:
+      typeof input.promotions === "boolean"
+        ? input.promotions
+        : DEFAULT_NOTIFICATION_PREFERENCES.promotions,
+    discounts:
+      typeof input.discounts === "boolean"
+        ? input.discounts
+        : DEFAULT_NOTIFICATION_PREFERENCES.discounts,
+    seasonalOffers:
+      typeof input.seasonalOffers === "boolean"
+        ? input.seasonalOffers
+        : DEFAULT_NOTIFICATION_PREFERENCES.seasonalOffers,
+    orderStatus: true,
+  };
+}
+
+function shouldDeliverByPreference(
+  recipient: { notificationPreferences?: Record<string, unknown> | null },
+  type: string,
+): boolean {
+  const preferences = normalizePreferences(recipient.notificationPreferences);
+  const normalizedType = type.toUpperCase();
+
+  if (normalizedType === "ORDER_STATUS" || normalizedType === "ORDER_ASSIGNMENT") {
+    return true;
+  }
+
+  if (normalizedType.includes("DISCOUNT")) {
+    return preferences.discounts;
+  }
+
+  if (normalizedType.includes("SEASON") || normalizedType === "CAMPAIGN") {
+    return preferences.seasonalOffers;
+  }
+
+  if (normalizedType.includes("PROMO") || normalizedType.includes("SPECIAL")) {
+    return preferences.promotions;
+  }
+
+  return preferences.promotions;
+}
+
+function stringifyPushData(input: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(input).map(([key, value]) => [
+      key,
+      typeof value === "string" ? value : JSON.stringify(value),
+    ]),
+  );
+}
+
 interface NotificationCampaignJob {
   campaignId: string;
 }
@@ -313,6 +435,7 @@ interface CampaignRecipient {
   id: string;
   role: UserRole;
   fcmToken: string | null;
+  notificationPreferences?: Record<string, unknown> | null;
 }
 
 function isNotificationCampaignJob(value: unknown): value is NotificationCampaignJob {

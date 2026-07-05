@@ -92,12 +92,15 @@ export class UpdateOrderStatusDto {
   @IsEnum(MasterOrderStatus)
   status!: MasterOrderStatus;
 
-  @ApiPropertyOptional({ format: "uuid" })
-  @IsOptional()
-  @IsUUID()
-  riderId?: string;
-
   @ApiPropertyOptional({ example: "Rider assigned" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}
+
+export class AssignOrderRiderDto {
+  @ApiPropertyOptional({ example: "Automatically assigned available rider" })
   @IsOptional()
   @IsString()
   @MaxLength(500)
@@ -109,4 +112,12 @@ export class CompleteDeliveryDto {
   @IsString()
   @Matches(/^\d{6}$/)
   code!: string;
+}
+
+export class PickupSubOrderDto {
+  @ApiPropertyOptional({ example: "Picked up from outlet counter" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
 }

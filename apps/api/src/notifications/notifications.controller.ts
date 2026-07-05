@@ -12,6 +12,7 @@ import {
   CreateNotificationDto,
   CreatePromoNotificationDto,
   RegisterDeviceTokenDto,
+  UpdateNotificationPreferencesDto,
 } from "./dto/notification.dto";
 import { NotificationsService } from "./notifications.service";
 
@@ -55,6 +56,31 @@ export class NotificationsController {
   })
   registerDeviceToken(@Req() request: AuthenticatedRequest, @Body() input: RegisterDeviceTokenDto) {
     return this.notifications.registerDeviceToken(request.user!, input.token);
+  }
+
+  @Get("preferences")
+  @ApiMessage("Notification preferences retrieved")
+  @ApiOperation({
+    summary: "Get notification preferences",
+    description:
+      "Returns the authenticated user's notification preferences. Order status notifications are always enabled for operations.",
+  })
+  preferences(@Req() request: AuthenticatedRequest) {
+    return this.notifications.getPreferences(request.user!);
+  }
+
+  @Patch("preferences")
+  @ApiMessage("Notification preferences updated")
+  @ApiOperation({
+    summary: "Update notification preferences",
+    description:
+      "Updates opt-in/out preferences for promotions, discounts, and seasonal offers. orderStatus is always returned as true.",
+  })
+  updatePreferences(
+    @Req() request: AuthenticatedRequest,
+    @Body() input: UpdateNotificationPreferencesDto,
+  ) {
+    return this.notifications.updatePreferences(request.user!, input);
   }
 
   @Post("promos")
