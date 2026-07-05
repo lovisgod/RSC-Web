@@ -13,6 +13,7 @@ import { ItemModifier } from "./item-modifier.entity";
 import { MenuCategory } from "./menu-category.entity";
 import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
 import { MenuItemRating } from "./menu-item-rating.entity";
+import { OutletRating } from "./outlet-rating.entity";
 import { MenuItem } from "./menu-item.entity";
 import type {
   CreateItemModifierDto,
@@ -22,6 +23,7 @@ import type {
   CreateOutletDto,
   ListMenuItemsQueryDto,
   RateMenuItemDto,
+  RateOutletDto,
   UpdateItemModifierDto,
   UpdateItemModifierGroupDto,
   UpdateMenuCategoryDto,
@@ -47,6 +49,7 @@ export class CatalogService {
     @InjectRepository(MenuCategory) private readonly categories: Repository<MenuCategory>,
     @InjectRepository(MenuItem) private readonly items: Repository<MenuItem>,
     @InjectRepository(MenuItemRating) private readonly ratings: Repository<MenuItemRating>,
+    @InjectRepository(OutletRating) private readonly outletRatings: Repository<OutletRating>,
     @InjectRepository(ItemModifierGroup) private readonly groups: Repository<ItemModifierGroup>,
     @InjectRepository(ItemModifier) private readonly modifiers: Repository<ItemModifier>,
     @InjectRepository(MenuItemModifierGroup)
@@ -346,6 +349,38 @@ export class CatalogService {
     await this.items.save(item);
 
     return this.getPublicItem(id);
+  }
+
+  async rateOutlet(
+    user: AuthenticatedUser,
+    id: string,
+    input: RateOutletDto,
+  ): Promise<PublicOutletCatalog> {
+    if (user.role !== UserRole.CUSTOMER) {
+      throw new ForbiddenException("Only customers can rate outlets");
+    }
+
+    const outlet = await this.requireOutlet(id);
+    const existing = await this.outletRatings.findOneBy({ outletId: id, customerId: user.id });
+
+    const rating = existing ?? this.outletRatings.create({ outletId: id, customerId: user.id });
+    rating.rating = input.rating;
+    rating.comment = input.comment ?? null;
+
+    await this.outletRatings.save(rating);
+
+    const aggregate = await this.outletRatings
+      .createQueryBuilder("rating")
+      .select("AVG(rating.rating)", "average")
+      .addSelect("COUNT(rating.id)", "count")
+      .where("rating.outletId = :id", { id })
+      .getRawOne<{ average: string | null; count: string }>();
+
+    outlet.ratingAverage = Number(aggregate?.average ?? 0).toFixed(2);
+    outlet.ratingCount = Number(aggregate?.count ?? 0);
+    await this.outlets.save(outlet);
+
+    return this.getPublicOutlet(id);
   }
 
   async deleteItem(user: AuthenticatedUser, id: string): Promise<{ deleted: true }> {

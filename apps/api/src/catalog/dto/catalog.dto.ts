@@ -258,6 +258,21 @@ export class RateMenuItemDto {
   comment?: string;
 }
 
+export class RateOutletDto {
+  @ApiProperty({ example: 5, minimum: 1, maximum: 5 })
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating!: number;
+
+  @ApiPropertyOptional({ example: "Great food and prompt delivery", maxLength: 1_000 })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(1_000)
+  comment?: string;
+}
+
 export class CreateItemModifierGroupDto {
   @ApiPropertyOptional({
     format: "uuid",

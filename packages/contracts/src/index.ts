@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
@@ -403,11 +403,18 @@ export const outletSummarySchema = z.object({
   imageUrl: z.string().nullable(),
   isOnline: z.boolean(),
   momentSubaccountCode: z.string(),
+  ratingAverage: z.coerce.number().min(0).max(5).default(0),
+  ratingCount: z.int().nonnegative().default(0),
   menuCategories: z.array(menuCategorySchema),
   menuItems: z.array(menuItemSchema),
   itemModifierGroups: z.array(itemModifierGroupSchema),
   itemModifiers: z.array(itemModifierSchema),
   menuItemModifierGroups: z.array(menuItemModifierGroupSchema),
+});
+
+export const rateOutletInputSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional(),
 });
 
 export const masterOrderStatusSchema = z.enum([
@@ -867,3 +874,4 @@ export const pickupSubOrderInputSchema = z
 export type PlatformCharges = z.infer<typeof platformChargesSchema>;
 export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
 export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;
+export type RateOutletInput = z.infer<typeof rateOutletInputSchema>;

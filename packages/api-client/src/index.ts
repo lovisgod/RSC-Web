@@ -50,6 +50,7 @@ import {
   registrationResultSchema,
   resendVerificationInputSchema,
   resendVerificationResultSchema,
+  rateOutletInputSchema,
   uploadedImageSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
@@ -103,6 +104,7 @@ import {
   type RegistrationResult,
   type ResendVerificationInput,
   type ResendVerificationResult,
+  type RateOutletInput,
   type UploadedImage,
   type UserVerificationResult,
   type VerifyUserInput,
@@ -377,6 +379,14 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listOutlets(): Promise<OutletSummary[]> {
       return request("/api/v1/outlets", z.array(outletSummarySchema));
+    },
+    rateOutlet(id: string, input: RateOutletInput): Promise<OutletSummary> {
+      const body = rateOutletInputSchema.parse(input);
+
+      return request(`/api/v1/outlets/${encodeURIComponent(id)}/rating`, outletSummarySchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
     },
     listMenuCategories(outletId: string): Promise<MenuCategorySummary[]> {
       return request(
