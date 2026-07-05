@@ -10,7 +10,6 @@ import { apiClient } from "@/src/lib/api";
 
 const navItems = [
   { href: "/outlets", icon: "/icons/png/house_1f3e0.png", label: "Home" },
-  { href: "/menu", icon: "/icons/png/magnifying-glass-tilted-left_1f50d.png", label: "Search" },
   { href: "/cart", icon: "/icons/png/shopping-cart_1f6d2.png", label: "Cart" },
   { href: "/tracking", icon: "/icons/png/round-pushpin_1f4cd.png", label: "Tracking" },
   { href: "/profile", icon: "/icons/png/bust-in-silhouette_1f464.png", label: "Profile" },
@@ -36,7 +35,7 @@ export function SideNav() {
 
   return (
     <aside
-      className="hidden md:flex flex-col w-60 min-h-screen sticky top-0 flex-shrink-0"
+      className="hidden h-screen w-60 flex-shrink-0 flex-col md:flex"
       style={{ backgroundColor: "var(--rsc-main)" }}
     >
       {/* Brand */}
