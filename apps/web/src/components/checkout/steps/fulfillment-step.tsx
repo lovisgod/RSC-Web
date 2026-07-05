@@ -16,11 +16,10 @@ import {
   type FulfillmentMode,
   type OrderSnapshot,
 } from "@/src/lib/data/checkout";
+import { geocodeAddress } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
-import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
 import { useCartStore } from "@/src/stores/cart-store";
-import type { GooglePlaceSuggestion } from "@/src/lib/google-places";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -68,9 +67,10 @@ export function FulfillmentStep({
   const [locationError, setLocationError] = useState<string | null>(null);
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null);
   const [showNoDefaultHint, setShowNoDefaultHint] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const places = useGooglePlacesAutocomplete(addressText, mode === "delivery" && showDropdown);
 
   const filteredAddresses = savedAddresses.filter((addr) => {
     if (!addressText.trim()) return true;
@@ -116,7 +116,7 @@ export function FulfillmentStep({
     setLocationError(null);
     setShowNoDefaultHint(false);
     setShowDropdown(false);
-    places.resetSession();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     validateMutation.mutate({ latitude: addr.latitude, longitude: addr.longitude });
   }
 
@@ -146,20 +146,28 @@ export function FulfillmentStep({
     setSelectedSavedId(null);
     resetValidation();
     setShowNoDefaultHint(false);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value.trim() || value.trim().length < 5) return;
+
+    debounceRef.current = setTimeout(() => {
+      void runGeocode(value.trim());
+    }, 1500);
   }
 
-  async function selectGoogleSuggestion(suggestion: GooglePlaceSuggestion) {
+  async function runGeocode(query: string) {
+    setGeocoding(true);
     setLocationError(null);
     try {
-      const result = await places.selectSuggestion(suggestion);
+      const result = await geocodeAddress(query);
       if (!result) {
-        setLocationError("That address has no exact coordinates. Pick another suggestion.");
+        setGeocoding(false);
+        setLocationError("Address not found. Try a more specific address.");
         return;
       }
       const { latitude, longitude, addressLine, city, state, label } = result;
-      setAddressText(result.displayName || addressLine);
       setCoords({ latitude, longitude });
-      setShowDropdown(false);
+      setGeocoding(false);
 
       validateMutation.mutate(
         { latitude, longitude },
@@ -188,12 +196,14 @@ export function FulfillmentStep({
         },
       );
     } catch {
-      setLocationError("Could not load this address. Please pick another suggestion.");
+      setGeocoding(false);
+      setLocationError("Geocoding failed. Please try again.");
     }
   }
 
   useEffect(() => {
     return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
     };
   }, []);
@@ -270,7 +280,7 @@ export function FulfillmentStep({
     },
   });
 
-  const isValidating = places.isLoading || validateMutation.isPending;
+  const isValidating = geocoding || validateMutation.isPending;
   const isValidated = zone !== null;
   const cartItemCount = cart.groups.reduce((n, g) => n + g.items.length, 0);
   const canProceed = cartItemCount > 0 && (mode === "takeout" || isValidated);
@@ -355,32 +365,11 @@ export function FulfillmentStep({
               </div>
 
               {/* Saved address dropdown */}
-              {showDropdown && (places.suggestions.length > 0 || filteredAddresses.length > 0) && (
+              {showDropdown && filteredAddresses.length > 0 && (
                 <div
                   onMouseDown={handleDropdownMouseDown}
                   className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
                 >
-                  {places.suggestions.map((suggestion) => (
-                    <button
-                      key={suggestion.id}
-                      type="button"
-                      onClick={() => void selectGoogleSuggestion(suggestion)}
-                      className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/icons/png/round-pushpin_1f4cd.png"
-                        alt=""
-                        className="w-4 h-4 object-contain mt-0.5 flex-shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">
-                          {suggestion.description}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate">Google exact address</p>
-                      </div>
-                    </button>
-                  ))}
                   {filteredAddresses.map((addr) => (
                     <button
                       key={addr.id}
@@ -434,24 +423,14 @@ export function FulfillmentStep({
             )}
 
             {/* Idle hint */}
-            {!places.isConfigured && (
-              <p className="text-xs text-center text-amber-600">
-                Google Places is not configured yet.
-              </p>
-            )}
-
-            {places.error && !locationError && (
-              <p className="text-xs text-center text-red-500">{places.error}</p>
-            )}
-
             {!isValidated && !locationError && !isValidating && !addressText && (
               <p className="text-xs text-center text-gray-400">
-                Type your address and select an exact Google result
+                Type your address — it will be verified automatically
               </p>
             )}
 
-            {places.isLoading && (
-              <p className="text-xs text-center text-gray-400">Finding exact addresses…</p>
+            {geocoding && (
+              <p className="text-xs text-center text-gray-400">Finding your address…</p>
             )}
 
             {/* On behalf checkbox */}
