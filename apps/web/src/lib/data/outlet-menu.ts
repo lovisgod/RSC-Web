@@ -40,6 +40,7 @@ export interface OutletMenu {
   outletId: string;
   outletName: string;
   cuisines: string[];
+  isOnline: boolean;
   headerColor: string;
   image: string;
   categories: MenuCategory[];
@@ -142,9 +143,48 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
     outletId: outlet.id,
     outletName: outlet.name,
     cuisines: outlet.cuisines,
+    isOnline: outlet.isOnline ?? true,
     headerColor: outlet.headerColor,
     image: outlet.image,
     categories,
     items,
+    ...computeOutletMetrics(summary.menuItems),
   };
+}
+
+/** Derive outlet-level rating and delivery time from menu items. */
+export function computeOutletMetrics(menuItems: OutletSummary["menuItems"]): {
+  rating?: number;
+  deliveryTime?: string;
+} {
+  // Weighted average rating across all rated items
+  let weightedSum = 0;
+  let totalCount = 0;
+  for (const item of menuItems) {
+    const avg = Number(item.ratingAverage);
+    const count = Number(item.ratingCount);
+    if (count > 0 && !isNaN(avg)) {
+      weightedSum += avg * count;
+      totalCount += count;
+    }
+  }
+  const rating = totalCount > 0 ? Math.round((weightedSum / totalCount) * 10) / 10 : undefined;
+
+  // Most common non-null deliveryTimeRange (mode)
+  const freq = new Map<string, number>();
+  for (const item of menuItems) {
+    if (item.deliveryTimeRange) {
+      freq.set(item.deliveryTimeRange, (freq.get(item.deliveryTimeRange) ?? 0) + 1);
+    }
+  }
+  let deliveryTime: string | undefined;
+  let best = 0;
+  for (const [range, count] of freq) {
+    if (count > best) {
+      best = count;
+      deliveryTime = range;
+    }
+  }
+
+  return { ...(rating !== undefined ? { rating } : {}), ...(deliveryTime ? { deliveryTime } : {}) };
 }

@@ -5,17 +5,26 @@ import {
   changePasswordInputSchema,
   changePasswordResultSchema,
   createAdminInputSchema,
+  createGeofenceZoneInputSchema,
+  createNotificationCampaignInputSchema,
   customerOrderSchema,
+  geofenceZoneSchema,
   initiatePaymentInputSchema,
   initiatePaymentResultSchema,
+  notificationCampaignSchema,
+  notificationPreferencesSchema,
   paginatedMenuItemsSchema,
+  pickupSubOrderInputSchema,
   platformChargesSchema,
   orderDetailSchema,
   orderSummarySchema,
+  outletAdminSchema,
   userProfileSchema,
   updateProfileInputSchema,
-  updatePlatformChargesInputSchema,
+  updateGeofenceZoneInputSchema,
   updateMenuItemAvailabilityInputSchema,
+  updateNotificationPreferencesInputSchema,
+  updatePlatformChargesInputSchema,
   createDeliveryAddressInputSchema,
   deliveryAddressSummarySchema,
   validateAddressInputSchema,
@@ -41,23 +50,33 @@ import {
   registrationResultSchema,
   resendVerificationInputSchema,
   resendVerificationResultSchema,
+  uploadedImageSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminResult,
   type ChangePasswordInput,
   type ChangePasswordResult,
   type CreateAdminInput,
+  type CreateGeofenceZoneInput,
+  type CreateNotificationCampaignInput,
   type CustomerOrder,
+  type GeofenceZone,
   type InitiatePaymentInput,
   type InitiatePaymentResult,
+  type NotificationCampaign,
+  type NotificationPreferences,
   type PaginatedMenuItems,
+  type PickupSubOrderInput,
   type PlatformCharges,
   type OrderDetail,
   type OrderSummary,
+  type OutletAdmin,
   type UserProfile,
   type UpdateProfileInput,
+  type UpdateGeofenceZoneInput,
   type UpdatePlatformChargesInput,
   type UpdateMenuItemAvailabilityInput,
+  type UpdateNotificationPreferencesInput,
   type CreateDeliveryAddressInput,
   type DeliveryAddressSummary,
   type ValidateAddressInput,
@@ -84,6 +103,7 @@ import {
   type RegistrationResult,
   type ResendVerificationInput,
   type ResendVerificationResult,
+  type UploadedImage,
   type UserVerificationResult,
   type VerifyUserInput,
 } from "@rsc/contracts";
@@ -133,7 +153,18 @@ export function createApiClient(options: ApiClientOptions) {
     const headers = new Headers(init.headers);
     headers.set("accept", "application/json");
 
-    if (init.body && !headers.has("content-type")) {
+    const isFormDataBody = typeof FormData !== "undefined" && init.body instanceof FormData;
+    const isUrlSearchParamsBody =
+      typeof URLSearchParams !== "undefined" && init.body instanceof URLSearchParams;
+    const isBlobBody = typeof Blob !== "undefined" && init.body instanceof Blob;
+
+    if (
+      init.body &&
+      !headers.has("content-type") &&
+      !isFormDataBody &&
+      !isUrlSearchParamsBody &&
+      !isBlobBody
+    ) {
       headers.set("content-type", "application/json");
     }
 
@@ -246,6 +277,25 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    listOutletAdmins(input: { outletId?: string } = {}): Promise<OutletAdmin[]> {
+      const params = new URLSearchParams();
+
+      if (input.outletId) {
+        params.set("outletId", input.outletId);
+      }
+
+      const query = params.toString();
+
+      return request(
+        `/api/v1/users/outlet-admins${query ? `?${query}` : ""}`,
+        z.array(outletAdminSchema),
+      );
+    },
+    deleteOutletAdmin(id: string): Promise<{ deleted: true }> {
+      return request(`/api/v1/users/outlet-admins/${id}`, z.object({ deleted: z.literal(true) }), {
+        method: "DELETE",
+      });
+    },
     verifyUser(input: VerifyUserInput): Promise<UserVerificationResult> {
       const body = verifyUserInputSchema.parse(input);
 
@@ -280,6 +330,42 @@ export function createApiClient(options: ApiClientOptions) {
         method: "POST",
         body: JSON.stringify(body),
       });
+    },
+    listGeofenceZones(): Promise<GeofenceZone[]> {
+      return request("/api/v1/delivery/geofence-zones", z.array(geofenceZoneSchema));
+    },
+    getGeofenceZone(id: string): Promise<GeofenceZone> {
+      return request(
+        `/api/v1/delivery/geofence-zones/${encodeURIComponent(id)}`,
+        geofenceZoneSchema,
+      );
+    },
+    createGeofenceZone(input: CreateGeofenceZoneInput): Promise<GeofenceZone> {
+      const body = createGeofenceZoneInputSchema.parse(input);
+
+      return request("/api/v1/delivery/geofence-zones", geofenceZoneSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    updateGeofenceZone(id: string, input: UpdateGeofenceZoneInput): Promise<GeofenceZone> {
+      const body = updateGeofenceZoneInputSchema.parse(input);
+
+      return request(
+        `/api/v1/delivery/geofence-zones/${encodeURIComponent(id)}`,
+        geofenceZoneSchema,
+        {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        },
+      );
+    },
+    deleteGeofenceZone(id: string): Promise<{ deleted: true }> {
+      return request(
+        `/api/v1/delivery/geofence-zones/${encodeURIComponent(id)}`,
+        z.object({ deleted: z.literal(true) }),
+        { method: "DELETE" },
+      );
     },
     changePassword(input: ChangePasswordInput): Promise<ChangePasswordResult> {
       const body = changePasswordInputSchema.parse(input);
@@ -328,6 +414,15 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    uploadImage(file: Blob): Promise<UploadedImage> {
+      const body = new FormData();
+      body.append("file", file);
+
+      return request("/api/v1/media/images", uploadedImageSchema, {
+        method: "POST",
+        body,
+      });
+    },
     listOrders(): Promise<OrderSummary[]> {
       return request("/api/v1/orders", z.array(orderSummarySchema));
     },
@@ -345,6 +440,32 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
+    },
+    getNotificationPreferences(): Promise<NotificationPreferences> {
+      return request("/api/v1/notifications/preferences", notificationPreferencesSchema);
+    },
+    updateNotificationPreferences(
+      input: UpdateNotificationPreferencesInput,
+    ): Promise<NotificationPreferences> {
+      const body = updateNotificationPreferencesInputSchema.parse(input);
+
+      return request("/api/v1/notifications/preferences", notificationPreferencesSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
+    },
+    scheduleNotificationCampaign(
+      input: CreateNotificationCampaignInput,
+    ): Promise<NotificationCampaign> {
+      const body = createNotificationCampaignInputSchema.parse(input);
+
+      return request("/api/v1/notifications/campaigns", notificationCampaignSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    listNotificationCampaigns(): Promise<NotificationCampaign[]> {
+      return request("/api/v1/notifications/campaigns", z.array(notificationCampaignSchema));
     },
     reorder(id: string): Promise<InitiatePaymentResult> {
       return request(
@@ -374,6 +495,22 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    pickupSubOrder(
+      id: string,
+      subOrderId: string,
+      input: PickupSubOrderInput = {},
+    ): Promise<unknown> {
+      const body = pickupSubOrderInputSchema.parse(input);
+
+      return request(
+        `/api/v1/orders/${encodeURIComponent(id)}/sub-orders/${encodeURIComponent(subOrderId)}/pickup`,
+        z.unknown(),
+        {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        },
+      );
+    },
     listDeliveryAddresses(): Promise<DeliveryAddressSummary[]> {
       return request("/api/v1/delivery/addresses", z.array(deliveryAddressSummarySchema));
     },
@@ -392,6 +529,11 @@ export function createApiClient(options: ApiClientOptions) {
     deleteAccount(): Promise<unknown> {
       return request("/api/v1/users/me/deactivate", z.unknown(), {
         method: "POST",
+      });
+    },
+    deleteUser(id: string): Promise<unknown> {
+      return request(`/api/v1/users/${encodeURIComponent(id)}`, z.unknown(), {
+        method: "DELETE",
       });
     },
     getOperationsSummary(input: OperationsStatsQuery = {}): Promise<OperationsSummary> {

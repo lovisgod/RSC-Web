@@ -31,6 +31,9 @@ export class SubOrder {
   })
   status!: SubOrderStatus;
 
+  @Column({ name: "pickup_code", type: "char", length: 6 })
+  pickupCode!: string;
+
   @Column({ name: "subtotal_minor", type: "integer", default: 0 })
   subtotalMinor!: number;
 

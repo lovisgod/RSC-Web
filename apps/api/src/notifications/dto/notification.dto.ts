@@ -3,9 +3,11 @@ import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
 import {
   IsDateString,
+  IsBoolean,
   IsEnum,
   IsIn,
   IsOptional,
+  IsObject,
   IsString,
   IsUUID,
   Length,
@@ -43,6 +45,11 @@ export class CreateNotificationDto {
   @IsString()
   @Length(2, 2_000)
   body!: string;
+
+  @ApiProperty({ example: { deepLink: "rsc://orders/order-id" }, required: false })
+  @IsOptional()
+  @IsObject()
+  data?: Record<string, unknown>;
 }
 
 export class RegisterDeviceTokenDto {
@@ -50,6 +57,32 @@ export class RegisterDeviceTokenDto {
   @IsString()
   @Length(10, 255)
   token!: string;
+}
+
+export class UpdateNotificationPreferencesDto {
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  promotions?: boolean;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  discounts?: boolean;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  seasonalOffers?: boolean;
+
+  @ApiProperty({
+    example: true,
+    required: false,
+    description: "Operational order-status notifications are always enabled by the API.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  orderStatus?: boolean;
 }
 
 export class CreatePromoNotificationDto {
@@ -80,6 +113,12 @@ export class CreatePromoNotificationDto {
   @IsString()
   @MaxLength(80)
   promoCode?: string;
+
+  @ApiProperty({ example: "rsc://outlets/outlet-id", required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  deepLink?: string;
 }
 
 export class CreateNotificationCampaignDto {

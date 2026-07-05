@@ -65,9 +65,9 @@ export function FulfillmentStep({
   );
   const [zone, setZone] = useState<DeliveryZone | null>(initial.zone);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [geocoding, setGeocoding] = useState(false);
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null);
   const [showNoDefaultHint, setShowNoDefaultHint] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,6 +142,7 @@ export function FulfillmentStep({
 
   function handleAddressChange(value: string) {
     setAddressText(value);
+    setCoords(null);
     setSelectedSavedId(null);
     resetValidation();
     setShowNoDefaultHint(false);
@@ -428,7 +429,6 @@ export function FulfillmentStep({
               </p>
             )}
 
-            {/* Geocoding in progress hint */}
             {geocoding && (
               <p className="text-xs text-center text-gray-400">Finding your address…</p>
             )}

@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         source: "/api/v1/:path*",
         destination: `${API_URL}/api/v1/:path*`,
       },
+      {
+        source: "/socket.io/:path*",
+        destination: `${API_URL}/socket.io/:path*`,
+      },
     ];
   },
 };

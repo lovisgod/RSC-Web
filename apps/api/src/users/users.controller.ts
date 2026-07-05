@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -32,6 +33,7 @@ import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import type { UploadedImageFile } from "../media/media.service";
 import { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
+import { OutletAdminQueryDto } from "./dto/outlet-admin-query.dto";
 import { CreateRiderDto } from "./dto/rider.dto";
 import { UsersService } from "./users.service";
 
@@ -126,10 +128,10 @@ export class UsersController {
   @ApiOperation({
     summary: "List outlet admins",
     description:
-      "Returns all active outlet admin users for the super admin management screen. Soft-deleted admins are excluded.",
+      "Returns outlet admin users for the super admin management screen. Pass outletId to list admins for one outlet. Soft-deleted admins are excluded.",
   })
-  listOutletAdmins(@Req() request: AuthenticatedRequest) {
-    return this.users.listOutletAdmins(request.user!);
+  listOutletAdmins(@Req() request: AuthenticatedRequest, @Query() query: OutletAdminQueryDto) {
+    return this.users.listOutletAdmins(request.user!, query);
   }
 
   @Delete("outlet-admins/:id")

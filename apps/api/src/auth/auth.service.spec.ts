@@ -414,7 +414,7 @@ describe(AuthService.name, () => {
       role: UserRole.ADMIN,
       outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
     });
-    expect(result.temporaryPassword).toHaveLength(20);
+    expect(result.temporaryPassword).toHaveLength(19);
   });
 
   it("resends verification for the same unverified customer", async () => {

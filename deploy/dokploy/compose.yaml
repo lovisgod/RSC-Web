@@ -150,12 +150,14 @@ services:
       dockerfile: deploy/docker/Dockerfile.web
       args:
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-}
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${PUBLIC_GOOGLE_MAPS_API_KEY:-}
         APP_VERSION: ${APP_VERSION:-dokploy}
     restart: unless-stopped
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: "3000"
+      NEXT_GEOCODE_KEY: ${NEXT_GEOCODE_KEY:-}
     expose:
       - "3000"
     healthcheck:

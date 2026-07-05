@@ -72,6 +72,7 @@ describe(CatalogService.name, () => {
     save: ReturnType<typeof vi.fn>;
   };
   let media: { uploadImage: ReturnType<typeof vi.fn> };
+  let realtime: { emitOutletStatusUpdate: ReturnType<typeof vi.fn> };
   let service: CatalogService;
 
   beforeEach(() => {
@@ -156,6 +157,9 @@ describe(CatalogService.name, () => {
         publicId: "rsc/menu-items/item",
       }),
     };
+    realtime = {
+      emitOutletStatusUpdate: vi.fn(),
+    };
     service = new CatalogService(
       outlets as unknown as Repository<Outlet>,
       users as unknown as Repository<Customer>,
@@ -166,6 +170,7 @@ describe(CatalogService.name, () => {
       modifiers as unknown as Repository<ItemModifier>,
       itemGroups as unknown as Repository<MenuItemModifierGroup>,
       media as never,
+      realtime as never,
     );
   });
 
@@ -220,5 +225,10 @@ describe(CatalogService.name, () => {
 
     expect(result.isOnline).toBe(false);
     expect(outlets.save).toHaveBeenCalledWith(expect.objectContaining({ isOnline: false }));
+    expect(realtime.emitOutletStatusUpdate).toHaveBeenCalledWith({
+      outletId,
+      isOnline: false,
+      updatedAt: result.updatedAt,
+    });
   });
 });
