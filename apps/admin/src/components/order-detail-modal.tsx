@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import type { AdminOrderItem } from "../lib/api";
+import { orderStatusClass } from "../lib/order-status";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -46,16 +47,6 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Cancelled",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  DELIVERED: "#16a34a",
-  CANCELLED: "#dc2626",
-  PENDING_PAYMENT: "#d97706",
-  CONFIRMED: "#2563eb",
-  READY: "#059669",
-  OUT_FOR_DELIVERY: "#7c3aed",
-  PARTIALLY_READY: "#ca8a04",
-};
-
 export function OrderDetailModal({ item, outletById, onClose }: Props) {
   const { order, subOrders, lineItems } = item;
 
@@ -65,7 +56,6 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
     (linesBySubOrder[li.subOrderId] ??= []).push(li);
   }
 
-  const statusColor = STATUS_COLORS[order.status] ?? "var(--rsc-text-muted)";
   const statusText = STATUS_LABELS[order.status] ?? order.status;
 
   return createPortal(
@@ -89,12 +79,7 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
           </div>
 
           <span
-            className="order-modal__status-badge"
-            style={{
-              background: `${statusColor}18`,
-              color: statusColor,
-              borderColor: `${statusColor}40`,
-            }}
+            className={`order-modal__status-badge order-status ${orderStatusClass(order.status)}`}
           >
             {statusText}
           </span>

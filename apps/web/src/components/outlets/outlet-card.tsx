@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Clock10Icon, StarIcon } from "lucide-react";
 
 import type { Outlet } from "@/src/lib/data/outlets";
 
@@ -51,11 +52,13 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
             <div className="flex items-center gap-2 text-xs">
               {outlet.rating != null && (
                 <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-                  ★ {outlet.rating}
+                  <StarIcon /> {outlet.rating}
                 </span>
               )}
               {outlet.deliveryTime && (
-                <span className="text-gray-400 hidden sm:inline">⏱ {outlet.deliveryTime}</span>
+                <span className="text-gray-400 hidden sm:inline">
+                  <Clock10Icon /> {outlet.deliveryTime} mins{" "}
+                </span>
               )}
             </div>
 
