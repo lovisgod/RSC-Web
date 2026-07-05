@@ -42,12 +42,12 @@ export function MenuSearchItemCard({
     >
       {/* Thumbnail */}
       <div
-        className={`w-20 h-20 flex-shrink-0 rounded-xl flex items-center justify-center text-4xl ${soldOut ? "grayscale" : ""}`}
+        className={`w-20 h-20 flex-shrink-0 overflow-hidden rounded-xl flex items-center justify-center text-4xl ${soldOut ? "grayscale" : ""}`}
         style={{ backgroundColor: bgColor }}
       >
         {hasImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.imageUrl!} alt={item.name} className="w-12 h-12 object-contain" />
+          <img src={item.imageUrl!} alt={item.name} className="h-full w-full object-cover" />
         ) : (
           <span>{emoji}</span>
         )}

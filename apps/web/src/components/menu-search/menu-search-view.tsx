@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
+import { ArrowLeft, Search } from "lucide-react";
 
 import { useMenuSearch } from "@/src/hooks/use-menu-search";
-import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
+import { OUTLETS_QUERY, useOutlets } from "@/src/hooks/use-outlets";
 import { buildOutletMenu, type MenuItem } from "@/src/lib/data/outlet-menu";
 import { toDisplayOutlet } from "@/src/lib/data/outlets";
 import { ItemDetailModal } from "@/src/components/outlet-detail/item-detail-modal";
@@ -44,6 +46,7 @@ function resolveItemFromSummaries(
 export function MenuSearchView() {
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
+  const [activeOutletId, setActiveOutletId] = useState<string | null>(null);
   const [selected, setSelected] = useState<SelectedItem | null>(null);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -56,19 +59,20 @@ export function MenuSearchView() {
     debounceRef.current = setTimeout(() => setQuery(value.trim()), DEBOUNCE_MS);
   }
 
-  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useMenuSearch(query);
+  const { data: outlets = [], isPending: outletsPending } = useOutlets();
+  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useMenuSearch(
+    query,
+    activeOutletId,
+  );
 
   const allItems = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data]);
   const total = data?.pages[0]?.total ?? null;
+  const activeOutletName = outlets.find((outlet) => outlet.id === activeOutletId)?.name ?? null;
 
   // outletId → name from outlets cache (best-effort; falls back to "Kitchen")
   const outletNameMap = useMemo(() => {
-    const summaries = qc.getQueryData<OutletSummary[]>(OUTLETS_QUERY.queryKey);
-    const map = new Map<string, string>();
-    summaries?.forEach((s) => map.set(s.id, s.name));
-    return map;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qc, data]);
+    return new Map(outlets.map((outlet) => [outlet.id, outlet.name]));
+  }, [outlets]);
 
   // When "View options" is clicked:
   //  - If outlets cache is warm → resolve modifier groups instantly and open modal
@@ -108,17 +112,72 @@ export function MenuSearchView() {
     <>
       <div className="flex flex-col h-full">
         {/* Search bar */}
-        <div className="flex items-center gap-3 p-4 bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-            <input
-              autoFocus
-              value={input}
-              onChange={(e) => handleInput(e.target.value)}
-              type="search"
-              placeholder="Search all kitchens…"
-              className="w-full pl-9 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-[var(--rsc-main)] focus:outline-none transition-colors"
-            />
+        <div className="sticky top-0 z-10 border-b border-gray-100 bg-white">
+          <div className="flex items-center gap-3 p-4">
+            <Link
+              href="/outlets"
+              aria-label="Back to home"
+              title="Back to home"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 transition-colors hover:border-[var(--rsc-main)] hover:text-[var(--rsc-main)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-brand)]"
+            >
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+            </Link>
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                aria-hidden="true"
+              />
+              <input
+                autoFocus
+                value={input}
+                onChange={(e) => handleInput(e.target.value)}
+                type="search"
+                placeholder={`Search ${activeOutletName ?? "all outlets"}…`}
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-9 pr-4 text-sm transition-colors focus:border-[var(--rsc-main)] focus:bg-white focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div
+            className="-mt-1 flex gap-2 overflow-x-auto px-4 pb-3"
+            aria-label="Filter menu search by outlet"
+          >
+            <button
+              type="button"
+              onClick={() => setActiveOutletId(null)}
+              aria-pressed={activeOutletId === null}
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+                activeOutletId === null
+                  ? "border-[var(--rsc-main)] bg-[var(--rsc-main)] text-white"
+                  : "border-gray-200 bg-white text-gray-500 hover:border-[var(--rsc-main)] hover:text-[var(--rsc-main)]"
+              }`}
+            >
+              All
+            </button>
+            {outlets.map((outlet) => {
+              const isActive = activeOutletId === outlet.id;
+              return (
+                <button
+                  key={outlet.id}
+                  type="button"
+                  onClick={() => setActiveOutletId(outlet.id)}
+                  aria-pressed={isActive}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+                    isActive
+                      ? "border-[var(--rsc-main)] bg-[var(--rsc-main)] text-white"
+                      : "border-gray-200 bg-white text-gray-500 hover:border-[var(--rsc-main)] hover:text-[var(--rsc-main)]"
+                  }`}
+                >
+                  {outlet.name}
+                </button>
+              );
+            })}
+            {outletsPending && (
+              <>
+                <span className="h-10 w-24 shrink-0 animate-pulse rounded-full bg-gray-100" />
+                <span className="h-10 w-28 shrink-0 animate-pulse rounded-full bg-gray-100" />
+              </>
+            )}
           </div>
         </div>
 
@@ -127,7 +186,9 @@ export function MenuSearchView() {
           <p className="px-4 pt-3 text-xs text-gray-400">
             {total === 0
               ? "No results"
-              : `${total} item${total === 1 ? "" : "s"}${query ? ` for "${query}"` : ""}`}
+              : `${total} item${total === 1 ? "" : "s"}${
+                  query ? ` for "${query}"` : ""
+                }${activeOutletName ? ` from ${activeOutletName}` : ""}`}
           </p>
         )}
 

@@ -15,6 +15,7 @@ import {
   operationsQueueSchema,
   operationsSummarySchema,
   orderPulseSchema,
+  platformChargesSchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -23,6 +24,7 @@ import {
   riderLocationSchema,
   userVerificationResultSchema,
   updateMenuItemAvailabilityInputSchema,
+  updatePlatformChargesInputSchema,
   uploadedImageSchema,
   verifyUserInputSchema,
 } from "./index";
@@ -37,6 +39,37 @@ describe("moneySchema", () => {
 
   it("rejects decimal minor units", () => {
     expect(() => moneySchema.parse({ amountMinor: 12.5, currency: "NGN" })).toThrow();
+  });
+});
+
+describe("platform charges contracts", () => {
+  it("documents platform charge responses and partial updates", () => {
+    expect(
+      platformChargesSchema.parse({
+        platformCommissionBps: 1500,
+        defaultVatBps: 750,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 5000,
+        currency: "NGN",
+      }),
+    ).toEqual({
+      platformCommissionBps: 1500,
+      defaultVatBps: 750,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 5000,
+      currency: "NGN",
+    });
+
+    expect(updatePlatformChargesInputSchema.parse({ serviceFeeMinor: 0 })).toEqual({
+      serviceFeeMinor: 0,
+    });
+  });
+
+  it("rejects percentages above 100 percent and unknown update fields", () => {
+    expect(() =>
+      updatePlatformChargesInputSchema.parse({ platformCommissionBps: 10_001 }),
+    ).toThrow();
+    expect(() => updatePlatformChargesInputSchema.parse({ currency: "NGN" })).toThrow();
   });
 });
 
