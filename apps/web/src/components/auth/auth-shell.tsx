@@ -31,9 +31,11 @@ export function AuthShell({ children }: { children: ReactNode }) {
   }, [isSignedIn]);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       <SideNav />
-      <main className="flex-1 overflow-x-hidden pb-20 md:pb-0">{children}</main>
+      <main className="h-screen flex-1 overflow-x-hidden overflow-y-auto pb-20 md:pb-0">
+        {children}
+      </main>
       <BottomNav />
     </div>
   );
