@@ -25,7 +25,7 @@ import { useAuth } from "./hooks/use-auth";
 import { useOrdersQueue } from "./hooks/use-orders-queue";
 import { useOutletInfo } from "./hooks/use-outlet-info";
 import { useProfile } from "./hooks/use-profile";
-import { logout as apiLogout } from "./lib/api";
+import { isActiveQueueOrder, logout as apiLogout } from "./lib/api";
 import { toastBus } from "./lib/toast-bus";
 import { ActiveOrdersPage } from "./pages/active-orders-page";
 import { EarningsPage } from "./pages/earnings-page";
@@ -154,7 +154,7 @@ function StaffFooter({ onNavigate }: NavigationPanelProps) {
 function NavigationPanel({ onNavigate }: NavigationPanelProps) {
   const { user } = useAuth();
   const { data: orders = [] } = useOrdersQueue(user?.outletId ?? "");
-  const activeOrderCount = orders.length;
+  const activeOrderCount = orders.filter(isActiveQueueOrder).length;
 
   return (
     <div className="flex h-full min-h-0 flex-col">

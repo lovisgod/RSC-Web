@@ -56,8 +56,8 @@ body {
   color: white;
   background: var(--rsc-dark);
   border: 2px solid var(--rsc-dark);
-  padding: 4px 6px;
-  border-radius: 16px;
+  padding: 4px 16px;
+  border-radius: 8px;
 }
 
 .site-header .rsc-button--quiet:hover {
