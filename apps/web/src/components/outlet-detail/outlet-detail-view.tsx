@@ -72,6 +72,8 @@ export function OutletDetailView({ id }: { id: string }) {
     currentCategory === "all"
       ? menu.items
       : menu.items.filter((item) => item.categoryId === currentCategory);
+  const isOffline = menu.isOnline === false;
+  const activeSelectedItem = isOffline ? null : selectedItem;
 
   return (
     <>
@@ -133,6 +135,12 @@ export function OutletDetailView({ id }: { id: string }) {
           )}
         </div>
 
+        {isOffline && (
+          <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            This outlet is currently offline. Ordering is paused until it comes back online.
+          </div>
+        )}
+
         {/* Category tabs */}
         <div className="flex gap-2 overflow-x-auto pb-1 border-b border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
           {menu.categories.map((cat) => {
@@ -166,7 +174,13 @@ export function OutletDetailView({ id }: { id: string }) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {visibleItems.map((item) => (
-                <MenuItemCard key={item.id} item={item} onAdd={() => setSelectedItem(item)} />
+                <MenuItemCard
+                  key={item.id}
+                  item={item}
+                  onAdd={() => setSelectedItem(item)}
+                  disabled={isOffline}
+                  disabledLabel={isOffline ? "Offline" : undefined}
+                />
               ))}
             </div>
           )}
@@ -174,9 +188,9 @@ export function OutletDetailView({ id }: { id: string }) {
       </div>
 
       {/* Item detail modal */}
-      {selectedItem && (
+      {activeSelectedItem && (
         <ItemDetailModal
-          item={selectedItem}
+          item={activeSelectedItem}
           outletName={menu.outletName}
           onClose={() => setSelectedItem(null)}
         />

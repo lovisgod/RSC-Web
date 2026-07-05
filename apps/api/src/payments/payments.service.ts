@@ -184,6 +184,8 @@ export class PaymentsService {
     const outlets = await this.outlets.findBy({ id: In(outletIds) });
     const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
 
+    this.ensureOutletsAreOnline(outletIds, outletById);
+
     if (input.deliveryMode === "DELIVERY") {
       this.ensureOutletsCanDeliver(input, outletIds, outletById);
     }
@@ -397,6 +399,16 @@ export class PaymentsService {
         throw new BadRequestException(
           `Delivery address is outside ${outlet.name}'s delivery radius`,
         );
+      }
+    }
+  }
+
+  private ensureOutletsAreOnline(outletIds: string[], outletById: Map<string, Outlet>): void {
+    for (const outletId of outletIds) {
+      const outlet = outletById.get(outletId);
+
+      if (!outlet || !outlet.isOnline) {
+        throw new BadRequestException("One or more outlets are currently offline");
       }
     }
   }

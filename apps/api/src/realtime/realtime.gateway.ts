@@ -1,4 +1,4 @@
-import { Logger, UnauthorizedException } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
 import {
   ConnectedSocket,
   MessageBody,
@@ -12,6 +12,8 @@ import { Repository } from "typeorm";
 
 import { AuthSessionService } from "../auth/auth-session.service";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
+import { ACCESS_TOKEN_COOKIE } from "../auth/auth.constants";
+import { readCookie } from "../auth/cookies";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
 import { MasterOrder } from "../orders/master-order.entity";
@@ -61,7 +63,7 @@ export class RealtimeGateway {
       const token = this.extractToken(client);
 
       if (!token) {
-        throw new UnauthorizedException("Missing WebSocket token");
+        return;
       }
 
       socketData(client).user = await this.sessions.authenticateAccessToken(token);
@@ -120,7 +122,7 @@ export class RealtimeGateway {
       return header.slice("Bearer ".length);
     }
 
-    return null;
+    return readCookie(client.handshake.headers.cookie, ACCESS_TOKEN_COOKIE) ?? null;
   }
 
   private async canJoinRoom(user: AuthenticatedUser, room: string): Promise<boolean> {
