@@ -15,12 +15,12 @@ export function MenuItemCard({ item, onAdd }: MenuItemCardProps) {
     >
       {/* Thumbnail */}
       <div
-        className={`w-20 h-20 flex-shrink-0 rounded-xl flex items-center justify-center text-4xl ${soldOut ? "grayscale" : ""}`}
+        className={`w-20 h-20 flex-shrink-0 overflow-hidden rounded-xl flex items-center justify-center text-4xl ${soldOut ? "grayscale" : ""}`}
         style={{ backgroundColor: item.bgColor }}
       >
         {item.image.startsWith("/") || item.image.startsWith("http") ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image} alt={item.name} className="w-12 h-12 object-contain" />
+          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
         ) : (
           <span className="text-4xl">{item.image}</span>
         )}

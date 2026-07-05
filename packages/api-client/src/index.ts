@@ -14,6 +14,7 @@ import {
   orderSummarySchema,
   userProfileSchema,
   updateProfileInputSchema,
+  updatePlatformChargesInputSchema,
   updateMenuItemAvailabilityInputSchema,
   createDeliveryAddressInputSchema,
   deliveryAddressSummarySchema,
@@ -55,6 +56,7 @@ import {
   type OrderSummary,
   type UserProfile,
   type UpdateProfileInput,
+  type UpdatePlatformChargesInput,
   type UpdateMenuItemAvailabilityInput,
   type CreateDeliveryAddressInput,
   type DeliveryAddressSummary,
@@ -355,6 +357,14 @@ export function createApiClient(options: ApiClientOptions) {
     },
     getPlatformCharges(): Promise<PlatformCharges> {
       return request("/api/v1/payments/platform-charges", platformChargesSchema);
+    },
+    updatePlatformCharges(input: UpdatePlatformChargesInput): Promise<PlatformCharges> {
+      const body = updatePlatformChargesInputSchema.parse(input);
+
+      return request("/api/v1/payments/platform-charges", platformChargesSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
     },
     initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
       const body = initiatePaymentInputSchema.parse(input);

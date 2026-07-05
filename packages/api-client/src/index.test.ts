@@ -276,6 +276,48 @@ describe("registration API client", () => {
     );
   });
 
+  it("gets and updates platform charges using the published contract", async () => {
+    const platformCharges = {
+      platformCommissionBps: 1500,
+      defaultVatBps: 750,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 5000,
+      currency: "NGN",
+    };
+    const requestFetch = vi.fn().mockImplementation(
+      () =>
+        new Response(
+          JSON.stringify({
+            data: platformCharges,
+            message: "Platform charges retrieved",
+            status: 200,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.getPlatformCharges()).resolves.toEqual(platformCharges);
+    await client.updatePlatformCharges({
+      platformCommissionBps: 1200,
+      serviceFeeMinor: 0,
+    });
+
+    expect(requestFetch).toHaveBeenLastCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/payments/platform-charges",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({
+          platformCommissionBps: 1200,
+          serviceFeeMinor: 0,
+        }),
+      }),
+    );
+  });
+
   it("notifies the host application when a request is unauthorized", async () => {
     const onUnauthorized = vi.fn();
     const requestFetch = vi
