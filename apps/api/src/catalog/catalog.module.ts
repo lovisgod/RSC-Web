@@ -5,6 +5,7 @@ import { AuthModule } from "../auth/auth.module";
 import { Customer } from "../auth/customer.entity";
 import { MediaModule } from "../media/media.module";
 import { Outlet } from "../outlets/outlet.entity";
+import { RealtimeModule } from "../realtime/realtime.module";
 import { CatalogService } from "./catalog.service";
 import { ItemModifierGroupsController } from "./item-modifier-groups.controller";
 import { ItemModifierGroup } from "./item-modifier-group.entity";
@@ -22,6 +23,7 @@ import { OutletsController } from "./outlets.controller";
   imports: [
     AuthModule,
     MediaModule,
+    RealtimeModule,
     TypeOrmModule.forFeature([
       Outlet,
       Customer,

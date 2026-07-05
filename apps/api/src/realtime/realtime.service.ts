@@ -16,6 +16,12 @@ export interface OrderStatusUpdateEvent {
 
 export type RiderLocationUpdateEvent = LatestLocation;
 
+export interface OutletStatusUpdateEvent {
+  outletId: string;
+  isOnline: boolean;
+  updatedAt: Date;
+}
+
 @Injectable()
 export class RealtimeService {
   private server: Server | null = null;
@@ -44,6 +50,10 @@ export class RealtimeService {
 
     this.server?.to(riderRoom(event.riderId)).emit("rider:location_update", event);
     this.server?.to(platformAdminRoom()).emit("rider:location_update", event);
+  }
+
+  emitOutletStatusUpdate(event: OutletStatusUpdateEvent): void {
+    this.server?.emit("outlet:status_update", event);
   }
 }
 

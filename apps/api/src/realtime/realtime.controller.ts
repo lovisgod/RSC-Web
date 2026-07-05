@@ -19,10 +19,11 @@ export class RealtimeController {
       transport: "Socket.io v4",
       auth: {
         description:
-          "Pass the API access token as socket auth.token or as an Authorization: Bearer header during the Socket.io handshake.",
+          "Public outlet status broadcasts are available on connection. Protected room subscriptions require the API access token as socket auth.token, an Authorization: Bearer header, or the HttpOnly accessToken cookie during the Socket.io handshake.",
         examples: {
           authPayload: { auth: { token: "ACCESS_TOKEN" } },
           header: { extraHeaders: { Authorization: "Bearer ACCESS_TOKEN" } },
+          cookie: { withCredentials: true },
         },
       },
       subscribe: {
@@ -87,9 +88,19 @@ export class RealtimeController {
             recordedAt: "ISO-8601 timestamp",
           },
         },
+        {
+          name: "outlet:status_update",
+          rooms: ["all connected authenticated clients"],
+          cadence: "Emitted immediately when a super admin makes an outlet online or offline.",
+          payload: {
+            outletId: "uuid",
+            isOnline: false,
+            updatedAt: "ISO-8601 timestamp",
+          },
+        },
       ],
       clientExample:
-        "const socket = io('https://api-dev.rscdev.tech/realtime', { auth: { token } }); socket.emit('room:subscribe', { room: `order:${masterOrderId}` }); socket.on('rider:location_update', handler);",
+        "const socket = io('https://api-dev.rscdev.tech/realtime', { auth: { token }, withCredentials: true }); socket.emit('room:subscribe', { room: `order:${masterOrderId}` }); socket.on('outlet:status_update', handler);",
     };
   }
 }
