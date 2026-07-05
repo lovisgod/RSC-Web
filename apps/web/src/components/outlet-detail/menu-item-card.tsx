@@ -24,7 +24,7 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
       >
         {item.image.startsWith("/") || item.image.startsWith("http") ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image} alt={item.name} className="w-12 h-12 object-contain" />
+          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
         ) : (
           <span className="text-4xl">{item.image}</span>
         )}
