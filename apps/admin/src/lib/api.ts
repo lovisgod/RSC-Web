@@ -6,11 +6,14 @@ import {
   operationsSummarySchema,
   orderPulseQuerySchema,
   orderPulseSchema,
+  platformChargesSchema,
+  updatePlatformChargesInputSchema,
   type OperationsQueue,
   type OperationsStatsQuery,
   type OperationsSummary,
   type OrderPulse,
   type OrderPulseQuery,
+  type PlatformCharges,
   type AdminResult,
   type CreateAdminInput,
   type CustomerOrder,
@@ -27,6 +30,7 @@ import {
   type ResetPasswordResult,
   type SubOrderDetail,
   type UserVerificationResult,
+  type UpdatePlatformChargesInput,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
@@ -281,6 +285,20 @@ export const listOutletAdmins = (outletId?: string): Promise<OutletAdminUser[]> 
 
 export const deleteOutletAdmin = (id: string): Promise<void> =>
   http.delete(`/api/v1/users/outlet-admins/${id}`).then(() => undefined);
+
+// ─── Platform charges ─────────────────────────────────────────────────────────
+
+export const getPlatformCharges = async (): Promise<PlatformCharges> =>
+  platformChargesSchema.parse(await get<unknown>("/api/v1/payments/platform-charges"));
+
+export const updatePlatformCharges = async (
+  body: UpdatePlatformChargesInput,
+): Promise<PlatformCharges> => {
+  const input = updatePlatformChargesInputSchema.parse(body);
+  return platformChargesSchema.parse(
+    await patchReq<unknown>("/api/v1/payments/platform-charges", input),
+  );
+};
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
