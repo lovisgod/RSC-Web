@@ -352,7 +352,7 @@ export function FulfillmentStep({
                   onChange={(e) => handleAddressChange(e.target.value)}
                   onFocus={handleInputFocus}
                   onBlur={handleInputBlur}
-                  placeholder="Type or select your delivery address…"
+                  placeholder="e.g. 8 Abiola Sanusi Street, off Admiralty Way"
                   className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
                 />
                 {isValidating && (
@@ -424,7 +424,7 @@ export function FulfillmentStep({
             {/* Idle hint */}
             {!isValidated && !locationError && !isValidating && !addressText && (
               <p className="text-xs text-center text-gray-400">
-                Type your address — it will be verified automatically
+                Include your house number, street name and a nearby route, if needed.
               </p>
             )}
 
