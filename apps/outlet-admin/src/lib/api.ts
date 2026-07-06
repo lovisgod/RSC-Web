@@ -174,8 +174,8 @@ export const getMenuItemById = (itemId: string): Promise<MenuItem> =>
 
 // ─── Item modifier groups ─────────────────────────────────────────────────────
 
-export const listItemModifierGroups = (): Promise<ItemModifierGroup[]> =>
-  get("/api/v1/item-modifier-groups");
+export const listItemModifierGroups = (outletId: string): Promise<ItemModifierGroup[]> =>
+  get(`/api/v1/item-modifier-groups?outletId=${encodeURIComponent(outletId)}`);
 
 export const uploadImage = (file: File): Promise<UploadedImage> => {
   const body = new FormData();
