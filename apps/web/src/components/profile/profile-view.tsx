@@ -10,6 +10,7 @@ import {
   LogOut,
   MapPin,
   MapPinCheck,
+  Pencil,
   X,
   XCircle,
 } from "lucide-react";
@@ -46,6 +47,8 @@ const darkErrorClass = "mt-1 text-xs text-red-300";
 function ProfileHeader() {
   const [editing, setEditing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const signOut = useAuthStore((s) => s.signOut);
 
@@ -87,6 +90,45 @@ function ProfileHeader() {
     },
   });
 
+  const avatarMutation = useMutation({
+    mutationFn: (file: File) => apiClient.uploadAvatar(file),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["profile"], updated);
+      setAvatarError(null);
+    },
+    onError: (error) => {
+      setAvatarError(getMutationErrorMessage(error, {}));
+    },
+    onSettled: () => {
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = "";
+      }
+    },
+  });
+
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const supportedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
+    if (!supportedTypes.has(file.type)) {
+      setAvatarError("Choose a JPEG, PNG, WEBP, or GIF image.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Choose an image smaller than 5MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setAvatarError(null);
+    avatarMutation.mutate(file);
+  }
+
   const displayName = profile?.name ?? "";
   const initials = displayName ? getInitials(displayName) : "…";
 
@@ -111,12 +153,53 @@ function ProfileHeader() {
       </button>
       {/* Avatar */}
       <div className="flex flex-col items-center mb-5">
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-3"
-          style={{ backgroundColor: "var(--rsc-dark)" }}
+        <button
+          type="button"
+          onClick={() => avatarInputRef.current?.click()}
+          disabled={isPending || avatarMutation.isPending}
+          aria-label={profile?.avatarUrl ? "Change profile image" : "Add profile image"}
+          className="group/avatar relative mb-3 h-20 w-20 overflow-hidden rounded-full text-2xl font-bold text-white ring-2 ring-white/20 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 disabled:cursor-wait"
+          style={{
+            backgroundColor: "var(--rsc-dark)",
+            ...(profile?.avatarUrl
+              ? {
+                  backgroundImage: `url("${profile.avatarUrl}")`,
+                  backgroundPosition: "center",
+                  backgroundSize: "cover",
+                }
+              : {}),
+          }}
         >
-          {isPending ? <Loader2 className="w-6 h-6 animate-spin opacity-60" /> : initials}
-        </div>
+          <span className="flex h-full w-full items-center justify-center">
+            {isPending || avatarMutation.isPending ? (
+              <Loader2 className="h-6 w-6 animate-spin drop-shadow" />
+            ) : (
+              <>
+                {!profile?.avatarUrl && initials}
+                <span
+                  className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md transition-transform group-hover/avatar:scale-105"
+                  style={{ color: "var(--rsc-main)" }}
+                  aria-hidden="true"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </span>
+              </>
+            )}
+          </span>
+        </button>
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={handleAvatarChange}
+          className="sr-only"
+          tabIndex={-1}
+        />
+        {avatarError && (
+          <p role="alert" className="mb-3 max-w-64 text-center text-xs text-red-300">
+            {avatarError}
+          </p>
+        )}
 
         {!editing && (
           <>

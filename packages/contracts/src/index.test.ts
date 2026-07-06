@@ -26,6 +26,7 @@ import {
   updateMenuItemAvailabilityInputSchema,
   updatePlatformChargesInputSchema,
   uploadedImageSchema,
+  userProfileSchema,
   verifyUserInputSchema,
 } from "./index";
 
@@ -83,6 +84,24 @@ describe("media contracts", () => {
     ).toEqual({
       url: "https://res.cloudinary.com/rsc/image/upload/menu/item.webp",
       publicId: "uploads/menu-item",
+    });
+  });
+
+  it("documents nullable customer profile avatars", () => {
+    expect(
+      userProfileSchema.parse({
+        id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+        name: "Ada Okafor",
+        role: "CUSTOMER",
+        outletId: null,
+        avatarUrl: "https://res.cloudinary.com/rsc/image/upload/user-avatars/ada.webp",
+        email: "ada@example.com",
+        phone: "+2348031234567",
+        verificationChannels: { email: true, phone: true },
+        pendingVerificationChannels: { email: false, phone: false },
+      }),
+    ).toMatchObject({
+      avatarUrl: "https://res.cloudinary.com/rsc/image/upload/user-avatars/ada.webp",
     });
   });
 });

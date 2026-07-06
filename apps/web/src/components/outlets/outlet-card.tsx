@@ -51,19 +51,30 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
         </h3>
         <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
 
-        <div className="flex items-center justify-between mt-auto pt-2">
-          <div className="flex items-center gap-2 text-xs">
-            {outlet.rating != null && (
-              <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-                ★ {outlet.rating}
-              </span>
-            )}
-            {outlet.deliveryTime && (
-              <span className="text-gray-400 hidden sm:inline">⏱ {outlet.deliveryTime}</span>
-            )}
-          </div>
+        <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
+          {outlet.rating != null ? (
+            <span
+              className="inline-flex items-center gap-1 justify-self-start font-semibold"
+              style={{ color: "var(--rsc-dark)" }}
+            >
+              <StarIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              {outlet.rating}
+            </span>
+          ) : (
+            <span aria-hidden="true" />
+          )}
 
-          <span className="text-xs sm:text-sm font-semibold" style={{ color: "var(--rsc-dark)" }}>
+          {outlet.deliveryTime && (
+            <span className="inline-flex items-center justify-center gap-1 text-gray-500">
+              <Clock10Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{outlet.deliveryTime} mins</span>
+            </span>
+          )}
+
+          <span
+            className="justify-self-end text-xs font-semibold sm:text-sm"
+            style={{ color: "var(--rsc-dark)" }}
+          >
             {isOffline ? "Offline" : "Order Now"}
           </span>
         </div>
@@ -119,21 +130,30 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
           </h3>
           <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
 
-          <div className="flex items-center justify-between mt-auto pt-2">
-            <div className="flex items-center gap-2 text-xs">
-              {outlet.rating != null && (
-                <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-                  <StarIcon /> {outlet.rating}
-                </span>
-              )}
-              {outlet.deliveryTime && (
-                <span className="text-gray-400 hidden sm:inline">
-                  <Clock10Icon /> {outlet.deliveryTime} mins{" "}
-                </span>
-              )}
-            </div>
+          <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
+            {outlet.rating != null ? (
+              <span
+                className="inline-flex items-center gap-1 justify-self-start font-semibold"
+                style={{ color: "var(--rsc-dark)" }}
+              >
+                <StarIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                {outlet.rating}
+              </span>
+            ) : (
+              <span aria-hidden="true" />
+            )}
 
-            <span className="text-xs sm:text-sm font-semibold" style={{ color: "var(--rsc-dark)" }}>
+            {outlet.deliveryTime && (
+              <span className="inline-flex items-center justify-center gap-1 text-gray-500">
+                <Clock10Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>{outlet.deliveryTime} mins</span>
+              </span>
+            )}
+
+            <span
+              className="justify-self-end text-xs font-semibold sm:text-sm"
+              style={{ color: "var(--rsc-dark)" }}
+            >
               Order Now
             </span>
           </div>
