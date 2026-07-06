@@ -51,6 +51,9 @@ import {
   resendVerificationInputSchema,
   resendVerificationResultSchema,
   rateOutletInputSchema,
+  rejectAssignedOrderInputSchema,
+  rejectAssignedOrderResultSchema,
+  riderDispatchSchema,
   uploadedImageSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
@@ -105,6 +108,9 @@ import {
   type ResendVerificationInput,
   type ResendVerificationResult,
   type RateOutletInput,
+  type RejectAssignedOrderInput,
+  type RejectAssignedOrderResult,
+  type RiderDispatch,
   type UploadedImage,
   type UserVerificationResult,
   type VerifyUserInput,
@@ -446,6 +452,24 @@ export function createApiClient(options: ApiClientOptions) {
       return request(
         `/api/v1/orders/${encodeURIComponent(id)}/rider-location`,
         riderLocationSchema.nullable(),
+      );
+    },
+    listAssignedRiderOrders(): Promise<RiderDispatch[]> {
+      return request("/api/v1/riders/me/assigned-orders", z.array(riderDispatchSchema));
+    },
+    rejectAssignedRiderOrder(
+      id: string,
+      input: RejectAssignedOrderInput,
+    ): Promise<RejectAssignedOrderResult> {
+      const body = rejectAssignedOrderInputSchema.parse(input);
+
+      return request(
+        `/api/v1/riders/me/assigned-orders/${encodeURIComponent(id)}/reject`,
+        rejectAssignedOrderResultSchema,
+        {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        },
       );
     },
     listNotifications(): Promise<Notification[]> {

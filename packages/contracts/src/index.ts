@@ -638,6 +638,51 @@ export const orderDetailSchema = z
   })
   .passthrough();
 
+export const riderDispatchSchema = z.object({
+  orderId: z.uuid(),
+  status: masterOrderStatusSchema,
+  deliveryCodeRequired: z.literal(true),
+  deliveryAddress: z.string().nullable(),
+  deliveryLatitude: z.number().nullable(),
+  deliveryLongitude: z.number().nullable(),
+  customerId: z.uuid(),
+  riderId: z.uuid().nullable(),
+  outlets: z.array(
+    z.object({
+      subOrderId: z.uuid(),
+      outletId: z.uuid(),
+      outletName: z.string().min(1),
+      pickupAddress: z.string().nullable(),
+      pickupLatitude: z.number().nullable(),
+      pickupLongitude: z.number().nullable(),
+      pickupCode: z.string().min(1),
+      status: subOrderStatusSchema,
+      items: z.array(
+        z.object({
+          id: z.uuid(),
+          name: z.string().min(1),
+          quantity: z.coerce.number().int().positive(),
+          modifiers: z.array(z.unknown()),
+        }),
+      ),
+    }),
+  ),
+});
+
+export const rejectAssignedOrderInputSchema = z
+  .object({
+    reason: z.string().trim().min(1).max(500),
+  })
+  .strict();
+
+export const rejectAssignedOrderResultSchema = z.object({
+  rejected: z.literal(true),
+  reassigned: z.boolean(),
+  previousRiderId: z.uuid(),
+  riderId: z.uuid().nullable(),
+  order: orderDetailSchema,
+});
+
 export const uploadedImageSchema = z.object({
   url: z.url(),
   publicId: z.string().min(1),
@@ -846,6 +891,9 @@ export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
 export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
 export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
+export type RiderDispatch = z.infer<typeof riderDispatchSchema>;
+export type RejectAssignedOrderInput = z.infer<typeof rejectAssignedOrderInputSchema>;
+export type RejectAssignedOrderResult = z.infer<typeof rejectAssignedOrderResultSchema>;
 export type UploadedImage = z.infer<typeof uploadedImageSchema>;
 
 export const paginatedMenuItemsSchema = menuItemsPageSchema;

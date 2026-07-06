@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsIn,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
@@ -105,6 +106,14 @@ export class AssignOrderRiderDto {
   @IsString()
   @MaxLength(500)
   note?: string;
+}
+
+export class RejectAssignedOrderDto {
+  @ApiProperty({ example: "Bike issue, unable to complete this delivery" })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  reason!: string;
 }
 
 export class CompleteDeliveryDto {

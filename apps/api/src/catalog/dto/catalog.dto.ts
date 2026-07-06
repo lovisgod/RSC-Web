@@ -71,13 +71,21 @@ export class CreateOutletDto {
   @Max(10_000)
   vatBps?: number;
 
-  @ApiProperty({ example: 6.4474, description: "Outlet latitude used for delivery radius checks" })
+  @ApiPropertyOptional({
+    example: 6.4474,
+    description: "Outlet latitude used for delivery radius checks when configured",
+  })
+  @IsOptional()
   @IsLatitude()
-  latitude!: number;
+  latitude?: number;
 
-  @ApiProperty({ example: 3.4542, description: "Outlet longitude used for delivery radius checks" })
+  @ApiPropertyOptional({
+    example: 3.4542,
+    description: "Outlet longitude used for delivery radius checks when configured",
+  })
+  @IsOptional()
   @IsLongitude()
-  longitude!: number;
+  longitude?: number;
 
   @ApiPropertyOptional({ example: 15, description: "Maximum delivery radius in kilometers" })
   @IsOptional()
