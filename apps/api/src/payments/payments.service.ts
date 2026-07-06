@@ -393,6 +393,10 @@ export class PaymentsService {
         throw new BadRequestException("One or more outlets are unavailable");
       }
 
+      if (outlet.latitude === null || outlet.longitude === null) {
+        continue;
+      }
+
       const distanceKm = distanceBetweenKm(latitude, longitude, outlet.latitude, outlet.longitude);
 
       if (distanceKm > outlet.deliveryRadiusKm) {
