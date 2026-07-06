@@ -159,7 +159,7 @@ export const resetPassword = (body: {
 
 export const uploadImage = (file: File): Promise<{ url: string }> => {
   const fd = new FormData();
-  fd.append("image", file);
+  fd.append("file", file);
   return post("/api/v1/media/images", fd);
 };
 
