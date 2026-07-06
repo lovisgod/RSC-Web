@@ -110,7 +110,7 @@ function AddItemModal({
   onClose: () => void;
 }) {
   const { mutate: createItem, isPending } = useCreateMenuItem(outletId);
-  const { data: modifierGroups = [] } = useItemModifierGroups();
+  const { data: modifierGroups = [] } = useItemModifierGroups(outletId);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState("");
@@ -378,7 +378,7 @@ function EditItemModal({
   onClose: () => void;
 }) {
   const { mutate: updateItem, isPending } = useUpdateMenuItem(outletId);
-  const { data: modifierGroups = [] } = useItemModifierGroups();
+  const { data: modifierGroups = [] } = useItemModifierGroups(outletId);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState(item.name);
