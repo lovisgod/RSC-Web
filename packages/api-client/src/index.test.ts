@@ -223,6 +223,46 @@ describe("registration API client", () => {
     );
   });
 
+  it("uploads the active user's avatar as multipart form data", async () => {
+    const profile = {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      name: "Ada Okafor",
+      role: "CUSTOMER",
+      outletId: null,
+      avatarUrl: "https://res.cloudinary.com/rsc/image/upload/user-avatars/ada.webp",
+      email: "ada@example.com",
+      phone: "+2348031234567",
+      verificationChannels: { email: true, phone: true },
+      pendingVerificationChannels: { email: false, phone: false },
+    };
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: profile,
+          message: "Avatar uploaded successfully",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+    const file = new File(["avatar"], "avatar.webp", { type: "image/webp" });
+
+    await expect(client.uploadAvatar(file)).resolves.toEqual(profile);
+
+    const [, init] = requestFetch.mock.calls[0] as [string, RequestInit];
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/users/me/avatar",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(init.body).toBeInstanceOf(FormData);
+    expect((init.body as FormData).get("file")).toBe(file);
+    expect(new Headers(init.headers).has("content-type")).toBe(false);
+  });
+
   it("lists menu items for an outlet", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(

@@ -315,6 +315,15 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    uploadAvatar(file: File): Promise<UserProfile> {
+      const body = new FormData();
+      body.append("file", file);
+
+      return request("/api/v1/users/me/avatar", userProfileSchema, {
+        method: "POST",
+        body,
+      });
+    },
     createDeliveryAddress(input: CreateDeliveryAddressInput): Promise<DeliveryAddressSummary> {
       const body = createDeliveryAddressInputSchema.parse(input);
 

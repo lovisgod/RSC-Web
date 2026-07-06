@@ -196,6 +196,7 @@ export const userProfileSchema = z.object({
   name: z.string(),
   role: z.string(),
   outletId: z.uuid().nullable(),
+  avatarUrl: z.url().nullable(),
   email: z.string(),
   phone: z.string(),
   verificationChannels: z.object({ email: z.boolean(), phone: z.boolean() }),
