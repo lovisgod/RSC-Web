@@ -178,7 +178,11 @@ export function OrdersFeedPage() {
                         </span>
                       </td>
                       <td>
-                        <div className="order-outlet-badges">
+                        <div
+                          className={`order-outlet-badges${
+                            orderOutlets.length === 2 ? " order-outlet-badges--stacked" : ""
+                          }`}
+                        >
                           {orderOutlets.length > 0
                             ? orderOutlets.map((outlet) => (
                                 <span
