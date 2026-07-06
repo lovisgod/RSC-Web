@@ -27,8 +27,11 @@ import {
   updatePlatformChargesInputSchema,
   createDeliveryAddressInputSchema,
   deliveryAddressSummarySchema,
+  deliveryAddressSuggestionSchema,
   validateAddressInputSchema,
   validateAddressResultSchema,
+  resolveDeliveryAddressInputSchema,
+  resolvedDeliveryAddressSchema,
   forgotPasswordInputSchema,
   forgotPasswordResultSchema,
   menuCategorySchema,
@@ -83,8 +86,11 @@ import {
   type UpdateNotificationPreferencesInput,
   type CreateDeliveryAddressInput,
   type DeliveryAddressSummary,
+  type DeliveryAddressSuggestion,
   type ValidateAddressInput,
   type ValidateAddressResult,
+  type ResolveDeliveryAddressInput,
+  type ResolvedDeliveryAddress,
   type ForgotPasswordInput,
   type ForgotPasswordResult,
   type MenuCategorySummary,
@@ -335,6 +341,28 @@ export function createApiClient(options: ApiClientOptions) {
       const body = validateAddressInputSchema.parse(input);
 
       return request("/api/v1/delivery/validate-address", validateAddressResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    searchDeliveryAddressSuggestions(
+      q: string,
+      sessionToken?: string,
+    ): Promise<DeliveryAddressSuggestion[]> {
+      const params = new URLSearchParams({ q });
+      if (sessionToken) params.set("sessionToken", sessionToken);
+
+      return request(
+        `/api/v1/delivery/address-suggestions?${params.toString()}`,
+        z.array(deliveryAddressSuggestionSchema),
+      );
+    },
+    resolveDeliveryAddress(
+      input: ResolveDeliveryAddressInput,
+    ): Promise<ResolvedDeliveryAddress | null> {
+      const body = resolveDeliveryAddressInputSchema.parse(input);
+
+      return request("/api/v1/delivery/resolve-address", resolvedDeliveryAddressSchema.nullable(), {
         method: "POST",
         body: JSON.stringify(body),
       });
