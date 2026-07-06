@@ -211,6 +211,16 @@ export const updateProfileInputSchema = z
   })
   .strict();
 
+export const profileUpdateResultSchema = userProfileSchema.extend({
+  otpExpiresInSeconds: z.int().positive().nullable(),
+});
+
+export const verifyProfileChangeInputSchema = z
+  .object({
+    code: z.string().regex(/^\d{6}$/),
+  })
+  .strict();
+
 export const createDeliveryAddressInputSchema = z
   .object({
     label: z.string().min(1).max(50),
@@ -809,6 +819,8 @@ export type OperationsQueueItem = z.infer<typeof operationsQueueItemSchema>;
 export type OperationsQueue = z.infer<typeof operationsQueueSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
+export type ProfileUpdateResult = z.infer<typeof profileUpdateResultSchema>;
+export type VerifyProfileChangeInput = z.infer<typeof verifyProfileChangeInputSchema>;
 export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInputSchema>;
 export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema>;
 export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
