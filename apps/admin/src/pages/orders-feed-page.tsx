@@ -27,6 +27,38 @@ function statusLabel(status: string): string {
   return STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
 }
 
+function formatOrderDateTime(value: string): string {
+  const date = new Date(value);
+  const day = date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const time = date.toLocaleTimeString("en-GB", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return `${day} · ${time}`;
+}
+
+function deliveryModeLabel(mode: string): string {
+  if (mode === "DELIVERY") return "Delivery";
+  if (mode === "TAKEOUT") return "Takeout";
+  return mode;
+}
+
+function outletBadgeTone(outletId: string): number {
+  let hash = 0;
+
+  for (const character of outletId) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+
+  return (hash % 6) + 1;
+}
+
 export function OrdersFeedPage() {
   const { data: outlets } = useOutletsLive();
 
@@ -109,7 +141,7 @@ export function OrdersFeedPage() {
                 <th>Order ID</th>
                 <th>Date &amp; Time</th>
                 <th>Mode</th>
-                <th>Outlet(s)</th>
+                <th className="order-outlets-heading">Outlet(s)</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th>Action</th>
@@ -129,23 +161,35 @@ export function OrdersFeedPage() {
               ) : orders.length > 0 ? (
                 orders.map((item) => {
                   const { order, subOrders } = item;
-                  const outletNames = subOrders
-                    .map((s) => outletById[s.outletId]?.name ?? s.outletId.slice(0, 8))
-                    .join(", ");
+                  const orderOutlets = subOrders.map((subOrder) => ({
+                    id: subOrder.outletId,
+                    name: outletById[subOrder.outletId]?.name ?? subOrder.outletId.slice(0, 8),
+                  }));
 
                   return (
                     <tr key={order.id}>
                       <td className="text-mono">{order.id.slice(0, 8).toUpperCase()}</td>
+                      <td className="order-date-time">{formatOrderDateTime(order.createdAt)}</td>
                       <td>
-                        {new Date(order.createdAt).toLocaleString("en-GB", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
+                        <span
+                          className={`order-delivery-mode order-delivery-mode--${order.deliveryMode.toLowerCase()}`}
+                        >
+                          {deliveryModeLabel(order.deliveryMode)}
+                        </span>
                       </td>
-                      <td>{order.deliveryMode}</td>
                       <td>
-                        <strong>{subOrders.length}</strong>
-                        {outletNames && <small className="table-note">{outletNames}</small>}
+                        <div className="order-outlet-badges">
+                          {orderOutlets.length > 0
+                            ? orderOutlets.map((outlet) => (
+                                <span
+                                  key={outlet.id}
+                                  className={`order-outlet-badge order-outlet-badge--${outletBadgeTone(outlet.id)}`}
+                                >
+                                  {outlet.name}
+                                </span>
+                              ))
+                            : "—"}
+                        </div>
                       </td>
                       <td>₦{(order.totalMinor / 100).toLocaleString()}</td>
                       <td>

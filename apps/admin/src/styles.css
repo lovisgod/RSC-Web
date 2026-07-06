@@ -580,6 +580,83 @@ th {
   white-space: normal;
 }
 
+.order-date-time {
+  color: var(--rsc-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.order-outlet-badges {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  max-width: 240px;
+  gap: 0.3rem;
+}
+
+.order-outlets-heading {
+  text-align: center;
+}
+
+.order-outlet-badge,
+.order-delivery-mode {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.26rem 0.5rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.order-outlet-badge {
+  --outlet-badge-color: var(--rsc-main);
+
+  color: var(--outlet-badge-color);
+  background: color-mix(in srgb, var(--outlet-badge-color) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--outlet-badge-color) 24%, white);
+}
+
+.order-outlet-badge--1 {
+  --outlet-badge-color: var(--rsc-main);
+}
+
+.order-outlet-badge--2 {
+  --outlet-badge-color: var(--rsc-brand-strong);
+}
+
+.order-outlet-badge--3 {
+  --outlet-badge-color: var(--rsc-navy-light);
+}
+
+.order-outlet-badge--4 {
+  --outlet-badge-color: var(--rsc-brand);
+}
+
+.order-outlet-badge--5 {
+  --outlet-badge-color: var(--rsc-danger);
+}
+
+.order-outlet-badge--6 {
+  --outlet-badge-color: var(--rsc-muted);
+}
+
+.order-delivery-mode {
+  font-size: 0.68rem;
+}
+
+.order-delivery-mode--delivery {
+  color: var(--rsc-main);
+  background: color-mix(in srgb, var(--rsc-main) 12%, white);
+}
+
+.order-delivery-mode--takeout {
+  color: var(--rsc-brand-strong);
+  background: color-mix(in srgb, var(--rsc-brand) 14%, white);
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
