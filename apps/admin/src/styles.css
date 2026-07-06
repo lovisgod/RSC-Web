@@ -594,6 +594,10 @@ th {
   gap: 0.3rem;
 }
 
+.order-outlet-badges--stacked {
+  grid-template-columns: max-content;
+}
+
 .order-outlets-heading {
   text-align: center;
 }
