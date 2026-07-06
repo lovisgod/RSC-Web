@@ -16,11 +16,13 @@ import {
   paginatedMenuItemsSchema,
   pickupSubOrderInputSchema,
   platformChargesSchema,
+  profileUpdateResultSchema,
   orderDetailSchema,
   orderSummarySchema,
   outletAdminSchema,
   userProfileSchema,
   updateProfileInputSchema,
+  verifyProfileChangeInputSchema,
   updateGeofenceZoneInputSchema,
   updateMenuItemAvailabilityInputSchema,
   updateNotificationPreferencesInputSchema,
@@ -68,11 +70,13 @@ import {
   type PaginatedMenuItems,
   type PickupSubOrderInput,
   type PlatformCharges,
+  type ProfileUpdateResult,
   type OrderDetail,
   type OrderSummary,
   type OutletAdmin,
   type UserProfile,
   type UpdateProfileInput,
+  type VerifyProfileChangeInput,
   type UpdateGeofenceZoneInput,
   type UpdatePlatformChargesInput,
   type UpdateMenuItemAvailabilityInput,
@@ -307,10 +311,18 @@ export function createApiClient(options: ApiClientOptions) {
     getProfile(): Promise<UserProfile> {
       return request("/api/v1/users/me", userProfileSchema);
     },
-    updateProfile(input: UpdateProfileInput): Promise<UserProfile> {
+    updateProfile(input: UpdateProfileInput): Promise<ProfileUpdateResult> {
       const body = updateProfileInputSchema.parse(input);
 
-      return request("/api/v1/users/me", userProfileSchema, {
+      return request("/api/v1/users/me", profileUpdateResultSchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    verifyProfileChange(input: VerifyProfileChangeInput): Promise<UserProfile> {
+      const body = verifyProfileChangeInputSchema.parse(input);
+
+      return request("/api/v1/users/me/verify-change", userProfileSchema, {
         method: "POST",
         body: JSON.stringify(body),
       });

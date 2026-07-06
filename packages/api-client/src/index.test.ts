@@ -263,6 +263,43 @@ describe("registration API client", () => {
     expect(new Headers(init.headers).has("content-type")).toBe(false);
   });
 
+  it("verifies a pending profile change with only the six-digit code", async () => {
+    const profile = {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      name: "Ada Okafor",
+      role: "CUSTOMER",
+      outletId: null,
+      avatarUrl: null,
+      email: "new@example.com",
+      phone: "+2348031234567",
+      verificationChannels: { email: true, phone: true },
+      pendingVerificationChannels: { email: false, phone: false },
+    };
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: profile,
+          message: "Profile change verified",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.verifyProfileChange({ code: "482901" })).resolves.toEqual(profile);
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/users/me/verify-change",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ code: "482901" }),
+      }),
+    );
+  });
+
   it("lists menu items for an outlet", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(

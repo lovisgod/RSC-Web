@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@rsc/ui";
+import type { UserProfile } from "@rsc/contracts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -44,10 +45,171 @@ const darkErrorClass = "mt-1 text-xs text-red-300";
 
 // ── Profile header card ───────────────────────────────────────────────────────
 
+interface ProfileChangeVerificationModalProps {
+  profile: UserProfile;
+  initialSeconds: number | null;
+  onVerified: (profile: UserProfile) => void;
+  onClose: () => void;
+}
+
+function ProfileChangeVerificationModal({
+  profile,
+  initialSeconds,
+  onVerified,
+  onClose,
+}: ProfileChangeVerificationModalProps) {
+  const [code, setCode] = useState("");
+  const [secondsRemaining, setSecondsRemaining] = useState(initialSeconds);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const pending = profile.pendingVerificationChannels;
+
+  useEffect(() => {
+    if (initialSeconds === null) return;
+
+    const timer = window.setInterval(() => {
+      setSecondsRemaining((seconds) => (seconds === null ? null : Math.max(0, seconds - 1)));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [initialSeconds]);
+
+  const mutation = useMutation({
+    mutationFn: () => apiClient.verifyProfileChange({ code }),
+    onSuccess: (updated) => {
+      onVerified(updated);
+      setCode("");
+
+      if (updated.pendingVerificationChannels.email || updated.pendingVerificationChannels.phone) {
+        setSuccessMessage("One change is verified. Enter the code for the remaining change.");
+      } else {
+        onClose();
+      }
+    },
+  });
+
+  const destination =
+    pending.email && pending.phone
+      ? "your new email address and phone number"
+      : pending.email
+        ? "your new email address"
+        : "your new phone number";
+  const formattedTime =
+    secondsRemaining === null
+      ? null
+      : `${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, "0")}`;
+
+  function handleBackdropClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (event.target === event.currentTarget && !mutation.isPending) onClose();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm"
+      onClick={handleBackdropClick}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-verification-title"
+        className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+          <div>
+            <h2 id="profile-verification-title" className="font-bold text-gray-900">
+              Verify your change
+            </h2>
+            <p className="mt-0.5 text-xs text-gray-500">Enter the six-digit code we sent.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={mutation.isPending}
+            aria-label="Close verification"
+            className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:opacity-40"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            mutation.mutate();
+          }}
+          className="space-y-4 p-6"
+        >
+          <p className="text-sm leading-6 text-gray-600">
+            Use the code sent to <span className="font-semibold text-gray-900">{destination}</span>.
+            If both changed, either code can be verified first.
+          </p>
+
+          <div>
+            <label htmlFor="profile-change-code" className="sr-only">
+              Six-digit verification code
+            </label>
+            <input
+              id="profile-change-code"
+              value={code}
+              onChange={(event) => {
+                setCode(event.target.value.replace(/\D/g, "").slice(0, 6));
+                setSuccessMessage(null);
+                mutation.reset();
+              }}
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="\d{6}"
+              maxLength={6}
+              autoFocus
+              placeholder="000000"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-center font-mono text-2xl font-bold tracking-[0.35em] text-gray-900 outline-none transition focus:border-[var(--rsc-main)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--rsc-main)_15%,transparent)]"
+            />
+          </div>
+
+          {formattedTime && secondsRemaining !== 0 && (
+            <p className="text-center text-xs text-gray-400">Code expires in {formattedTime}</p>
+          )}
+          {secondsRemaining === 0 && (
+            <p className="text-center text-xs font-medium text-amber-600">
+              This code may have expired. Close this window and save your details again for a new
+              code.
+            </p>
+          )}
+          {successMessage && (
+            <p role="status" className="text-center text-xs font-medium text-green-600">
+              {successMessage}
+            </p>
+          )}
+          {mutation.isError && (
+            <p role="alert" className="text-center text-xs text-red-600">
+              {getMutationErrorMessage(mutation.error, {
+                400: "There is no matching pending profile change.",
+                401: "That code is incorrect, expired, or already used.",
+              })}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={code.length !== 6 || mutation.isPending}
+            className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: "var(--rsc-main)" }}
+          >
+            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {mutation.isPending ? "Verifying…" : "Verify change"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function ProfileHeader() {
   const [editing, setEditing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [verificationOpen, setVerificationOpen] = useState(false);
+  const [otpExpiresInSeconds, setOtpExpiresInSeconds] = useState<number | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const signOut = useAuthStore((s) => s.signOut);
@@ -87,6 +249,13 @@ function ProfileHeader() {
     onSuccess: (updated) => {
       queryClient.setQueryData(["profile"], updated);
       setEditing(false);
+
+      if (updated.pendingVerificationChannels.email || updated.pendingVerificationChannels.phone) {
+        setOtpExpiresInSeconds(updated.otpExpiresInSeconds);
+        setVerificationOpen(true);
+      } else {
+        setOtpExpiresInSeconds(null);
+      }
     },
   });
 
@@ -131,6 +300,9 @@ function ProfileHeader() {
 
   const displayName = profile?.name ?? "";
   const initials = displayName ? getInitials(displayName) : "…";
+  const hasPendingProfileChange = Boolean(
+    profile?.pendingVerificationChannels.email || profile?.pendingVerificationChannels.phone,
+  );
 
   return (
     <div
@@ -214,6 +386,16 @@ function ProfileHeader() {
                 <h2 className="text-xl font-bold text-white">{displayName}</h2>
                 <p className="text-sm text-white/60 mt-0.5">{profile?.email}</p>
                 <p className="text-sm text-white/60">{profile?.phone}</p>
+                {hasPendingProfileChange && (
+                  <button
+                    type="button"
+                    onClick={() => setVerificationOpen(true)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    Verify pending change
+                  </button>
+                )}
               </>
             )}
             <button
@@ -289,6 +471,15 @@ function ProfileHeader() {
             </button>
           </div>
         </form>
+      )}
+
+      {verificationOpen && profile && (
+        <ProfileChangeVerificationModal
+          profile={profile}
+          initialSeconds={otpExpiresInSeconds}
+          onVerified={(updated) => queryClient.setQueryData(["profile"], updated)}
+          onClose={() => setVerificationOpen(false)}
+        />
       )}
     </div>
   );
