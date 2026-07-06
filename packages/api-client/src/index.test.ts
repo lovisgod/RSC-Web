@@ -353,6 +353,33 @@ describe("registration API client", () => {
     );
   });
 
+  it("rates a menu item using the customer rating endpoint", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { ...menuItem, ratingAverage: 5, ratingCount: 1 },
+          message: "Menu item rated successfully",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await client.rateMenuItem(menuItem.id, { rating: 5 });
+
+    expect(requestFetch).toHaveBeenCalledWith(
+      `https://api-dev.rscapp.xyz/api/v1/menu-items/${menuItem.id}/rating`,
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ rating: 5 }),
+      }),
+    );
+  });
+
   it("gets and updates platform charges using the published contract", async () => {
     const platformCharges = {
       platformCommissionBps: 1500,
