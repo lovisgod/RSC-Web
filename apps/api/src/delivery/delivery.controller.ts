@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Req,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
@@ -21,7 +22,9 @@ import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import { DeliveryService } from "./delivery.service";
 import {
+  AddressSuggestionsQueryDto,
   CreateDeliveryAddressDto,
+  ResolveAddressDto,
   UpdateDeliveryAddressDto,
   ValidateAddressDto,
 } from "./dto/delivery-address.dto";
@@ -37,6 +40,19 @@ export class DeliveryController {
   @ApiMessage("Delivery address validated")
   validateAddress(@Body() input: ValidateAddressDto) {
     return this.delivery.validateAddress(input);
+  }
+
+  @Get("address-suggestions")
+  @ApiMessage("Delivery address suggestions retrieved")
+  addressSuggestions(@Query() query: AddressSuggestionsQueryDto) {
+    return this.delivery.searchAddressSuggestions(query);
+  }
+
+  @Post("resolve-address")
+  @HttpCode(HttpStatus.OK)
+  @ApiMessage("Delivery address resolved")
+  resolveAddress(@Body() input: ResolveAddressDto) {
+    return this.delivery.resolveAddress(input);
   }
 
   @Get("geofence-zones")

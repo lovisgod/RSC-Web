@@ -250,6 +250,35 @@ export const validateAddressResultSchema = z.object({
     .nullable(),
 });
 
+export const deliveryAddressProviderSchema = z.enum(["google", "opencage"]);
+
+export const deliveryAddressSuggestionSchema = z.object({
+  id: z.string().min(1),
+  description: z.string().min(1),
+  provider: deliveryAddressProviderSchema,
+  sessionToken: z.string().nullable(),
+});
+
+export const resolveDeliveryAddressInputSchema = z
+  .object({
+    input: z.string().trim().min(3).max(200).optional(),
+    suggestionId: z.string().min(1).max(500).optional(),
+    provider: deliveryAddressProviderSchema.optional(),
+    sessionToken: z.string().max(120).optional(),
+  })
+  .strict();
+
+export const resolvedDeliveryAddressSchema = z.object({
+  addressLine: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  label: z.string().min(1),
+  displayName: z.string().min(1),
+  latitude: z.number(),
+  longitude: z.number(),
+  provider: deliveryAddressProviderSchema,
+});
+
 export const geofenceZoneSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1),
@@ -864,6 +893,10 @@ export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInp
 export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema>;
 export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
 export type ValidateAddressResult = z.infer<typeof validateAddressResultSchema>;
+export type DeliveryAddressProvider = z.infer<typeof deliveryAddressProviderSchema>;
+export type DeliveryAddressSuggestion = z.infer<typeof deliveryAddressSuggestionSchema>;
+export type ResolveDeliveryAddressInput = z.infer<typeof resolveDeliveryAddressInputSchema>;
+export type ResolvedDeliveryAddress = z.infer<typeof resolvedDeliveryAddressSchema>;
 export type GeofenceZone = z.infer<typeof geofenceZoneSchema>;
 export type CreateGeofenceZoneInput = z.infer<typeof createGeofenceZoneInputSchema>;
 export type UpdateGeofenceZoneInput = z.infer<typeof updateGeofenceZoneInputSchema>;

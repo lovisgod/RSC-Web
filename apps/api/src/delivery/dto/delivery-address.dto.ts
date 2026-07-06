@@ -3,6 +3,7 @@ import { Transform } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
 import {
   IsBoolean,
+  IsIn,
   IsLatitude,
   IsLongitude,
   IsOptional,
@@ -72,4 +73,47 @@ export class ValidateAddressDto {
   @ApiProperty({ example: 3.4542 })
   @IsLongitude()
   longitude!: number;
+}
+
+export class AddressSuggestionsQueryDto {
+  @ApiProperty({ example: "8 Abiola Sanusi Street" })
+  @Transform(trim)
+  @IsString()
+  @Length(3, 200)
+  q!: string;
+
+  @ApiPropertyOptional({ example: "checkout-session-uuid" })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  sessionToken?: string;
+}
+
+export class ResolveAddressDto {
+  @ApiPropertyOptional({ example: "8 Abiola Sanusi Street" })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @Length(3, 200)
+  input?: string;
+
+  @ApiPropertyOptional({ example: "ChIJ..." })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  suggestionId?: string;
+
+  @ApiPropertyOptional({ enum: ["google", "opencage"] })
+  @IsOptional()
+  @IsIn(["google", "opencage"])
+  provider?: "google" | "opencage";
+
+  @ApiPropertyOptional({ example: "checkout-session-uuid" })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  sessionToken?: string;
 }
