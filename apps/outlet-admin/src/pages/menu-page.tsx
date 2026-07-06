@@ -19,10 +19,12 @@ import { useMemo, useRef, useState } from "react";
 
 import { MenuItemCard } from "../components/menu-item-card";
 import { MenuItemDetail } from "../components/menu-item-detail";
+import { ModifierManagementCard } from "../components/modifier-management-card";
 import { useAuth } from "../hooks/use-auth";
 import { useCreateMenuItem } from "../hooks/use-create-menu-item";
 import { useItemModifierGroups } from "../hooks/use-item-modifier-groups";
 import { useMenuCategories, useMenuItems } from "../hooks/use-menu-items";
+import { useOutletInfo } from "../hooks/use-outlet-info";
 import { useUpdateMenuItem } from "../hooks/use-update-menu-item";
 
 const EMPTY_MENU_ITEMS: MenuItem[] = [];
@@ -370,11 +372,13 @@ function EditItemModal({
   item,
   outletId,
   categories,
+  assignedModifierGroupIds,
   onClose,
 }: {
   item: MenuItem;
   outletId: string;
   categories: { id: string; name: string }[];
+  assignedModifierGroupIds: string[];
   onClose: () => void;
 }) {
   const { mutate: updateItem, isPending } = useUpdateMenuItem(outletId);
@@ -389,7 +393,8 @@ function EditItemModal({
   const [isAvailable, setIsAvailable] = useState(item.isAvailable);
   const [sortOrder, setSortOrder] = useState(String(item.sortOrder));
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
-  const [selectedModifierGroupIds, setSelectedModifierGroupIds] = useState<string[]>([]);
+  const [selectedModifierGroupIds, setSelectedModifierGroupIds] =
+    useState<string[]>(assignedModifierGroupIds);
   const [shaking, setShaking] = useState(false);
 
   function triggerShake() {
@@ -423,9 +428,7 @@ function EditItemModal({
           priceMinor,
           isAvailable,
           sortOrder: parseInt(sortOrder, 10) || 0,
-          ...(selectedModifierGroupIds.length > 0
-            ? { modifierGroupIds: selectedModifierGroupIds }
-            : {}),
+          modifierGroupIds: selectedModifierGroupIds,
         },
         ...(imageFile ? { imageFile } : {}),
       },
@@ -643,6 +646,7 @@ function EditItemModal({
 export function MenuPage() {
   const { user } = useAuth();
   const outletId = user?.outletId ?? "";
+  const { data: outlet } = useOutletInfo(outletId);
   const { data: categories = [] } = useMenuCategories(outletId);
   const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>();
   const { data: menuItems, isLoading } = useMenuItems(outletId, activeCategoryId);
@@ -694,6 +698,13 @@ export function MenuPage() {
     ? categories.find((c) => c.id === serverItems.find((i) => i.id === selectedItemId)?.categoryId)
         ?.name
     : undefined;
+  const availableModifierGroupIds = new Set(
+    outlet?.itemModifierGroups.map((group) => group.id) ?? [],
+  );
+  const assignedModifierGroupIds = (itemId: string) =>
+    outlet?.menuItemModifierGroups
+      .filter((link) => link.menuItemId === itemId && availableModifierGroupIds.has(link.groupId))
+      .map((link) => link.groupId) ?? [];
 
   if (selectedItemId) {
     return (
@@ -710,6 +721,7 @@ export function MenuPage() {
             item={editingItem}
             outletId={outletId}
             categories={categories}
+            assignedModifierGroupIds={assignedModifierGroupIds(editingItem.id)}
             onClose={() => setEditingItem(null)}
           />
         )}
@@ -729,6 +741,8 @@ export function MenuPage() {
           + Add New Item
         </button>
       </div>
+
+      <ModifierManagementCard outletId={outletId} />
 
       {categories.length > 0 && (
         <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
@@ -790,6 +804,7 @@ export function MenuPage() {
           item={editingItem}
           outletId={outletId}
           categories={categories}
+          assignedModifierGroupIds={assignedModifierGroupIds(editingItem.id)}
           onClose={() => setEditingItem(null)}
         />
       )}

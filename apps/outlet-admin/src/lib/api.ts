@@ -6,6 +6,7 @@ import {
   type ChangePasswordInput,
   type ChangePasswordResult,
   type ItemModifierGroup,
+  type ItemModifier,
   type LoginResult,
   type LogoutResult,
   type MasterOrderStatus,
@@ -176,6 +177,45 @@ export const getMenuItemById = (itemId: string): Promise<MenuItem> =>
 
 export const listItemModifierGroups = (outletId: string): Promise<ItemModifierGroup[]> =>
   get(`/api/v1/item-modifier-groups?outletId=${encodeURIComponent(outletId)}`);
+
+export interface SaveItemModifierGroupBody {
+  name: string;
+  minSelections: number;
+  maxSelections: number;
+  isRequired: boolean;
+  sortOrder: number;
+}
+
+export const createItemModifierGroup = (
+  body: SaveItemModifierGroupBody,
+): Promise<ItemModifierGroup> => post("/api/v1/item-modifier-groups", body);
+
+export const updateItemModifierGroup = (
+  groupId: string,
+  body: Partial<SaveItemModifierGroupBody>,
+): Promise<ItemModifierGroup> => patchReq(`/api/v1/item-modifier-groups/${groupId}`, body);
+
+export const deleteItemModifierGroup = (groupId: string): Promise<void> =>
+  http.delete(`/api/v1/item-modifier-groups/${groupId}`).then(() => undefined);
+
+export interface SaveItemModifierBody {
+  groupId: string;
+  name: string;
+  priceDeltaMinor: number;
+  isAvailable: boolean;
+  sortOrder: number;
+}
+
+export const createItemModifier = (body: SaveItemModifierBody): Promise<ItemModifier> =>
+  post("/api/v1/item-modifiers", body);
+
+export const updateItemModifier = (
+  modifierId: string,
+  body: Partial<SaveItemModifierBody>,
+): Promise<ItemModifier> => patchReq(`/api/v1/item-modifiers/${modifierId}`, body);
+
+export const deleteItemModifier = (modifierId: string): Promise<void> =>
+  http.delete(`/api/v1/item-modifiers/${modifierId}`).then(() => undefined);
 
 export const uploadImage = (file: File): Promise<UploadedImage> => {
   const body = new FormData();
