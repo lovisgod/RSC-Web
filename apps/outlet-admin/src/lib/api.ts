@@ -1,8 +1,10 @@
 import axios, { type AxiosError } from "axios";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import {
+  adminOrdersResultSchema,
   changePasswordInputSchema,
   changePasswordResultSchema,
+  type AdminOrdersResult,
   type ChangePasswordInput,
   type ChangePasswordResult,
   type ItemModifierGroup,
@@ -266,58 +268,14 @@ export interface PosSubOrder {
   status: SubOrderStatus;
   pickupCode?: string;
   deliveryMode: string;
-  deliveryCode: string;
+  deliveryCode: string | null;
   items: PosSubOrderItem[];
   totalAmountMinor: number;
   createdAt: string;
   estimatedPrepTimeMinutes?: number;
 }
 
-// ─── GET /api/v1/orders/admin response types ──────────────────────────────────
-
-interface AdminLineItem {
-  id: string;
-  subOrderId: string;
-  outletId: string;
-  itemNameSnapshot: string;
-  quantity: number;
-  unitPriceMinor: number;
-  lineTotalMinor: number;
-  modifiersSnapshot: { id: string; name: string; priceDeltaMinor: number }[];
-}
-
-interface AdminSubOrder {
-  id: string;
-  masterOrderId: string;
-  outletId: string;
-  status: string;
-  pickupCode?: string;
-  subtotalMinor: number;
-  currency: string;
-  createdAt: string;
-  preparationTimeMinutes?: number;
-}
-
-interface AdminOrderEntry {
-  order: {
-    id: string;
-    status: MasterOrderStatus;
-    deliveryMode: string;
-    deliveryCode: string;
-    createdAt: string;
-  };
-  subOrders: AdminSubOrder[];
-  lineItems: AdminLineItem[];
-}
-
-interface AdminOrdersData {
-  orders: AdminOrderEntry[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
+function toSubOrders(data: AdminOrdersResult, outletId: string): PosSubOrder[] {
   return data.orders.flatMap(({ order, subOrders, lineItems }) =>
     subOrders
       .filter((sub) => sub.outletId === outletId)
@@ -369,9 +327,9 @@ export function isActiveQueueOrder(order: PosSubOrder): boolean {
 }
 
 export const listAdminOrders = (outletId: string): Promise<PosSubOrder[]> =>
-  get<AdminOrdersData>(`/api/v1/orders/admin?outletId=${encodeURIComponent(outletId)}`).then(
-    (data) => toSubOrders(data, outletId),
-  );
+  get<unknown>(`/api/v1/orders/admin?outletId=${encodeURIComponent(outletId)}`)
+    .then((data) => adminOrdersResultSchema.parse(data))
+    .then((data) => toSubOrders(data, outletId));
 
 // PATCH /api/v1/orders/{subOrderId}/status
 // Body accepts MasterOrderStatus values; the server maps them to sub-order status internally:
