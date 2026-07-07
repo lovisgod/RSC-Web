@@ -909,7 +909,7 @@ export class OrdersService {
           AND recent_orders.deleted_at IS NULL
         WHERE u.role = 'RIDER'
           AND u.status = 'ACTIVE'
-          AND u.rider_status = ANY($2)
+          AND COALESCE(u.rider_status, 'AVAILABLE') = ANY($2)
           AND u.deleted_at IS NULL
           ${outletFilter}
           ${excludedRiderFilter}
