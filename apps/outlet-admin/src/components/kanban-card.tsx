@@ -261,8 +261,8 @@ function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
 // ─── Ready card ───────────────────────────────────────────────────────────────
 
 const READY_ACTION_LABEL: Record<string, string> = {
-  DELIVERY: "Confirm Rider Handoff",
-  TAKEOUT: "Confirm Customer Pickup",
+  DELIVERY: "Rider Handoff",
+  TAKEOUT: "Customer Pickup",
 };
 
 function ReadyCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
