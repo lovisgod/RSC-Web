@@ -24,187 +24,132 @@ import {
   verifyTakeoutHandoff,
   type PosSubOrder,
 } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
 import { toastBus } from "../lib/toast-bus";
 
-// ─── Allowed drag transitions ─────────────────────────────────────────────────
 const DRAG_TRANSITIONS: Record<string, Partial<Record<SubOrderStatus, MasterOrderStatus>>> = {
   preparing: { PENDING: "CONFIRMED" },
   ready: { ACCEPTED: "READY", PREPARING: "READY" },
 };
 
-// ─── Accept + prep-time modal (commented out — API does not accept preparationTimeMinutes yet) ───
-/*
-function AcceptOrderModal({
-  onConfirm,
-  onCancel,
-}: {
-  onConfirm: (prepTimeMinutes: number) => void;
-  onCancel: () => void;
-}) {
-  const [minutes, setMinutes] = useState(25);
+type HandoffMode = "takeout" | "dispatch";
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-        <h2 className="text-lg font-bold text-slate-900">
-          Accept Order &amp; Set Preparation Time
-        </h2>
-        <p className="mt-1.5 text-sm text-slate-500">
-          Estimate how long (in minutes) this sub-order will take to be cooked &amp; packaged.
-        </p>
+const HANDOFF_MODES: Record<
+  HandoffMode,
+  {
+    label: string;
+    helper: string;
+    button: string;
+    pending: string;
+    success: string;
+  }
+> = {
+  takeout: {
+    label: "Customer pickup",
+    helper: "For walk-in takeout customers",
+    button: "Confirm pickup",
+    pending: "Verifying…",
+    success: "Customer pickup verified — order collected ✓",
+  },
+  dispatch: {
+    label: "Rider dispatch",
+    helper: "For riders collecting delivery orders",
+    button: "Confirm dispatch",
+    pending: "Confirming…",
+    success: "Rider collection confirmed — sub-order dispatched ✓",
+  },
+};
 
-        <div className="mt-5">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Preparation Time (Minutes)
-          </label>
-          <input
-            type="number"
-            min={1}
-            max={240}
-            value={minutes}
-            onChange={(e) => setMinutes(Math.max(1, parseInt(e.target.value, 10) || 1))}
-            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
-            autoFocus
-          />
-        </div>
-
-        <div className="mt-5 flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onConfirm(minutes)}
-            className="flex-1 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white transition hover:bg-emerald-600"
-          >
-            Accept
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-*/
-
-// ─── Customer walk-in pickup ────────────────────────────────────────────────────
-
-function TakeoutVerifier({ outletId }: { outletId: string }) {
+function HandoffVerifier({ outletId }: { outletId: string }) {
+  const [mode, setMode] = useState<HandoffMode>("takeout");
   const [code, setCode] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const copy = HANDOFF_MODES[mode];
 
-  async function handleVerify(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (code.length !== 6) return;
-    setIsVerifying(true);
+
+    setIsSubmitting(true);
     try {
-      await verifyTakeoutHandoff({ code });
-      toastBus.emit("Customer pickup verified — order collected ✓", "success");
+      if (mode === "takeout") {
+        await verifyTakeoutHandoff({ code });
+      } else {
+        await riderCollect({ code });
+      }
+
+      toastBus.emit(copy.success, "success");
       setCode("");
-      await queryClient.invalidateQueries({ queryKey: ["pos", "orders", outletId] });
+      await queryClient.invalidateQueries({ queryKey: outletAdminKeys.orders(outletId) });
     } catch (err) {
       toastBus.emit(err instanceof Error ? err.message : "Invalid code", "error");
     } finally {
-      setIsVerifying(false);
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
-      <span className="text-2xl" aria-hidden="true">
-        🛍️
-      </span>
-      <div className="min-w-0 shrink-0">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Customer Pickup</p>
-        <p className="mt-0.5 text-xs text-slate-400">Customer walks in to collect</p>
+    <section className="mx-6 mb-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+      <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            Code verification
+          </p>
+          <p className="mt-0.5 truncate text-xs text-slate-400">{copy.helper}</p>
+        </div>
       </div>
-      <form onSubmit={handleVerify} className="flex flex-1 items-center gap-3">
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto"
+      >
+        <label className="sr-only" htmlFor="handoff-mode">
+          Code type
+        </label>
+        <select
+          id="handoff-mode"
+          value={mode}
+          onChange={(event) => {
+            setMode(event.target.value as HandoffMode);
+            setCode("");
+          }}
+          className="h-11 w-36 shrink-0 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none transition focus:ring-2 focus:ring-emerald-400 sm:w-44 sm:text-sm"
+        >
+          {Object.entries(HANDOFF_MODES).map(([value, option]) => (
+            <option key={value} value={value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
+        <label className="sr-only" htmlFor="handoff-code">
+          {copy.label} code
+        </label>
         <input
-          id="takeout-code"
+          id="handoff-code"
           type="text"
           inputMode="numeric"
           pattern="\d{6}"
           maxLength={6}
           placeholder="6-digit code"
           value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-emerald-400"
-          aria-label="Customer pickup code"
+          onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
+          className="h-11 min-w-28 flex-1 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:ring-2 focus:ring-emerald-400"
+          aria-label={`${copy.label} code`}
         />
+
         <button
           type="submit"
-          disabled={code.length !== 6 || isVerifying}
-          className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+          disabled={code.length !== 6 || isSubmitting}
+          className="h-11 shrink-0 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 sm:px-5"
         >
-          {isVerifying ? "Verifying…" : "Confirm"}
+          {isSubmitting ? copy.pending : copy.button}
         </button>
       </form>
-    </div>
+    </section>
   );
 }
-
-// ─── Rider collection from outlet ───────────────────────────────────────────────
-
-function RiderCollector({ outletId }: { outletId: string }) {
-  const [code, setCode] = useState("");
-  const [isCollecting, setIsCollecting] = useState(false);
-  const queryClient = useQueryClient();
-
-  async function handleCollect(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (code.length !== 6) return;
-    setIsCollecting(true);
-    try {
-      await riderCollect({ code });
-      toastBus.emit("Rider collection confirmed — sub-order dispatched ✓", "success");
-      setCode("");
-      await queryClient.invalidateQueries({ queryKey: ["pos", "orders", outletId] });
-    } catch (err) {
-      toastBus.emit(err instanceof Error ? err.message : "Invalid code", "error");
-    } finally {
-      setIsCollecting(false);
-    }
-  }
-
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
-      <span className="text-2xl" aria-hidden="true">
-        🚵
-      </span>
-      <div className="min-w-0 shrink-0">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Rider Collection</p>
-        <p className="mt-0.5 text-xs text-slate-400">Rider arrives to collect order</p>
-      </div>
-      <form onSubmit={handleCollect} className="flex flex-1 items-center gap-3">
-        <input
-          id="rider-collect-code"
-          type="text"
-          inputMode="numeric"
-          pattern="\d{6}"
-          maxLength={6}
-          placeholder="6-digit code"
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-blue-400"
-          aria-label="Rider collection code"
-        />
-        <button
-          type="submit"
-          disabled={code.length !== 6 || isCollecting}
-          className="rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:opacity-50"
-        >
-          {isCollecting ? "Confirming…" : "Dispatch"}
-        </button>
-      </form>
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ActiveOrdersPage() {
   const { user } = useAuth();
@@ -221,9 +166,11 @@ export function ActiveOrdersPage() {
     useSensor(KeyboardSensor),
   );
 
-  const incoming = activeOrders.filter((o) => o.status === "PENDING");
-  const preparing = activeOrders.filter((o) => o.status === "ACCEPTED" || o.status === "PREPARING");
-  const ready = activeOrders.filter((o) => o.status === "READY");
+  const incoming = activeOrders.filter((order) => order.status === "PENDING");
+  const preparing = activeOrders.filter(
+    (order) => order.status === "ACCEPTED" || order.status === "PREPARING",
+  );
+  const ready = activeOrders.filter((order) => order.status === "READY");
 
   function handleAdvance(subOrderId: string, status: MasterOrderStatus) {
     updateStatus({ subOrderId, status });
@@ -246,23 +193,17 @@ export function ActiveOrdersPage() {
   }
 
   return (
-    <div className="flex h-full min-h-screen flex-col">
+    <div className="flex min-h-full flex-col">
       <OutletPageHeader />
+      <HandoffVerifier outletId={outletId} />
 
-      {/* Handoff verification widgets */}
-      <div className="mx-6 mb-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <TakeoutVerifier outletId={outletId} />
-        <RiderCollector outletId={outletId} />
-      </div>
-
-      <p id="board-hint" className="mx-6 mb-3 text-xs text-slate-400">
+      <p id="board-hint" className="mx-6 mb-3 shrink-0 text-xs text-slate-400">
         Drag a card to its next stage, or use the action button.
       </p>
 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
         <div
-          className="grid flex-1 grid-cols-1 gap-4 px-6 pb-6 lg:grid-cols-3"
-          style={{ minHeight: 0 }}
+          className="grid grid-cols-1 items-start gap-4 px-6 pb-6 lg:grid-cols-3"
           aria-describedby="board-hint"
         >
           <KanbanColumn
@@ -300,8 +241,6 @@ export function ActiveOrdersPage() {
           />
         </div>
       </DndContext>
-
-      {/* AcceptOrderModal commented out — API does not support preparationTimeMinutes yet */}
     </div>
   );
 }
