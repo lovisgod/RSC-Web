@@ -29,6 +29,7 @@ export function CheckoutView() {
   const [step, setStep] = useState<Step>(1);
   const [delivery, setDelivery] = useState<DeliveryForm>(EMPTY_DELIVERY);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<OrderSnapshot | null>(null);
 
   return (
@@ -52,15 +53,16 @@ export function CheckoutView() {
       <CheckoutProgress current={STEP_TO_PROGRESS[step]} />
 
       {/* Content + sidebar */}
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+      <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-8">
         {/* Main step */}
-        <div className="flex-1 min-w-0">
+        <div className="w-full max-w-xl min-w-0 lg:max-w-none lg:flex-1">
           {step === 1 && (
             <FulfillmentStep
               initial={delivery}
-              onComplete={(d, id, snap) => {
+              onComplete={(d, id, snap, url) => {
                 setDelivery(d);
                 setOrderId(id);
+                setCheckoutUrl(url);
                 setSnapshot(snap);
                 setStep(2);
               }}
@@ -69,7 +71,8 @@ export function CheckoutView() {
 
           {step === 2 && (
             <PaymentStep
-              deliveryForm={delivery}
+              checkoutUrl={checkoutUrl}
+              totalMinor={snapshot?.totals.totalMinor ?? null}
               onBack={() => router.push("/outlets")}
               onSuccess={() => setStep(3)}
             />
@@ -79,7 +82,7 @@ export function CheckoutView() {
         </div>
 
         {/* Order summary sidebar — always visible, uses snapshot once cart is cleared */}
-        <div className="w-full lg:w-[340px] lg:sticky lg:top-20">
+        <div className="w-full max-w-xl lg:sticky lg:top-20 lg:w-[340px] lg:max-w-none">
           <CheckoutSidebar snapshot={snapshot} />
         </div>
       </div>
