@@ -222,6 +222,7 @@ export interface PosSubOrderItem {
 export interface PosSubOrder {
   id: string;
   masterOrderId: string;
+  masterOrderStatus: MasterOrderStatus;
   status: SubOrderStatus;
   deliveryMode: string;
   deliveryCode: string;
@@ -258,6 +259,7 @@ interface AdminSubOrder {
 interface AdminOrderEntry {
   order: {
     id: string;
+    status: MasterOrderStatus;
     deliveryMode: string;
     deliveryCode: string;
     createdAt: string;
@@ -280,6 +282,7 @@ function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
       .map((sub) => ({
         id: sub.id,
         masterOrderId: order.id,
+        masterOrderStatus: order.status,
         status: sub.status as SubOrderStatus,
         deliveryMode: order.deliveryMode,
         deliveryCode: order.deliveryCode,
@@ -304,6 +307,21 @@ function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
           ? { estimatedPrepTimeMinutes: sub.preparationTimeMinutes }
           : {}),
       })),
+  );
+}
+
+const ACTIVE_QUEUE_SUB_ORDER_STATUSES = new Set<SubOrderStatus>([
+  "PENDING",
+  "ACCEPTED",
+  "PREPARING",
+  "READY",
+]);
+
+export function isActiveQueueOrder(order: PosSubOrder): boolean {
+  return (
+    order.masterOrderStatus !== "DELIVERED" &&
+    order.masterOrderStatus !== "CANCELLED" &&
+    ACTIVE_QUEUE_SUB_ORDER_STATUSES.has(order.status)
   );
 }
 
