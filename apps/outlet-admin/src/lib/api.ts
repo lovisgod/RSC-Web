@@ -184,11 +184,26 @@ export const uploadImage = (file: File): Promise<UploadedImage> => {
   return post("/api/v1/media/images", body);
 };
 
-export const verifyHandoffCode = (
-  outletId: string,
-  body: { code: string },
-): Promise<{ verified: boolean; orderId?: string }> =>
-  post(`/api/v1/outlets/${outletId}/orders/verify-handoff`, body);
+/** Outlet-admin: customer walks in and presents their pickup code → marks sub-order COLLECTED. */
+export const verifyTakeoutHandoff = (body: {
+  code: string;
+}): Promise<{
+  verified: boolean;
+  subOrderId: string;
+  masterOrderId: string;
+  masterStatus: string;
+}> => post("/api/v1/orders/outlet/verify-handoff", body);
+
+/** Outlet-admin: rider arrives at counter and presents pickup code → marks sub-order DISPATCHED. */
+export const riderCollect = (body: {
+  code: string;
+  note?: string;
+}): Promise<{
+  collected: boolean;
+  subOrderId: string;
+  masterOrderId: string;
+  masterStatus: string;
+}> => post("/api/v1/orders/outlet/rider-collect", body);
 
 // ─── Orders / Sub-orders ──────────────────────────────────────────────────────
 
