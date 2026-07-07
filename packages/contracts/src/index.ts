@@ -648,6 +648,16 @@ export const orderLineItemSchema = z
   })
   .passthrough();
 
+export const riderInfoSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  phone: z.string(),
+  email: z.string().nullable().optional(),
+  avatarUrl: z.string().nullable().optional(),
+  vehicleType: z.string().nullable().optional(),
+  plateNumber: z.string().nullable().optional(),
+});
+
 export const orderDetailSchema = z
   .object({
     order: customerOrderSchema,
@@ -664,6 +674,7 @@ export const orderDetailSchema = z
       .nullish()
       .transform((value) => value ?? []),
     latestRiderLocation: riderLocationSchema.nullish().transform((value) => value ?? null),
+    rider: riderInfoSchema.nullish().transform((value) => value ?? null),
   })
   .passthrough();
 
@@ -920,6 +931,7 @@ export type NotificationCampaign = z.infer<typeof notificationCampaignSchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;
 export type RiderLocation = z.infer<typeof riderLocationSchema>;
+export type RiderInfo = z.infer<typeof riderInfoSchema>;
 export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
 export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
 export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
