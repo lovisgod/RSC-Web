@@ -265,6 +265,7 @@ export class OrdersService {
 
     order.status = input.status;
     await this.masterOrders.save(order);
+    await this.autoAssignRiderIfReady(order, user);
     await this.recordStatusEvent(order, user.id, input.note ?? null);
     await this.notifyOrderStatus(order);
     this.realtime.emitOrderStatusUpdate({
@@ -492,6 +493,7 @@ export class OrdersService {
     }
 
     await this.recordStatusEvent(order, user.id, input.note ?? null, subOrder);
+    await this.autoAssignRiderIfReady(order, user);
     await this.notifyOrderStatus(order);
     this.realtime.emitOrderStatusUpdate({
       masterOrderId: order.id,
@@ -670,6 +672,27 @@ export class OrdersService {
     });
 
     return { riderId: rider.id, dispatch };
+  }
+
+  private async autoAssignRiderIfReady(
+    order: MasterOrder,
+    actor: AuthenticatedUser,
+  ): Promise<{ riderId: string; dispatch: RiderDispatch } | null> {
+    if (
+      order.riderId ||
+      order.deliveryMode !== "DELIVERY" ||
+      order.status !== MasterOrderStatus.READY
+    ) {
+      return null;
+    }
+
+    return this.assignFairRider(
+      { ...actor, role: UserRole.SUPER_ADMIN },
+      order,
+      "Auto assigned when order became ready",
+      [],
+      false,
+    );
   }
 
   private async requireCustomerOrder(user: AuthenticatedUser, id: string): Promise<MasterOrder> {
