@@ -331,6 +331,53 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("auto-assigns an available rider when an order becomes ready", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.PARTIALLY_READY,
+      deliveryMode: "DELIVERY",
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const outletSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      pickupCode: "123456",
+      status: SubOrderStatus.PREPARING,
+    });
+    const riderId = "07c89f55-9343-4e69-bd41-bc18dcaf1478";
+    const { service, notifications, realtime, dataSource } = createService({
+      adminOutletId: outletId,
+      orders: [order],
+      availableRiders: [{ id: riderId, assignmentCount: 0 }],
+      outlets: [Object.assign(new Outlet(), { id: outletId, name: "Outlet One" })],
+      subOrders: [outletSubOrder],
+    });
+
+    await service.updateStatus(adminUser, outletSubOrder.id, {
+      status: MasterOrderStatus.READY,
+    });
+
+    expect(order.status).toBe(MasterOrderStatus.READY);
+    expect(order.riderId).toBe(riderId);
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: riderId,
+        recipientRole: UserRole.RIDER,
+        type: "ORDER_ASSIGNMENT",
+      }),
+    );
+    expect(realtime.emitOrderStatusUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ masterOrderId: order.id, riderId }),
+    );
+    expect(dataSource.query).toHaveBeenCalledWith(
+      expect.stringContaining('ORDER BY "assignmentCount" ASC'),
+      expect.not.arrayContaining([outletId]),
+    );
+  });
+
   it("returns not found when no available free rider exists", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
