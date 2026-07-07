@@ -37,41 +37,44 @@ type HandoffMode = "takeout" | "dispatch";
 const HANDOFF_MODES: Record<
   HandoffMode,
   {
-    label: string;
-    helper: string;
-    button: string;
     pending: string;
     success: string;
   }
 > = {
   takeout: {
-    label: "Customer pickup",
-    helper: "For walk-in takeout customers",
-    button: "Confirm pickup",
-    pending: "Verifying…",
-    success: "Customer pickup verified — order collected ✓",
+    pending: "Confirming pickup...",
+    success: "Customer pickup verified - order collected",
   },
   dispatch: {
-    label: "Rider dispatch",
-    helper: "For riders collecting delivery orders",
-    button: "Confirm dispatch",
-    pending: "Confirming…",
-    success: "Rider collection confirmed — sub-order dispatched ✓",
+    pending: "Confirming handoff...",
+    success: "Rider handoff confirmed - sub-order dispatched",
   },
 };
 
-function HandoffVerifier({ outletId }: { outletId: string }) {
-  const [mode, setMode] = useState<HandoffMode>("takeout");
+const DELIVERY_MODE_LABEL: Record<string, string> = {
+  DELIVERY: "Delivery",
+  TAKEOUT: "Takeout",
+};
+
+function HandoffVerifier({
+  outletId,
+  readyOrders,
+}: {
+  outletId: string;
+  readyOrders: PosSubOrder[];
+}) {
   const [code, setCode] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingMode, setSubmittingMode] = useState<HandoffMode | null>(null);
   const queryClient = useQueryClient();
-  const copy = HANDOFF_MODES[mode];
+  const matchedOrder =
+    code.length === 6 ? readyOrders.find((order) => order.pickupCode === code) : undefined;
+  const hasPickupCodes = readyOrders.some((order) => order.pickupCode);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (code.length !== 6) return;
+  async function confirmHandoff(mode: HandoffMode) {
+    if (!matchedOrder || submittingMode) return;
 
-    setIsSubmitting(true);
+    const copy = HANDOFF_MODES[mode];
+    setSubmittingMode(mode);
     try {
       if (mode === "takeout") {
         await verifyTakeoutHandoff({ code });
@@ -85,9 +88,13 @@ function HandoffVerifier({ outletId }: { outletId: string }) {
     } catch (err) {
       toastBus.emit(err instanceof Error ? err.message : "Invalid code", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmittingMode(null);
     }
   }
+
+  const codeIsComplete = code.length === 6;
+  const notFound = codeIsComplete && hasPickupCodes && !matchedOrder;
+  const pickupCodesUnavailable = codeIsComplete && !hasPickupCodes;
 
   return (
     <section className="mx-6 mb-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
@@ -96,35 +103,15 @@ function HandoffVerifier({ outletId }: { outletId: string }) {
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
             Code verification
           </p>
-          <p className="mt-0.5 truncate text-xs text-slate-400">{copy.helper}</p>
+          <p className="mt-0.5 truncate text-xs text-slate-400">
+            Enter the pickup code first; confirm only after the matching sub-order card appears.
+          </p>
         </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto"
-      >
-        <label className="sr-only" htmlFor="handoff-mode">
-          Code type
-        </label>
-        <select
-          id="handoff-mode"
-          value={mode}
-          onChange={(event) => {
-            setMode(event.target.value as HandoffMode);
-            setCode("");
-          }}
-          className="h-11 w-36 shrink-0 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none transition focus:ring-2 focus:ring-emerald-400 sm:w-44 sm:text-sm"
-        >
-          {Object.entries(HANDOFF_MODES).map(([value, option]) => (
-            <option key={value} value={value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-
+      <div className="space-y-3">
         <label className="sr-only" htmlFor="handoff-code">
-          {copy.label} code
+          Pickup code
         </label>
         <input
           id="handoff-code"
@@ -135,18 +122,81 @@ function HandoffVerifier({ outletId }: { outletId: string }) {
           placeholder="6-digit code"
           value={code}
           onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-          className="h-11 min-w-28 flex-1 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:ring-2 focus:ring-emerald-400"
-          aria-label={`${copy.label} code`}
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:ring-2 focus:ring-emerald-400"
+          aria-label="Pickup code"
         />
 
-        <button
-          type="submit"
-          disabled={code.length !== 6 || isSubmitting}
-          className="h-11 shrink-0 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 sm:px-5"
-        >
-          {isSubmitting ? copy.pending : copy.button}
-        </button>
-      </form>
+        {matchedOrder && (
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-sm font-bold text-slate-900">
+                  #{matchedOrder.id.slice(-8).toUpperCase()}
+                </p>
+                <p className="mt-1 text-xs font-medium text-slate-500">
+                  {DELIVERY_MODE_LABEL[matchedOrder.deliveryMode] ?? matchedOrder.deliveryMode} -{" "}
+                  {matchedOrder.items.length} item{matchedOrder.items.length === 1 ? "" : "s"} - NGN{" "}
+                  {(matchedOrder.totalAmountMinor / 100).toLocaleString("en-NG")}
+                </p>
+              </div>
+              <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emerald-700">
+                {matchedOrder.status}
+              </span>
+            </div>
+
+            <ul className="mt-3 space-y-1 border-t border-emerald-100 pt-3">
+              {matchedOrder.items.slice(0, 3).map((item, index) => (
+                <li key={`${item.name}-${index}`} className="text-xs text-slate-600">
+                  <span className="font-bold text-orange-500">{item.quantity}x</span> {item.name}
+                </li>
+              ))}
+              {matchedOrder.items.length > 3 && (
+                <li className="text-xs text-slate-400">
+                  +{matchedOrder.items.length - 3} more item
+                  {matchedOrder.items.length - 3 === 1 ? "" : "s"}
+                </li>
+              )}
+            </ul>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={Boolean(submittingMode)}
+                onClick={() => void confirmHandoff("takeout")}
+                className="h-10 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+              >
+                {submittingMode === "takeout"
+                  ? HANDOFF_MODES.takeout.pending
+                  : "Confirm customer pickup"}
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(submittingMode)}
+                onClick={() => void confirmHandoff("dispatch")}
+                className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+              >
+                {submittingMode === "dispatch"
+                  ? HANDOFF_MODES.dispatch.pending
+                  : "Confirm rider handoff"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {notFound && (
+          <p className="text-xs font-medium text-red-500">
+            No ready sub-order in this outlet matches that pickup code.
+          </p>
+        )}
+
+        {pickupCodesUnavailable && (
+          <p className="text-xs font-medium text-amber-600">
+            Pickup codes are not present in the outlet order list response, so the card cannot be
+            previewed before confirmation. The backend needs to expose a code lookup endpoint or
+            include pickupCode in admin sub-orders.
+          </p>
+        )}
+      </div>
     </section>
   );
 }
@@ -195,7 +245,7 @@ export function ActiveOrdersPage() {
   return (
     <div className="flex min-h-full flex-col">
       <OutletPageHeader />
-      <HandoffVerifier outletId={outletId} />
+      <HandoffVerifier outletId={outletId} readyOrders={ready} />
 
       <p id="board-hint" className="mx-6 mb-3 shrink-0 text-xs text-slate-400">
         Drag a card to its next stage, or use the action button.
