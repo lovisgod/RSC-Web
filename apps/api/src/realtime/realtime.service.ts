@@ -22,6 +22,13 @@ export interface OutletStatusUpdateEvent {
   updatedAt: Date;
 }
 
+export interface MenuItemAvailabilityUpdateEvent {
+  menuItemId: string;
+  outletId: string;
+  isAvailable: boolean;
+  updatedAt: Date;
+}
+
 @Injectable()
 export class RealtimeService {
   private server: Server | null = null;
@@ -54,6 +61,10 @@ export class RealtimeService {
 
   emitOutletStatusUpdate(event: OutletStatusUpdateEvent): void {
     this.server?.emit("outlet:status_update", event);
+  }
+
+  emitMenuItemAvailabilityUpdate(event: MenuItemAvailabilityUpdateEvent): void {
+    this.server?.emit("menu_item:availability_update", event);
   }
 }
 

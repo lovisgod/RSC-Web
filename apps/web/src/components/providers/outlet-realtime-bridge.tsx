@@ -13,6 +13,13 @@ interface OutletStatusUpdateEvent {
   updatedAt: string;
 }
 
+interface MenuItemAvailabilityUpdateEvent {
+  menuItemId: string;
+  outletId: string;
+  isAvailable: boolean;
+  updatedAt: string;
+}
+
 export function OutletRealtimeBridge() {
   const queryClient = useQueryClient();
 
@@ -30,6 +37,21 @@ export function OutletRealtimeBridge() {
           outlet.id === event.outletId ? { ...outlet, isOnline: event.isOnline } : outlet,
         ),
       );
+    });
+
+    socket.on("menu_item:availability_update", (event: MenuItemAvailabilityUpdateEvent) => {
+      queryClient.setQueryData<OutletSummary[]>(OUTLETS_QUERY.queryKey, (outlets) =>
+        outlets?.map((outlet) => {
+          if (outlet.id !== event.outletId) return outlet;
+          return {
+            ...outlet,
+            menuItems: outlet.menuItems.map((item) =>
+              item.id === event.menuItemId ? { ...item, isAvailable: event.isAvailable } : item,
+            ),
+          };
+        }),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["menu-items-search"] });
     });
 
     return () => {

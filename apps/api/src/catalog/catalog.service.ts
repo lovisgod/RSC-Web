@@ -283,6 +283,8 @@ export class CatalogService {
       await this.replaceItemGroups(item.id, input.modifierGroupIds);
     }
 
+    const wasAvailable = item.isAvailable;
+
     Object.assign(item, {
       ...input,
       description: input.description === undefined ? item.description : input.description,
@@ -292,7 +294,18 @@ export class CatalogService {
     });
     delete (item as Partial<MenuItem> & { modifierGroupIds?: string[] }).modifierGroupIds;
 
-    return this.items.save(item);
+    const saved = await this.items.save(item);
+
+    if (wasAvailable !== saved.isAvailable) {
+      this.realtime.emitMenuItemAvailabilityUpdate({
+        menuItemId: saved.id,
+        outletId: saved.outletId,
+        isAvailable: saved.isAvailable,
+        updatedAt: saved.updatedAt,
+      });
+    }
+
+    return saved;
   }
 
   async updateItemAvailability(
@@ -301,9 +314,21 @@ export class CatalogService {
     input: UpdateMenuItemAvailabilityDto,
   ): Promise<MenuItem> {
     const item = await this.getItem(user, id);
+    const wasAvailable = item.isAvailable;
     item.isAvailable = input.isAvailable;
 
-    return this.items.save(item);
+    const saved = await this.items.save(item);
+
+    if (wasAvailable !== saved.isAvailable) {
+      this.realtime.emitMenuItemAvailabilityUpdate({
+        menuItemId: saved.id,
+        outletId: saved.outletId,
+        isAvailable: saved.isAvailable,
+        updatedAt: saved.updatedAt,
+      });
+    }
+
+    return saved;
   }
 
   async uploadItemImage(
