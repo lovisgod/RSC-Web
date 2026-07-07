@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
@@ -7,6 +7,8 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import { RejectAssignedOrderDto } from "../orders/dto/orders.dto";
+import { OrdersService } from "../orders/orders.service";
 import { RecordRiderLocationDto, RiderDeliveriesQueryDto } from "./dto/rider-location.dto";
 import { RidersService } from "./riders.service";
 
@@ -15,7 +17,10 @@ import { RidersService } from "./riders.service";
 @UseGuards(AuthGuard)
 @Controller({ path: "riders", version: "1" })
 export class RidersController {
-  constructor(private readonly riders: RidersService) {}
+  constructor(
+    private readonly riders: RidersService,
+    private readonly orders: OrdersService,
+  ) {}
 
   @Post("locations")
   @ApiMessage("Rider location recorded")
@@ -53,5 +58,35 @@ export class RidersController {
     @Query() query: RiderDeliveriesQueryDto,
   ) {
     return this.riders.completedDeliveries(request.user!, query);
+  }
+
+  @Get("me/assigned-orders")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.RIDER)
+  @ApiMessage("Rider assigned orders retrieved")
+  @ApiOperation({
+    summary: "List my assigned active orders",
+    description:
+      "Rider-only endpoint returning active auto-assigned dispatches. Assignment is accepted by default until the rider explicitly rejects an order.",
+  })
+  assignedOrders(@Req() request: AuthenticatedRequest) {
+    return this.orders.listAssignedDispatches(request.user!);
+  }
+
+  @Patch("me/assigned-orders/:id/reject")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.RIDER)
+  @ApiMessage("Rider order assignment rejected")
+  @ApiOperation({
+    summary: "Reject an assigned order",
+    description:
+      "Rider-only endpoint for rejecting an auto-assigned order with a mandatory reason. The rejected rider is excluded from immediate reassignment.",
+  })
+  rejectAssignedOrder(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() input: RejectAssignedOrderDto,
+  ) {
+    return this.orders.rejectAssignedOrder(request.user!, id, input);
   }
 }

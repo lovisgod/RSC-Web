@@ -29,8 +29,11 @@ import {
   updatePlatformChargesInputSchema,
   createDeliveryAddressInputSchema,
   deliveryAddressSummarySchema,
+  deliveryAddressSuggestionSchema,
   validateAddressInputSchema,
   validateAddressResultSchema,
+  resolveDeliveryAddressInputSchema,
+  resolvedDeliveryAddressSchema,
   forgotPasswordInputSchema,
   forgotPasswordResultSchema,
   menuCategorySchema,
@@ -52,6 +55,10 @@ import {
   registrationResultSchema,
   resendVerificationInputSchema,
   resendVerificationResultSchema,
+  rateOutletInputSchema,
+  rejectAssignedOrderInputSchema,
+  rejectAssignedOrderResultSchema,
+  riderDispatchSchema,
   uploadedImageSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
@@ -83,8 +90,11 @@ import {
   type UpdateNotificationPreferencesInput,
   type CreateDeliveryAddressInput,
   type DeliveryAddressSummary,
+  type DeliveryAddressSuggestion,
   type ValidateAddressInput,
   type ValidateAddressResult,
+  type ResolveDeliveryAddressInput,
+  type ResolvedDeliveryAddress,
   type ForgotPasswordInput,
   type ForgotPasswordResult,
   type MenuCategorySummary,
@@ -107,6 +117,10 @@ import {
   type RegistrationResult,
   type ResendVerificationInput,
   type ResendVerificationResult,
+  type RateOutletInput,
+  type RejectAssignedOrderInput,
+  type RejectAssignedOrderResult,
+  type RiderDispatch,
   type UploadedImage,
   type UserVerificationResult,
   type VerifyUserInput,
@@ -352,6 +366,28 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    searchDeliveryAddressSuggestions(
+      q: string,
+      sessionToken?: string,
+    ): Promise<DeliveryAddressSuggestion[]> {
+      const params = new URLSearchParams({ q });
+      if (sessionToken) params.set("sessionToken", sessionToken);
+
+      return request(
+        `/api/v1/delivery/address-suggestions?${params.toString()}`,
+        z.array(deliveryAddressSuggestionSchema),
+      );
+    },
+    resolveDeliveryAddress(
+      input: ResolveDeliveryAddressInput,
+    ): Promise<ResolvedDeliveryAddress | null> {
+      const body = resolveDeliveryAddressInputSchema.parse(input);
+
+      return request("/api/v1/delivery/resolve-address", resolvedDeliveryAddressSchema.nullable(), {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     listGeofenceZones(): Promise<GeofenceZone[]> {
       return request("/api/v1/delivery/geofence-zones", z.array(geofenceZoneSchema));
     },
@@ -398,6 +434,14 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listOutlets(): Promise<OutletSummary[]> {
       return request("/api/v1/outlets", z.array(outletSummarySchema));
+    },
+    rateOutlet(id: string, input: RateOutletInput): Promise<OutletSummary> {
+      const body = rateOutletInputSchema.parse(input);
+
+      return request(`/api/v1/outlets/${encodeURIComponent(id)}/rating`, outletSummarySchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
     },
     listMenuCategories(outletId: string): Promise<MenuCategorySummary[]> {
       return request(
@@ -457,6 +501,24 @@ export function createApiClient(options: ApiClientOptions) {
       return request(
         `/api/v1/orders/${encodeURIComponent(id)}/rider-location`,
         riderLocationSchema.nullable(),
+      );
+    },
+    listAssignedRiderOrders(): Promise<RiderDispatch[]> {
+      return request("/api/v1/riders/me/assigned-orders", z.array(riderDispatchSchema));
+    },
+    rejectAssignedRiderOrder(
+      id: string,
+      input: RejectAssignedOrderInput,
+    ): Promise<RejectAssignedOrderResult> {
+      const body = rejectAssignedOrderInputSchema.parse(input);
+
+      return request(
+        `/api/v1/riders/me/assigned-orders/${encodeURIComponent(id)}/reject`,
+        rejectAssignedOrderResultSchema,
+        {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        },
       );
     },
     listNotifications(): Promise<Notification[]> {

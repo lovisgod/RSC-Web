@@ -36,14 +36,20 @@ export class Outlet {
   @Column({ name: "vat_bps", type: "integer", default: 0 })
   vatBps!: number;
 
-  @Column({ type: "double precision" })
-  latitude!: number;
+  @Column({ type: "double precision", nullable: true })
+  latitude!: number | null;
 
-  @Column({ type: "double precision" })
-  longitude!: number;
+  @Column({ type: "double precision", nullable: true })
+  longitude!: number | null;
 
   @Column({ name: "delivery_radius_km", type: "double precision", default: 15 })
   deliveryRadiusKm!: number;
+
+  @Column({ name: "rating_average", type: "numeric", precision: 3, scale: 2, default: 0 })
+  ratingAverage!: string;
+
+  @Column({ name: "rating_count", type: "integer", default: 0 })
+  ratingCount!: number;
 
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;

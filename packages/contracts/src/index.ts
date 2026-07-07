@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
@@ -261,6 +261,35 @@ export const validateAddressResultSchema = z.object({
     .nullable(),
 });
 
+export const deliveryAddressProviderSchema = z.enum(["google", "opencage"]);
+
+export const deliveryAddressSuggestionSchema = z.object({
+  id: z.string().min(1),
+  description: z.string().min(1),
+  provider: deliveryAddressProviderSchema,
+  sessionToken: z.string().nullable(),
+});
+
+export const resolveDeliveryAddressInputSchema = z
+  .object({
+    input: z.string().trim().min(3).max(200).optional(),
+    suggestionId: z.string().min(1).max(500).optional(),
+    provider: deliveryAddressProviderSchema.optional(),
+    sessionToken: z.string().max(120).optional(),
+  })
+  .strict();
+
+export const resolvedDeliveryAddressSchema = z.object({
+  addressLine: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  label: z.string().min(1),
+  displayName: z.string().min(1),
+  latitude: z.number(),
+  longitude: z.number(),
+  provider: deliveryAddressProviderSchema,
+});
+
 export const geofenceZoneSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1),
@@ -414,11 +443,18 @@ export const outletSummarySchema = z.object({
   imageUrl: z.string().nullable(),
   isOnline: z.boolean(),
   momentSubaccountCode: z.string(),
+  ratingAverage: z.coerce.number().min(0).max(5).default(0),
+  ratingCount: z.int().nonnegative().default(0),
   menuCategories: z.array(menuCategorySchema),
   menuItems: z.array(menuItemSchema),
   itemModifierGroups: z.array(itemModifierGroupSchema),
   itemModifiers: z.array(itemModifierSchema),
   menuItemModifierGroups: z.array(menuItemModifierGroupSchema),
+});
+
+export const rateOutletInputSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional(),
 });
 
 export const masterOrderStatusSchema = z.enum([
@@ -642,6 +678,51 @@ export const orderDetailSchema = z
   })
   .passthrough();
 
+export const riderDispatchSchema = z.object({
+  orderId: z.uuid(),
+  status: masterOrderStatusSchema,
+  deliveryCodeRequired: z.literal(true),
+  deliveryAddress: z.string().nullable(),
+  deliveryLatitude: z.number().nullable(),
+  deliveryLongitude: z.number().nullable(),
+  customerId: z.uuid(),
+  riderId: z.uuid().nullable(),
+  outlets: z.array(
+    z.object({
+      subOrderId: z.uuid(),
+      outletId: z.uuid(),
+      outletName: z.string().min(1),
+      pickupAddress: z.string().nullable(),
+      pickupLatitude: z.number().nullable(),
+      pickupLongitude: z.number().nullable(),
+      pickupCode: z.string().min(1),
+      status: subOrderStatusSchema,
+      items: z.array(
+        z.object({
+          id: z.uuid(),
+          name: z.string().min(1),
+          quantity: z.coerce.number().int().positive(),
+          modifiers: z.array(z.unknown()),
+        }),
+      ),
+    }),
+  ),
+});
+
+export const rejectAssignedOrderInputSchema = z
+  .object({
+    reason: z.string().trim().min(1).max(500),
+  })
+  .strict();
+
+export const rejectAssignedOrderResultSchema = z.object({
+  rejected: z.literal(true),
+  reassigned: z.boolean(),
+  previousRiderId: z.uuid(),
+  riderId: z.uuid().nullable(),
+  order: orderDetailSchema,
+});
+
 export const uploadedImageSchema = z.object({
   url: z.url(),
   publicId: z.string().min(1),
@@ -825,6 +906,10 @@ export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInp
 export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema>;
 export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
 export type ValidateAddressResult = z.infer<typeof validateAddressResultSchema>;
+export type DeliveryAddressProvider = z.infer<typeof deliveryAddressProviderSchema>;
+export type DeliveryAddressSuggestion = z.infer<typeof deliveryAddressSuggestionSchema>;
+export type ResolveDeliveryAddressInput = z.infer<typeof resolveDeliveryAddressInputSchema>;
+export type ResolvedDeliveryAddress = z.infer<typeof resolvedDeliveryAddressSchema>;
 export type GeofenceZone = z.infer<typeof geofenceZoneSchema>;
 export type CreateGeofenceZoneInput = z.infer<typeof createGeofenceZoneInputSchema>;
 export type UpdateGeofenceZoneInput = z.infer<typeof updateGeofenceZoneInputSchema>;
@@ -852,6 +937,9 @@ export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
 export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
 export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
+export type RiderDispatch = z.infer<typeof riderDispatchSchema>;
+export type RejectAssignedOrderInput = z.infer<typeof rejectAssignedOrderInputSchema>;
+export type RejectAssignedOrderResult = z.infer<typeof rejectAssignedOrderResultSchema>;
 export type UploadedImage = z.infer<typeof uploadedImageSchema>;
 
 export const paginatedMenuItemsSchema = menuItemsPageSchema;
@@ -880,3 +968,4 @@ export const pickupSubOrderInputSchema = z
 export type PlatformCharges = z.infer<typeof platformChargesSchema>;
 export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
 export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;
+export type RateOutletInput = z.infer<typeof rateOutletInputSchema>;

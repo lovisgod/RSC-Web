@@ -31,5 +31,6 @@ import { SubOrder } from "./sub-order.entity";
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
+  exports: [OrdersService],
 })
 export class OrdersModule {}
