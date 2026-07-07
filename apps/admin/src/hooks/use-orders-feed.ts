@@ -7,6 +7,7 @@ export function useOrdersFeed(params?: AdminOrdersQuery) {
     queryKey: ["admin", "orders", params ?? {}],
     queryFn: () => listAdminOrders(params),
     staleTime: 0,
-    refetchInterval: 10_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   });
 }

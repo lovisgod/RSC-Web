@@ -18,7 +18,10 @@ export function OutletRealtimeBridge() {
   const hasConnectedRef = useRef(false);
 
   useEffect(() => {
-    const origin = process.env.NEXT_PUBLIC_REALTIME_URL || window.location.origin;
+    const origin =
+      process.env.NEXT_PUBLIC_REALTIME_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      window.location.origin;
     const socket = io(`${origin}/realtime`, {
       path: "/socket.io",
       withCredentials: true,

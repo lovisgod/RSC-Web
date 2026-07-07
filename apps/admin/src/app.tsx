@@ -14,6 +14,7 @@ import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "reac
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Toaster } from "./components/toaster";
+import { useAdminRealtime } from "./hooks/use-admin-realtime";
 import { useLiveClock } from "./hooks/use-live-clock";
 import { useAuth } from "./hooks/use-auth";
 import { logout as apiLogout } from "./lib/api";
@@ -124,6 +125,8 @@ function OperatorFooter() {
 }
 
 function AdminShell() {
+  useAdminRealtime();
+
   const location = useLocation();
   const clock = useLiveClock();
   const pageTitle = getPageTitle(location.pathname);
