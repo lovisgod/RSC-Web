@@ -18,6 +18,13 @@ export default defineConfig({
         // Rewrite cookie domain so the browser accepts them on 127.0.0.1
         cookieDomainRewrite: { "*": "" },
       },
+      "/socket.io": {
+        target: "https://api-dev.rscdev.tech",
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        cookieDomainRewrite: { "*": "" },
+      },
     },
   },
   preview: {

@@ -29,7 +29,11 @@ const orderRoomPayloadSchema = z.object({
 });
 
 function getRealtimeOrigin() {
-  return process.env.NEXT_PUBLIC_REALTIME_URL || window.location.origin;
+  return (
+    process.env.NEXT_PUBLIC_REALTIME_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    window.location.origin
+  );
 }
 
 export function useOrderDetail(orderId: string | null) {

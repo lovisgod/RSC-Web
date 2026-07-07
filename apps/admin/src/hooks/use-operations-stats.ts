@@ -3,13 +3,14 @@ import type { OperationsStatsQuery, OrderPulseRange } from "@rsc/contracts";
 
 import { getOperationsQueue, getOperationsSummary, getOrderPulse } from "../lib/api";
 
-const REFRESH_INTERVAL = 30_000;
+const FALLBACK_REFRESH_INTERVAL = 60_000;
 
 export function useOperationsSummary(input: OperationsStatsQuery = {}) {
   return useQuery({
     queryKey: ["admin", "stats", "operations", "summary", input],
     queryFn: () => getOperationsSummary(input),
-    refetchInterval: REFRESH_INTERVAL,
+    refetchInterval: FALLBACK_REFRESH_INTERVAL,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -17,7 +18,8 @@ export function useOrderPulse(range: OrderPulseRange, input: OperationsStatsQuer
   return useQuery({
     queryKey: ["admin", "stats", "operations", "order-pulse", range, input],
     queryFn: () => getOrderPulse({ ...input, range }),
-    refetchInterval: REFRESH_INTERVAL,
+    refetchInterval: FALLBACK_REFRESH_INTERVAL,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -25,6 +27,7 @@ export function useOperationsQueue(input: OperationsStatsQuery = {}) {
   return useQuery({
     queryKey: ["admin", "stats", "operations", "queue", input],
     queryFn: () => getOperationsQueue(input),
-    refetchInterval: REFRESH_INTERVAL,
+    refetchInterval: FALLBACK_REFRESH_INTERVAL,
+    refetchIntervalInBackground: false,
   });
 }
