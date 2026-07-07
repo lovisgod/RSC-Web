@@ -46,7 +46,6 @@ describe(PiiCryptoService.name, () => {
     const parts = encrypted.split(".");
     const payloadBytes = Buffer.from(parts[3]!, "base64url");
     const mid = Math.floor(payloadBytes.length / 2);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     payloadBytes[mid] = payloadBytes[mid]! ^ 0xff;
     parts[3] = payloadBytes.toString("base64url");
     const tampered = parts.join(".");
