@@ -47,7 +47,12 @@ export function FulfillmentStep({
   onComplete,
 }: {
   initial: DeliveryForm;
-  onComplete: (data: DeliveryForm, orderId: string, snapshot: OrderSnapshot) => void;
+  onComplete: (
+    data: DeliveryForm,
+    orderId: string,
+    snapshot: OrderSnapshot,
+    checkoutUrl: string | null,
+  ) => void;
 }) {
   const { data: cart } = useCart();
   const clearCart = useCartStore((s) => s.clear);
@@ -309,6 +314,7 @@ export function FulfillmentStep({
         },
         result.reference,
         snapshot,
+        result.checkoutUrl,
       );
     },
   });
