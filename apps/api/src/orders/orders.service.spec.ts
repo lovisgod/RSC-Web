@@ -15,6 +15,7 @@ import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
 import type { OrderStatusEvent } from "./order-status-event.entity";
 import { OrdersService } from "./orders.service";
 import { SubOrder } from "./sub-order.entity";
+import { PiiCryptoService } from "../common/security/pii-crypto.service";
 
 function createMasterOrderQueryBuilder(orders: MasterOrder[], total: number) {
   const queryBuilder = {
@@ -41,6 +42,21 @@ function createService(input: {
   const queryBuilder = createMasterOrderQueryBuilder(input.orders ?? [], input.total ?? 0);
   const users = {
     findOne: vi.fn(({ where }: { where: Partial<Customer> }) => {
+      if (where.role === UserRole.ADMIN) {
+        return Promise.resolve(
+          input.adminOutletId === undefined
+            ? null
+            : Object.assign(new Customer(), { id: "admin-id", outletId: input.adminOutletId }),
+        );
+      }
+
+      return Promise.resolve(
+        (input.riders ?? []).find((rider) =>
+          Object.entries(where).every(([key, value]) => rider[key as keyof Customer] === value),
+        ) ?? null,
+      );
+    }),
+    findOneBy: vi.fn((where: Partial<Customer>) => {
       if (where.role === UserRole.ADMIN) {
         return Promise.resolve(
           input.adminOutletId === undefined
@@ -111,6 +127,9 @@ function createService(input: {
       Promise.resolve(sql.includes("FROM users u") ? (input.availableRiders ?? []) : []),
     ),
   };
+  const piiCrypto = {
+    decrypt: vi.fn((val) => val),
+  };
   const service = new OrdersService(
     users as unknown as Repository<Customer>,
     outlets as unknown as Repository<Outlet>,
@@ -122,6 +141,7 @@ function createService(input: {
     {} as PaymentsService,
     notifications as unknown as NotificationsService,
     realtime as unknown as RealtimeService,
+    piiCrypto as unknown as PiiCryptoService,
   );
 
   return {
