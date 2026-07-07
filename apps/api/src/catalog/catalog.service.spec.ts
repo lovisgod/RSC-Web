@@ -13,6 +13,7 @@ import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
 import { MenuItemRating } from "./menu-item-rating.entity";
 import { MenuItem } from "./menu-item.entity";
 import { OutletRating } from "./outlet-rating.entity";
+import type { PreparationSuggestion } from "./preparation-suggestion.entity";
 
 describe(CatalogService.name, () => {
   const outletId = "4273e96c-2887-49a5-a6d5-269f007f04f0";
@@ -182,6 +183,20 @@ describe(CatalogService.name, () => {
       emitOutletStatusUpdate: vi.fn(),
       emitMenuItemAvailabilityUpdate: vi.fn(),
     };
+    const preparationSuggestions = {
+      find: vi.fn().mockResolvedValue([]),
+      findOneBy: vi.fn().mockResolvedValue(null),
+      create: vi.fn((val: unknown) => val),
+      save: vi.fn((val: unknown) => Promise.resolve(val)),
+      remove: vi.fn().mockResolvedValue(undefined),
+      createQueryBuilder: vi.fn(() => ({
+        where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
+        getMany: vi.fn().mockResolvedValue([]),
+      })),
+    };
     service = new CatalogService(
       outlets as unknown as Repository<Outlet>,
       users as unknown as Repository<Customer>,
@@ -192,6 +207,7 @@ describe(CatalogService.name, () => {
       groups as unknown as Repository<ItemModifierGroup>,
       modifiers as unknown as Repository<ItemModifier>,
       itemGroups as unknown as Repository<MenuItemModifierGroup>,
+      preparationSuggestions as unknown as Repository<PreparationSuggestion>,
       media as never,
       realtime as never,
     );

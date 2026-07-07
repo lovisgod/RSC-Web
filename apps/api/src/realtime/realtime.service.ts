@@ -4,6 +4,7 @@ import type { Server } from "socket.io";
 import type { MasterOrderStatus } from "../orders/order-status.enum";
 import type { LatestLocation } from "../orders/orders.service";
 import type { SubOrder } from "../orders/sub-order.entity";
+import type { PreparationSuggestion } from "../catalog/preparation-suggestion.entity";
 
 export interface OrderStatusUpdateEvent {
   masterOrderId: string;
@@ -65,6 +66,18 @@ export class RealtimeService {
 
   emitMenuItemAvailabilityUpdate(event: MenuItemAvailabilityUpdateEvent): void {
     this.server?.emit("menu_item:availability_update", event);
+  }
+
+  emitPreparationSuggestionCreated(suggestion: PreparationSuggestion): void {
+    this.server?.emit("preparation_suggestion:created", suggestion);
+  }
+
+  emitPreparationSuggestionUpdated(suggestion: PreparationSuggestion): void {
+    this.server?.emit("preparation_suggestion:updated", suggestion);
+  }
+
+  emitPreparationSuggestionDeleted(id: string): void {
+    this.server?.emit("preparation_suggestion:deleted", { id });
   }
 }
 
