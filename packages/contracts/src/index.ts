@@ -521,10 +521,12 @@ export const adminOrderSubOrderSchema = z.object({
   masterOrderId: z.uuid(),
   outletId: z.uuid(),
   status: subOrderStatusSchema,
+  pickupCode: z.string().nullable().optional(),
   subtotalMinor: z.int().nonnegative(),
   commissionMinor: z.int().nonnegative(),
   netMinor: z.int().nonnegative(),
   currency: currencySchema,
+  preparationTimeMinutes: z.int().nonnegative().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
@@ -541,7 +543,18 @@ export const adminOrderLineItemSchema = z.object({
   quantity: z.int().positive(),
   lineTotalMinor: z.int().nonnegative(),
   currency: currencySchema,
-  modifiersSnapshot: z.array(z.unknown()),
+  modifiersSnapshot: z
+    .array(
+      z
+        .object({
+          id: z.uuid().optional(),
+          name: z.string().min(1),
+          priceDeltaMinor: z.coerce.number().int().default(0),
+        })
+        .passthrough(),
+    )
+    .nullish()
+    .transform((value) => value ?? []),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
