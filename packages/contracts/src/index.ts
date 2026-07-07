@@ -968,3 +968,47 @@ export type PlatformCharges = z.infer<typeof platformChargesSchema>;
 export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
 export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;
 export type RateOutletInput = z.infer<typeof rateOutletInputSchema>;
+
+export const preparationSuggestionSchema = z.object({
+  id: z.uuid(),
+  text: z.string().min(1).max(255),
+  outletId: z.uuid().nullable(),
+  menuItemId: z.uuid().nullable(),
+  isActive: z.boolean(),
+  sortOrder: z.int().nonnegative(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const createPreparationSuggestionInputSchema = z
+  .object({
+    text: z.string().trim().min(1).max(255),
+    outletId: z.uuid().nullable().optional(),
+    menuItemId: z.uuid().nullable().optional(),
+    isActive: z.boolean().optional(),
+    sortOrder: z.int().nonnegative().optional(),
+  })
+  .strict();
+
+export const updatePreparationSuggestionInputSchema = createPreparationSuggestionInputSchema
+  .partial()
+  .strict();
+
+export const queryPreparationSuggestionsInputSchema = z
+  .object({
+    outletId: z.uuid().optional(),
+    menuItemId: z.uuid().optional(),
+    q: z.string().optional(),
+  })
+  .strict();
+
+export type PreparationSuggestion = z.infer<typeof preparationSuggestionSchema>;
+export type CreatePreparationSuggestionInput = z.infer<
+  typeof createPreparationSuggestionInputSchema
+>;
+export type UpdatePreparationSuggestionInput = z.infer<
+  typeof updatePreparationSuggestionInputSchema
+>;
+export type QueryPreparationSuggestionsInput = z.infer<
+  typeof queryPreparationSuggestionsInputSchema
+>;
