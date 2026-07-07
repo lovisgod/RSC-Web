@@ -667,7 +667,11 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
                           <p className="text-sm font-semibold text-gray-800 truncate">
                             {suggestion.description}
                           </p>
-                          <p className="text-xs text-gray-400 truncate">Google exact address</p>
+                          <p className="text-xs text-gray-400 truncate">
+                            {suggestion.provider === "google"
+                              ? "Google exact address"
+                              : "Address match"}
+                          </p>
                         </div>
                       </button>
                     ))}

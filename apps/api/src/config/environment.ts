@@ -51,6 +51,10 @@ export interface Environment {
   FIREBASE_CLIENT_EMAIL?: string;
   FIREBASE_PRIVATE_KEY?: string;
   FIREBASE_PRIVATE_KEY_BASE64?: string;
+  ADDRESS_AUTOCOMPLETE_PROVIDER: "google" | "opencage";
+  GOOGLE_MAPS_API_KEY?: string;
+  OPENCAGE_API_KEY?: string;
+  OPENCAGE_BASE_URL: string;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -182,6 +186,12 @@ const environmentSchema = Joi.object<Environment>({
   }),
   FIREBASE_PRIVATE_KEY: Joi.string().optional().allow(""),
   FIREBASE_PRIVATE_KEY_BASE64: Joi.string().optional().allow(""),
+  ADDRESS_AUTOCOMPLETE_PROVIDER: Joi.string().valid("google", "opencage").default("google"),
+  GOOGLE_MAPS_API_KEY: Joi.string().optional().allow(""),
+  OPENCAGE_API_KEY: Joi.string().optional().allow(""),
+  OPENCAGE_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://api.opencagedata.com/geocode/v1/json"),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {

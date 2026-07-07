@@ -9,7 +9,8 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import type { MasterOrderStatus, SubOrderStatus } from "@rsc/contracts";
-import { useState } from "react"; // kept for TakeoutVerifier
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { KanbanColumn } from "../components/kanban-column";
 import { OutletPageHeader } from "../components/outlet-page-header";
@@ -17,7 +18,12 @@ import { useAuth } from "../hooks/use-auth";
 import { useNewOrderAlert } from "../hooks/use-new-order-alert";
 import { useOrdersQueue } from "../hooks/use-orders-queue";
 import { useUpdateOrderStatus } from "../hooks/use-update-order-status";
-import { isActiveQueueOrder, verifyHandoffCode, type PosSubOrder } from "../lib/api";
+import {
+  isActiveQueueOrder,
+  riderCollect,
+  verifyTakeoutHandoff,
+  type PosSubOrder,
+} from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
 // ─── Allowed drag transitions ─────────────────────────────────────────────────
@@ -84,20 +90,22 @@ function AcceptOrderModal({
 }
 */
 
-// ─── Takeout hand-off verifier ────────────────────────────────────────────────
+// ─── Customer walk-in pickup ────────────────────────────────────────────────────
 
 function TakeoutVerifier({ outletId }: { outletId: string }) {
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const queryClient = useQueryClient();
 
   async function handleVerify(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (code.length !== 6 || !outletId) return;
+    if (code.length !== 6) return;
     setIsVerifying(true);
     try {
-      await verifyHandoffCode(outletId, { code });
-      toastBus.emit("Handoff verified — order collected ✓", "success");
+      await verifyTakeoutHandoff({ code });
+      toastBus.emit("Customer pickup verified — order collected ✓", "success");
       setCode("");
+      await queryClient.invalidateQueries({ queryKey: ["pos", "orders", outletId] });
     } catch (err) {
       toastBus.emit(err instanceof Error ? err.message : "Invalid code", "error");
     } finally {
@@ -106,30 +114,90 @@ function TakeoutVerifier({ outletId }: { outletId: string }) {
   }
 
   return (
-    <div className="mx-6 mb-5 flex items-center gap-4 rounded-xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
+    <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
       <span className="text-2xl" aria-hidden="true">
         🛍️
       </span>
-      <span className="shrink-0 text-sm font-semibold text-slate-700">
-        Takeout Hand-off Verifier
-      </span>
+      <div className="min-w-0 shrink-0">
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Customer Pickup</p>
+        <p className="mt-0.5 text-xs text-slate-400">Customer walks in to collect</p>
+      </div>
       <form onSubmit={handleVerify} className="flex flex-1 items-center gap-3">
         <input
+          id="takeout-code"
           type="text"
           inputMode="numeric"
           pattern="\d{6}"
           maxLength={6}
-          placeholder="Enter customer's 6-digit code"
+          placeholder="6-digit code"
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-emerald-400"
+          aria-label="Customer pickup code"
         />
         <button
           type="submit"
-          disabled={code.length !== 6 || isVerifying || !outletId}
+          disabled={code.length !== 6 || isVerifying}
           className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
         >
-          Verify Code
+          {isVerifying ? "Verifying…" : "Confirm"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ─── Rider collection from outlet ───────────────────────────────────────────────
+
+function RiderCollector({ outletId }: { outletId: string }) {
+  const [code, setCode] = useState("");
+  const [isCollecting, setIsCollecting] = useState(false);
+  const queryClient = useQueryClient();
+
+  async function handleCollect(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (code.length !== 6) return;
+    setIsCollecting(true);
+    try {
+      await riderCollect({ code });
+      toastBus.emit("Rider collection confirmed — sub-order dispatched ✓", "success");
+      setCode("");
+      await queryClient.invalidateQueries({ queryKey: ["pos", "orders", outletId] });
+    } catch (err) {
+      toastBus.emit(err instanceof Error ? err.message : "Invalid code", "error");
+    } finally {
+      setIsCollecting(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
+      <span className="text-2xl" aria-hidden="true">
+        🚵
+      </span>
+      <div className="min-w-0 shrink-0">
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Rider Collection</p>
+        <p className="mt-0.5 text-xs text-slate-400">Rider arrives to collect order</p>
+      </div>
+      <form onSubmit={handleCollect} className="flex flex-1 items-center gap-3">
+        <input
+          id="rider-collect-code"
+          type="text"
+          inputMode="numeric"
+          pattern="\d{6}"
+          maxLength={6}
+          placeholder="6-digit code"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-blue-400"
+          aria-label="Rider collection code"
+        />
+        <button
+          type="submit"
+          disabled={code.length !== 6 || isCollecting}
+          className="rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:opacity-50"
+        >
+          {isCollecting ? "Confirming…" : "Dispatch"}
         </button>
       </form>
     </div>
@@ -180,7 +248,12 @@ export function ActiveOrdersPage() {
   return (
     <div className="flex h-full min-h-screen flex-col">
       <OutletPageHeader />
-      <TakeoutVerifier outletId={outletId} />
+
+      {/* Handoff verification widgets */}
+      <div className="mx-6 mb-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <TakeoutVerifier outletId={outletId} />
+        <RiderCollector outletId={outletId} />
+      </div>
 
       <p id="board-hint" className="mx-6 mb-3 text-xs text-slate-400">
         Drag a card to its next stage, or use the action button.

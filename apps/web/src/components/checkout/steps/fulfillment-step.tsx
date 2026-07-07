@@ -16,9 +16,11 @@ import {
   type FulfillmentMode,
   type OrderSnapshot,
 } from "@/src/lib/data/checkout";
+import type { GooglePlaceSuggestion } from "@/src/lib/google-places";
 import { geocodeAddress } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
+import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
 import { useCartStore } from "@/src/stores/cart-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
@@ -71,6 +73,7 @@ export function FulfillmentStep({
   const [showDropdown, setShowDropdown] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const addressSuggestions = useGooglePlacesAutocomplete(addressText, mode === "delivery");
 
   const filteredAddresses = savedAddresses.filter((addr) => {
     if (!addressText.trim()) return true;
@@ -165,40 +168,70 @@ export function FulfillmentStep({
         setLocationError("Address not found. Try a more specific address.");
         return;
       }
-      const { latitude, longitude, addressLine, city, state, label } = result;
-      setCoords({ latitude, longitude });
       setGeocoding(false);
-
-      validateMutation.mutate(
-        { latitude, longitude },
-        {
-          onSuccess: (data) => {
-            if (!data.deliverable) return;
-            const isAlreadySaved = savedAddresses.some(
-              (a) =>
-                Math.abs(a.latitude - latitude) < 0.0001 &&
-                Math.abs(a.longitude - longitude) < 0.0001,
-            );
-            if (isAlreadySaved) return;
-            void apiClient
-              .createDeliveryAddress({
-                label: label || addressLine.slice(0, 30),
-                addressLine,
-                city: city || "Lagos",
-                state: state || "Lagos State",
-                latitude,
-                longitude,
-                isDefault: savedAddresses.length === 0,
-              })
-              .then(() => qc.invalidateQueries({ queryKey: ["delivery-addresses"] }))
-              .catch((err: unknown) => console.error("[address save]", err));
-          },
-        },
-      );
+      handleResolvedAddress(result);
     } catch {
       setGeocoding(false);
       setLocationError("Geocoding failed. Please try again.");
     }
+  }
+
+  async function selectAddressSuggestion(suggestion: GooglePlaceSuggestion) {
+    setGeocoding(true);
+    setLocationError(null);
+    try {
+      const result = await addressSuggestions.selectSuggestion(suggestion);
+      setGeocoding(false);
+      if (!result) {
+        setLocationError("Address not found. Try a more specific address.");
+        return;
+      }
+      setAddressText(result.displayName || result.addressLine);
+      setShowDropdown(false);
+      handleResolvedAddress(result);
+    } catch {
+      setGeocoding(false);
+      setLocationError("Could not load this address. Please pick another suggestion.");
+    }
+  }
+
+  function handleResolvedAddress(result: {
+    latitude: number;
+    longitude: number;
+    addressLine: string;
+    city: string;
+    state: string;
+    label: string;
+  }) {
+    const { latitude, longitude, addressLine, city, state, label } = result;
+    setCoords({ latitude, longitude });
+
+    validateMutation.mutate(
+      { latitude, longitude },
+      {
+        onSuccess: (data) => {
+          if (!data.deliverable) return;
+          const isAlreadySaved = savedAddresses.some(
+            (address) =>
+              Math.abs(address.latitude - latitude) < 0.0001 &&
+              Math.abs(address.longitude - longitude) < 0.0001,
+          );
+          if (isAlreadySaved) return;
+          void apiClient
+            .createDeliveryAddress({
+              label: label || addressLine.slice(0, 30),
+              addressLine,
+              city: city || "Lagos",
+              state: state || "Lagos State",
+              latitude,
+              longitude,
+              isDefault: savedAddresses.length === 0,
+            })
+            .then(() => qc.invalidateQueries({ queryKey: ["delivery-addresses"] }))
+            .catch((err: unknown) => console.error("[address save]", err));
+        },
+      },
+    );
   }
 
   useEffect(() => {
@@ -280,7 +313,7 @@ export function FulfillmentStep({
     },
   });
 
-  const isValidating = geocoding || validateMutation.isPending;
+  const isValidating = geocoding || addressSuggestions.isLoading || validateMutation.isPending;
   const isValidated = zone !== null;
   const cartItemCount = cart.groups.reduce((n, g) => n + g.items.length, 0);
   const canProceed = cartItemCount > 0 && (mode === "takeout" || isValidated);
@@ -364,43 +397,71 @@ export function FulfillmentStep({
                 )}
               </div>
 
-              {/* Saved address dropdown */}
-              {showDropdown && filteredAddresses.length > 0 && (
-                <div
-                  onMouseDown={handleDropdownMouseDown}
-                  className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
-                >
-                  {filteredAddresses.map((addr) => (
-                    <button
-                      key={addr.id}
-                      type="button"
-                      onClick={() => selectSavedAddress(addr)}
-                      className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${
-                        selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/5" : ""
-                      }`}
-                    >
-                      <span className="mt-0.5 flex-shrink-0 text-gray-400">
-                        {addr.isDefault ? (
-                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                        ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src="/icons/png/round-pushpin_1f4cd.png"
-                            alt=""
-                            className="w-4 h-4 object-contain"
-                          />
-                        )}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{addr.label}</p>
-                        <p className="text-xs text-gray-400 truncate">
-                          {addr.addressLine}, {addr.city}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Address dropdown */}
+              {showDropdown &&
+                (filteredAddresses.length > 0 || addressSuggestions.suggestions.length > 0) && (
+                  <div
+                    onMouseDown={handleDropdownMouseDown}
+                    className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
+                  >
+                    {filteredAddresses.map((addr) => (
+                      <button
+                        key={addr.id}
+                        type="button"
+                        onClick={() => selectSavedAddress(addr)}
+                        className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${
+                          selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/5" : ""
+                        }`}
+                      >
+                        <span className="mt-0.5 flex-shrink-0 text-gray-400">
+                          {addr.isDefault ? (
+                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src="/icons/png/round-pushpin_1f4cd.png"
+                              alt=""
+                              className="w-4 h-4 object-contain"
+                            />
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
+                            {addr.label}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate">
+                            {addr.addressLine}, {addr.city}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                    {addressSuggestions.suggestions.map((suggestion) => (
+                      <button
+                        key={`${suggestion.provider}:${suggestion.id}`}
+                        type="button"
+                        onClick={() => void selectAddressSuggestion(suggestion)}
+                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/icons/png/round-pushpin_1f4cd.png"
+                          alt=""
+                          className="w-4 h-4 object-contain mt-0.5 flex-shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
+                            {suggestion.description}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate">
+                            {suggestion.provider === "google"
+                              ? "Google exact address"
+                              : "Address match"}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
             </div>
 
             {/* Validation success */}
