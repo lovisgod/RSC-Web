@@ -45,7 +45,9 @@ describe(PiiCryptoService.name, () => {
     // character is unreliable because padding bits may absorb the edit.
     const parts = encrypted.split(".");
     const payloadBytes = Buffer.from(parts[3]!, "base64url");
-    payloadBytes[Math.floor(payloadBytes.length / 2)] ^= 0xff;
+    const mid = Math.floor(payloadBytes.length / 2);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    payloadBytes[mid] = payloadBytes[mid]! ^ 0xff;
     parts[3] = payloadBytes.toString("base64url");
     const tampered = parts.join(".");
 
