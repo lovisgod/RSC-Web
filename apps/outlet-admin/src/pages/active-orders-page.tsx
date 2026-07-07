@@ -18,7 +18,12 @@ import { useAuth } from "../hooks/use-auth";
 import { useNewOrderAlert } from "../hooks/use-new-order-alert";
 import { useOrdersQueue } from "../hooks/use-orders-queue";
 import { useUpdateOrderStatus } from "../hooks/use-update-order-status";
-import { riderCollect, verifyTakeoutHandoff, type PosSubOrder } from "../lib/api";
+import {
+  isActiveQueueOrder,
+  riderCollect,
+  verifyTakeoutHandoff,
+  type PosSubOrder,
+} from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
 // ─── Allowed drag transitions ─────────────────────────────────────────────────
@@ -206,8 +211,9 @@ export function ActiveOrdersPage() {
   const outletId = user?.outletId ?? "";
   const { data: orders = [], isLoading } = useOrdersQueue(outletId);
   const { mutate: updateStatus, isPending: isAdvancing } = useUpdateOrderStatus(outletId);
+  const activeOrders = orders.filter(isActiveQueueOrder);
 
-  useNewOrderAlert(orders);
+  useNewOrderAlert(activeOrders);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -215,9 +221,9 @@ export function ActiveOrdersPage() {
     useSensor(KeyboardSensor),
   );
 
-  const incoming = orders.filter((o) => o.status === "PENDING");
-  const preparing = orders.filter((o) => o.status === "ACCEPTED" || o.status === "PREPARING");
-  const ready = orders.filter((o) => o.status === "READY");
+  const incoming = activeOrders.filter((o) => o.status === "PENDING");
+  const preparing = activeOrders.filter((o) => o.status === "ACCEPTED" || o.status === "PREPARING");
+  const ready = activeOrders.filter((o) => o.status === "READY");
 
   function handleAdvance(subOrderId: string, status: MasterOrderStatus) {
     updateStatus({ subOrderId, status });
