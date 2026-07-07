@@ -79,7 +79,10 @@ describe(CatalogService.name, () => {
     save: ReturnType<typeof vi.fn>;
   };
   let media: { uploadImage: ReturnType<typeof vi.fn> };
-  let realtime: { emitOutletStatusUpdate: ReturnType<typeof vi.fn> };
+  let realtime: {
+    emitOutletStatusUpdate: ReturnType<typeof vi.fn>;
+    emitMenuItemAvailabilityUpdate: ReturnType<typeof vi.fn>;
+  };
   let service: CatalogService;
 
   beforeEach(() => {
@@ -177,6 +180,7 @@ describe(CatalogService.name, () => {
     };
     realtime = {
       emitOutletStatusUpdate: vi.fn(),
+      emitMenuItemAvailabilityUpdate: vi.fn(),
     };
     service = new CatalogService(
       outlets as unknown as Repository<Outlet>,
@@ -231,6 +235,12 @@ describe(CatalogService.name, () => {
 
     expect(result.isAvailable).toBe(false);
     expect(items.save).toHaveBeenCalledWith(expect.objectContaining({ isAvailable: false }));
+    expect(realtime.emitMenuItemAvailabilityUpdate).toHaveBeenCalledWith({
+      menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+      outletId,
+      isAvailable: false,
+      updatedAt: result.updatedAt,
+    });
   });
 
   it("blocks outlet admins from changing outlet online status through generic updates", async () => {
