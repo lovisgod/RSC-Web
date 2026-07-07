@@ -15,7 +15,7 @@ import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
 import type { OrderStatusEvent } from "./order-status-event.entity";
 import { OrdersService } from "./orders.service";
 import { SubOrder } from "./sub-order.entity";
-import { PiiCryptoService } from "../common/security/pii-crypto.service";
+import type { PiiCryptoService } from "../common/security/pii-crypto.service";
 
 function createMasterOrderQueryBuilder(orders: MasterOrder[], total: number) {
   const queryBuilder = {
@@ -128,7 +128,7 @@ function createService(input: {
     ),
   };
   const piiCrypto = {
-    decrypt: vi.fn((val) => val),
+    decrypt: vi.fn((val: string): string => val),
   };
   const service = new OrdersService(
     users as unknown as Repository<Customer>,
