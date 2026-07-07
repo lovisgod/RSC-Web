@@ -130,3 +130,25 @@ export class PickupSubOrderDto {
   @MaxLength(500)
   note?: string;
 }
+
+/** Outlet-admin enters the sub-order's pickup code to mark a customer walk-in as collected. */
+export class VerifyPickupCodeDto {
+  @ApiProperty({ example: "493021", minLength: 6, maxLength: 6 })
+  @IsString()
+  @Matches(/^\d{6}$/)
+  code!: string;
+}
+
+/** Outlet-admin enters the sub-order's pickup code when a rider arrives to collect. */
+export class RiderCollectSubOrderDto {
+  @ApiProperty({ example: "493021", minLength: 6, maxLength: 6 })
+  @IsString()
+  @Matches(/^\d{6}$/)
+  code!: string;
+
+  @ApiPropertyOptional({ example: "Rider collected order" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}

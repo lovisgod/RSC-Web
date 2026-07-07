@@ -26,7 +26,9 @@ import type {
   ListAdminOrdersQueryDto,
   PickupSubOrderDto,
   RejectAssignedOrderDto,
+  RiderCollectSubOrderDto,
   UpdateOrderStatusDto,
+  VerifyPickupCodeDto,
 } from "./dto/orders.dto";
 
 export interface LatestLocation {
@@ -540,6 +542,129 @@ export class OrdersService {
     });
 
     return this.buildOrderDetail(order);
+  }
+
+  /**
+   * Outlet-admin verifies a customer walk-in pickup.
+   * Finds the READY sub-order for this outlet matching the code → COLLECTED.
+   */
+  async verifyOutletHandoff(user: AuthenticatedUser, input: VerifyPickupCodeDto) {
+    if (user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Only outlet admins can verify customer handoffs");
+    }
+
+    const outletId = await this.requireAdminOutletId(user);
+    const subOrder = await this.subOrders.findOneBy({ outletId, pickupCode: input.code });
+
+    if (!subOrder) {
+      throw new NotFoundException("No order found for that pickup code");
+    }
+
+    if (subOrder.status !== SubOrderStatus.READY) {
+      throw new BadRequestException(
+        `Sub-order is not ready for pickup (current status: ${subOrder.status})`,
+      );
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: subOrder.masterOrderId });
+
+    if (!order) {
+      throw new NotFoundException("Master order not found");
+    }
+
+    subOrder.status = SubOrderStatus.COLLECTED;
+    await this.subOrders.save(subOrder);
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+
+    if (derivedStatus !== order.status) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
+
+    await this.recordStatusEvent(order, user.id, "Customer walk-in pickup verified", subOrder);
+    await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return {
+      verified: true,
+      subOrderId: subOrder.id,
+      masterOrderId: order.id,
+      masterStatus: order.status,
+    };
+  }
+
+  /**
+   * Outlet-admin verifies a rider arriving to collect an order.
+   * Finds the READY sub-order for this outlet matching the code → DISPATCHED.
+   * Master order becomes OUT_FOR_DELIVERY when all non-rejected sub-orders are dispatched/collected.
+   */
+  async riderCollectSubOrderByCode(user: AuthenticatedUser, input: RiderCollectSubOrderDto) {
+    if (user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Only outlet admins can verify rider collection");
+    }
+
+    const outletId = await this.requireAdminOutletId(user);
+    const subOrder = await this.subOrders.findOneBy({ outletId, pickupCode: input.code });
+
+    if (!subOrder) {
+      throw new NotFoundException("No order found for that pickup code");
+    }
+
+    if (subOrder.status !== SubOrderStatus.READY) {
+      throw new BadRequestException(
+        `Sub-order is not ready for collection (current status: ${subOrder.status})`,
+      );
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: subOrder.masterOrderId });
+
+    if (!order) {
+      throw new NotFoundException("Master order not found");
+    }
+
+    subOrder.status = SubOrderStatus.DISPATCHED;
+    await this.subOrders.save(subOrder);
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+
+    if (derivedStatus !== order.status) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
+
+    await this.recordStatusEvent(
+      order,
+      user.id,
+      input.note ?? "Rider collected sub-order from outlet",
+      subOrder,
+    );
+    await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+      ...(order.status === MasterOrderStatus.OUT_FOR_DELIVERY
+        ? { riderLocationTracking: "START" as const }
+        : {}),
+    });
+
+    return {
+      collected: true,
+      subOrderId: subOrder.id,
+      masterOrderId: order.id,
+      masterStatus: order.status,
+    };
   }
 
   async latestRiderLocation(user: AuthenticatedUser, id: string): Promise<LatestLocation | null> {
