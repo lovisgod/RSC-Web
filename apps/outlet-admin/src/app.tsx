@@ -22,6 +22,7 @@ import {
 
 import { Toaster } from "./components/toaster";
 import { useAuth } from "./hooks/use-auth";
+import { useIdleLogout } from "./hooks/use-idle-logout";
 import { useOrdersQueue } from "./hooks/use-orders-queue";
 import { useOutletInfo } from "./hooks/use-outlet-info";
 import { useProfile } from "./hooks/use-profile";
@@ -230,6 +231,8 @@ function NavigationPanel({ onNavigate }: NavigationPanelProps) {
 }
 
 function AppShell() {
+  useIdleLogout();
+
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isDesktopNavVisible, setIsDesktopNavVisible] = useState(true);
   const location = useLocation();
