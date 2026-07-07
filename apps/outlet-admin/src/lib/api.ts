@@ -264,6 +264,7 @@ export interface PosSubOrder {
   masterOrderId: string;
   masterOrderStatus: MasterOrderStatus;
   status: SubOrderStatus;
+  pickupCode?: string;
   deliveryMode: string;
   deliveryCode: string;
   items: PosSubOrderItem[];
@@ -290,6 +291,7 @@ interface AdminSubOrder {
   masterOrderId: string;
   outletId: string;
   status: string;
+  pickupCode?: string;
   subtotalMinor: number;
   currency: string;
   createdAt: string;
@@ -324,6 +326,7 @@ function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
         masterOrderId: order.id,
         masterOrderStatus: order.status,
         status: sub.status as SubOrderStatus,
+        ...(sub.pickupCode ? { pickupCode: sub.pickupCode } : {}),
         deliveryMode: order.deliveryMode,
         deliveryCode: order.deliveryCode,
         items: lineItems
