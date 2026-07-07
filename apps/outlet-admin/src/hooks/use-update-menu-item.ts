@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateMenuItem, uploadMenuItemImage, type UpdateMenuItemBody } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
 import { toastBus } from "../lib/toast-bus";
 
 interface UpdateMenuItemArgs {
@@ -24,8 +25,8 @@ export function useUpdateMenuItem(outletId: string) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pos", "outlet", outletId] });
-      queryClient.invalidateQueries({ queryKey: ["pos", "menu-item"] });
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.outlet.root(outletId) });
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.menuItem.root() });
       toastBus.emit("Menu item updated", "success");
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),
