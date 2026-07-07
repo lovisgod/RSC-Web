@@ -22,6 +22,7 @@ import {
   type SaveItemModifierBody,
   type SaveItemModifierGroupBody,
 } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
 import { toastBus } from "../lib/toast-bus";
 
 const fieldClass =
@@ -380,8 +381,8 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
 
   async function refreshModifierData() {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["pos", "outlet", outletId] }),
-      queryClient.invalidateQueries({ queryKey: ["pos", "modifier-groups", outletId] }),
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.outlet.root(outletId) }),
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.modifierGroups(outletId) }),
     ]);
   }
 
@@ -450,7 +451,7 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
 
   return (
     <>
-      <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
@@ -488,7 +489,7 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
             </p>
           </div>
         ) : (
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div className="mt-4 grid max-h-64 gap-3 overflow-y-auto pr-1 md:grid-cols-2">
             {groups.map((group) => {
               const groupModifiers = modifiers
                 .filter((modifier) => modifier.groupId === group.id)

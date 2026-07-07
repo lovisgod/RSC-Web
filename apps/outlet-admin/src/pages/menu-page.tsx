@@ -730,13 +730,13 @@ export function MenuPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="min-w-0 overflow-x-hidden p-4 sm:p-6">
+      <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-bold text-slate-900">Menu &amp; Inventory Manager</h1>
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          className="w-full rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 sm:w-auto"
         >
           + Add New Item
         </button>
@@ -745,7 +745,7 @@ export function MenuPage() {
       <ModifierManagementCard outletId={outletId} />
 
       {categories.length > 0 && (
-        <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+        <div className="mb-5 flex max-w-full gap-2 overflow-x-auto pb-1">
           <TabButton
             label="All"
             active={!activeCategoryId}
@@ -763,7 +763,7 @@ export function MenuPage() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
           ))}
@@ -776,10 +776,10 @@ export function MenuPage() {
             items={sortedItems.map((i) => i.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
               {sortedItems.map((item) => (
                 <SortableMenuItemCard
-                  key={item.id}
+                  key={`${item.id}:${item.isAvailable}`}
                   item={item}
                   outletId={outletId}
                   onSelect={() => setSelectedItemId(item.id)}
