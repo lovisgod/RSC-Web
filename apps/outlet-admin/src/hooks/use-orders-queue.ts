@@ -7,6 +7,6 @@ export function useOrdersQueue(outletId: string) {
     queryKey: outletAdminKeys.orders(outletId),
     queryFn: () => listAdminOrders(outletId),
     enabled: Boolean(outletId),
-    refetchInterval: 15_000,
+    refetchInterval: 60_000,
   });
 }

@@ -18,6 +18,11 @@ export default defineConfig({
         changeOrigin: true,
         cookieDomainRewrite: { "*": "" },
       },
+      "/socket.io": {
+        target: "https://api-dev.rscdev.tech",
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
   preview: {
