@@ -250,6 +250,28 @@ export const scheduleNotificationCampaign = (
 export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
   post("/api/v1/auth/admins", body);
 
+export interface CreateRiderInput {
+  name: string;
+  email: string;
+  phone: string;
+  vehicleType?: string;
+  plateNumber?: string;
+}
+
+export interface RiderResult {
+  id: string;
+  name: string;
+  role: "RIDER";
+  outletId: string | null;
+  vehicleType: string | null;
+  plateNumber: string | null;
+  riderStatus: string | null;
+  temporaryPassword: string;
+}
+
+export const createRider = (body: CreateRiderInput): Promise<RiderResult> =>
+  post("/api/v1/users/riders", body);
+
 export interface OutletAdminUser {
   id: string;
   name: string;
