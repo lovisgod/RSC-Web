@@ -24,7 +24,7 @@ export function useOutletRealtime(outletId: string) {
     const socket = io(`${getRealtimeOrigin()}/realtime`, {
       path: "/socket.io",
       withCredentials: true,
-      transports: ["websocket", "polling"],
+      transports: ["polling"],
     });
 
     function refreshOutletQueue() {
