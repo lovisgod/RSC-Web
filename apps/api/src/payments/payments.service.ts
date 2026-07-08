@@ -337,15 +337,28 @@ export class PaymentsService {
     for (const inputItem of input.items) {
       const item = menuItemById.get(inputItem.menuItemId);
 
-      if (!item || !item.isAvailable) {
-        throw new BadRequestException("One or more menu items are unavailable");
+      if (!item) {
+        throw new BadRequestException(`Menu item with ID "${inputItem.menuItemId}" was not found`);
+      }
+      if (!item.isAvailable) {
+        throw new BadRequestException(`Menu item "${item.name}" is currently unavailable`);
       }
 
       const selectedModifiers = (inputItem.modifiers ?? []).map((selected) => {
         const modifier = modifierById.get(selected.modifierId);
 
-        if (!modifier || !modifier.isAvailable || modifier.outletId !== item.outletId) {
-          throw new BadRequestException("One or more modifiers are unavailable");
+        if (!modifier) {
+          throw new BadRequestException(`Modifier with ID "${selected.modifierId}" was not found`);
+        }
+        if (!modifier.isAvailable) {
+          throw new BadRequestException(
+            `Modifier "${modifier.name}" for item "${item.name}" is currently unavailable`,
+          );
+        }
+        if (modifier.outletId !== item.outletId) {
+          throw new BadRequestException(
+            `Modifier "${modifier.name}" does not belong to the same outlet as item "${item.name}"`,
+          );
         }
 
         return modifier;
