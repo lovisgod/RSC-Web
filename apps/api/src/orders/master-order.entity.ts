@@ -69,6 +69,9 @@ export class MasterOrder {
   @Column({ name: "delivery_code", type: "char", length: 6, nullable: true })
   deliveryCode!: string | null;
 
+  @Column({ name: "preparation_time", type: "integer", nullable: true })
+  preparationTime!: number | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

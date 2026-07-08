@@ -98,6 +98,14 @@ export class UpdateOrderStatusDto {
   @IsString()
   @MaxLength(500)
   note?: string;
+
+  @ApiPropertyOptional({ example: 30, description: "Estimated preparation time in minutes" })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(480)
+  preparationTime?: number;
 }
 
 export class AssignOrderRiderDto {

@@ -500,6 +500,7 @@ export const adminOrderMasterSchema = z.object({
   deliveryLongitude: z.number().nullable(),
   paymentReference: z.string().nullable(),
   deliveryCode: z.string().nullable(),
+  preparationTime: z.number().int().nullable().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
@@ -514,6 +515,7 @@ export const adminOrderSubOrderSchema = z.object({
   commissionMinor: z.int().nonnegative(),
   netMinor: z.int().nonnegative(),
   currency: currencySchema,
+  preparationTime: z.number().int().nullable().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
@@ -581,6 +583,7 @@ export const customerOrderSchema = z
     deliveryLongitude: z.coerce.number().min(-180).max(180).nullable(),
     paymentReference: z.string().nullable(),
     deliveryCode: z.string().nullable(),
+    preparationTime: z.coerce.number().int().nullable().optional(),
     createdAt: z.string().min(1),
     updatedAt: z.string().min(1),
     deletedAt: z.iso.datetime().nullable(),
@@ -617,6 +620,7 @@ export const subOrderDetailSchema = z
     commissionMinor: z.coerce.number().int().nonnegative().default(0),
     netMinor: z.coerce.number().int().nonnegative().default(0),
     currency: currencySchema.default("NGN"),
+    preparationTime: z.coerce.number().int().nullable().optional(),
     createdAt: z.string().min(1),
   })
   .passthrough();

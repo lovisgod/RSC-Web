@@ -46,6 +46,9 @@ export class SubOrder {
   @Column({ type: "char", length: 3, default: "NGN" })
   currency!: "NGN";
 
+  @Column({ name: "preparation_time", type: "integer", nullable: true })
+  preparationTime!: number | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 
