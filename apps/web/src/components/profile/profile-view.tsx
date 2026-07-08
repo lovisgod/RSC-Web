@@ -1,10 +1,15 @@
 "use client";
 
 import { Card } from "@rsc/ui";
-import type { UserProfile } from "@rsc/contracts";
+import type {
+  NotificationPreferences,
+  UpdateNotificationPreferencesInput,
+  UserProfile,
+} from "@rsc/contracts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ChevronDown,
   CheckCircle2,
   KeyRound,
   Loader2,
@@ -42,6 +47,8 @@ const darkInputClass =
   "w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/50 focus:outline-none";
 
 const darkErrorClass = "mt-1 text-xs text-red-300";
+
+const notificationPreferencesQueryKey = ["notifications", "preferences"] as const;
 
 // ── Profile header card ───────────────────────────────────────────────────────
 
@@ -926,6 +933,199 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
 // ── Change password card ──────────────────────────────────────────────────────
 
+type EditableNotificationPreference = "promotions" | "discounts" | "seasonalOffers";
+
+const notificationPreferenceLabels: Record<
+  EditableNotificationPreference,
+  { title: string; description: string }
+> = {
+  promotions: {
+    title: "Promotions",
+    description: "Receive general promo updates and offer announcements.",
+  },
+  discounts: {
+    title: "Discounts",
+    description: "Get notified when discount offers are available.",
+  },
+  seasonalOffers: {
+    title: "Seasonal offers",
+    description: "Hear about festive, holiday, and special-period offers.",
+  },
+};
+
+function getPreferencePatch(
+  preferences: NotificationPreferences,
+  preference: EditableNotificationPreference,
+  enabled: boolean,
+): UpdateNotificationPreferencesInput {
+  return {
+    promotions: preferences.promotions,
+    discounts: preferences.discounts,
+    seasonalOffers: preferences.seasonalOffers,
+    orderStatus: true,
+    [preference]: enabled,
+  };
+}
+
+function NotificationSwitch({
+  checked,
+  disabled,
+  label,
+  onToggle,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  label: string;
+  onToggle?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onToggle}
+      className="relative h-7 w-12 flex-shrink-0 rounded-full p-1 transition disabled:cursor-not-allowed disabled:opacity-60"
+      style={{ backgroundColor: checked ? "var(--rsc-main)" : "#D1D5DB" }}
+    >
+      <span
+        className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+          checked ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </button>
+  );
+}
+
+function NotificationPreferencesCard() {
+  const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const preferencesQuery = useQuery({
+    queryKey: notificationPreferencesQueryKey,
+    queryFn: () => apiClient.getNotificationPreferences(),
+    enabled: open,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (input: UpdateNotificationPreferencesInput) =>
+      apiClient.updateNotificationPreferences(input),
+    onSuccess: (preferences) => {
+      queryClient.setQueryData<NotificationPreferences>(
+        notificationPreferencesQueryKey,
+        preferences,
+      );
+    },
+  });
+
+  const preferences = preferencesQuery.data;
+  const controlsDisabled = preferencesQuery.isPending || mutation.isPending;
+
+  const updatePreference = (preference: EditableNotificationPreference, enabled: boolean) => {
+    if (!preferences) return;
+    mutation.mutate(getPreferencePatch(preferences, preference, enabled));
+  };
+
+  return (
+    <Card>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="notification-preferences-panel"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-4 text-left"
+      >
+        <span>
+          <span className="block font-semibold text-gray-900">Notification controls</span>
+          <span className="mt-0.5 block text-sm text-gray-400">
+            Choose which offers and updates you want to receive.
+          </span>
+        </span>
+
+        <ChevronDown
+          className={`h-5 w-5 flex-shrink-0 text-gray-400 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div id="notification-preferences-panel" className="mt-5 border-t border-gray-100 pt-4">
+          {preferencesQuery.isPending ? (
+            <div className="flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading notification preferences…
+            </div>
+          ) : preferencesQuery.isError ? (
+            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+              <p className="text-sm font-medium text-red-700">
+                Could not load notification preferences.
+              </p>
+              <button
+                type="button"
+                onClick={() => preferencesQuery.refetch()}
+                className="mt-2 text-sm font-semibold text-red-600 hover:underline"
+              >
+                Try again
+              </button>
+            </div>
+          ) : preferences ? (
+            <div className="space-y-3">
+              {mutation.isError && (
+                <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {getMutationErrorMessage(mutation.error)}
+                </p>
+              )}
+
+              {(Object.keys(notificationPreferenceLabels) as EditableNotificationPreference[]).map(
+                (preference) => {
+                  const content = notificationPreferenceLabels[preference];
+                  const checked = preferences[preference];
+
+                  return (
+                    <div
+                      key={preference}
+                      className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{content.title}</p>
+                        <p className="mt-0.5 text-xs leading-5 text-gray-500">
+                          {content.description}
+                        </p>
+                      </div>
+                      <NotificationSwitch
+                        checked={checked}
+                        disabled={controlsDisabled}
+                        label={`${checked ? "Disable" : "Enable"} ${content.title}`}
+                        onToggle={() => updatePreference(preference, !checked)}
+                      />
+                    </div>
+                  );
+                },
+              )}
+
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Order updates</p>
+                  <p className="mt-0.5 text-xs leading-5 text-gray-500">
+                    Always on so you can receive payment, preparation, pickup, and delivery updates.
+                  </p>
+                </div>
+                <NotificationSwitch
+                  checked={preferences.orderStatus}
+                  disabled
+                  label="Order updates"
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function ChangePasswordCard() {
   const [open, setOpen] = useState(false);
 
@@ -1049,6 +1249,7 @@ export function ProfileView() {
         {/* Right — settings cards stacked */}
         <div className="w-full md:w-1/2 space-y-4">
           <DefaultAddressCard />
+          <NotificationPreferencesCard />
           <ChangePasswordCard />
           <DeleteAccountCard />
         </div>
