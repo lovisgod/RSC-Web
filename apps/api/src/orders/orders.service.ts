@@ -267,8 +267,13 @@ export class OrdersService {
       order.riderId = order.riderId ?? user.id;
     }
 
+    if (input.preparationTime !== undefined) {
+      order.preparationTime = input.preparationTime;
+    }
+
     order.status = input.status;
     await this.masterOrders.save(order);
+
     await this.autoAssignRiderIfReady(order, user);
     await this.recordStatusEvent(order, user.id, input.note ?? null);
     await this.notifyOrderStatus(order);
@@ -486,13 +491,31 @@ export class OrdersService {
     }
 
     subOrder.status = this.toSubOrderStatus(input.status);
+    if (input.preparationTime !== undefined) {
+      subOrder.preparationTime = input.preparationTime;
+    }
     await this.subOrders.save(subOrder);
 
     const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
     const derivedStatus = this.deriveMasterStatus(subOrders);
 
+    const prepTimes = subOrders
+      .map((so) => so.preparationTime)
+      .filter((t): t is number => t !== null && typeof t === "number" && !isNaN(t));
+    const newPrepTime = prepTimes.length ? Math.max(...prepTimes) : null;
+
+    let orderChanged = false;
+    if ((order.preparationTime ?? null) !== newPrepTime) {
+      order.preparationTime = newPrepTime;
+      orderChanged = true;
+    }
+
     if (derivedStatus !== order.status) {
       order.status = derivedStatus;
+      orderChanged = true;
+    }
+
+    if (orderChanged) {
       await this.masterOrders.save(order);
     }
 
