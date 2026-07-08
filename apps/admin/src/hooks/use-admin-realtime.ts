@@ -23,7 +23,7 @@ export function useAdminRealtime() {
     const socket = io(`${getRealtimeOrigin()}/realtime`, {
       path: "/socket.io",
       withCredentials: true,
-      transports: ["websocket", "polling"],
+      transports: ["polling"],
     });
 
     function refreshOrdersAndStats() {
