@@ -327,6 +327,8 @@ export const initiatePaymentInputSchema = z
     deliveryAddress: z.string().optional(),
     deliveryLatitude: z.number().optional(),
     deliveryLongitude: z.number().optional(),
+    recipientPhone: z.string().optional(),
+    preparationNote: z.string().max(1000).optional(),
   })
   .strict();
 
@@ -498,6 +500,7 @@ export const adminOrderMasterSchema = z.object({
   deliveryAddress: z.string().nullable(),
   deliveryLatitude: z.number().nullable(),
   deliveryLongitude: z.number().nullable(),
+  recipientPhone: z.string().nullable().optional(),
   paymentReference: z.string().nullable(),
   deliveryCode: z.string().nullable(),
   preparationTime: z.number().int().nullable().optional(),
@@ -516,6 +519,7 @@ export const adminOrderSubOrderSchema = z.object({
   netMinor: z.int().nonnegative(),
   currency: currencySchema,
   preparationTime: z.number().int().nullable().optional(),
+  preparationNote: z.string().nullable().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
@@ -581,6 +585,7 @@ export const customerOrderSchema = z
     deliveryAddress: z.string().nullable(),
     deliveryLatitude: z.coerce.number().min(-90).max(90).nullable(),
     deliveryLongitude: z.coerce.number().min(-180).max(180).nullable(),
+    recipientPhone: z.string().nullable().optional(),
     paymentReference: z.string().nullable(),
     deliveryCode: z.string().nullable(),
     preparationTime: z.coerce.number().int().nullable().optional(),
@@ -621,6 +626,7 @@ export const subOrderDetailSchema = z
     netMinor: z.coerce.number().int().nonnegative().default(0),
     currency: currencySchema.default("NGN"),
     preparationTime: z.coerce.number().int().nullable().optional(),
+    preparationNote: z.string().nullable().optional(),
     createdAt: z.string().min(1),
   })
   .passthrough();
@@ -701,6 +707,7 @@ export const riderDispatchSchema = z.object({
       pickupLongitude: z.number().nullable(),
       pickupCode: z.string().min(1),
       status: subOrderStatusSchema,
+      preparationNote: z.string().nullable().optional(),
       items: z.array(
         z.object({
           id: z.uuid(),
