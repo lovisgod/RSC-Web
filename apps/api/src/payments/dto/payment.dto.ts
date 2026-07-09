@@ -7,6 +7,7 @@ import {
   IsInt,
   IsLatitude,
   IsLongitude,
+  IsPhoneNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -72,4 +73,18 @@ export class InitiatePaymentDto {
   @IsOptional()
   @IsLongitude()
   deliveryLongitude?: number;
+
+  @ApiPropertyOptional({
+    example: "08031234567",
+    description: "Phone number of the person receiving the order when ordering on behalf.",
+  })
+  @IsOptional()
+  @IsPhoneNumber("NG")
+  recipientPhone?: string;
+
+  @ApiPropertyOptional({ example: "Make everything mildly spicy", maxLength: 1_000 })
+  @IsOptional()
+  @IsString()
+  @Length(1, 1_000)
+  preparationNote?: string;
 }

@@ -174,32 +174,64 @@ function CardShell({ order, isAdvancing, accentClass, rightSlot, children }: She
 
 interface KanbanCardProps {
   order: PosSubOrder;
-  onAdvance: (subOrderId: string, status: MasterOrderStatus) => void;
+  onAdvance: (
+    subOrderId: string,
+    status: MasterOrderStatus,
+    preparationTimeMinutes?: number,
+  ) => void;
   isAdvancing: boolean;
 }
 
 // ─── Incoming card (PENDING) ──────────────────────────────────────────────────
 
 function IncomingCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
+  const [preparationTimeMinutes, setPreparationTimeMinutes] = useState("");
+  const parsedPreparationTime = Number(preparationTimeMinutes);
+  const canAccept =
+    Number.isInteger(parsedPreparationTime) &&
+    parsedPreparationTime > 0 &&
+    parsedPreparationTime <= 240;
+
   return (
     <CardShell order={order} isAdvancing={isAdvancing} accentClass="bg-orange-500">
-      <div className="flex items-center justify-between gap-2 border-t border-slate-50 pt-2">
-        <button
-          type="button"
-          disabled={isAdvancing}
-          onClick={() => onAdvance(order.id, "CANCELLED")}
-          className="rounded-lg border border-red-600 bg-[var(--rsc-danger)] px-3 py-1 text-xs font-semibold text-[var(--rsc-panel)] transition hover:bg-red-100 disabled:opacity-50"
-        >
-          Reject
-        </button>
-        <button
-          type="button"
-          disabled={isAdvancing}
-          onClick={() => onAdvance(order.id, "CONFIRMED")}
-          className="rounded-lg bg-emerald-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
-        >
-          Accept
-        </button>
+      <div className="space-y-2 border-t border-slate-50 pt-2">
+        <label className="block">
+          <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+            Estimated prep time
+          </span>
+          <div className="mt-1 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={240}
+              value={preparationTimeMinutes}
+              onChange={(event) => setPreparationTimeMinutes(event.target.value.replace(/\D/g, ""))}
+              placeholder="20"
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-300"
+            />
+            <span className="shrink-0 text-xs font-semibold text-slate-400">mins</span>
+          </div>
+        </label>
+
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            disabled={isAdvancing}
+            onClick={() => onAdvance(order.id, "CANCELLED")}
+            className="rounded-lg border border-red-600 bg-[var(--rsc-danger)] px-3 py-1 text-xs font-semibold text-[var(--rsc-panel)] transition hover:bg-red-100 disabled:opacity-50"
+          >
+            Reject
+          </button>
+          <button
+            type="button"
+            disabled={isAdvancing || !canAccept}
+            onClick={() => onAdvance(order.id, "CONFIRMED", parsedPreparationTime)}
+            className="rounded-lg bg-emerald-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+          >
+            Accept
+          </button>
+        </div>
       </div>
     </CardShell>
   );

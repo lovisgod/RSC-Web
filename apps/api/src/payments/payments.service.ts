@@ -7,6 +7,7 @@ import { DataSource, In, Repository } from "typeorm";
 
 import { Customer } from "../auth/customer.entity";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
+import { normalizeNigerianPhoneNumber } from "../auth/phone-number";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import type { ApplicationConfig } from "../config/configuration";
 import { DeliveryService } from "../delivery/delivery.service";
@@ -219,6 +220,8 @@ export class PaymentsService {
     });
     const reference = `RSC-${randomUUID()}`;
     const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
+    const recipientPhone = this.normalizeRecipientPhone(input.recipientPhone);
+    const preparationNote = input.preparationNote?.trim() || null;
 
     const providerPayment = await this.paymentAdapter.initiate({
       email: customerEmail,
@@ -243,6 +246,7 @@ export class PaymentsService {
           deliveryAddress: input.deliveryAddress ?? null,
           deliveryLatitude: input.deliveryLatitude ?? null,
           deliveryLongitude: input.deliveryLongitude ?? null,
+          recipientPhone,
           paymentReference: providerPayment.reference,
           deliveryCode: randomSixDigitCode(),
           status:
@@ -262,6 +266,7 @@ export class PaymentsService {
             subtotalMinor: route.grossMinor,
             commissionMinor: route.commissionMinor,
             netMinor: route.netMinor,
+            preparationNote,
           }),
         );
         subOrders.push(subOrder);
@@ -337,15 +342,28 @@ export class PaymentsService {
     for (const inputItem of input.items) {
       const item = menuItemById.get(inputItem.menuItemId);
 
-      if (!item || !item.isAvailable) {
-        throw new BadRequestException("One or more menu items are unavailable");
+      if (!item) {
+        throw new BadRequestException(`Menu item with ID "${inputItem.menuItemId}" was not found`);
+      }
+      if (!item.isAvailable) {
+        throw new BadRequestException(`Menu item "${item.name}" is currently unavailable`);
       }
 
       const selectedModifiers = (inputItem.modifiers ?? []).map((selected) => {
         const modifier = modifierById.get(selected.modifierId);
 
-        if (!modifier || !modifier.isAvailable || modifier.outletId !== item.outletId) {
-          throw new BadRequestException("One or more modifiers are unavailable");
+        if (!modifier) {
+          throw new BadRequestException(`Modifier with ID "${selected.modifierId}" was not found`);
+        }
+        if (!modifier.isAvailable) {
+          throw new BadRequestException(
+            `Modifier "${modifier.name}" for item "${item.name}" is currently unavailable`,
+          );
+        }
+        if (modifier.outletId !== item.outletId) {
+          throw new BadRequestException(
+            `Modifier "${modifier.name}" does not belong to the same outlet as item "${item.name}"`,
+          );
         }
 
         return modifier;
@@ -414,6 +432,18 @@ export class PaymentsService {
       if (!outlet || !outlet.isOnline) {
         throw new BadRequestException("One or more outlets are currently offline");
       }
+    }
+  }
+
+  private normalizeRecipientPhone(phone: string | undefined): string | null {
+    if (!phone) {
+      return null;
+    }
+
+    try {
+      return normalizeNigerianPhoneNumber(phone);
+    } catch {
+      throw new BadRequestException("Recipient phone must be a valid Nigerian mobile number");
     }
   }
 }

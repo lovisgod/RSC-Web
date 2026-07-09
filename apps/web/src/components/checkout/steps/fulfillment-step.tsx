@@ -63,6 +63,7 @@ export function FulfillmentStep({
   const [addressText, setAddressText] = useState(initial.address);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
+  const [instructions, setInstructions] = useState(initial.instructions);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     initial.latitude != null && initial.longitude != null
       ? { latitude: initial.latitude, longitude: initial.longitude }
@@ -270,6 +271,8 @@ export function FulfillmentStep({
       const base = {
         items,
         deliveryMode: mode === "delivery" ? ("DELIVERY" as const) : ("TAKEOUT" as const),
+        ...(instructions.trim() ? { preparationNote: instructions.trim() } : {}),
+        ...(onBehalf && recipientPhone.trim() ? { recipientPhone: recipientPhone.trim() } : {}),
       };
 
       return apiClient.initiatePayment(
@@ -308,7 +311,7 @@ export function FulfillmentStep({
           zone,
           onBehalf,
           recipientPhone,
-          instructions: "",
+          instructions,
         },
         result.reference,
         snapshot,
@@ -513,25 +516,17 @@ export function FulfillmentStep({
             </label>
 
             {onBehalf && (
-              <div className="rounded-xl border border-blue-100 bg-white px-4 py-3">
-                <label
-                  htmlFor="recipient-phone"
-                  className="text-xs font-bold uppercase tracking-widest text-gray-500"
-                >
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500">
                   Recipient phone number
                 </label>
                 <input
-                  id="recipient-phone"
                   type="tel"
-                  inputMode="tel"
                   value={recipientPhone}
                   onChange={(event) => setRecipientPhone(event.target.value)}
-                  placeholder="e.g. 08031234567"
-                  className="mt-2 w-full bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+                  placeholder="08031234567"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
                 />
-                <p className="mt-1 text-xs text-gray-400">
-                  We will connect this to the order contract once the endpoint supports it.
-                </p>
               </div>
             )}
           </div>

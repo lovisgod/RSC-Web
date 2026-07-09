@@ -15,6 +15,7 @@ import { Outlet } from "../outlets/outlet.entity";
 import { RealtimeService } from "../realtime/realtime.service";
 import type { InitiatePaymentDto } from "../payments/dto/payment.dto";
 import { PaymentsService } from "../payments/payments.service";
+import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { MasterOrder } from "./master-order.entity";
 import { OrderLineItem } from "./order-line-item.entity";
 import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
@@ -68,6 +69,7 @@ export interface RiderDispatch {
     pickupLongitude: number | null;
     pickupCode: string;
     status: SubOrderStatus;
+    preparationNote: string | null;
     items: Array<{
       id: string;
       name: string;
@@ -96,6 +98,7 @@ export class OrdersService {
     private readonly payments: PaymentsService,
     private readonly notifications: NotificationsService,
     private readonly realtime: RealtimeService,
+    private readonly piiCrypto: PiiCryptoService,
   ) {}
 
   listMine(user: AuthenticatedUser): Promise<MasterOrder[]> {
@@ -265,8 +268,13 @@ export class OrdersService {
       order.riderId = order.riderId ?? user.id;
     }
 
+    if (input.preparationTime !== undefined) {
+      order.preparationTime = input.preparationTime;
+    }
+
     order.status = input.status;
     await this.masterOrders.save(order);
+
     await this.autoAssignRiderIfReady(order, user);
     await this.recordStatusEvent(order, user.id, input.note ?? null);
     await this.notifyOrderStatus(order);
@@ -484,13 +492,31 @@ export class OrdersService {
     }
 
     subOrder.status = this.toSubOrderStatus(input.status);
+    if (input.preparationTime !== undefined) {
+      subOrder.preparationTime = input.preparationTime;
+    }
     await this.subOrders.save(subOrder);
 
     const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
     const derivedStatus = this.deriveMasterStatus(subOrders);
 
+    const prepTimes = subOrders
+      .map((so) => so.preparationTime)
+      .filter((t): t is number => t !== null && typeof t === "number" && !isNaN(t));
+    const newPrepTime = prepTimes.length ? Math.max(...prepTimes) : null;
+
+    let orderChanged = false;
+    if ((order.preparationTime ?? null) !== newPrepTime) {
+      order.preparationTime = newPrepTime;
+      orderChanged = true;
+    }
+
     if (derivedStatus !== order.status) {
       order.status = derivedStatus;
+      orderChanged = true;
+    }
+
+    if (orderChanged) {
       await this.masterOrders.save(order);
     }
 
@@ -684,7 +710,23 @@ export class OrdersService {
       this.getLatestRiderLocation(order.id),
     ]);
 
-    return { order, subOrders, lineItems, events, latestRiderLocation };
+    let rider = null;
+    if (order.riderId) {
+      const riderUser = await this.users.findOneBy({ id: order.riderId });
+      if (riderUser) {
+        rider = {
+          id: riderUser.id,
+          name: riderUser.name,
+          phone: this.piiCrypto.decrypt(riderUser.phoneEncrypted),
+          email: this.piiCrypto.decrypt(riderUser.emailEncrypted),
+          avatarUrl: riderUser.avatarUrl,
+          vehicleType: riderUser.vehicleType,
+          plateNumber: riderUser.plateNumber,
+        };
+      }
+    }
+
+    return { order, subOrders, lineItems, events, latestRiderLocation, rider };
   }
 
   private async buildRiderDispatch(order: MasterOrder): Promise<RiderDispatch> {
@@ -718,6 +760,7 @@ export class OrdersService {
           pickupLongitude: outlet?.longitude ?? null,
           pickupCode: subOrder.pickupCode,
           status: subOrder.status,
+          preparationNote: subOrder.preparationNote,
           items: lineItems
             .filter((lineItem) => lineItem.subOrderId === subOrder.id)
             .map((lineItem) => ({
@@ -792,6 +835,7 @@ export class OrdersService {
           latitude: outlet.pickupLatitude,
           longitude: outlet.pickupLongitude,
           pickupCode: outlet.pickupCode,
+          preparationNote: outlet.preparationNote,
         })),
       },
     });
@@ -909,7 +953,7 @@ export class OrdersService {
           AND recent_orders.deleted_at IS NULL
         WHERE u.role = 'RIDER'
           AND u.status = 'ACTIVE'
-          AND u.rider_status = ANY($2)
+          AND COALESCE(u.rider_status, 'AVAILABLE') = ANY($2)
           AND u.deleted_at IS NULL
           ${outletFilter}
           ${excludedRiderFilter}

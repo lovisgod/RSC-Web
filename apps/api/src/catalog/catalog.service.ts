@@ -15,6 +15,7 @@ import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
 import { MenuItemRating } from "./menu-item-rating.entity";
 import { OutletRating } from "./outlet-rating.entity";
 import { MenuItem } from "./menu-item.entity";
+import { PreparationSuggestion } from "./preparation-suggestion.entity";
 import type {
   CreateItemModifierDto,
   CreateItemModifierGroupDto,
@@ -31,6 +32,9 @@ import type {
   UpdateMenuItemDto,
   UpdateOutletOnlineStatusDto,
   UpdateOutletDto,
+  CreatePreparationSuggestionDto,
+  UpdatePreparationSuggestionDto,
+  QueryPreparationSuggestionsDto,
 } from "./dto/catalog.dto";
 
 export interface MenuItemsPage {
@@ -54,6 +58,8 @@ export class CatalogService {
     @InjectRepository(ItemModifier) private readonly modifiers: Repository<ItemModifier>,
     @InjectRepository(MenuItemModifierGroup)
     private readonly itemGroups: Repository<MenuItemModifierGroup>,
+    @InjectRepository(PreparationSuggestion)
+    private readonly preparationSuggestions: Repository<PreparationSuggestion>,
     private readonly media: MediaService,
     private readonly realtime: RealtimeService,
   ) {}
@@ -283,6 +289,8 @@ export class CatalogService {
       await this.replaceItemGroups(item.id, input.modifierGroupIds);
     }
 
+    const wasAvailable = item.isAvailable;
+
     Object.assign(item, {
       ...input,
       description: input.description === undefined ? item.description : input.description,
@@ -292,7 +300,18 @@ export class CatalogService {
     });
     delete (item as Partial<MenuItem> & { modifierGroupIds?: string[] }).modifierGroupIds;
 
-    return this.items.save(item);
+    const saved = await this.items.save(item);
+
+    if (wasAvailable !== saved.isAvailable) {
+      this.realtime.emitMenuItemAvailabilityUpdate({
+        menuItemId: saved.id,
+        outletId: saved.outletId,
+        isAvailable: saved.isAvailable,
+        updatedAt: saved.updatedAt,
+      });
+    }
+
+    return saved;
   }
 
   async updateItemAvailability(
@@ -301,9 +320,21 @@ export class CatalogService {
     input: UpdateMenuItemAvailabilityDto,
   ): Promise<MenuItem> {
     const item = await this.getItem(user, id);
+    const wasAvailable = item.isAvailable;
     item.isAvailable = input.isAvailable;
 
-    return this.items.save(item);
+    const saved = await this.items.save(item);
+
+    if (wasAvailable !== saved.isAvailable) {
+      this.realtime.emitMenuItemAvailabilityUpdate({
+        menuItemId: saved.id,
+        outletId: saved.outletId,
+        isAvailable: saved.isAvailable,
+        updatedAt: saved.updatedAt,
+      });
+    }
+
+    return saved;
   }
 
   async uploadItemImage(
@@ -741,6 +772,99 @@ export class CatalogService {
         menuItems.some((item) => item.id === itemGroup.menuItemId && item.outletId === outlet.id),
       ),
     }));
+  }
+
+  async listPreparationSuggestions(
+    query: QueryPreparationSuggestionsDto,
+  ): Promise<PreparationSuggestion[]> {
+    const qb = this.preparationSuggestions
+      .createQueryBuilder("suggestion")
+      .where("suggestion.isActive = true");
+
+    if (query.outletId) {
+      qb.andWhere("(suggestion.outletId IS NULL OR suggestion.outletId = :outletId)", {
+        outletId: query.outletId,
+      });
+    } else {
+      qb.andWhere("suggestion.outletId IS NULL");
+    }
+
+    if (query.menuItemId) {
+      qb.andWhere("(suggestion.menuItemId IS NULL OR suggestion.menuItemId = :menuItemId)", {
+        menuItemId: query.menuItemId,
+      });
+    } else {
+      qb.andWhere("suggestion.menuItemId IS NULL");
+    }
+
+    if (query.q) {
+      qb.andWhere("suggestion.text ILIKE :search", { search: `%${query.q}%` });
+    }
+
+    return qb.orderBy("suggestion.sortOrder", "ASC").addOrderBy("suggestion.text", "ASC").getMany();
+  }
+
+  async listPreparationSuggestionsAdmin(
+    query: QueryPreparationSuggestionsDto,
+  ): Promise<PreparationSuggestion[]> {
+    const qb = this.preparationSuggestions.createQueryBuilder("suggestion");
+
+    if (query.outletId) {
+      qb.andWhere("suggestion.outletId = :outletId", { outletId: query.outletId });
+    }
+    if (query.menuItemId) {
+      qb.andWhere("suggestion.menuItemId = :menuItemId", { menuItemId: query.menuItemId });
+    }
+    if (query.q) {
+      qb.andWhere("suggestion.text ILIKE :search", { search: `%${query.q}%` });
+    }
+
+    return qb.orderBy("suggestion.sortOrder", "ASC").addOrderBy("suggestion.text", "ASC").getMany();
+  }
+
+  async createPreparationSuggestion(
+    input: CreatePreparationSuggestionDto,
+  ): Promise<PreparationSuggestion> {
+    const suggestion = this.preparationSuggestions.create({
+      text: input.text,
+      outletId: input.outletId ?? null,
+      menuItemId: input.menuItemId ?? null,
+      isActive: input.isActive ?? true,
+      sortOrder: input.sortOrder ?? 0,
+    });
+    const saved = await this.preparationSuggestions.save(suggestion);
+    this.realtime.emitPreparationSuggestionCreated(saved);
+    return saved;
+  }
+
+  async updatePreparationSuggestion(
+    id: string,
+    input: UpdatePreparationSuggestionDto,
+  ): Promise<PreparationSuggestion> {
+    const suggestion = await this.preparationSuggestions.findOneBy({ id });
+    if (!suggestion) {
+      throw new NotFoundException("Preparation suggestion not found");
+    }
+
+    Object.assign(suggestion, {
+      ...input,
+      outletId: input.outletId === undefined ? suggestion.outletId : input.outletId,
+      menuItemId: input.menuItemId === undefined ? suggestion.menuItemId : input.menuItemId,
+    });
+
+    const saved = await this.preparationSuggestions.save(suggestion);
+    this.realtime.emitPreparationSuggestionUpdated(saved);
+    return saved;
+  }
+
+  async deletePreparationSuggestion(id: string): Promise<{ deleted: true }> {
+    const suggestion = await this.preparationSuggestions.findOneBy({ id });
+    if (!suggestion) {
+      throw new NotFoundException("Preparation suggestion not found");
+    }
+    await this.preparationSuggestions.remove(suggestion);
+    this.realtime.emitPreparationSuggestionDeleted(id);
+    return { deleted: true };
   }
 }
 
