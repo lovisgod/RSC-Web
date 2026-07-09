@@ -1,13 +1,13 @@
 import { Button } from "@rsc/ui";
 import { KeyRound, ShieldCheck, X, Landmark, CheckCircle2, AlertCircle } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 
 import { PasswordInput } from "../components/password-input";
 import { useChangePassword } from "../hooks/use-change-password";
 import { useAuth } from "../hooks/use-auth";
 import { useOutletInfo } from "../hooks/use-outlet-info";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listBanks, provisionSubaccount } from "../lib/api";
+import { listBanks, provisionSubaccount, resolveBankAccount } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
 interface PasswordForm {
@@ -47,6 +47,48 @@ export function SettingsPage() {
     accountNumber?: string;
   }>({});
   const [isEditingBank, setIsEditingBank] = useState(false);
+  const [resolvedAccountName, setResolvedAccountName] = useState("");
+  const [resolvingName, setResolvingName] = useState(false);
+  const [resolveError, setResolveError] = useState("");
+
+  useEffect(() => {
+    const isAccountNumberValid = /^\d{10}$/.test(bankForm.accountNumber);
+    if (!bankForm.bankCode || !isAccountNumberValid) {
+      setResolvedAccountName("");
+      setResolveError("");
+      return;
+    }
+
+    let active = true;
+    const delayDebounce = setTimeout(async () => {
+      setResolvingName(true);
+      setResolvedAccountName("");
+      setResolveError("");
+      try {
+        const res = await resolveBankAccount(bankForm.accountNumber, bankForm.bankCode);
+        if (active) {
+          setResolvedAccountName(res.accountName);
+          setBankForm((current) => ({
+            ...current,
+            businessName: res.accountName,
+          }));
+        }
+      } catch (err) {
+        if (active) {
+          setResolveError((err as Error).message);
+        }
+      } finally {
+        if (active) {
+          setResolvingName(false);
+        }
+      }
+    }, 500);
+
+    return () => {
+      active = false;
+      clearTimeout(delayDebounce);
+    };
+  }, [bankForm.bankCode, bankForm.accountNumber]);
 
   const provisionMutation = useMutation({
     mutationFn: () => {
@@ -423,6 +465,19 @@ export function SettingsPage() {
                       <span className="text-xs text-red-600 mt-1 block">
                         {bankErrors.accountNumber}
                       </span>
+                    )}
+                    {resolvingName && (
+                      <span className="text-xs text-slate-500 mt-1 block animate-pulse">
+                        Verifying bank details...
+                      </span>
+                    )}
+                    {resolvedAccountName && (
+                      <span className="text-xs text-emerald-600 mt-1 block font-semibold">
+                        Verified Name: {resolvedAccountName}
+                      </span>
+                    )}
+                    {resolveError && (
+                      <span className="text-xs text-red-600 mt-1 block">{resolveError}</span>
                     )}
                   </div>
                 </div>

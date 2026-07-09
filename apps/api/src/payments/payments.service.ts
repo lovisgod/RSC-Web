@@ -595,6 +595,57 @@ export class PaymentsService {
     }
   }
 
+  async resolveBankAccount(
+    accountNumber: string,
+    bankCode: string,
+  ): Promise<{ accountNumber: string; accountName: string; bankCode: string }> {
+    const paymentsConfig = this.configService.get("payments", { infer: true });
+
+    if (paymentsConfig.provider !== "paystack") {
+      return {
+        accountNumber,
+        accountName: "Demo Settlement Account",
+        bankCode,
+      };
+    }
+
+    try {
+      const response = await fetch(
+        `${paymentsConfig.paystack.baseUrl}/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
+        {
+          headers: {
+            authorization: `Bearer ${paymentsConfig.paystack.secretKey}`,
+          },
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`Paystack account verification failed with status ${response.status}`);
+      }
+      const payload = (await response.json()) as {
+        status: boolean;
+        message?: string;
+        data?: {
+          account_number: string;
+          account_name: string;
+          bank_id: number;
+        };
+      };
+      if (!payload.status || !payload.data) {
+        throw new Error(payload.message || "Invalid response structure from Paystack");
+      }
+      return {
+        accountNumber: payload.data.account_number,
+        accountName: payload.data.account_name,
+        bankCode,
+      };
+    } catch (err) {
+      this.logger.error(`Failed to resolve bank account: ${(err as Error).message}`);
+      throw new BadRequestException(
+        `Could not verify bank account details: ${(err as Error).message}`,
+      );
+    }
+  }
+
   private normalizeRecipientPhone(phone: string | undefined): string | null {
     if (!phone) {
       return null;
