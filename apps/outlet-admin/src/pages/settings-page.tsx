@@ -1,6 +1,6 @@
 import { Button } from "@rsc/ui";
 import { KeyRound, ShieldCheck, X, Landmark, CheckCircle2, AlertCircle } from "lucide-react";
-import { useState, type FormEvent, useEffect } from "react";
+import { useState, type FormEvent } from "react";
 
 import { PasswordInput } from "../components/password-input";
 import { useChangePassword } from "../hooks/use-change-password";
