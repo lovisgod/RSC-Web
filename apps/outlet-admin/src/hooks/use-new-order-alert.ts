@@ -2,6 +2,17 @@ import { useEffect, useRef } from "react";
 import type { PosSubOrder } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
+type AlertableOrder = Pick<PosSubOrder, "id" | "status">;
+
+export function getUnseenIncomingOrderIds(
+  orders: AlertableOrder[],
+  seenIncomingIds: ReadonlySet<string>,
+): string[] {
+  return orders
+    .filter((order) => order.status === "PENDING" && !seenIncomingIds.has(order.id))
+    .map((order) => order.id);
+}
+
 function chime() {
   try {
     const ctx = new AudioContext();
@@ -24,22 +35,27 @@ function chime() {
 }
 
 export function useNewOrderAlert(orders: PosSubOrder[]) {
-  const seenRef = useRef<Set<string> | null>(null);
+  const seenIncomingIdsRef = useRef(new Set<string>());
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    const currentIds = new Set(orders.map((o) => o.id));
+    const incomingIds = orders
+      .filter((order) => order.status === "PENDING")
+      .map((order) => order.id);
 
-    if (seenRef.current === null) {
-      seenRef.current = currentIds;
+    if (!isInitializedRef.current) {
+      incomingIds.forEach((id) => seenIncomingIdsRef.current.add(id));
+      isInitializedRef.current = true;
       return;
     }
 
-    const newCount = [...currentIds].filter((id) => !seenRef.current!.has(id)).length;
+    const unseenIncomingIds = getUnseenIncomingOrderIds(orders, seenIncomingIdsRef.current);
+    unseenIncomingIds.forEach((id) => seenIncomingIdsRef.current.add(id));
+
+    const newCount = unseenIncomingIds.length;
     if (newCount > 0) {
       chime();
       toastBus.emit(`${newCount} new order${newCount > 1 ? "s" : ""} received`, "success");
     }
-
-    seenRef.current = currentIds;
   }, [orders]);
 }

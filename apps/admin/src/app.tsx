@@ -1,6 +1,7 @@
 import {
   ChevronRight,
   ClipboardList,
+  Bike,
   Gauge,
   LogOut,
   Megaphone,
@@ -14,6 +15,7 @@ import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "reac
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Toaster } from "./components/toaster";
+import { useAdminRealtime } from "./hooks/use-admin-realtime";
 import { useLiveClock } from "./hooks/use-live-clock";
 import { useAuth } from "./hooks/use-auth";
 import { logout as apiLogout } from "./lib/api";
@@ -28,12 +30,14 @@ import { OutletDetailPage } from "./pages/outlet-detail-page";
 import { PromotionsPage } from "./pages/promotions-page";
 import { RegisterPage } from "./pages/register-page";
 import { ResetPasswordPage } from "./pages/reset-password-page";
+import { RiderReportsPage } from "./pages/rider-reports-page";
 import { VerifyPage } from "./pages/verify-page";
 
 const navigation = [
   { label: "Platform Live Board", to: "/", icon: Gauge },
   { label: "Orders Feed", to: "/orders", icon: ClipboardList },
   { label: "Outlet & Platform Control", to: "/outlets", icon: SlidersHorizontal },
+  { label: "Rider Reports", to: "/riders", icon: Bike },
   { label: "Financial Reconciliation", to: "/finance", icon: Wallet },
   { label: "Promotions Composer", to: "/promotions", icon: Megaphone },
 ] as const;
@@ -42,6 +46,7 @@ const routeTitles: Record<string, string> = {
   "/": "Platform Live Board",
   "/orders": "Platform Orders Feed",
   "/outlets": "Outlet & System Control",
+  "/riders": "Rider Performance Reports",
   "/finance": "Reconciliation & Payouts Ledger",
   "/promotions": "Promotions Push Composer",
 };
@@ -124,6 +129,8 @@ function OperatorFooter() {
 }
 
 function AdminShell() {
+  useAdminRealtime();
+
   const location = useLocation();
   const clock = useLiveClock();
   const pageTitle = getPageTitle(location.pathname);
@@ -204,6 +211,7 @@ function AdminShell() {
             <Route path="/orders" element={<OrdersFeedPage />} />
             <Route path="/outlets" element={<OutletControlPage />} />
             <Route path="/outlets/:id" element={<OutletDetailPage />} />
+            <Route path="/riders" element={<RiderReportsPage />} />
             <Route path="/finance" element={<FinancialReconciliationPage />} />
             <Route path="/promotions" element={<PromotionsPage />} />
             <Route path="/settings" element={<Navigate to="/" replace />} />

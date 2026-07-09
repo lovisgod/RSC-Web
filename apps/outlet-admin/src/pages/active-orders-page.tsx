@@ -24,187 +24,182 @@ import {
   verifyTakeoutHandoff,
   type PosSubOrder,
 } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
 import { toastBus } from "../lib/toast-bus";
 
-// ─── Allowed drag transitions ─────────────────────────────────────────────────
 const DRAG_TRANSITIONS: Record<string, Partial<Record<SubOrderStatus, MasterOrderStatus>>> = {
   preparing: { PENDING: "CONFIRMED" },
   ready: { ACCEPTED: "READY", PREPARING: "READY" },
 };
 
-// ─── Accept + prep-time modal (commented out — API does not accept preparationTimeMinutes yet) ───
-/*
-function AcceptOrderModal({
-  onConfirm,
-  onCancel,
+type HandoffMode = "takeout" | "dispatch";
+
+const HANDOFF_MODES: Record<
+  HandoffMode,
+  {
+    pending: string;
+    success: string;
+  }
+> = {
+  takeout: {
+    pending: "Confirming pickup...",
+    success: "Customer pickup verified - order collected",
+  },
+  dispatch: {
+    pending: "Confirming handoff...",
+    success: "Rider handoff confirmed - sub-order dispatched",
+  },
+};
+
+const DELIVERY_MODE_LABEL: Record<string, string> = {
+  DELIVERY: "Delivery",
+  TAKEOUT: "Takeout",
+};
+
+function HandoffVerifier({
+  outletId,
+  readyOrders,
 }: {
-  onConfirm: (prepTimeMinutes: number) => void;
-  onCancel: () => void;
+  outletId: string;
+  readyOrders: PosSubOrder[];
 }) {
-  const [minutes, setMinutes] = useState(25);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-        <h2 className="text-lg font-bold text-slate-900">
-          Accept Order &amp; Set Preparation Time
-        </h2>
-        <p className="mt-1.5 text-sm text-slate-500">
-          Estimate how long (in minutes) this sub-order will take to be cooked &amp; packaged.
-        </p>
-
-        <div className="mt-5">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Preparation Time (Minutes)
-          </label>
-          <input
-            type="number"
-            min={1}
-            max={240}
-            value={minutes}
-            onChange={(e) => setMinutes(Math.max(1, parseInt(e.target.value, 10) || 1))}
-            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
-            autoFocus
-          />
-        </div>
-
-        <div className="mt-5 flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onConfirm(minutes)}
-            className="flex-1 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white transition hover:bg-emerald-600"
-          >
-            Accept
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-*/
-
-// ─── Customer walk-in pickup ────────────────────────────────────────────────────
-
-function TakeoutVerifier({ outletId }: { outletId: string }) {
   const [code, setCode] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [submittingMode, setSubmittingMode] = useState<HandoffMode | null>(null);
   const queryClient = useQueryClient();
+  const matchedOrder =
+    code.length === 6 ? readyOrders.find((order) => order.pickupCode === code) : undefined;
+  const hasPickupCodes = readyOrders.some((order) => order.pickupCode);
 
-  async function handleVerify(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (code.length !== 6) return;
-    setIsVerifying(true);
+  async function confirmHandoff(mode: HandoffMode) {
+    if (!matchedOrder || submittingMode) return;
+
+    const copy = HANDOFF_MODES[mode];
+    setSubmittingMode(mode);
     try {
-      await verifyTakeoutHandoff({ code });
-      toastBus.emit("Customer pickup verified — order collected ✓", "success");
+      if (mode === "takeout") {
+        await verifyTakeoutHandoff({ code });
+      } else {
+        await riderCollect({ code });
+      }
+
+      toastBus.emit(copy.success, "success");
       setCode("");
-      await queryClient.invalidateQueries({ queryKey: ["pos", "orders", outletId] });
+      await queryClient.invalidateQueries({ queryKey: outletAdminKeys.orders(outletId) });
     } catch (err) {
       toastBus.emit(err instanceof Error ? err.message : "Invalid code", "error");
     } finally {
-      setIsVerifying(false);
+      setSubmittingMode(null);
     }
   }
 
+  const codeIsComplete = code.length === 6;
+  const notFound = codeIsComplete && hasPickupCodes && !matchedOrder;
+  const pickupCodesUnavailable = codeIsComplete && !hasPickupCodes;
+
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
-      <span className="text-2xl" aria-hidden="true">
-        🛍️
-      </span>
-      <div className="min-w-0 shrink-0">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Customer Pickup</p>
-        <p className="mt-0.5 text-xs text-slate-400">Customer walks in to collect</p>
+    <section className="mx-6 mb-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+      <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            Code verification
+          </p>
+          <p className="mt-0.5 truncate text-xs text-slate-400">
+            Enter the pickup code first; confirm only after the matching sub-order card appears.
+          </p>
+        </div>
       </div>
-      <form onSubmit={handleVerify} className="flex flex-1 items-center gap-3">
+
+      <div className="space-y-3">
+        <label className="sr-only" htmlFor="handoff-code">
+          Pickup code
+        </label>
         <input
-          id="takeout-code"
+          id="handoff-code"
           type="text"
           inputMode="numeric"
           pattern="\d{6}"
           maxLength={6}
           placeholder="6-digit code"
           value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-emerald-400"
-          aria-label="Customer pickup code"
+          onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:ring-2 focus:ring-emerald-400"
+          aria-label="Pickup code"
         />
-        <button
-          type="submit"
-          disabled={code.length !== 6 || isVerifying}
-          className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
-        >
-          {isVerifying ? "Verifying…" : "Confirm"}
-        </button>
-      </form>
-    </div>
-  );
-}
 
-// ─── Rider collection from outlet ───────────────────────────────────────────────
+        {matchedOrder && (
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-sm font-bold text-slate-900">
+                  #{matchedOrder.id.slice(-8).toUpperCase()}
+                </p>
+                <p className="mt-1 text-xs font-medium text-slate-500">
+                  {DELIVERY_MODE_LABEL[matchedOrder.deliveryMode] ?? matchedOrder.deliveryMode} -{" "}
+                  {matchedOrder.items.length} item{matchedOrder.items.length === 1 ? "" : "s"} - NGN{" "}
+                  {(matchedOrder.totalAmountMinor / 100).toLocaleString("en-NG")}
+                </p>
+              </div>
+              <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emerald-700">
+                {matchedOrder.status}
+              </span>
+            </div>
 
-function RiderCollector({ outletId }: { outletId: string }) {
-  const [code, setCode] = useState("");
-  const [isCollecting, setIsCollecting] = useState(false);
-  const queryClient = useQueryClient();
+            <ul className="mt-3 space-y-1 border-t border-emerald-100 pt-3">
+              {matchedOrder.items.slice(0, 3).map((item, index) => (
+                <li key={`${item.name}-${index}`} className="text-xs text-slate-600">
+                  <span className="font-bold text-orange-500">{item.quantity}x</span> {item.name}
+                </li>
+              ))}
+              {matchedOrder.items.length > 3 && (
+                <li className="text-xs text-slate-400">
+                  +{matchedOrder.items.length - 3} more item
+                  {matchedOrder.items.length - 3 === 1 ? "" : "s"}
+                </li>
+              )}
+            </ul>
 
-  async function handleCollect(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (code.length !== 6) return;
-    setIsCollecting(true);
-    try {
-      await riderCollect({ code });
-      toastBus.emit("Rider collection confirmed — sub-order dispatched ✓", "success");
-      setCode("");
-      await queryClient.invalidateQueries({ queryKey: ["pos", "orders", outletId] });
-    } catch (err) {
-      toastBus.emit(err instanceof Error ? err.message : "Invalid code", "error");
-    } finally {
-      setIsCollecting(false);
-    }
-  }
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={Boolean(submittingMode)}
+                onClick={() => void confirmHandoff("takeout")}
+                className="h-10 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+              >
+                {submittingMode === "takeout"
+                  ? HANDOFF_MODES.takeout.pending
+                  : "Confirm customer pickup"}
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(submittingMode)}
+                onClick={() => void confirmHandoff("dispatch")}
+                className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+              >
+                {submittingMode === "dispatch"
+                  ? HANDOFF_MODES.dispatch.pending
+                  : "Confirm rider handoff"}
+              </button>
+            </div>
+          </div>
+        )}
 
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
-      <span className="text-2xl" aria-hidden="true">
-        🚵
-      </span>
-      <div className="min-w-0 shrink-0">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Rider Collection</p>
-        <p className="mt-0.5 text-xs text-slate-400">Rider arrives to collect order</p>
+        {notFound && (
+          <p className="text-xs font-medium text-red-500">
+            No ready sub-order in this outlet matches that pickup code.
+          </p>
+        )}
+
+        {pickupCodesUnavailable && (
+          <p className="text-xs font-medium text-amber-600">
+            Pickup codes are not present in the outlet order list response, so the card cannot be
+            previewed before confirmation. The backend needs to expose a code lookup endpoint or
+            include pickupCode in admin sub-orders.
+          </p>
+        )}
       </div>
-      <form onSubmit={handleCollect} className="flex flex-1 items-center gap-3">
-        <input
-          id="rider-collect-code"
-          type="text"
-          inputMode="numeric"
-          pattern="\d{6}"
-          maxLength={6}
-          placeholder="6-digit code"
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-blue-400"
-          aria-label="Rider collection code"
-        />
-        <button
-          type="submit"
-          disabled={code.length !== 6 || isCollecting}
-          className="rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:opacity-50"
-        >
-          {isCollecting ? "Confirming…" : "Dispatch"}
-        </button>
-      </form>
-    </div>
+    </section>
   );
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ActiveOrdersPage() {
   const { user } = useAuth();
@@ -221,9 +216,11 @@ export function ActiveOrdersPage() {
     useSensor(KeyboardSensor),
   );
 
-  const incoming = activeOrders.filter((o) => o.status === "PENDING");
-  const preparing = activeOrders.filter((o) => o.status === "ACCEPTED" || o.status === "PREPARING");
-  const ready = activeOrders.filter((o) => o.status === "READY");
+  const incoming = activeOrders.filter((order) => order.status === "PENDING");
+  const preparing = activeOrders.filter(
+    (order) => order.status === "ACCEPTED" || order.status === "PREPARING",
+  );
+  const ready = activeOrders.filter((order) => order.status === "READY");
 
   function handleAdvance(subOrderId: string, status: MasterOrderStatus) {
     updateStatus({ subOrderId, status });
@@ -246,23 +243,17 @@ export function ActiveOrdersPage() {
   }
 
   return (
-    <div className="flex h-full min-h-screen flex-col">
+    <div className="flex min-h-full flex-col">
       <OutletPageHeader />
+      <HandoffVerifier outletId={outletId} readyOrders={ready} />
 
-      {/* Handoff verification widgets */}
-      <div className="mx-6 mb-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <TakeoutVerifier outletId={outletId} />
-        <RiderCollector outletId={outletId} />
-      </div>
-
-      <p id="board-hint" className="mx-6 mb-3 text-xs text-slate-400">
+      <p id="board-hint" className="mx-6 mb-3 shrink-0 text-xs text-slate-400">
         Drag a card to its next stage, or use the action button.
       </p>
 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
         <div
-          className="grid flex-1 grid-cols-1 gap-4 px-6 pb-6 lg:grid-cols-3"
-          style={{ minHeight: 0 }}
+          className="grid grid-cols-1 items-start gap-4 px-6 pb-6 lg:grid-cols-3"
           aria-describedby="board-hint"
         >
           <KanbanColumn
@@ -300,8 +291,6 @@ export function ActiveOrdersPage() {
           />
         </div>
       </DndContext>
-
-      {/* AcceptOrderModal commented out — API does not support preparationTimeMinutes yet */}
     </div>
   );
 }
