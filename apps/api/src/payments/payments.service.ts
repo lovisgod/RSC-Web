@@ -584,7 +584,10 @@ export class PaymentsService {
         },
       });
       if (!response.ok) return fallbackBanks;
-      const payload = await response.json();
+      const payload = (await response.json()) as {
+        status: boolean;
+        data?: Array<{ code: string; name: string }>;
+      };
       if (payload.status && Array.isArray(payload.data)) {
         return payload.data.map((b: { code: string; name: string }) => ({
           code: b.code,
