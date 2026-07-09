@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
@@ -368,6 +368,11 @@ export const initiatePaymentResultSchema = z.object({
   ),
 });
 
+export const paymentVerifyResultSchema = z.object({
+  status: z.enum(["PENDING", "SUCCESS", "FAILED"]),
+  orderStatus: z.string().min(1),
+});
+
 export const menuCategorySchema = z.object({
   id: z.uuid(),
   outletId: z.uuid(),
@@ -444,7 +449,7 @@ export const outletSummarySchema = z.object({
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
   isOnline: z.boolean(),
-  momentSubaccountCode: z.string(),
+  paystackSubaccountCode: z.string().nullable(),
   ratingAverage: z.coerce.number().min(0).max(5).default(0),
   ratingCount: z.int().nonnegative().default(0),
   menuCategories: z.array(menuCategorySchema),

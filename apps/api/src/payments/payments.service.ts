@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, In, Repository } from "typeorm";
@@ -22,7 +22,12 @@ import { SubOrder } from "../orders/sub-order.entity";
 import type { InitiatePaymentDto } from "./dto/payment.dto";
 import type { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
-import { PAYMENT_ADAPTER, type PaymentAdapter, type PaymentSplitRoute } from "./payment-adapter";
+import {
+  PAYMENT_ADAPTER,
+  type ParsedWebhookEvent,
+  type PaymentAdapter,
+  type PaymentSplitRoute,
+} from "./payment-adapter";
 
 interface PricedLine {
   outletId: string;
@@ -52,6 +57,7 @@ interface PlatformChargesRow {
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
   private readonly platformCommissionBps: number;
   private readonly vatBps: number;
   private readonly deliveryFeeMinor: number;
@@ -212,7 +218,7 @@ export class PaymentsService {
 
       return {
         outletId,
-        subaccountCode: outletById.get(outletId)?.momentSubaccountCode ?? null,
+        subaccountCode: outletById.get(outletId)?.paystackSubaccountCode ?? null,
         grossMinor,
         commissionMinor,
         netMinor: grossMinor - commissionMinor,
@@ -324,6 +330,119 @@ export class PaymentsService {
       },
       splitBreakdown: splitRoutes,
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Webhook confirmation (server-authoritative, idempotent)
+  // ---------------------------------------------------------------------------
+
+  async confirmPayment(event: ParsedWebhookEvent): Promise<{ already: boolean }> {
+    // Idempotency: record this event, bail if already processed
+    try {
+      await this.dataSource.query(
+        `INSERT INTO payment_webhook_events (gateway, event_id, event_type, payload)
+         VALUES ($1, $2, $3, $4)`,
+        ["paystack", event.eventId, event.eventType, JSON.stringify(event.providerResponse)],
+      );
+    } catch {
+      // unique constraint violation → already processed
+      this.logger.log(`Webhook event ${event.eventId} already processed — skipping`);
+      return { already: true };
+    }
+
+    const payment = await this.payments.findOneBy({ reference: event.reference });
+
+    if (!payment) {
+      this.logger.warn(`Webhook: no payment found for reference ${event.reference}`);
+      return { already: false };
+    }
+
+    // Already in a terminal state — nothing to do
+    if (payment.status !== PaymentStatus.PENDING) {
+      return { already: true };
+    }
+
+    const nextPaymentStatus =
+      event.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
+    const nextOrderStatus =
+      event.status === "SUCCESS" ? MasterOrderStatus.CONFIRMED : MasterOrderStatus.CANCELLED;
+
+    payment.status = nextPaymentStatus;
+    await this.payments.save(payment);
+
+    const order = await this.masterOrders.findOneBy({ id: payment.masterOrderId });
+
+    if (order && order.status === MasterOrderStatus.PENDING_PAYMENT) {
+      order.status = nextOrderStatus;
+      await this.masterOrders.save(order);
+      this.realtime.emitOrderStatusUpdate({
+        masterOrderId: order.id,
+        customerId: order.customerId,
+        riderId: order.riderId,
+        status: order.status,
+        updatedAt: order.updatedAt,
+      });
+    }
+
+    this.logger.log(
+      `Payment ${payment.reference} confirmed: ${nextPaymentStatus} (order ${payment.masterOrderId})`,
+    );
+
+    return { already: false };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Verify — frontend polling fallback when webhook delivery is delayed
+  // ---------------------------------------------------------------------------
+
+  async verifyPayment(user: AuthenticatedUser, reference: string) {
+    const payment = await this.payments.findOneBy({ reference });
+
+    if (!payment) {
+      throw new NotFoundException("Payment not found");
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: payment.masterOrderId });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    // Customers can only query their own payments
+    if (order.customerId !== user.id) {
+      throw new NotFoundException("Payment not found");
+    }
+
+    // If already settled, return immediately without hitting the provider
+    if (payment.status !== PaymentStatus.PENDING) {
+      return { status: payment.status, orderStatus: order.status };
+    }
+
+    // Poll the provider
+    const result = await this.paymentAdapter.verify(reference);
+
+    if (result.status !== "PENDING") {
+      const event: ParsedWebhookEvent = {
+        eventId: `verify-${reference}`,
+        eventType: result.status === "SUCCESS" ? "charge.success" : "charge.failed",
+        reference,
+        status: result.status,
+        amountMinor: result.amountMinor,
+        providerResponse: result.providerResponse,
+      };
+      await this.confirmPayment(event);
+
+      // Reload after update
+      const updatedPayment = await this.payments.findOneBy({ reference });
+      const updatedOrder = await this.masterOrders.findOneBy({ id: payment.masterOrderId });
+
+      return {
+        status: updatedPayment?.status ?? payment.status,
+        orderStatus: updatedOrder?.status ?? order.status,
+      };
+    }
+
+    return { status: payment.status, orderStatus: order.status };
   }
 
   private async priceCart(input: InitiatePaymentDto): Promise<PricedLine[]> {
