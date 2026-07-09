@@ -549,6 +549,7 @@ export const adminOrderLineItemSchema = z.object({
   quantity: z.int().positive(),
   lineTotalMinor: z.int().nonnegative(),
   currency: currencySchema,
+  customerNote: z.string().nullable().optional(),
   modifiersSnapshot: z
     .array(
       z

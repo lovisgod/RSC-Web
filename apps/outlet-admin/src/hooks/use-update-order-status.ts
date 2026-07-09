@@ -20,13 +20,16 @@ export function useUpdateOrderStatus(outletId: string) {
       subOrderId,
       status,
       preparationTimeMinutes,
+      rejectionReason,
     }: {
       subOrderId: string;
       status: MasterOrderStatus;
       preparationTimeMinutes?: number;
+      rejectionReason?: string;
     }) =>
       updateSubOrderStatus(subOrderId, {
         status,
+        ...(rejectionReason !== undefined ? { note: rejectionReason } : {}),
         ...(preparationTimeMinutes !== undefined
           ? { preparationTime: preparationTimeMinutes }
           : {}),
@@ -36,6 +39,7 @@ export function useUpdateOrderStatus(outletId: string) {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<PosSubOrder[]>(queryKey);
       const subStatus = MASTER_TO_SUB[status];
+      const updatedAt = new Date().toISOString();
       if (subStatus) {
         queryClient.setQueryData<PosSubOrder[]>(queryKey, (orders) =>
           orders?.map((o) =>
@@ -43,6 +47,7 @@ export function useUpdateOrderStatus(outletId: string) {
               ? {
                   ...o,
                   status: subStatus,
+                  updatedAt,
                   ...(preparationTimeMinutes !== undefined
                     ? { estimatedPrepTimeMinutes: preparationTimeMinutes }
                     : {}),
