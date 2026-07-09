@@ -19,13 +19,11 @@ const NEXT_STATUS: Partial<Record<SubOrderStatus, MasterOrderStatus>> = {
 const DELIVERY_MODE_LABEL: Record<string, string> = {
   DELIVERY: "Delivery",
   TAKEOUT: "Takeout",
-  DINE_IN: "Dine In",
 };
 
 const DELIVERY_MODE_EMOJI: Record<string, string> = {
   DELIVERY: "🚴",
   TAKEOUT: "🛍️",
-  DINE_IN: "🍽️",
 };
 
 // ─── Compact item list ────────────────────────────────────────────────────────
@@ -263,9 +261,8 @@ function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
 // ─── Ready card ───────────────────────────────────────────────────────────────
 
 const READY_ACTION_LABEL: Record<string, string> = {
-  DELIVERY: "Sent Out",
-  TAKEOUT: "Picked Up",
-  DINE_IN: "Served",
+  DELIVERY: "Rider Handoff",
+  TAKEOUT: "Customer Pickup",
 };
 
 function ReadyCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {

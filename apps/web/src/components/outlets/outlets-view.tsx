@@ -21,7 +21,7 @@ export function OutletsView() {
 
   if (isPending) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 gap-x-3 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
         {[1, 2, 3, 4].map((i) => (
           <OutletSkeleton key={i} />
         ))}
@@ -38,7 +38,7 @@ export function OutletsView() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+    <div className="grid grid-cols-1 gap-x-3 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
       {outlets.map((outlet) => (
         <OutletCard key={outlet.id} outlet={outlet} />
       ))}

@@ -47,7 +47,7 @@ export function MenuItemCard({
     <div
       ref={dragRef}
       style={dragStyle}
-      className="relative flex items-center gap-2 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
+      className="relative flex min-w-0 items-center gap-2 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
     >
       {/* Delete confirmation overlay */}
       {confirmDelete && (
@@ -90,7 +90,7 @@ export function MenuItemCard({
       <button
         type="button"
         onClick={onSelect}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left"
       >
         <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-slate-50 text-2xl">
           {item.imageUrl ? (

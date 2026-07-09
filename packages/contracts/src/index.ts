@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
@@ -196,6 +196,7 @@ export const userProfileSchema = z.object({
   name: z.string(),
   role: z.string(),
   outletId: z.uuid().nullable(),
+  avatarUrl: z.url().nullable(),
   email: z.string(),
   phone: z.string(),
   verificationChannels: z.object({ email: z.boolean(), phone: z.boolean() }),
@@ -207,6 +208,16 @@ export const updateProfileInputSchema = z
     name: z.string().trim().min(2).max(120),
     email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
     phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+  })
+  .strict();
+
+export const profileUpdateResultSchema = userProfileSchema.extend({
+  otpExpiresInSeconds: z.int().positive().nullable(),
+});
+
+export const verifyProfileChangeInputSchema = z
+  .object({
+    code: z.string().regex(/^\d{6}$/),
   })
   .strict();
 
@@ -514,12 +525,14 @@ export const adminOrderSubOrderSchema = z.object({
   masterOrderId: z.uuid(),
   outletId: z.uuid(),
   status: subOrderStatusSchema,
+  pickupCode: z.string().nullable().optional(),
   subtotalMinor: z.int().nonnegative(),
   commissionMinor: z.int().nonnegative(),
   netMinor: z.int().nonnegative(),
   currency: currencySchema,
   preparationTime: z.number().int().nullable().optional(),
   preparationNote: z.string().nullable().optional(),
+  preparationTimeMinutes: z.int().nonnegative().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
@@ -536,7 +549,18 @@ export const adminOrderLineItemSchema = z.object({
   quantity: z.int().positive(),
   lineTotalMinor: z.int().nonnegative(),
   currency: currencySchema,
-  modifiersSnapshot: z.array(z.unknown()),
+  modifiersSnapshot: z
+    .array(
+      z
+        .object({
+          id: z.uuid().optional(),
+          name: z.string().min(1),
+          priceDeltaMinor: z.coerce.number().int().default(0),
+        })
+        .passthrough(),
+    )
+    .nullish()
+    .transform((value) => value ?? []),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
@@ -911,6 +935,8 @@ export type OperationsQueueItem = z.infer<typeof operationsQueueItemSchema>;
 export type OperationsQueue = z.infer<typeof operationsQueueSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
+export type ProfileUpdateResult = z.infer<typeof profileUpdateResultSchema>;
+export type VerifyProfileChangeInput = z.infer<typeof verifyProfileChangeInputSchema>;
 export type CreateDeliveryAddressInput = z.infer<typeof createDeliveryAddressInputSchema>;
 export type DeliveryAddressSummary = z.infer<typeof deliveryAddressSummarySchema>;
 export type ValidateAddressInput = z.infer<typeof validateAddressInputSchema>;
