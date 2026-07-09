@@ -39,59 +39,63 @@ export function CartOutletGroupCard({ group }: { group: CartOutletGroup }) {
       {/* Expandable items */}
       {open && (
         <ul className="border-t border-gray-100 divide-y divide-gray-50">
-          {group.items.map((item) => (
-            <li key={item.id} className="flex items-center gap-3 px-4 sm:px-5 py-3">
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 leading-tight">{item.name}</p>
-                {item.notes && (
-                  <p className="text-xs text-gray-400 mt-0.5 truncate">{item.notes}</p>
-                )}
-                <p className="text-sm font-bold mt-1" style={{ color: "var(--rsc-dark)" }}>
-                  {formatNaira(item.unitPriceMinor * item.quantity)}
-                </p>
-              </div>
+          {group.items.map((item, index) => {
+            const lineId = item.lineId ?? `${item.id}-${index}`;
 
-              {/* Quantity controls */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  type="button"
-                  aria-label={item.quantity <= 1 ? "Remove item" : "Decrease quantity"}
-                  onClick={() =>
-                    item.quantity <= 1
-                      ? removeItem(group.outletId, item.id)
-                      : updateQuantity(group.outletId, item.id, item.quantity - 1)
-                  }
-                  className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors"
-                  style={
-                    item.quantity <= 1
-                      ? { borderColor: "var(--rsc-danger)", color: "var(--rsc-danger)" }
-                      : { borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }
-                  }
-                >
-                  {item.quantity <= 1 ? (
-                    <Trash2 className="w-3.5 h-3.5" />
-                  ) : (
-                    <Minus className="w-3.5 h-3.5" />
+            return (
+              <li key={lineId} className="flex items-center gap-3 px-4 sm:px-5 py-3">
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">{item.name}</p>
+                  {item.notes && (
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{item.notes}</p>
                   )}
-                </button>
+                  <p className="text-sm font-bold mt-1" style={{ color: "var(--rsc-dark)" }}>
+                    {formatNaira(item.unitPriceMinor * item.quantity)}
+                  </p>
+                </div>
 
-                <span className="text-sm font-bold w-5 text-center tabular-nums">
-                  {item.quantity}
-                </span>
+                {/* Quantity controls */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    aria-label={item.quantity <= 1 ? "Remove item" : "Decrease quantity"}
+                    onClick={() =>
+                      item.quantity <= 1
+                        ? removeItem(group.outletId, lineId)
+                        : updateQuantity(group.outletId, lineId, item.quantity - 1)
+                    }
+                    className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors"
+                    style={
+                      item.quantity <= 1
+                        ? { borderColor: "var(--rsc-danger)", color: "var(--rsc-danger)" }
+                        : { borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }
+                    }
+                  >
+                    {item.quantity <= 1 ? (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    ) : (
+                      <Minus className="w-3.5 h-3.5" />
+                    )}
+                  </button>
 
-                <button
-                  type="button"
-                  aria-label="Increase quantity"
-                  onClick={() => updateQuantity(group.outletId, item.id, item.quantity + 1)}
-                  className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors"
-                  style={{ borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </li>
-          ))}
+                  <span className="text-sm font-bold w-5 text-center tabular-nums">
+                    {item.quantity}
+                  </span>
+
+                  <button
+                    type="button"
+                    aria-label="Increase quantity"
+                    onClick={() => updateQuantity(group.outletId, lineId, item.quantity + 1)}
+                    className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors"
+                    style={{ borderColor: "var(--rsc-main)", color: "var(--rsc-main)" }}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Card>

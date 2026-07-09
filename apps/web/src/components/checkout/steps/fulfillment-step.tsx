@@ -21,7 +21,6 @@ import { geocodeAddress } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
-import { useCartStore } from "@/src/stores/cart-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -55,7 +54,6 @@ export function FulfillmentStep({
   ) => void;
 }) {
   const { data: cart } = useCart();
-  const clearCart = useCartStore((s) => s.clear);
   const qc = useQueryClient();
 
   const { data: savedAddresses = [] } = useDeliveryAddresses();
@@ -64,7 +62,7 @@ export function FulfillmentStep({
   const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
   const [addressText, setAddressText] = useState(initial.address);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
-  const [instructions, setInstructions] = useState(initial.instructions);
+  const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     initial.latitude != null && initial.longitude != null
       ? { latitude: initial.latitude, longitude: initial.longitude }
@@ -301,7 +299,6 @@ export function FulfillmentStep({
         })),
         totals: result.totals,
       };
-      clearCart();
       onComplete(
         {
           mode,
@@ -310,7 +307,8 @@ export function FulfillmentStep({
           longitude: coords?.longitude ?? null,
           zone,
           onBehalf,
-          instructions,
+          recipientPhone,
+          instructions: "",
         },
         result.reference,
         snapshot,
@@ -505,28 +503,40 @@ export function FulfillmentStep({
               <input
                 type="checkbox"
                 checked={onBehalf}
-                onChange={(e) => setOnBehalf(e.target.checked)}
+                onChange={(e) => {
+                  setOnBehalf(e.target.checked);
+                  if (!e.target.checked) setRecipientPhone("");
+                }}
                 className="w-4 h-4 rounded border-gray-300 accent-[var(--rsc-main)]"
               />
-              <span className="text-sm text-gray-600">
-                Order on behalf of someone inside geofence
-              </span>
+              <span className="text-sm text-gray-600">Order on behalf of some else</span>
             </label>
+
+            {onBehalf && (
+              <div className="rounded-xl border border-blue-100 bg-white px-4 py-3">
+                <label
+                  htmlFor="recipient-phone"
+                  className="text-xs font-bold uppercase tracking-widest text-gray-500"
+                >
+                  Recipient phone number
+                </label>
+                <input
+                  id="recipient-phone"
+                  type="tel"
+                  inputMode="tel"
+                  value={recipientPhone}
+                  onChange={(event) => setRecipientPhone(event.target.value)}
+                  placeholder="e.g. 08031234567"
+                  className="mt-2 w-full bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  We will connect this to the order contract once the endpoint supports it.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
-
-      {/* Preparation instructions */}
-      <div>
-        <SectionLabel icon="📝" text="Preparation Instructions" />
-        <textarea
-          value={instructions}
-          onChange={(e) => setInstructions(e.target.value)}
-          rows={3}
-          placeholder="e.g., Make the Cactus Suya extra spicy, no onions…"
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none resize-none"
-        />
-      </div>
 
       {/* Price breakdown — mobile only */}
       <div className="space-y-2 lg:hidden">
