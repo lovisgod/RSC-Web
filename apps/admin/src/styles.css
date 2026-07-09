@@ -1263,39 +1263,6 @@ th {
   font-weight: 800;
 }
 
-.rider-endpoint-note {
-  display: flex;
-  gap: 0.85rem;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-  border: 1px solid color-mix(in srgb, var(--rsc-main) 24%, white);
-  border-radius: var(--rsc-radius);
-  padding: 1rem 1.15rem;
-  color: var(--rsc-navy-dark);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--rsc-main) 9%, white),
-    color-mix(in srgb, var(--rsc-navy-light) 5%, white)
-  );
-}
-
-.rider-endpoint-note svg {
-  flex: 0 0 auto;
-  margin-top: 0.1rem;
-  color: var(--rsc-main);
-}
-
-.rider-endpoint-note strong {
-  display: block;
-  margin-bottom: 0.2rem;
-}
-
-.rider-endpoint-note p {
-  margin: 0;
-  color: var(--rsc-muted);
-  line-height: 1.55;
-}
-
 .rider-report-metrics {
   margin-bottom: 1rem;
 }
