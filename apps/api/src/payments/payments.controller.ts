@@ -10,6 +10,7 @@ import {
   RawBodyRequest,
   Req,
   UseGuards,
+  Query,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
@@ -45,6 +46,15 @@ export class PaymentsController {
   @ApiMessage("Nigerian banks retrieved")
   banks() {
     return this.payments.getBanks();
+  }
+
+  @Get("resolve-account")
+  @ApiMessage("Bank account resolved")
+  resolveAccount(
+    @Query("accountNumber") accountNumber: string,
+    @Query("bankCode") bankCode: string,
+  ) {
+    return this.payments.resolveBankAccount(accountNumber, bankCode);
   }
 
   @Patch("platform-charges")

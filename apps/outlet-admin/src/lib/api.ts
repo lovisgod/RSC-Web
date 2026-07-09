@@ -143,6 +143,14 @@ export const setSubaccountCode = (
 export const listBanks = (): Promise<Array<{ code: string; name: string }>> =>
   get("/api/v1/payments/banks");
 
+export const resolveBankAccount = (
+  accountNumber: string,
+  bankCode: string,
+): Promise<{ accountNumber: string; accountName: string; bankCode: string }> =>
+  get(
+    `/api/v1/payments/resolve-account?accountNumber=${encodeURIComponent(accountNumber)}&bankCode=${encodeURIComponent(bankCode)}`,
+  );
+
 // ─── Menu ─────────────────────────────────────────────────────────────────────
 
 export const toggleMenuItemAvailability = (
