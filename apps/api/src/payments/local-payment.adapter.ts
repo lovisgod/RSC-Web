@@ -35,8 +35,10 @@ export class LocalPaymentAdapter implements PaymentAdapter {
   }
 
   // The local adapter does not handle real webhooks; always returns null.
-  parseWebhookEvent(_rawBody: Buffer, _signature: string): Promise<ParsedWebhookEvent | null> {
-    return Promise.resolve(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async parseWebhookEvent(rawBody: Buffer, signature: string): Promise<ParsedWebhookEvent | null> {
+    await Promise.resolve();
+    return null;
   }
 
   provisionSubaccount(input: ProvisionSubaccountInput): Promise<ProvisionSubaccountResult> {
