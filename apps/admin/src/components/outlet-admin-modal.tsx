@@ -1,4 +1,5 @@
 import { Button } from "@rsc/ui";
+import { createAdminInputSchema } from "@rsc/contracts";
 import { Copy, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const EMPTY_FORM = { name: "", email: "", phone: "" };
+type FormErrors = Partial<Record<keyof typeof EMPTY_FORM, string>>;
 
 export function OutletAdminModal({ open, outletId, onClose }: Props) {
   if (!open) return null;
@@ -22,6 +24,7 @@ export function OutletAdminModal({ open, outletId, onClose }: Props) {
 
 function OutletAdminModalContent({ outletId, onClose }: Omit<Props, "open">) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [result, setResult] = useState<AdminResult | null>(null);
   const [copied, setCopied] = useState(false);
   const firstFieldRef = useRef<HTMLInputElement>(null);
@@ -60,11 +63,28 @@ function OutletAdminModalContent({ outletId, onClose }: Omit<Props, "open">) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) return;
-    mutate(
-      { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), outletId },
-      { onSuccess: (data) => setResult(data) },
-    );
+    const payload = {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      outletId,
+    };
+    const parsed = createAdminInputSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      const nextErrors: FormErrors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof FormErrors;
+        if (key in EMPTY_FORM && !nextErrors[key]) {
+          nextErrors[key] = issue.message;
+        }
+      }
+      setErrors(nextErrors);
+      return;
+    }
+
+    setErrors({});
+    mutate(parsed.data, { onSuccess: (data) => setResult(data) });
   }
 
   function copyPassword() {
@@ -158,6 +178,7 @@ function OutletAdminModalContent({ outletId, onClose }: Omit<Props, "open">) {
                 required
                 {...field("name")}
               />
+              {errors.name && <small className="field-error">{errors.name}</small>}
             </label>
 
             <div className="modal-row">
@@ -170,6 +191,7 @@ function OutletAdminModalContent({ outletId, onClose }: Omit<Props, "open">) {
                   required
                   {...field("email")}
                 />
+                {errors.email && <small className="field-error">{errors.email}</small>}
               </label>
 
               <label className="field-label">
@@ -181,6 +203,7 @@ function OutletAdminModalContent({ outletId, onClose }: Omit<Props, "open">) {
                   required
                   {...field("phone")}
                 />
+                {errors.phone && <small className="field-error">{errors.phone}</small>}
               </label>
             </div>
 

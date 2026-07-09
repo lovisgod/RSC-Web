@@ -3,7 +3,6 @@ import { Button, EmptyState, MetricCard } from "@rsc/ui";
 import { Bike, CalendarDays, Clock3, Info, Plus, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { PageHeading } from "../components/page-heading";
 import { RiderOnboardModal } from "../components/rider-onboard-modal";
 import { useOrdersFeed } from "../hooks/use-orders-feed";
 import type { AdminOrderItem } from "../lib/api";
@@ -142,28 +141,32 @@ export function RiderReportsPage() {
     <>
       <RiderOnboardModal open={onboardOpen} onClose={() => setOnboardOpen(false)} />
 
-      <PageHeading
-        kicker="Rider operations"
-        title="Rider daily performance"
-        description="Review delivery workload, completion pace, and rider earnings from the current admin order feed."
-        action={
-          <div className="rider-report-actions">
+      <section className="page-heading rider-page-heading">
+        <div className="rider-page-heading__copy">
+          <div className="rider-page-heading__top">
+            <p className="kicker">Rider operations</p>
             <Button tone="navy" onClick={() => setOnboardOpen(true)}>
               <Plus aria-hidden="true" size={16} />
-              Onboard Rider
+              <span className="rider-onboard-label">Onboard Rider</span>
             </Button>
-            <label className="rider-date-filter">
-              <CalendarDays aria-hidden="true" size={18} />
-              <span className="sr-only">Report date</span>
-              <input
-                type="date"
-                value={reportDate}
-                onChange={(event) => setReportDate(event.target.value)}
-              />
-            </label>
           </div>
-        }
-      />
+          <h1>Rider daily performance</h1>
+          <p>
+            Review delivery workload, completion pace, and rider earnings from the current admin
+            order feed.
+          </p>
+        </div>
+
+        <label className="rider-date-filter">
+          <CalendarDays aria-hidden="true" size={18} />
+          <span className="sr-only">Report date</span>
+          <input
+            type="date"
+            value={reportDate}
+            onChange={(event) => setReportDate(event.target.value)}
+          />
+        </label>
+      </section>
 
       <section className="rider-endpoint-note" role="note">
         <Info aria-hidden="true" size={18} />

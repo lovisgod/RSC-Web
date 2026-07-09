@@ -1,6 +1,6 @@
 "use client";
 
-import { type DeliveryAddressSummary } from "@rsc/contracts";
+import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, Star, XCircle } from "lucide-react";
@@ -63,6 +63,7 @@ export function FulfillmentStep({
   const [addressText, setAddressText] = useState(initial.address);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
+  const [recipientPhoneError, setRecipientPhoneError] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     initial.latitude != null && initial.longitude != null
       ? { latitude: initial.latitude, longitude: initial.longitude }
@@ -254,6 +255,13 @@ export function FulfillmentStep({
       console.error("[initiatePayment error]", err);
     },
     mutationFn: () => {
+      if (onBehalf) {
+        const parsedPhone = nigerianPhoneNumberSchema.safeParse(recipientPhone);
+        if (!parsedPhone.success) {
+          throw new Error(parsedPhone.error.issues[0]?.message ?? "Enter a valid phone number.");
+        }
+      }
+
       const items = cart.groups.flatMap((g) =>
         g.items.map((item) => ({
           menuItemId: item.id,
@@ -270,7 +278,7 @@ export function FulfillmentStep({
       const base = {
         items,
         deliveryMode: mode === "delivery" ? ("DELIVERY" as const) : ("TAKEOUT" as const),
-        ...(onBehalf && recipientPhone.trim() ? { recipientPhone: recipientPhone.trim() } : {}),
+        ...(onBehalf ? { recipientPhone: recipientPhone.trim() } : {}),
       };
 
       return apiClient.initiatePayment(
@@ -506,6 +514,7 @@ export function FulfillmentStep({
                 checked={onBehalf}
                 onChange={(e) => {
                   setOnBehalf(e.target.checked);
+                  setRecipientPhoneError(null);
                   if (!e.target.checked) setRecipientPhone("");
                 }}
                 className="w-4 h-4 rounded border-gray-300 accent-[var(--rsc-main)]"
@@ -521,10 +530,30 @@ export function FulfillmentStep({
                 <input
                   type="tel"
                   value={recipientPhone}
-                  onChange={(event) => setRecipientPhone(event.target.value)}
+                  onChange={(event) => {
+                    setRecipientPhone(event.target.value);
+                    setRecipientPhoneError(null);
+                  }}
+                  onBlur={() => {
+                    if (!recipientPhone.trim()) {
+                      setRecipientPhoneError("Recipient phone number is required.");
+                      return;
+                    }
+
+                    const parsedPhone = nigerianPhoneNumberSchema.safeParse(recipientPhone);
+                    setRecipientPhoneError(
+                      parsedPhone.success
+                        ? null
+                        : (parsedPhone.error.issues[0]?.message ?? "Enter a valid phone number."),
+                    );
+                  }}
                   placeholder="08031234567"
+                  aria-invalid={Boolean(recipientPhoneError)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
                 />
+                {recipientPhoneError && (
+                  <p className="text-xs text-red-500">{recipientPhoneError}</p>
+                )}
               </div>
             )}
           </div>
@@ -570,7 +599,19 @@ export function FulfillmentStep({
           tone="navy"
           fullWidth
           type="button"
-          onClick={() => initiateMutation.mutate()}
+          onClick={() => {
+            if (onBehalf) {
+              const parsedPhone = nigerianPhoneNumberSchema.safeParse(recipientPhone);
+              if (!parsedPhone.success) {
+                setRecipientPhoneError(
+                  parsedPhone.error.issues[0]?.message ?? "Enter a valid phone number.",
+                );
+                return;
+              }
+            }
+
+            initiateMutation.mutate();
+          }}
           disabled={!canProceed || initiateMutation.isPending}
         >
           {initiateMutation.isPending ? (
