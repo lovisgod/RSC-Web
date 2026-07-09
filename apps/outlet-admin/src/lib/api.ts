@@ -336,5 +336,5 @@ export const listAdminOrders = (outletId: string): Promise<PosSubOrder[]> =>
 //   CONFIRMED → ACCEPTED | PARTIALLY_READY → PREPARING | READY → READY | DELIVERED → COLLECTED
 export const updateSubOrderStatus = (
   subOrderId: string,
-  body: { status: MasterOrderStatus; note?: string },
+  body: { status: MasterOrderStatus; note?: string; preparationTime?: number },
 ): Promise<unknown> => patchReq(`/api/v1/orders/${subOrderId}/status`, body);

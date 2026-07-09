@@ -12,8 +12,6 @@ const MASTER_TO_SUB: Partial<Record<MasterOrderStatus, SubOrderStatus>> = {
   DELIVERED: "COLLECTED",
 };
 
-const PREPARATION_TIME_NOTE_PREFIX = "Estimated preparation time:";
-
 export function useUpdateOrderStatus(outletId: string) {
   const queryClient = useQueryClient();
 
@@ -30,7 +28,7 @@ export function useUpdateOrderStatus(outletId: string) {
       updateSubOrderStatus(subOrderId, {
         status,
         ...(preparationTimeMinutes !== undefined
-          ? { note: `${PREPARATION_TIME_NOTE_PREFIX} ${preparationTimeMinutes} minutes` }
+          ? { preparationTime: preparationTimeMinutes }
           : {}),
       }),
     onMutate: async ({ subOrderId, status, preparationTimeMinutes }) => {
