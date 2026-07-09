@@ -54,8 +54,10 @@ export function SettingsPage() {
   useEffect(() => {
     const isAccountNumberValid = /^\d{10}$/.test(bankForm.accountNumber);
     if (!bankForm.bankCode || !isAccountNumberValid) {
-      setResolvedAccountName("");
-      setResolveError("");
+      Promise.resolve().then(() => {
+        setResolvedAccountName("");
+        setResolveError("");
+      });
       return;
     }
 
