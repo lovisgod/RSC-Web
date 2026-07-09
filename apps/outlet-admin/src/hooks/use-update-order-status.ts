@@ -12,6 +12,8 @@ const MASTER_TO_SUB: Partial<Record<MasterOrderStatus, SubOrderStatus>> = {
   DELIVERED: "COLLECTED",
 };
 
+const PREPARATION_TIME_NOTE_PREFIX = "Estimated preparation time:";
+
 export function useUpdateOrderStatus(outletId: string) {
   const queryClient = useQueryClient();
 
@@ -27,16 +29,28 @@ export function useUpdateOrderStatus(outletId: string) {
     }) =>
       updateSubOrderStatus(subOrderId, {
         status,
-        ...(preparationTimeMinutes !== undefined ? { preparationTimeMinutes } : {}),
+        ...(preparationTimeMinutes !== undefined
+          ? { note: `${PREPARATION_TIME_NOTE_PREFIX} ${preparationTimeMinutes} minutes` }
+          : {}),
       }),
-    onMutate: async ({ subOrderId, status }) => {
+    onMutate: async ({ subOrderId, status, preparationTimeMinutes }) => {
       const queryKey = outletAdminKeys.orders(outletId);
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<PosSubOrder[]>(queryKey);
       const subStatus = MASTER_TO_SUB[status];
       if (subStatus) {
         queryClient.setQueryData<PosSubOrder[]>(queryKey, (orders) =>
-          orders?.map((o) => (o.id === subOrderId ? { ...o, status: subStatus } : o)),
+          orders?.map((o) =>
+            o.id === subOrderId
+              ? {
+                  ...o,
+                  status: subStatus,
+                  ...(preparationTimeMinutes !== undefined
+                    ? { estimatedPrepTimeMinutes: preparationTimeMinutes }
+                    : {}),
+                }
+              : o,
+          ),
         );
       }
       return { previous };

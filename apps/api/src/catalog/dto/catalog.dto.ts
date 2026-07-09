@@ -359,3 +359,53 @@ export class CreateItemModifierDto {
 }
 
 export class UpdateItemModifierDto extends PartialType(CreateItemModifierDto) {}
+
+export class CreatePreparationSuggestionDto {
+  @ApiProperty({ example: "Mild salt" })
+  @Transform(trim)
+  @IsString()
+  @Length(1, 255)
+  text!: string;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  outletId?: string | null;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  menuItemId?: string | null;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ default: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+}
+
+export class UpdatePreparationSuggestionDto extends PartialType(CreatePreparationSuggestionDto) {}
+
+export class QueryPreparationSuggestionsDto {
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  outletId?: string;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  menuItemId?: string;
+
+  @ApiPropertyOptional({ example: "mild" })
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  q?: string;
+}

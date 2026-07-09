@@ -222,8 +222,16 @@ export function ActiveOrdersPage() {
   );
   const ready = activeOrders.filter((order) => order.status === "READY");
 
-  function handleAdvance(subOrderId: string, status: MasterOrderStatus) {
-    updateStatus({ subOrderId, status });
+  function handleAdvance(
+    subOrderId: string,
+    status: MasterOrderStatus,
+    preparationTimeMinutes?: number,
+  ) {
+    updateStatus({
+      subOrderId,
+      status,
+      ...(preparationTimeMinutes !== undefined ? { preparationTimeMinutes } : {}),
+    });
   }
 
   function handleDragEnd(event: DragEndEvent) {

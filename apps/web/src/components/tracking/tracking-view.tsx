@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import type { OrderLineItem, SubOrderDetail } from "@rsc/contracts";
+import type { OrderLineItem, OrderStatusEvent, SubOrderDetail } from "@rsc/contracts";
 import { Card, EmptyState } from "@rsc/ui";
 import { Bike, ChevronDown, MapPin, RefreshCw, Store, Wifi, WifiOff } from "lucide-react";
 
@@ -63,12 +63,31 @@ function NoActiveOrder() {
   );
 }
 
+function getPreparationTimeFromEvents(
+  events: OrderStatusEvent[],
+  subOrderId: string,
+): number | null {
+  const matchingEvent = [...events]
+    .reverse()
+    .find(
+      (event) =>
+        event.subOrderId === subOrderId &&
+        event.note?.toLowerCase().startsWith("estimated preparation time:"),
+    );
+  const match = matchingEvent?.note?.match(/(\d+)\s*minutes?/i);
+  const minutes = match ? Number(match[1]) : NaN;
+
+  return Number.isFinite(minutes) ? minutes : null;
+}
+
 function KitchenBreakdown({
   subOrders,
   lineItems,
+  events,
 }: {
   subOrders: SubOrderDetail[];
   lineItems: OrderLineItem[];
+  events: OrderStatusEvent[];
 }) {
   const { data: outlets, isPending: outletsPending } = useOutlets();
   const outletNames = new Map(outlets?.map((outlet) => [outlet.id, outlet.name]) ?? []);
@@ -102,6 +121,10 @@ function KitchenBreakdown({
         const items = lineItems.filter((lineItem) => lineItem.subOrderId === subOrder.id);
         const normalizedStatus = subOrder.status.toUpperCase();
         const unavailable = normalizedStatus === "REJECTED" || normalizedStatus === "CANCELLED";
+        const preparationTimeMinutes =
+          normalizedStatus === "PREPARING"
+            ? getPreparationTimeFromEvents(events, subOrder.id)
+            : null;
 
         return (
           <Card
@@ -150,6 +173,17 @@ function KitchenBreakdown({
                   normalizedStatus.toLowerCase().replaceAll("_", " ")}
               </span>
             </div>
+
+            {preparationTimeMinutes !== null && (
+              <div className="mb-4 rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,white)] px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--rsc-brand-strong)]">
+                  Estimated preparation time
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-gray-800">
+                  {preparationTimeMinutes} minutes
+                </p>
+              </div>
+            )}
 
             {items.length > 0 ? (
               <ul className="space-y-2">
@@ -321,7 +355,7 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
         </>
       )}
 
-      <KitchenBreakdown subOrders={subOrders} lineItems={lineItems} />
+      <KitchenBreakdown subOrders={subOrders} lineItems={lineItems} events={events} />
 
       <Card className="space-y-4 border-[color:color-mix(in_srgb,var(--rsc-main)_10%,white)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
         <div className="flex items-center gap-2.5">

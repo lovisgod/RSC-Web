@@ -39,7 +39,16 @@ describe(PiiCryptoService.name, () => {
   it("rejects tampered ciphertext", () => {
     const service = createService();
     const encrypted = service.encrypt("08031234567");
-    const tampered = `${encrypted.slice(0, -1)}A`;
+
+    // Tamper the encrypted payload segment (index 3) by flipping a bit
+    // in the middle of its binary content. Changing only the last base64url
+    // character is unreliable because padding bits may absorb the edit.
+    const parts = encrypted.split(".");
+    const payloadBytes = Buffer.from(parts[3]!, "base64url");
+    const mid = Math.floor(payloadBytes.length / 2);
+    payloadBytes[mid] = payloadBytes[mid]! ^ 0xff;
+    parts[3] = payloadBytes.toString("base64url");
+    const tampered = parts.join(".");
 
     expect(() => service.decrypt(tampered)).toThrow();
   });

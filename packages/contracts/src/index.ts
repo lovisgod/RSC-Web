@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 
@@ -338,6 +338,8 @@ export const initiatePaymentInputSchema = z
     deliveryAddress: z.string().optional(),
     deliveryLatitude: z.number().optional(),
     deliveryLongitude: z.number().optional(),
+    recipientPhone: z.string().optional(),
+    preparationNote: z.string().max(1000).optional(),
   })
   .strict();
 
@@ -509,8 +511,10 @@ export const adminOrderMasterSchema = z.object({
   deliveryAddress: z.string().nullable(),
   deliveryLatitude: z.number().nullable(),
   deliveryLongitude: z.number().nullable(),
+  recipientPhone: z.string().nullable().optional(),
   paymentReference: z.string().nullable(),
   deliveryCode: z.string().nullable(),
+  preparationTime: z.number().int().nullable().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   deletedAt: z.iso.datetime().nullable(),
@@ -526,6 +530,8 @@ export const adminOrderSubOrderSchema = z.object({
   commissionMinor: z.int().nonnegative(),
   netMinor: z.int().nonnegative(),
   currency: currencySchema,
+  preparationTime: z.number().int().nullable().optional(),
+  preparationNote: z.string().nullable().optional(),
   preparationTimeMinutes: z.int().nonnegative().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -603,8 +609,10 @@ export const customerOrderSchema = z
     deliveryAddress: z.string().nullable(),
     deliveryLatitude: z.coerce.number().min(-90).max(90).nullable(),
     deliveryLongitude: z.coerce.number().min(-180).max(180).nullable(),
+    recipientPhone: z.string().nullable().optional(),
     paymentReference: z.string().nullable(),
     deliveryCode: z.string().nullable(),
+    preparationTime: z.coerce.number().int().nullable().optional(),
     createdAt: z.string().min(1),
     updatedAt: z.string().min(1),
     deletedAt: z.iso.datetime().nullable(),
@@ -641,6 +649,8 @@ export const subOrderDetailSchema = z
     commissionMinor: z.coerce.number().int().nonnegative().default(0),
     netMinor: z.coerce.number().int().nonnegative().default(0),
     currency: currencySchema.default("NGN"),
+    preparationTime: z.coerce.number().int().nullable().optional(),
+    preparationNote: z.string().nullable().optional(),
     createdAt: z.string().min(1),
   })
   .passthrough();
@@ -672,6 +682,16 @@ export const orderLineItemSchema = z
   })
   .passthrough();
 
+export const riderInfoSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  phone: z.string(),
+  email: z.string().nullable().optional(),
+  avatarUrl: z.string().nullable().optional(),
+  vehicleType: z.string().nullable().optional(),
+  plateNumber: z.string().nullable().optional(),
+});
+
 export const orderDetailSchema = z
   .object({
     order: customerOrderSchema,
@@ -688,6 +708,7 @@ export const orderDetailSchema = z
       .nullish()
       .transform((value) => value ?? []),
     latestRiderLocation: riderLocationSchema.nullish().transform((value) => value ?? null),
+    rider: riderInfoSchema.nullish().transform((value) => value ?? null),
   })
   .passthrough();
 
@@ -710,6 +731,7 @@ export const riderDispatchSchema = z.object({
       pickupLongitude: z.number().nullable(),
       pickupCode: z.string().min(1),
       status: subOrderStatusSchema,
+      preparationNote: z.string().nullable().optional(),
       items: z.array(
         z.object({
           id: z.uuid(),
@@ -946,6 +968,7 @@ export type NotificationCampaign = z.infer<typeof notificationCampaignSchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;
 export type RiderLocation = z.infer<typeof riderLocationSchema>;
+export type RiderInfo = z.infer<typeof riderInfoSchema>;
 export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
 export type SubOrderDetail = z.infer<typeof subOrderDetailSchema>;
 export type OrderLineItem = z.infer<typeof orderLineItemSchema>;
@@ -982,3 +1005,47 @@ export type PlatformCharges = z.infer<typeof platformChargesSchema>;
 export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
 export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;
 export type RateOutletInput = z.infer<typeof rateOutletInputSchema>;
+
+export const preparationSuggestionSchema = z.object({
+  id: z.uuid(),
+  text: z.string().min(1).max(255),
+  outletId: z.uuid().nullable(),
+  menuItemId: z.uuid().nullable(),
+  isActive: z.boolean(),
+  sortOrder: z.int().nonnegative(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const createPreparationSuggestionInputSchema = z
+  .object({
+    text: z.string().trim().min(1).max(255),
+    outletId: z.uuid().nullable().optional(),
+    menuItemId: z.uuid().nullable().optional(),
+    isActive: z.boolean().optional(),
+    sortOrder: z.int().nonnegative().optional(),
+  })
+  .strict();
+
+export const updatePreparationSuggestionInputSchema = createPreparationSuggestionInputSchema
+  .partial()
+  .strict();
+
+export const queryPreparationSuggestionsInputSchema = z
+  .object({
+    outletId: z.uuid().optional(),
+    menuItemId: z.uuid().optional(),
+    q: z.string().optional(),
+  })
+  .strict();
+
+export type PreparationSuggestion = z.infer<typeof preparationSuggestionSchema>;
+export type CreatePreparationSuggestionInput = z.infer<
+  typeof createPreparationSuggestionInputSchema
+>;
+export type UpdatePreparationSuggestionInput = z.infer<
+  typeof updatePreparationSuggestionInputSchema
+>;
+export type QueryPreparationSuggestionsInput = z.infer<
+  typeof queryPreparationSuggestionsInputSchema
+>;
