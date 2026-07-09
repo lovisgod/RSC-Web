@@ -17,6 +17,7 @@ const EMPTY_DELIVERY: DeliveryForm = {
   longitude: null,
   zone: null,
   onBehalf: false,
+  recipientPhone: "",
   instructions: "",
 };
 

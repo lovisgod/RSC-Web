@@ -59,6 +59,7 @@ export function FulfillmentStep({
   const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
   const [addressText, setAddressText] = useState(initial.address);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
+  const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
   const [instructions, setInstructions] = useState(initial.instructions);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     initial.latitude != null && initial.longitude != null
@@ -267,6 +268,8 @@ export function FulfillmentStep({
       const base = {
         items,
         deliveryMode: mode === "delivery" ? ("DELIVERY" as const) : ("TAKEOUT" as const),
+        ...(instructions.trim() ? { preparationNote: instructions.trim() } : {}),
+        ...(onBehalf && recipientPhone.trim() ? { recipientPhone: recipientPhone.trim() } : {}),
       };
 
       return apiClient.initiatePayment(
@@ -305,6 +308,7 @@ export function FulfillmentStep({
           longitude: coords?.longitude ?? null,
           zone,
           onBehalf,
+          recipientPhone,
           instructions,
         },
         result.reference,
@@ -506,6 +510,21 @@ export function FulfillmentStep({
                 Order on behalf of someone inside geofence
               </span>
             </label>
+
+            {onBehalf && (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500">
+                  Recipient phone number
+                </label>
+                <input
+                  type="tel"
+                  value={recipientPhone}
+                  onChange={(event) => setRecipientPhone(event.target.value)}
+                  placeholder="08031234567"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -63,6 +63,9 @@ export class MasterOrder {
   @Column({ name: "delivery_longitude", type: "double precision", nullable: true })
   deliveryLongitude!: number | null;
 
+  @Column({ name: "recipient_phone", type: "varchar", length: 32, nullable: true })
+  recipientPhone!: string | null;
+
   @Column({ name: "payment_reference", type: "varchar", length: 120, nullable: true })
   paymentReference!: string | null;
 

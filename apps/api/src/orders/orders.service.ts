@@ -69,6 +69,7 @@ export interface RiderDispatch {
     pickupLongitude: number | null;
     pickupCode: string;
     status: SubOrderStatus;
+    preparationNote: string | null;
     items: Array<{
       id: string;
       name: string;
@@ -759,6 +760,7 @@ export class OrdersService {
           pickupLongitude: outlet?.longitude ?? null,
           pickupCode: subOrder.pickupCode,
           status: subOrder.status,
+          preparationNote: subOrder.preparationNote,
           items: lineItems
             .filter((lineItem) => lineItem.subOrderId === subOrder.id)
             .map((lineItem) => ({
@@ -833,6 +835,7 @@ export class OrdersService {
           latitude: outlet.pickupLatitude,
           longitude: outlet.pickupLongitude,
           pickupCode: outlet.pickupCode,
+          preparationNote: outlet.preparationNote,
         })),
       },
     });
