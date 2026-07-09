@@ -1,4 +1,5 @@
 import { Button, Input } from "@rsc/ui";
+import { nigerianPhoneNumberSchema } from "@rsc/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,7 +11,16 @@ import { toastBus } from "../lib/toast-bus";
 import { authStore } from "../stores/auth-store";
 
 const schema = z.object({
-  identifier: z.string().min(1, "Email or phone is required"),
+  identifier: z
+    .string()
+    .trim()
+    .min(1, "Email or phone is required")
+    .refine(
+      (value) =>
+        z.string().email().safeParse(value).success ||
+        nigerianPhoneNumberSchema.safeParse(value).success,
+      "Enter a valid email address or Nigerian phone number",
+    ),
   password: z.string().min(1, "Password is required"),
 });
 

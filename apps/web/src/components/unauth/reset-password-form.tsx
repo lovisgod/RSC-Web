@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { NIGERIAN_MOBILE_NUMBER_PATTERN } from "@rsc/contracts";
+import { nigerianPhoneNumberSchema } from "@rsc/contracts";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@rsc/ui";
@@ -27,7 +27,7 @@ export function ResetPasswordForm() {
 
   const mutation = useMutation({
     mutationFn: (data: ResetPasswordFormData) => {
-      const isPhone = NIGERIAN_MOBILE_NUMBER_PATTERN.test(identifier);
+      const isPhone = nigerianPhoneNumberSchema.safeParse(identifier).success;
       return apiClient.resetPassword({
         identifier,
         ...(isPhone ? { phoneCode: data.code } : { emailCode: data.code }),

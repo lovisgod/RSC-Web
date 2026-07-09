@@ -1,7 +1,19 @@
 import { z } from "zod";
+import { nigerianPhoneNumberSchema } from "@rsc/contracts";
+
+const emailOrPhoneIdentifierSchema = z
+  .string()
+  .trim()
+  .min(1, "Email or phone number is required")
+  .refine(
+    (value) =>
+      z.string().email().safeParse(value).success ||
+      nigerianPhoneNumberSchema.safeParse(value).success,
+    "Enter a valid email address or Nigerian phone number",
+  );
 
 export const signInSchema = z.object({
-  identifier: z.string().min(1, "Email or phone number is required"),
+  identifier: emailOrPhoneIdentifierSchema,
   password: z.string().min(1, "Password is required"),
 });
 
@@ -16,7 +28,7 @@ const passwordSchema = z.string().min(8, "Password must be at least 8 characters
 
 export const signUpSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  phone: z.string().min(10, "Enter a valid phone number"),
+  phone: nigerianPhoneNumberSchema,
   email: z.string().email("Enter a valid email address"),
   password: passwordSchema,
 });
@@ -26,7 +38,7 @@ export const otpSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  identifier: z.string().min(1, "Email or phone number is required"),
+  identifier: emailOrPhoneIdentifierSchema,
 });
 
 export const resetPasswordSchema = z

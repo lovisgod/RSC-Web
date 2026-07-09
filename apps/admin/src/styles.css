@@ -1224,22 +1224,34 @@ th {
   box-shadow: 0 12px 28px rgb(30 49 96 / 8%);
 }
 
-.rider-report-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-end;
-  gap: 1rem;
-  transform: translateY(-0.75rem);
+.rider-page-heading {
+  align-items: start;
 }
 
-.rider-report-actions .btn {
+.rider-page-heading__copy {
+  min-width: 0;
+}
+
+.rider-page-heading__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(100%, 800px);
+  margin-bottom: 0.45rem;
+}
+
+.rider-page-heading__top .kicker {
+  margin-bottom: 0;
+}
+
+.rider-page-heading__top .btn {
   min-height: 48px;
   color: white;
   box-shadow: 0 14px 30px rgb(30 49 96 / 22%);
 }
 
-.rider-report-actions .btn svg {
+.rider-page-heading__top .btn svg {
   color: currentColor;
 }
 
@@ -3007,5 +3019,29 @@ th {
   .outlet-availability__head {
     flex-wrap: nowrap;
     align-items: center;
+  }
+
+  .rider-page-heading {
+    gap: 1rem;
+  }
+
+  .rider-page-heading__top {
+    width: 100%;
+  }
+
+  .rider-page-heading__top .rsc-button {
+    min-height: 40px;
+    min-width: 40px;
+    padding: 0 0.65rem;
+    border-radius: 12px;
+  }
+
+  .rider-onboard-label {
+    display: none;
+  }
+
+  .rider-page-heading__top .rsc-button svg {
+    width: 20px;
+    height: 20px;
   }
 }

@@ -9,6 +9,8 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   platformChargesSchema,
+  createRiderInputSchema,
+  riderResultSchema,
   updatePlatformChargesInputSchema,
   type OperationsQueue,
   type OperationsStatsQuery,
@@ -26,10 +28,12 @@ import {
   type MenuItem,
   type NotificationCampaign,
   type CreateNotificationCampaignInput,
+  type CreateRiderInput,
   type OutletSummary,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
+  type RiderResult,
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
 } from "@rsc/contracts";
@@ -250,27 +254,10 @@ export const scheduleNotificationCampaign = (
 export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
   post("/api/v1/auth/admins", body);
 
-export interface CreateRiderInput {
-  name: string;
-  email: string;
-  phone: string;
-  vehicleType?: string;
-  plateNumber?: string;
-}
-
-export interface RiderResult {
-  id: string;
-  name: string;
-  role: "RIDER";
-  outletId: string | null;
-  vehicleType: string | null;
-  plateNumber: string | null;
-  riderStatus: string | null;
-  temporaryPassword: string;
-}
-
 export const createRider = (body: CreateRiderInput): Promise<RiderResult> =>
-  post("/api/v1/users/riders", body);
+  post<unknown>("/api/v1/users/riders", createRiderInputSchema.parse(body)).then((data) =>
+    riderResultSchema.parse(data),
+  );
 
 export interface OutletAdminUser {
   id: string;
