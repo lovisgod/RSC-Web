@@ -46,6 +46,7 @@ export function SettingsPage() {
     bankCode?: string;
     accountNumber?: string;
   }>({});
+  const [isEditingBank, setIsEditingBank] = useState(false);
 
   const provisionMutation = useMutation({
     mutationFn: () => {
@@ -59,6 +60,7 @@ export function SettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outlet", "detail", outletId] });
       toastBus.emit("Bank account registered successfully!", "success");
+      setIsEditingBank(false);
     },
     onError: (err: Error) => {
       toastBus.emit(err.message, "error");
@@ -294,7 +296,7 @@ export function SettingsPage() {
           <div className="p-5 sm:p-6">
             {isLoadingOutlet ? (
               <p className="text-sm text-slate-500">Loading settlement details...</p>
-            ) : outlet?.paystackSubaccountCode ? (
+            ) : outlet?.paystackSubaccountCode && !isEditingBank ? (
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
                 <div className="flex items-start gap-3">
                   <span className="text-emerald-600 mt-0.5">
@@ -310,9 +312,13 @@ export function SettingsPage() {
                     </p>
                     <p className="mt-2 text-xs text-slate-500 leading-5">
                       Settlements for orders from this outlet will be paid out net of 10% platform
-                      commission. If you need to update your payout details, please contact platform
-                      super-admins.
+                      commission.
                     </p>
+                    <div className="mt-3">
+                      <Button tone="quiet" type="button" onClick={() => setIsEditingBank(true)}>
+                        Change Settlement Details
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -421,7 +427,17 @@ export function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-3">
+                <div className="flex justify-end gap-3 pt-3">
+                  {outlet?.paystackSubaccountCode && (
+                    <Button
+                      tone="quiet"
+                      type="button"
+                      disabled={provisionMutation.isPending}
+                      onClick={() => setIsEditingBank(false)}
+                    >
+                      Cancel
+                    </Button>
+                  )}
                   <Button tone="navy" type="submit" disabled={provisionMutation.isPending}>
                     {provisionMutation.isPending ? "Registering Account…" : "Register Bank Account"}
                   </Button>
