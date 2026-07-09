@@ -174,6 +174,7 @@ export class PaystackPaymentAdapter implements PaymentAdapter {
   // -------------------------------------------------------------------------
 
   async parseWebhookEvent(rawBody: Buffer, signature: string): Promise<ParsedWebhookEvent | null> {
+    await Promise.resolve();
     // Paystack signs the raw body with HMAC-SHA512 using the secret key
     if (!this.verifyPaystackSignature(rawBody, signature)) {
       this.logger.warn("Paystack webhook: invalid signature — request rejected");
