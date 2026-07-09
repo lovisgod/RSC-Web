@@ -4,6 +4,9 @@ import { Repository } from "typeorm";
 
 import { PAYMENT_ADAPTER, type PaymentAdapter } from "../payments/payment-adapter";
 import { Outlet } from "./outlet.entity";
+import { Customer } from "../auth/customer.entity";
+import { UserRole } from "../auth/user-role.enum";
+import { ForbiddenException } from "@nestjs/common";
 
 export interface ProvisionOutletSubaccountInput {
   businessName: string;
@@ -17,8 +20,22 @@ export class OutletsService {
 
   constructor(
     @InjectRepository(Outlet) private readonly outlets: Repository<Outlet>,
+    @InjectRepository(Customer) private readonly users: Repository<Customer>,
     @Inject(PAYMENT_ADAPTER) private readonly paymentAdapter: PaymentAdapter,
   ) {}
+
+  async checkOwnOutletAccess(userId: string, role: UserRole, outletId: string): Promise<void> {
+    if (role !== UserRole.ADMIN) {
+      return;
+    }
+    const admin = await this.users.findOne({
+      where: { id: userId, role: UserRole.ADMIN },
+      select: { id: true, outletId: true },
+    });
+    if (!admin || admin.outletId !== outletId) {
+      throw new ForbiddenException("Cannot manage another outlet's subaccount");
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Public catalog

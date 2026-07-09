@@ -41,6 +41,12 @@ export class PaymentsController {
     return this.payments.getPlatformCharges();
   }
 
+  @Get("banks")
+  @ApiMessage("Nigerian banks retrieved")
+  banks() {
+    return this.payments.getBanks();
+  }
+
   @Patch("platform-charges")
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)

@@ -1,6 +1,18 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
+import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
@@ -29,12 +41,12 @@ export class OutletsController {
   /**
    * Register an outlet's bank account with Paystack.
    * Creates a Paystack subaccount and saves the ACCT_xxx code back to the outlet.
-   * SUPER_ADMIN only.
+   * SUPER_ADMIN or own outlet's ADMIN only.
    */
   @Post(":id/subaccount")
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({
     summary: "Provision Paystack subaccount for an outlet",
     description:
@@ -42,29 +54,38 @@ export class OutletsController {
       "Idempotent — pass force=true to re-provision.",
   })
   @ApiMessage("Outlet subaccount provisioned")
-  provisionSubaccount(
+  async provisionSubaccount(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() input: ProvisionSubaccountDto,
+    @Req() request: AuthenticatedRequest,
   ) {
+    const user = request.user!;
+    await this.outlets.checkOwnOutletAccess(user.id, user.role, id);
     return this.outlets.provisionSubaccount(id, input, input.force);
   }
 
   /**
    * Manually assign a Paystack subaccount code that was registered externally
    * (e.g. via Paystack dashboard rather than the API).
-   * SUPER_ADMIN only.
+   * SUPER_ADMIN or own outlet's ADMIN only.
    */
   @Put(":id/subaccount-code")
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({
     summary: "Manually set an outlet's Paystack subaccount code",
     description:
       "Use when the subaccount was created outside the API. " + "Code must start with ACCT_.",
   })
   @ApiMessage("Subaccount code updated")
-  setSubaccountCode(@Param("id", ParseUUIDPipe) id: string, @Body() input: SetSubaccountCodeDto) {
+  async setSubaccountCode(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() input: SetSubaccountCodeDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const user = request.user!;
+    await this.outlets.checkOwnOutletAccess(user.id, user.role, id);
     return this.outlets.setSubaccountCode(id, input.subaccountCode);
   }
 }
