@@ -29,6 +29,7 @@ function maskUrl(value: string): string {
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
+    rawBody: true, // required for Paystack webhook HMAC-SHA512 signature validation
   });
 
   configureApplication(app);

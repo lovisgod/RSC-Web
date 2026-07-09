@@ -93,11 +93,12 @@ export class CreateOutletDto {
   @Min(0.1)
   deliveryRadiusKm?: number;
 
-  @ApiProperty({ example: "MOMENT_SUBACCOUNT_123" })
+  @ApiPropertyOptional({ example: "ACCT_abc123" })
   @Transform(trim)
+  @IsOptional()
   @IsString()
   @Length(2, 100)
-  momentSubaccountCode!: string;
+  paystackSubaccountCode?: string;
 }
 
 export class UpdateOutletDto extends PartialType(CreateOutletDto) {}
