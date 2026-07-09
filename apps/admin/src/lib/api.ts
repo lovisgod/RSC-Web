@@ -173,7 +173,7 @@ export interface OutletBody {
   description?: string;
   cuisineType: string;
   isOnline?: boolean;
-  momentSubaccountCode: string;
+  paystackSubaccountCode?: string;
   imageUrl?: string;
 }
 
