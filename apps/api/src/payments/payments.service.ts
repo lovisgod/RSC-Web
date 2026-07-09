@@ -559,47 +559,39 @@ export class PaymentsService {
   // ---------------------------------------------------------------------------
 
   async getBanks(): Promise<Array<{ code: string; name: string }>> {
-    const fallbackBanks = [
-      { code: "058", name: "Guaranty Trust Bank (GTBank)" },
-      { code: "044", name: "Access Bank" },
-      { code: "057", name: "Zenith Bank" },
-      { code: "033", name: "United Bank for Africa (UBA)" },
-      { code: "035", name: "Wema Bank" },
-      { code: "011", name: "First Bank of Nigeria" },
-      { code: "032", name: "Union Bank of Nigeria" },
-      { code: "232", name: "Sterling Bank" },
-      { code: "070", name: "Fidelity Bank" },
-      { code: "214", name: "First City Monument Bank (FCMB)" },
-      { code: "039", name: "Stanbic IBTC Bank" },
-    ];
+    const paymentsConfig = this.configService.get("payments", { infer: true });
+
+    // Query configured Paystack base URL if paystack is active, otherwise default to Paystack's public endpoint
+    const url =
+      paymentsConfig.provider === "paystack"
+        ? `${paymentsConfig.paystack.baseUrl}/bank?currency=NGN`
+        : "https://api.paystack.co/bank?currency=NGN";
+
+    const headers: Record<string, string> = {};
+    if (paymentsConfig.provider === "paystack" && paymentsConfig.paystack.secretKey) {
+      headers["authorization"] = `Bearer ${paymentsConfig.paystack.secretKey}`;
+    }
 
     try {
-      const paymentsConfig = this.configService.get("payments", { infer: true });
-      if (paymentsConfig.provider !== "paystack") {
-        return fallbackBanks;
+      const response = await fetch(url, { headers });
+      if (!response.ok) {
+        throw new Error(`Paystack bank fetch failed with status ${response.status}`);
       }
-      const response = await fetch(`${paymentsConfig.paystack.baseUrl}/bank?currency=NGN`, {
-        headers: {
-          authorization: `Bearer ${paymentsConfig.paystack.secretKey}`,
-        },
-      });
-      if (!response.ok) return fallbackBanks;
       const payload = (await response.json()) as {
         status: boolean;
+        message?: string;
         data?: Array<{ code: string; name: string }>;
       };
-      if (payload.status && Array.isArray(payload.data)) {
-        return payload.data.map((b: { code: string; name: string }) => ({
-          code: b.code,
-          name: b.name,
-        }));
+      if (!payload.status || !Array.isArray(payload.data)) {
+        throw new Error(payload.message || "Failed to parse bank list from response");
       }
-      return fallbackBanks;
+      return payload.data.map((b: { code: string; name: string }) => ({
+        code: b.code,
+        name: b.name,
+      }));
     } catch (err) {
-      this.logger.warn(
-        `Failed to fetch bank list from Paystack, using fallback: ${(err as Error).message}`,
-      );
-      return fallbackBanks;
+      this.logger.error(`Failed to fetch bank list: ${(err as Error).message}`);
+      throw new Error(`Could not load bank listings: ${(err as Error).message}`);
     }
   }
 
