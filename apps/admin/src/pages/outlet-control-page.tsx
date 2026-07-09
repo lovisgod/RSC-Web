@@ -249,7 +249,10 @@ export function OutletControlPage() {
                       <div className="outlet-card__info">
                         <strong>{outlet.name}</strong>
                         <small className="outlet-card__cuisine">{outlet.cuisineType}</small>
-                        <small>Sub-account: {outlet.momentSubaccountCode}</small>
+                        <small>
+                          Sub-account:{" "}
+                          {outlet.paystackSubaccountCode ?? "None (Pending Onboarding)"}
+                        </small>
                       </div>
 
                       <span className={`outlet-status${isOnline ? "" : " outlet-status--closed"}`}>
