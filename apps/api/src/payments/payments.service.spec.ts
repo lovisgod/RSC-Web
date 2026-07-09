@@ -81,14 +81,12 @@ describe(PaymentsService.name, () => {
         checkoutUrl: null,
         providerResponse: {},
       }),
-      verify: vi
-        .fn()
-        .mockResolvedValue({
-          status: "SUCCESS",
-          amountMinor: 0,
-          reference: "RSC-reference",
-          providerResponse: {},
-        }),
+      verify: vi.fn().mockResolvedValue({
+        status: "SUCCESS",
+        amountMinor: 0,
+        reference: "RSC-reference",
+        providerResponse: {},
+      }),
       parseWebhookEvent: vi.fn().mockResolvedValue(null),
       provisionSubaccount: vi
         .fn()
