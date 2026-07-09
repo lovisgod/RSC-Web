@@ -1,6 +1,8 @@
 import axios, { type AxiosError } from "axios";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import {
+  adminOrdersQuerySchema,
+  adminOrdersResultSchema,
   operationsQueueSchema,
   operationsStatsQuerySchema,
   operationsSummarySchema,
@@ -15,25 +17,26 @@ import {
   type OrderPulseQuery,
   type PlatformCharges,
   type AdminResult,
+  type AdminOrdersQuery,
+  type AdminOrdersResult,
   type CreateAdminInput,
-  type CustomerOrder,
   type ForgotPasswordResult,
   type LoginResult,
   type LogoutResult,
   type MenuItem,
   type NotificationCampaign,
   type CreateNotificationCampaignInput,
-  type OrderLineItem,
   type OutletSummary,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
-  type SubOrderDetail,
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
+
+export type { AdminOrdersQuery, AdminOrdersResult } from "@rsc/contracts";
 
 // ─── Axios instance ───────────────────────────────────────────────────────────
 
@@ -159,7 +162,7 @@ export const resetPassword = (body: {
 
 export const uploadImage = (file: File): Promise<{ url: string }> => {
   const fd = new FormData();
-  fd.append("image", file);
+  fd.append("file", file);
   return post("/api/v1/media/images", fd);
 };
 
@@ -202,44 +205,24 @@ export const updateMenuItemAvailability = (
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-export interface AdminOrdersQuery {
-  outletId?: string;
-  status?: string;
-  subOrderStatus?: string;
-  deliveryMode?: string;
-  customerId?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface AdminOrderItem {
-  order: CustomerOrder;
-  subOrders: SubOrderDetail[];
-  lineItems: OrderLineItem[];
-}
-
-export interface AdminOrdersResult {
-  orders: AdminOrderItem[];
-  total: number;
-  limit: number;
-  offset: number;
-}
+export type AdminOrderItem = AdminOrdersResult["orders"][number];
 
 export const listAdminOrders = (params?: AdminOrdersQuery): Promise<AdminOrdersResult> => {
+  const queryParams = adminOrdersQuerySchema.parse(params ?? {});
   const qs = new URLSearchParams();
-  if (params?.outletId) qs.set("outletId", params.outletId);
-  if (params?.status) qs.set("status", params.status);
-  if (params?.subOrderStatus) qs.set("subOrderStatus", params.subOrderStatus);
-  if (params?.deliveryMode) qs.set("deliveryMode", params.deliveryMode);
-  if (params?.customerId) qs.set("customerId", params.customerId);
-  if (params?.dateFrom) qs.set("dateFrom", params.dateFrom);
-  if (params?.dateTo) qs.set("dateTo", params.dateTo);
-  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
-  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  if (queryParams.outletId) qs.set("outletId", queryParams.outletId);
+  if (queryParams.status) qs.set("status", queryParams.status);
+  if (queryParams.subOrderStatus) qs.set("subOrderStatus", queryParams.subOrderStatus);
+  if (queryParams.deliveryMode) qs.set("deliveryMode", queryParams.deliveryMode);
+  if (queryParams.customerId) qs.set("customerId", queryParams.customerId);
+  if (queryParams.dateFrom) qs.set("dateFrom", queryParams.dateFrom);
+  if (queryParams.dateTo) qs.set("dateTo", queryParams.dateTo);
+  if (queryParams.limit !== undefined) qs.set("limit", String(queryParams.limit));
+  if (queryParams.offset !== undefined) qs.set("offset", String(queryParams.offset));
   const query = qs.toString();
-  return get(`/api/v1/orders/admin${query ? `?${query}` : ""}`);
+  return get<unknown>(`/api/v1/orders/admin${query ? `?${query}` : ""}`).then((data) =>
+    adminOrdersResultSchema.parse(data),
+  );
 };
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -266,6 +249,28 @@ export const scheduleNotificationCampaign = (
 
 export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
   post("/api/v1/auth/admins", body);
+
+export interface CreateRiderInput {
+  name: string;
+  email: string;
+  phone: string;
+  vehicleType?: string;
+  plateNumber?: string;
+}
+
+export interface RiderResult {
+  id: string;
+  name: string;
+  role: "RIDER";
+  outletId: string | null;
+  vehicleType: string | null;
+  plateNumber: string | null;
+  riderStatus: string | null;
+  temporaryPassword: string;
+}
+
+export const createRider = (body: CreateRiderInput): Promise<RiderResult> =>
+  post("/api/v1/users/riders", body);
 
 export interface OutletAdminUser {
   id: string;

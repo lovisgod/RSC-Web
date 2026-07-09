@@ -1,15 +1,22 @@
 "use client";
 
 import { Card } from "@rsc/ui";
+import type {
+  NotificationPreferences,
+  UpdateNotificationPreferencesInput,
+  UserProfile,
+} from "@rsc/contracts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ChevronDown,
   CheckCircle2,
   KeyRound,
   Loader2,
   LogOut,
   MapPin,
   MapPinCheck,
+  Pencil,
   X,
   XCircle,
 } from "lucide-react";
@@ -41,11 +48,176 @@ const darkInputClass =
 
 const darkErrorClass = "mt-1 text-xs text-red-300";
 
+const notificationPreferencesQueryKey = ["notifications", "preferences"] as const;
+
 // ── Profile header card ───────────────────────────────────────────────────────
+
+interface ProfileChangeVerificationModalProps {
+  profile: UserProfile;
+  initialSeconds: number | null;
+  onVerified: (profile: UserProfile) => void;
+  onClose: () => void;
+}
+
+function ProfileChangeVerificationModal({
+  profile,
+  initialSeconds,
+  onVerified,
+  onClose,
+}: ProfileChangeVerificationModalProps) {
+  const [code, setCode] = useState("");
+  const [secondsRemaining, setSecondsRemaining] = useState(initialSeconds);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const pending = profile.pendingVerificationChannels;
+
+  useEffect(() => {
+    if (initialSeconds === null) return;
+
+    const timer = window.setInterval(() => {
+      setSecondsRemaining((seconds) => (seconds === null ? null : Math.max(0, seconds - 1)));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [initialSeconds]);
+
+  const mutation = useMutation({
+    mutationFn: () => apiClient.verifyProfileChange({ code }),
+    onSuccess: (updated) => {
+      onVerified(updated);
+      setCode("");
+
+      if (updated.pendingVerificationChannels.email || updated.pendingVerificationChannels.phone) {
+        setSuccessMessage("One change is verified. Enter the code for the remaining change.");
+      } else {
+        onClose();
+      }
+    },
+  });
+
+  const destination =
+    pending.email && pending.phone
+      ? "your new email address and phone number"
+      : pending.email
+        ? "your new email address"
+        : "your new phone number";
+  const formattedTime =
+    secondsRemaining === null
+      ? null
+      : `${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, "0")}`;
+
+  function handleBackdropClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (event.target === event.currentTarget && !mutation.isPending) onClose();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm"
+      onClick={handleBackdropClick}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-verification-title"
+        className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+          <div>
+            <h2 id="profile-verification-title" className="font-bold text-gray-900">
+              Verify your change
+            </h2>
+            <p className="mt-0.5 text-xs text-gray-500">Enter the six-digit code we sent.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={mutation.isPending}
+            aria-label="Close verification"
+            className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:opacity-40"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            mutation.mutate();
+          }}
+          className="space-y-4 p-6"
+        >
+          <p className="text-sm leading-6 text-gray-600">
+            Use the code sent to <span className="font-semibold text-gray-900">{destination}</span>.
+            If both changed, either code can be verified first.
+          </p>
+
+          <div>
+            <label htmlFor="profile-change-code" className="sr-only">
+              Six-digit verification code
+            </label>
+            <input
+              id="profile-change-code"
+              value={code}
+              onChange={(event) => {
+                setCode(event.target.value.replace(/\D/g, "").slice(0, 6));
+                setSuccessMessage(null);
+                mutation.reset();
+              }}
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="\d{6}"
+              maxLength={6}
+              autoFocus
+              placeholder="000000"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-center font-mono text-2xl font-bold tracking-[0.35em] text-gray-900 outline-none transition focus:border-[var(--rsc-main)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--rsc-main)_15%,transparent)]"
+            />
+          </div>
+
+          {formattedTime && secondsRemaining !== 0 && (
+            <p className="text-center text-xs text-gray-400">Code expires in {formattedTime}</p>
+          )}
+          {secondsRemaining === 0 && (
+            <p className="text-center text-xs font-medium text-amber-600">
+              This code may have expired. Close this window and save your details again for a new
+              code.
+            </p>
+          )}
+          {successMessage && (
+            <p role="status" className="text-center text-xs font-medium text-green-600">
+              {successMessage}
+            </p>
+          )}
+          {mutation.isError && (
+            <p role="alert" className="text-center text-xs text-red-600">
+              {getMutationErrorMessage(mutation.error, {
+                400: "There is no matching pending profile change.",
+                401: "That code is incorrect, expired, or already used.",
+              })}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={code.length !== 6 || mutation.isPending}
+            className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: "var(--rsc-main)" }}
+          >
+            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {mutation.isPending ? "Verifying…" : "Verify change"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function ProfileHeader() {
   const [editing, setEditing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [verificationOpen, setVerificationOpen] = useState(false);
+  const [otpExpiresInSeconds, setOtpExpiresInSeconds] = useState<number | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const signOut = useAuthStore((s) => s.signOut);
 
@@ -84,11 +256,60 @@ function ProfileHeader() {
     onSuccess: (updated) => {
       queryClient.setQueryData(["profile"], updated);
       setEditing(false);
+
+      if (updated.pendingVerificationChannels.email || updated.pendingVerificationChannels.phone) {
+        setOtpExpiresInSeconds(updated.otpExpiresInSeconds);
+        setVerificationOpen(true);
+      } else {
+        setOtpExpiresInSeconds(null);
+      }
     },
   });
 
+  const avatarMutation = useMutation({
+    mutationFn: (file: File) => apiClient.uploadAvatar(file),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["profile"], updated);
+      setAvatarError(null);
+    },
+    onError: (error) => {
+      setAvatarError(getMutationErrorMessage(error, {}));
+    },
+    onSettled: () => {
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = "";
+      }
+    },
+  });
+
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const supportedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
+    if (!supportedTypes.has(file.type)) {
+      setAvatarError("Choose a JPEG, PNG, WEBP, or GIF image.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Choose an image smaller than 5MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setAvatarError(null);
+    avatarMutation.mutate(file);
+  }
+
   const displayName = profile?.name ?? "";
   const initials = displayName ? getInitials(displayName) : "…";
+  const hasPendingProfileChange = Boolean(
+    profile?.pendingVerificationChannels.email || profile?.pendingVerificationChannels.phone,
+  );
 
   return (
     <div
@@ -111,12 +332,53 @@ function ProfileHeader() {
       </button>
       {/* Avatar */}
       <div className="flex flex-col items-center mb-5">
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-3"
-          style={{ backgroundColor: "var(--rsc-dark)" }}
+        <button
+          type="button"
+          onClick={() => avatarInputRef.current?.click()}
+          disabled={isPending || avatarMutation.isPending}
+          aria-label={profile?.avatarUrl ? "Change profile image" : "Add profile image"}
+          className="group/avatar relative mb-3 h-20 w-20 overflow-hidden rounded-full text-2xl font-bold text-white ring-2 ring-white/20 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 disabled:cursor-wait"
+          style={{
+            backgroundColor: "var(--rsc-dark)",
+            ...(profile?.avatarUrl
+              ? {
+                  backgroundImage: `url("${profile.avatarUrl}")`,
+                  backgroundPosition: "center",
+                  backgroundSize: "cover",
+                }
+              : {}),
+          }}
         >
-          {isPending ? <Loader2 className="w-6 h-6 animate-spin opacity-60" /> : initials}
-        </div>
+          <span className="flex h-full w-full items-center justify-center">
+            {isPending || avatarMutation.isPending ? (
+              <Loader2 className="h-6 w-6 animate-spin drop-shadow" />
+            ) : (
+              <>
+                {!profile?.avatarUrl && initials}
+                <span
+                  className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md transition-transform group-hover/avatar:scale-105"
+                  style={{ color: "var(--rsc-main)" }}
+                  aria-hidden="true"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </span>
+              </>
+            )}
+          </span>
+        </button>
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={handleAvatarChange}
+          className="sr-only"
+          tabIndex={-1}
+        />
+        {avatarError && (
+          <p role="alert" className="mb-3 max-w-64 text-center text-xs text-red-300">
+            {avatarError}
+          </p>
+        )}
 
         {!editing && (
           <>
@@ -131,6 +393,16 @@ function ProfileHeader() {
                 <h2 className="text-xl font-bold text-white">{displayName}</h2>
                 <p className="text-sm text-white/60 mt-0.5">{profile?.email}</p>
                 <p className="text-sm text-white/60">{profile?.phone}</p>
+                {hasPendingProfileChange && (
+                  <button
+                    type="button"
+                    onClick={() => setVerificationOpen(true)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    Verify pending change
+                  </button>
+                )}
               </>
             )}
             <button
@@ -206,6 +478,15 @@ function ProfileHeader() {
             </button>
           </div>
         </form>
+      )}
+
+      {verificationOpen && profile && (
+        <ProfileChangeVerificationModal
+          profile={profile}
+          initialSeconds={otpExpiresInSeconds}
+          onVerified={(updated) => queryClient.setQueryData(["profile"], updated)}
+          onClose={() => setVerificationOpen(false)}
+        />
       )}
     </div>
   );
@@ -652,6 +933,199 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
 // ── Change password card ──────────────────────────────────────────────────────
 
+type EditableNotificationPreference = "promotions" | "discounts" | "seasonalOffers";
+
+const notificationPreferenceLabels: Record<
+  EditableNotificationPreference,
+  { title: string; description: string }
+> = {
+  promotions: {
+    title: "Promotions",
+    description: "Receive general promo updates and offer announcements.",
+  },
+  discounts: {
+    title: "Discounts",
+    description: "Get notified when discount offers are available.",
+  },
+  seasonalOffers: {
+    title: "Seasonal offers",
+    description: "Hear about festive, holiday, and special-period offers.",
+  },
+};
+
+function getPreferencePatch(
+  preferences: NotificationPreferences,
+  preference: EditableNotificationPreference,
+  enabled: boolean,
+): UpdateNotificationPreferencesInput {
+  return {
+    promotions: preferences.promotions,
+    discounts: preferences.discounts,
+    seasonalOffers: preferences.seasonalOffers,
+    orderStatus: true,
+    [preference]: enabled,
+  };
+}
+
+function NotificationSwitch({
+  checked,
+  disabled,
+  label,
+  onToggle,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  label: string;
+  onToggle?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onToggle}
+      className="relative h-7 w-12 flex-shrink-0 rounded-full p-1 transition disabled:cursor-not-allowed disabled:opacity-60"
+      style={{ backgroundColor: checked ? "var(--rsc-main)" : "#D1D5DB" }}
+    >
+      <span
+        className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+          checked ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </button>
+  );
+}
+
+function NotificationPreferencesCard() {
+  const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const preferencesQuery = useQuery({
+    queryKey: notificationPreferencesQueryKey,
+    queryFn: () => apiClient.getNotificationPreferences(),
+    enabled: open,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (input: UpdateNotificationPreferencesInput) =>
+      apiClient.updateNotificationPreferences(input),
+    onSuccess: (preferences) => {
+      queryClient.setQueryData<NotificationPreferences>(
+        notificationPreferencesQueryKey,
+        preferences,
+      );
+    },
+  });
+
+  const preferences = preferencesQuery.data;
+  const controlsDisabled = preferencesQuery.isPending || mutation.isPending;
+
+  const updatePreference = (preference: EditableNotificationPreference, enabled: boolean) => {
+    if (!preferences) return;
+    mutation.mutate(getPreferencePatch(preferences, preference, enabled));
+  };
+
+  return (
+    <Card>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="notification-preferences-panel"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-4 text-left"
+      >
+        <span>
+          <span className="block font-semibold text-gray-900">Notification controls</span>
+          <span className="mt-0.5 block text-sm text-gray-400">
+            Choose which offers and updates you want to receive.
+          </span>
+        </span>
+
+        <ChevronDown
+          className={`h-5 w-5 flex-shrink-0 text-gray-400 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div id="notification-preferences-panel" className="mt-5 border-t border-gray-100 pt-4">
+          {preferencesQuery.isPending ? (
+            <div className="flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading notification preferences…
+            </div>
+          ) : preferencesQuery.isError ? (
+            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+              <p className="text-sm font-medium text-red-700">
+                Could not load notification preferences.
+              </p>
+              <button
+                type="button"
+                onClick={() => preferencesQuery.refetch()}
+                className="mt-2 text-sm font-semibold text-red-600 hover:underline"
+              >
+                Try again
+              </button>
+            </div>
+          ) : preferences ? (
+            <div className="space-y-3">
+              {mutation.isError && (
+                <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {getMutationErrorMessage(mutation.error)}
+                </p>
+              )}
+
+              {(Object.keys(notificationPreferenceLabels) as EditableNotificationPreference[]).map(
+                (preference) => {
+                  const content = notificationPreferenceLabels[preference];
+                  const checked = preferences[preference];
+
+                  return (
+                    <div
+                      key={preference}
+                      className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{content.title}</p>
+                        <p className="mt-0.5 text-xs leading-5 text-gray-500">
+                          {content.description}
+                        </p>
+                      </div>
+                      <NotificationSwitch
+                        checked={checked}
+                        disabled={controlsDisabled}
+                        label={`${checked ? "Disable" : "Enable"} ${content.title}`}
+                        onToggle={() => updatePreference(preference, !checked)}
+                      />
+                    </div>
+                  );
+                },
+              )}
+
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Order updates</p>
+                  <p className="mt-0.5 text-xs leading-5 text-gray-500">
+                    Always on so you can receive payment, preparation, pickup, and delivery updates.
+                  </p>
+                </div>
+                <NotificationSwitch
+                  checked={preferences.orderStatus}
+                  disabled
+                  label="Order updates"
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function ChangePasswordCard() {
   const [open, setOpen] = useState(false);
 
@@ -775,6 +1249,7 @@ export function ProfileView() {
         {/* Right — settings cards stacked */}
         <div className="w-full md:w-1/2 space-y-4">
           <DefaultAddressCard />
+          <NotificationPreferencesCard />
           <ChangePasswordCard />
           <DeleteAccountCard />
         </div>
