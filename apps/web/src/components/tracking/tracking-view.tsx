@@ -372,10 +372,13 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
   const status = getStatusConfig(order.status);
   const contentId = `tracking-order-${order.id}`;
   const normalizedStatus = order.status.toUpperCase();
-  const showHandoffCode =
-    !!order.deliveryCode &&
-    ((order.deliveryMode === "DELIVERY" && normalizedStatus === "OUT_FOR_DELIVERY") ||
-      (order.deliveryMode === "TAKEOUT" && normalizedStatus === "READY"));
+  const codeVisibleStatuses = new Set([
+    "CONFIRMED",
+    "PARTIALLY_READY",
+    "READY",
+    "OUT_FOR_DELIVERY",
+  ]);
+  const showHandoffCode = !!order.deliveryCode && codeVisibleStatuses.has(normalizedStatus);
 
   return (
     <div
