@@ -1,6 +1,6 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button, EmptyState, MetricCard } from "@rsc/ui";
-import { Bike, CalendarDays, Clock3, Info, Plus, Trophy } from "lucide-react";
+import { Bike, CalendarDays, Clock3, Plus, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { RiderOnboardModal } from "../components/rider-onboard-modal";
@@ -166,18 +166,6 @@ export function RiderReportsPage() {
             onChange={(event) => setReportDate(event.target.value)}
           />
         </label>
-      </section>
-
-      <section className="rider-endpoint-note" role="note">
-        <Info aria-hidden="true" size={18} />
-        <div>
-          <strong>Admin rider reporting endpoint is not ready yet.</strong>
-          <p>
-            The API currently exposes rider delivery reports only to the rider account. This screen
-            derives admin visibility from delivery orders until a dedicated admin report endpoint is
-            added.
-          </p>
-        </div>
       </section>
 
       <section className="metric-grid rider-report-metrics" aria-label="Rider performance summary">
