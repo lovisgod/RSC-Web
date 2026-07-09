@@ -8,7 +8,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
   const card = (
     <article
       data-disabled={isOffline}
-      className={`bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col transition-shadow duration-200 group-hover:shadow-md ${isOffline ? "opacity-65" : ""}`}
+      className={`bg-white rounded-2xl overflow-hidden shadow-[0_8px_22px_rgba(30,49,96,0.10)] flex flex-col transition-shadow duration-200 group-hover:shadow-[0_12px_28px_rgba(30,49,96,0.16)] ${isOffline ? "opacity-65" : ""}`}
     >
       {/* Coloured header */}
       <div
@@ -51,19 +51,30 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
         </h3>
         <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
 
-        <div className="flex items-center justify-between mt-auto pt-2">
-          <div className="flex items-center gap-2 text-xs">
-            {outlet.rating != null && (
-              <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-                ★ {outlet.rating}
-              </span>
-            )}
-            {outlet.deliveryTime && (
-              <span className="text-gray-400 hidden sm:inline">⏱ {outlet.deliveryTime}</span>
-            )}
-          </div>
+        <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
+          {outlet.rating != null ? (
+            <span
+              className="inline-flex items-center gap-1 justify-self-start font-semibold"
+              style={{ color: "var(--rsc-dark)" }}
+            >
+              <StarIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              {outlet.rating}
+            </span>
+          ) : (
+            <span aria-hidden="true" />
+          )}
 
-          <span className="text-xs sm:text-sm font-semibold" style={{ color: "var(--rsc-dark)" }}>
+          {outlet.deliveryTime && (
+            <span className="inline-flex items-center justify-center gap-1 text-gray-500">
+              <Clock10Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{outlet.deliveryTime} mins</span>
+            </span>
+          )}
+
+          <span
+            className="justify-self-end text-xs font-semibold sm:text-sm"
+            style={{ color: "var(--rsc-dark)" }}
+          >
             {isOffline ? "Offline" : "Order Now"}
           </span>
         </div>
@@ -77,7 +88,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
 
   return (
     <Link href={`/outlets/${outlet.id}`} className="block group">
-      <article className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col transition-shadow duration-200 group-hover:shadow-md">
+      <article className="bg-white rounded-2xl overflow-hidden shadow-[0_8px_22px_rgba(30,49,96,0.10)] flex flex-col transition-shadow duration-200 group-hover:shadow-[0_12px_28px_rgba(30,49,96,0.16)]">
         {/* Coloured header */}
         <div
           className="relative h-36 sm:h-44 flex-shrink-0"
@@ -119,21 +130,30 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
           </h3>
           <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
 
-          <div className="flex items-center justify-between mt-auto pt-2">
-            <div className="flex items-center gap-2 text-xs">
-              {outlet.rating != null && (
-                <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-                  <StarIcon /> {outlet.rating}
-                </span>
-              )}
-              {outlet.deliveryTime && (
-                <span className="text-gray-400 hidden sm:inline">
-                  <Clock10Icon /> {outlet.deliveryTime} mins{" "}
-                </span>
-              )}
-            </div>
+          <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
+            {outlet.rating != null ? (
+              <span
+                className="inline-flex items-center gap-1 justify-self-start font-semibold"
+                style={{ color: "var(--rsc-dark)" }}
+              >
+                <StarIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                {outlet.rating}
+              </span>
+            ) : (
+              <span aria-hidden="true" />
+            )}
 
-            <span className="text-xs sm:text-sm font-semibold" style={{ color: "var(--rsc-dark)" }}>
+            {outlet.deliveryTime && (
+              <span className="inline-flex items-center justify-center gap-1 text-gray-500">
+                <Clock10Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>{outlet.deliveryTime} mins</span>
+              </span>
+            )}
+
+            <span
+              className="justify-self-end text-xs font-semibold sm:text-sm"
+              style={{ color: "var(--rsc-dark)" }}
+            >
               Order Now
             </span>
           </div>

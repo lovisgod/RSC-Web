@@ -16,6 +16,7 @@ import {
   operationsSummarySchema,
   orderPulseSchema,
   platformChargesSchema,
+  profileUpdateResultSchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -26,6 +27,8 @@ import {
   updateMenuItemAvailabilityInputSchema,
   updatePlatformChargesInputSchema,
   uploadedImageSchema,
+  userProfileSchema,
+  verifyProfileChangeInputSchema,
   verifyUserInputSchema,
 } from "./index";
 
@@ -84,6 +87,48 @@ describe("media contracts", () => {
       url: "https://res.cloudinary.com/rsc/image/upload/menu/item.webp",
       publicId: "uploads/menu-item",
     });
+  });
+
+  it("documents nullable customer profile avatars", () => {
+    expect(
+      userProfileSchema.parse({
+        id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+        name: "Ada Okafor",
+        role: "CUSTOMER",
+        outletId: null,
+        avatarUrl: "https://res.cloudinary.com/rsc/image/upload/user-avatars/ada.webp",
+        email: "ada@example.com",
+        phone: "+2348031234567",
+        verificationChannels: { email: true, phone: true },
+        pendingVerificationChannels: { email: false, phone: false },
+      }),
+    ).toMatchObject({
+      avatarUrl: "https://res.cloudinary.com/rsc/image/upload/user-avatars/ada.webp",
+    });
+  });
+
+  it("documents pending profile updates and their six-digit verification input", () => {
+    expect(
+      profileUpdateResultSchema.parse({
+        id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+        name: "Ada Okafor",
+        role: "CUSTOMER",
+        outletId: null,
+        avatarUrl: null,
+        email: "ada@example.com",
+        phone: "+2348031234567",
+        verificationChannels: { email: true, phone: true },
+        pendingVerificationChannels: { email: true, phone: false },
+        otpExpiresInSeconds: 600,
+      }),
+    ).toMatchObject({
+      pendingVerificationChannels: { email: true, phone: false },
+      otpExpiresInSeconds: 600,
+    });
+    expect(verifyProfileChangeInputSchema.parse({ code: "482901" })).toEqual({
+      code: "482901",
+    });
+    expect(() => verifyProfileChangeInputSchema.parse({ code: "12345" })).toThrow();
   });
 });
 

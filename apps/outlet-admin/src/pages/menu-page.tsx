@@ -19,10 +19,12 @@ import { useMemo, useRef, useState } from "react";
 
 import { MenuItemCard } from "../components/menu-item-card";
 import { MenuItemDetail } from "../components/menu-item-detail";
+import { ModifierManagementCard } from "../components/modifier-management-card";
 import { useAuth } from "../hooks/use-auth";
 import { useCreateMenuItem } from "../hooks/use-create-menu-item";
 import { useItemModifierGroups } from "../hooks/use-item-modifier-groups";
 import { useMenuCategories, useMenuItems } from "../hooks/use-menu-items";
+import { useOutletInfo } from "../hooks/use-outlet-info";
 import { useUpdateMenuItem } from "../hooks/use-update-menu-item";
 
 const EMPTY_MENU_ITEMS: MenuItem[] = [];
@@ -110,7 +112,7 @@ function AddItemModal({
   onClose: () => void;
 }) {
   const { mutate: createItem, isPending } = useCreateMenuItem(outletId);
-  const { data: modifierGroups = [] } = useItemModifierGroups();
+  const { data: modifierGroups = [] } = useItemModifierGroups(outletId);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState("");
@@ -370,15 +372,17 @@ function EditItemModal({
   item,
   outletId,
   categories,
+  assignedModifierGroupIds,
   onClose,
 }: {
   item: MenuItem;
   outletId: string;
   categories: { id: string; name: string }[];
+  assignedModifierGroupIds: string[];
   onClose: () => void;
 }) {
   const { mutate: updateItem, isPending } = useUpdateMenuItem(outletId);
-  const { data: modifierGroups = [] } = useItemModifierGroups();
+  const { data: modifierGroups = [] } = useItemModifierGroups(outletId);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState(item.name);
@@ -389,7 +393,8 @@ function EditItemModal({
   const [isAvailable, setIsAvailable] = useState(item.isAvailable);
   const [sortOrder, setSortOrder] = useState(String(item.sortOrder));
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
-  const [selectedModifierGroupIds, setSelectedModifierGroupIds] = useState<string[]>([]);
+  const [selectedModifierGroupIds, setSelectedModifierGroupIds] =
+    useState<string[]>(assignedModifierGroupIds);
   const [shaking, setShaking] = useState(false);
 
   function triggerShake() {
@@ -423,9 +428,7 @@ function EditItemModal({
           priceMinor,
           isAvailable,
           sortOrder: parseInt(sortOrder, 10) || 0,
-          ...(selectedModifierGroupIds.length > 0
-            ? { modifierGroupIds: selectedModifierGroupIds }
-            : {}),
+          modifierGroupIds: selectedModifierGroupIds,
         },
         ...(imageFile ? { imageFile } : {}),
       },
@@ -643,6 +646,7 @@ function EditItemModal({
 export function MenuPage() {
   const { user } = useAuth();
   const outletId = user?.outletId ?? "";
+  const { data: outlet } = useOutletInfo(outletId);
   const { data: categories = [] } = useMenuCategories(outletId);
   const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>();
   const { data: menuItems, isLoading } = useMenuItems(outletId, activeCategoryId);
@@ -694,6 +698,13 @@ export function MenuPage() {
     ? categories.find((c) => c.id === serverItems.find((i) => i.id === selectedItemId)?.categoryId)
         ?.name
     : undefined;
+  const availableModifierGroupIds = new Set(
+    outlet?.itemModifierGroups.map((group) => group.id) ?? [],
+  );
+  const assignedModifierGroupIds = (itemId: string) =>
+    outlet?.menuItemModifierGroups
+      .filter((link) => link.menuItemId === itemId && availableModifierGroupIds.has(link.groupId))
+      .map((link) => link.groupId) ?? [];
 
   if (selectedItemId) {
     return (
@@ -710,6 +721,7 @@ export function MenuPage() {
             item={editingItem}
             outletId={outletId}
             categories={categories}
+            assignedModifierGroupIds={assignedModifierGroupIds(editingItem.id)}
             onClose={() => setEditingItem(null)}
           />
         )}
@@ -718,20 +730,22 @@ export function MenuPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="min-w-0 overflow-x-hidden p-4 sm:p-6">
+      <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-bold text-slate-900">Menu &amp; Inventory Manager</h1>
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          className="w-full rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 sm:w-auto"
         >
           + Add New Item
         </button>
       </div>
 
+      <ModifierManagementCard outletId={outletId} />
+
       {categories.length > 0 && (
-        <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+        <div className="mb-5 flex max-w-full gap-2 overflow-x-auto pb-1">
           <TabButton
             label="All"
             active={!activeCategoryId}
@@ -749,7 +763,7 @@ export function MenuPage() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
           ))}
@@ -762,10 +776,10 @@ export function MenuPage() {
             items={sortedItems.map((i) => i.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
               {sortedItems.map((item) => (
                 <SortableMenuItemCard
-                  key={item.id}
+                  key={`${item.id}:${item.isAvailable}`}
                   item={item}
                   outletId={outletId}
                   onSelect={() => setSelectedItemId(item.id)}
@@ -790,6 +804,7 @@ export function MenuPage() {
           item={editingItem}
           outletId={outletId}
           categories={categories}
+          assignedModifierGroupIds={assignedModifierGroupIds(editingItem.id)}
           onClose={() => setEditingItem(null)}
         />
       )}

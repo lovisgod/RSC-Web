@@ -22,7 +22,9 @@ import {
 
 import { Toaster } from "./components/toaster";
 import { useAuth } from "./hooks/use-auth";
+import { useIdleLogout } from "./hooks/use-idle-logout";
 import { useOrdersQueue } from "./hooks/use-orders-queue";
+import { useOutletRealtime } from "./hooks/use-outlet-realtime";
 import { useOutletInfo } from "./hooks/use-outlet-info";
 import { useProfile } from "./hooks/use-profile";
 import { isActiveQueueOrder, logout as apiLogout } from "./lib/api";
@@ -230,6 +232,11 @@ function NavigationPanel({ onNavigate }: NavigationPanelProps) {
 }
 
 function AppShell() {
+  useIdleLogout();
+
+  const { user } = useAuth();
+  useOutletRealtime(user?.outletId ?? "");
+
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isDesktopNavVisible, setIsDesktopNavVisible] = useState(true);
   const location = useLocation();
