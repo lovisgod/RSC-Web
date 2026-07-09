@@ -5,6 +5,13 @@ import { io } from "socket.io-client";
 import { outletAdminKeys } from "../lib/query-keys";
 
 const SUBORDER_NEW_EVENT = "suborder:new";
+const MENU_ITEM_AVAILABILITY_EVENT = "menu_item:availability_update";
+
+interface MenuItemAvailabilityUpdateEvent {
+  menuItemId: string;
+  outletId: string;
+  isAvailable: boolean;
+}
 
 function getRealtimeOrigin() {
   return (
@@ -42,6 +49,14 @@ export function useOutletRealtime(outletId: string) {
     });
 
     socket.on(SUBORDER_NEW_EVENT, refreshOutletQueue);
+    socket.on(MENU_ITEM_AVAILABILITY_EVENT, (event: MenuItemAvailabilityUpdateEvent) => {
+      if (event.outletId !== outletId) return;
+
+      void queryClient.invalidateQueries({ queryKey: outletAdminKeys.outlet.detail(outletId) });
+      void queryClient.invalidateQueries({
+        queryKey: outletAdminKeys.menuItem.detail(event.menuItemId),
+      });
+    });
 
     return () => {
       socket.emit("room:unsubscribe", { room });

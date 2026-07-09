@@ -63,7 +63,6 @@ export function FulfillmentStep({
   const [addressText, setAddressText] = useState(initial.address);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
-  const [instructions, setInstructions] = useState(initial.instructions);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     initial.latitude != null && initial.longitude != null
       ? { latitude: initial.latitude, longitude: initial.longitude }
@@ -271,7 +270,6 @@ export function FulfillmentStep({
       const base = {
         items,
         deliveryMode: mode === "delivery" ? ("DELIVERY" as const) : ("TAKEOUT" as const),
-        ...(instructions.trim() ? { preparationNote: instructions.trim() } : {}),
         ...(onBehalf && recipientPhone.trim() ? { recipientPhone: recipientPhone.trim() } : {}),
       };
 
@@ -311,7 +309,7 @@ export function FulfillmentStep({
           zone,
           onBehalf,
           recipientPhone,
-          instructions,
+          instructions: "",
         },
         result.reference,
         snapshot,

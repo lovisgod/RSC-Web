@@ -126,9 +126,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
     const selectedModifiers = item.modifierGroups.flatMap((g) =>
       g.modifiers.filter((m) => selections.get(g.id)?.has(m.id)),
     );
-    const notes = [selectedModifiers.map((m) => m.name).join(", "), preparationNote.trim()].filter(
-      Boolean,
-    );
+    const note = preparationNote.trim();
 
     addItem({
       outletId: item.outletId,
@@ -136,7 +134,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
       item: {
         id: item.id,
         name: item.name,
-        notes: notes.join(" · "),
+        notes: note,
         quantity,
         unitPriceMinor: unitPrice,
         modifiers: selectedModifiers.map((m) => ({ modifierId: m.id })),

@@ -2,7 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { MasterOrderStatus, SubOrderStatus } from "@rsc/contracts";
 import { GripVertical } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { printReceipt } from "../lib/native-bridge";
 import type { PosSubOrder } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
@@ -28,6 +28,62 @@ const DELIVERY_MODE_EMOJI: Record<string, string> = {
 
 // ─── Compact item list ────────────────────────────────────────────────────────
 
+const FIFTEEN_MINUTES_IN_SECONDS = 15 * 60;
+const FIVE_MINUTES_IN_SECONDS = 5 * 60;
+
+function formatCountdown(totalSeconds: number): string {
+  const safeSeconds = Math.max(0, totalSeconds);
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function getCountdownTone(secondsRemaining: number): string {
+  if (secondsRemaining <= FIVE_MINUTES_IN_SECONDS) {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  if (secondsRemaining <= FIFTEEN_MINUTES_IN_SECONDS) {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  return "border-emerald-200 bg-emerald-50 text-emerald-700";
+}
+
+function PrepCountdown({ order }: { order: PosSubOrder }) {
+  const [now, setNow] = useState(() => Date.now());
+  const prepMinutes = order.estimatedPrepTimeMinutes;
+
+  useEffect(() => {
+    if (prepMinutes == null) return undefined;
+
+    const intervalId = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(intervalId);
+  }, [prepMinutes]);
+
+  if (prepMinutes == null) return null;
+
+  const rawStartedAt = new Date(order.updatedAt || order.createdAt).getTime();
+  const startedAt = Number.isFinite(rawStartedAt) ? rawStartedAt : now;
+  const endsAt = startedAt + prepMinutes * 60_000;
+  const secondsRemaining = Math.max(0, Math.ceil((endsAt - now) / 1000));
+  const isOverdue = now > endsAt;
+
+  return (
+    <span
+      className={`inline-flex min-w-[4.5rem] items-center justify-center rounded-full border px-2 py-0.5 text-xs font-bold tabular-nums ${getCountdownTone(secondsRemaining)}`}
+      title={
+        isOverdue
+          ? `Prep target passed (${prepMinutes} minutes)`
+          : `Estimated prep time: ${prepMinutes} minutes`
+      }
+    >
+      {formatCountdown(secondsRemaining)}
+    </span>
+  );
+}
+
 function ItemList({ items }: { items: PosSubOrder["items"] }) {
   return (
     <ul className="mb-2.5 space-y-1.5">
@@ -40,6 +96,11 @@ function ItemList({ items }: { items: PosSubOrder["items"] }) {
             </span>
           </div>
           <p className="text-sm text-slate-800">{item.name}</p>
+          {item.customerNote && (
+            <p className="mt-0.5 rounded-md bg-slate-50 px-2 py-1 text-xs italic text-slate-500">
+              Note: {item.customerNote}
+            </p>
+          )}
         </li>
       ))}
     </ul>
@@ -60,6 +121,11 @@ function OrderDetailPanel({ order }: { order: PosSubOrder }) {
               ₦{((item.quantity * item.priceMinor) / 100).toLocaleString("en-NG")}
             </span>
           </div>
+          {item.customerNote && (
+            <p className="ml-3 mt-1 rounded-md bg-white px-2 py-1 text-xs italic text-slate-500">
+              Note: {item.customerNote}
+            </p>
+          )}
           {item.modifiers && item.modifiers.length > 0 && (
             <ul className="ml-3 mt-1 space-y-0.5">
               {item.modifiers.map((mod, j) => (
@@ -159,6 +225,17 @@ function CardShell({ order, isAdvancing, accentClass, rightSlot, children }: She
             </div>
           </div>
 
+          {order.preparationNote && (
+            <div className="mb-2 rounded-lg border border-orange-100 bg-orange-50 px-2.5 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-orange-500">
+                Preparation note
+              </p>
+              <p className="mt-0.5 text-xs font-medium leading-relaxed text-slate-700">
+                {order.preparationNote}
+              </p>
+            </div>
+          )}
+
           {/* Item list: compact or detailed */}
           {expanded ? <OrderDetailPanel order={order} /> : <ItemList items={order.items} />}
 
@@ -178,6 +255,7 @@ interface KanbanCardProps {
     subOrderId: string,
     status: MasterOrderStatus,
     preparationTimeMinutes?: number,
+    rejectionReason?: string,
   ) => void;
   isAdvancing: boolean;
 }
@@ -186,15 +264,63 @@ interface KanbanCardProps {
 
 function IncomingCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
   const [preparationTimeMinutes, setPreparationTimeMinutes] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const parsedPreparationTime = Number(preparationTimeMinutes);
   const canAccept =
     Number.isInteger(parsedPreparationTime) &&
     parsedPreparationTime > 0 &&
     parsedPreparationTime <= 240;
 
+  function handleReject() {
+    const trimmedReason = rejectReason.trim();
+    if (!trimmedReason) {
+      toastBus.emit("Please provide a rejection reason", "warning");
+      return;
+    }
+
+    setShowRejectModal(false);
+    setRejectReason("");
+    onAdvance(order.id, "CANCELLED", undefined, trimmedReason);
+  }
+
   return (
     <CardShell order={order} isAdvancing={isAdvancing} accentClass="bg-orange-500">
       <div className="space-y-2 border-t border-slate-50 pt-2">
+        {showRejectModal && (
+          <div className="rounded-xl border border-red-200 bg-red-50/80 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
+              Rejection reason
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={(event) => setRejectReason(event.target.value)}
+              placeholder="Briefly explain why this order cannot be fulfilled"
+              className="mt-2 min-h-20 w-full rounded-lg border border-red-200 bg-white px-2.5 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-red-300"
+              maxLength={500}
+            />
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectReason("");
+                }}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReject}
+                className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white"
+              >
+                Confirm reject
+              </button>
+            </div>
+          </div>
+        )}
+
         <label className="block">
           <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
             Estimated prep time
@@ -218,7 +344,7 @@ function IncomingCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
           <button
             type="button"
             disabled={isAdvancing}
-            onClick={() => onAdvance(order.id, "CANCELLED")}
+            onClick={() => setShowRejectModal(true)}
             className="rounded-lg border border-red-600 bg-[var(--rsc-danger)] px-3 py-1 text-xs font-semibold text-[var(--rsc-panel)] transition hover:bg-red-100 disabled:opacity-50"
           >
             Reject
@@ -255,19 +381,14 @@ function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
     if (!result.printed) toastBus.emit("Printing unavailable outside POS shell", "warning");
   }
 
-  const targetSlot = order.estimatedPrepTimeMinutes != null && (
-    <span className="text-xs text-slate-400">
-      Target:{" "}
-      <span className="font-semibold text-slate-600">{order.estimatedPrepTimeMinutes}m</span>
-    </span>
-  );
+  const targetSlot = <PrepCountdown order={order} />;
 
   return (
     <CardShell
       order={order}
       isAdvancing={isAdvancing}
       accentClass="bg-yellow-400"
-      rightSlot={targetSlot || undefined}
+      rightSlot={targetSlot}
     >
       <div className="flex items-center gap-2 border-t border-slate-50 pt-2">
         <button

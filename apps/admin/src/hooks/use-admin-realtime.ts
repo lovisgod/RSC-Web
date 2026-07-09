@@ -10,6 +10,12 @@ interface OutletStatusUpdateEvent {
   isOnline: boolean;
 }
 
+interface MenuItemAvailabilityUpdateEvent {
+  menuItemId: string;
+  outletId: string;
+  isAvailable: boolean;
+}
+
 function getRealtimeOrigin() {
   return (
     import.meta.env.VITE_REALTIME_URL || import.meta.env.VITE_API_BASE_URL || window.location.origin
@@ -53,6 +59,23 @@ export function useAdminRealtime() {
       );
 
       void queryClient.invalidateQueries({ queryKey: ["admin", "stats", "operations"] });
+    });
+
+    socket.on("menu_item:availability_update", (event: MenuItemAvailabilityUpdateEvent) => {
+      queryClient.setQueryData<OutletSummary[]>(["admin", "outlets"], (outlets) =>
+        outlets?.map((outlet) => {
+          if (outlet.id !== event.outletId) return outlet;
+
+          return {
+            ...outlet,
+            menuItems: outlet.menuItems.map((item) =>
+              item.id === event.menuItemId ? { ...item, isAvailable: event.isAvailable } : item,
+            ),
+          };
+        }),
+      );
+
+      void queryClient.invalidateQueries({ queryKey: ["menu-items"] });
     });
 
     return () => {
