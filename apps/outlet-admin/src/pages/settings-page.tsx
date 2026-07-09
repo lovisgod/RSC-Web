@@ -47,15 +47,16 @@ export function SettingsPage() {
     accountNumber?: string;
   }>({});
 
-  useEffect(() => {
-    if (outlet?.name && !bankForm.businessName) {
-      setBankForm((current) => ({ ...current, businessName: `${outlet.name} Settlement` }));
-    }
-  }, [outlet, bankForm.businessName]);
-
   const provisionMutation = useMutation({
-    mutationFn: () => provisionSubaccount(outletId, bankForm),
-    onSuccess: (res) => {
+    mutationFn: () => {
+      const finalBusinessName =
+        bankForm.businessName.trim() || (outlet?.name ? `${outlet.name} Settlement` : "");
+      return provisionSubaccount(outletId, {
+        ...bankForm,
+        businessName: finalBusinessName,
+      });
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outlet", "detail", outletId] });
       toastBus.emit("Bank account registered successfully!", "success");
     },
@@ -71,7 +72,9 @@ export function SettingsPage() {
 
   function validateBank(): boolean {
     const nextErrors: typeof bankErrors = {};
-    if (!bankForm.businessName.trim()) {
+    const finalBusinessName =
+      bankForm.businessName.trim() || (outlet?.name ? `${outlet.name} Settlement` : "");
+    if (!finalBusinessName) {
       nextErrors.businessName = "Business name is required";
     }
     if (!bankForm.bankCode) {
@@ -351,7 +354,9 @@ export function SettingsPage() {
                       type="text"
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[var(--rsc-main)] focus:outline-none"
                       placeholder="e.g. Farfallino Lekki Settlement"
-                      value={bankForm.businessName}
+                      value={
+                        bankForm.businessName || (outlet?.name ? `${outlet.name} Settlement` : "")
+                      }
                       onChange={(e) => updateBankField("businessName", e.target.value)}
                       disabled={provisionMutation.isPending}
                     />
