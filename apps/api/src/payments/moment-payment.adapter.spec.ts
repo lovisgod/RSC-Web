@@ -174,7 +174,7 @@ describe(MomentPaymentAdapter.name, () => {
       const rawBody = Buffer.from(rawBodyStr, "utf8");
 
       // Calculate expected signature using key part
-      const secretBytes = Buffer.from(webhookSecret.split("_")[1], "base64");
+      const secretBytes = Buffer.from(webhookSecret.split("_")[1] || "", "base64");
       const signedContent = `${webhookId}.${timestamp}.${rawBodyStr}`;
       const generatedSig = createHmac("sha256", secretBytes).update(signedContent).digest("base64");
 
