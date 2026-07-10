@@ -231,7 +231,11 @@ export function createApiClient(options: ApiClientOptions) {
     const parsedEnvelope = apiResponseSchema(schema).safeParse(payload);
 
     if (!parsedEnvelope.success) {
-      console.error("API contract validation failed", parsedEnvelope.error.flatten());
+      console.error("API contract validation failed", {
+        path,
+        issues: parsedEnvelope.error.issues,
+        fieldErrors: parsedEnvelope.error.flatten().fieldErrors,
+      });
       throw new ApiContractError(
         "The server returned an unexpected response.",
         parsedEnvelope.error.issues,

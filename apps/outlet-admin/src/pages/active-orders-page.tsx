@@ -298,7 +298,7 @@ export function ActiveOrdersPage() {
             id="preparing"
             title="Outlet Preparing"
             badge={preparing.length}
-            badgeColor="bg-orange-500"
+            badgeColor="bg-yellow-400"
             orders={preparing}
             isLoading={isLoading}
             emptyText="No items in preparation"

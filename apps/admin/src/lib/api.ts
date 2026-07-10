@@ -8,6 +8,7 @@ import {
   operationsSummarySchema,
   orderPulseQuerySchema,
   orderPulseSchema,
+  outletSummarySchema,
   platformChargesSchema,
   createRiderInputSchema,
   riderResultSchema,
@@ -184,21 +185,26 @@ export interface OutletBody {
   imageUrl?: string;
 }
 
-export const listOutlets = (): Promise<OutletSummary[]> => get("/api/v1/outlets");
+export const listOutlets = (): Promise<OutletSummary[]> =>
+  get<unknown>("/api/v1/outlets").then((data) => outletSummarySchema.array().parse(data));
 
-export const getOutlet = (id: string): Promise<OutletSummary> => get(`/api/v1/outlets/${id}`);
+export const getOutlet = (id: string): Promise<OutletSummary> =>
+  get<unknown>(`/api/v1/outlets/${id}`).then((data) => outletSummarySchema.parse(data));
 
 export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
-  post("/api/v1/outlets", body);
+  post<unknown>("/api/v1/outlets", body).then((data) => outletSummarySchema.parse(data));
 
 export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<OutletSummary> =>
-  patchReq(`/api/v1/outlets/${id}`, body);
+  patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) => outletSummarySchema.parse(data));
 
 /** PATCH — dedicated endpoint for toggling online status only */
 export const toggleOutletOnlineStatus = (
   id: string,
   body: { isOnline: boolean },
-): Promise<OutletSummary> => patchReq(`/api/v1/outlets/${id}/online-status`, body);
+): Promise<OutletSummary> =>
+  patchReq<unknown>(`/api/v1/outlets/${id}/online-status`, body).then((data) =>
+    outletSummarySchema.parse(data),
+  );
 
 export const deleteOutlet = (id: string): Promise<void> =>
   http.delete(`/api/v1/outlets/${id}`).then(() => undefined);
