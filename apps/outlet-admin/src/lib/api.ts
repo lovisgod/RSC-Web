@@ -116,6 +116,41 @@ export const getProfile = async (): Promise<UserProfile> =>
 export const getOutletById = (outletId: string): Promise<OutletSummary> =>
   get(`/api/v1/outlets/${outletId}`);
 
+export const toggleOutletOnlineStatus = (
+  outletId: string,
+  body: { isOnline: boolean },
+): Promise<OutletSummary> => patchReq(`/api/v1/outlets/${outletId}/online-status`, body);
+
+export interface ProvisionSubaccountBody {
+  businessName: string;
+  bankCode: string;
+  accountNumber: string;
+  force?: boolean;
+}
+
+export const provisionSubaccount = (
+  outletId: string,
+  body: ProvisionSubaccountBody,
+): Promise<{ subaccountCode: string; outlet: OutletSummary }> =>
+  post(`/api/v1/outlets/${outletId}/subaccount`, body);
+
+export const setSubaccountCode = (
+  outletId: string,
+  body: { subaccountCode: string },
+): Promise<{ subaccountCode: string; outlet: OutletSummary }> =>
+  http.put(`/api/v1/outlets/${outletId}/subaccount-code`, body).then((r) => r.data.data);
+
+export const listBanks = (): Promise<Array<{ code: string; name: string }>> =>
+  get("/api/v1/payments/banks");
+
+export const resolveBankAccount = (
+  accountNumber: string,
+  bankCode: string,
+): Promise<{ accountNumber: string; accountName: string; bankCode: string }> =>
+  get(
+    `/api/v1/payments/resolve-account?accountNumber=${encodeURIComponent(accountNumber)}&bankCode=${encodeURIComponent(bankCode)}`,
+  );
+
 // ─── Menu ─────────────────────────────────────────────────────────────────────
 
 export const toggleMenuItemAvailability = (
@@ -341,5 +376,5 @@ export const listAdminOrders = (outletId: string): Promise<PosSubOrder[]> =>
 //   CONFIRMED → ACCEPTED | PARTIALLY_READY → PREPARING | READY → READY | DELIVERED → COLLECTED
 export const updateSubOrderStatus = (
   subOrderId: string,
-  body: { status: MasterOrderStatus; note?: string; preparationTime?: number },
+  body: { status: MasterOrderStatus; preparationTimeMinutes?: number; rejectionReason?: string },
 ): Promise<unknown> => patchReq(`/api/v1/orders/${subOrderId}/status`, body);

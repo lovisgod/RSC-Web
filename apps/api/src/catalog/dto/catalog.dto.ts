@@ -17,6 +17,7 @@ import {
   MaxLength,
   Min,
   Max,
+  ValidateIf,
 } from "class-validator";
 
 const trim = ({ value }: TransformFnParams): unknown =>
@@ -93,11 +94,13 @@ export class CreateOutletDto {
   @Min(0.1)
   deliveryRadiusKm?: number;
 
-  @ApiProperty({ example: "MOMENT_SUBACCOUNT_123" })
+  @ApiPropertyOptional({ example: "ACCT_abc123" })
   @Transform(trim)
+  @IsOptional()
+  @ValidateIf((object, value) => value !== null && value !== "")
   @IsString()
   @Length(2, 100)
-  momentSubaccountCode!: string;
+  paystackSubaccountCode?: string | null;
 }
 
 export class UpdateOutletDto extends PartialType(CreateOutletDto) {}

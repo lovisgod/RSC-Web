@@ -106,6 +106,12 @@ export class UpdateOrderStatusDto {
   @Min(1)
   @Max(480)
   preparationTime?: number;
+
+  @ApiPropertyOptional({ example: "Out of stock", description: "Reason/purpose of rejection" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  rejectionReason?: string;
 }
 
 export class AssignOrderRiderDto {

@@ -550,13 +550,10 @@ export function createApiClient(options: ApiClientOptions) {
     listNotificationCampaigns(): Promise<NotificationCampaign[]> {
       return request("/api/v1/notifications/campaigns", z.array(notificationCampaignSchema));
     },
-    reorder(id: string): Promise<InitiatePaymentResult> {
+    reorder(id: string): Promise<InitiatePaymentInput> {
       return request(
         `/api/v1/orders/${encodeURIComponent(id)}/reorder`,
-        initiatePaymentResultSchema,
-        {
-          method: "POST",
-        },
+        initiatePaymentInputSchema,
       );
     },
     getPlatformCharges(): Promise<PlatformCharges> {

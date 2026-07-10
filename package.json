@@ -9,6 +9,12 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "redis:start": "redis-cli ping >/dev/null 2>&1 && echo 'Redis is already running' || (redis-server --daemonize yes && echo 'Started Redis daemon' || true)",
+    "predev": "pnpm redis:start",
+    "predev:api": "pnpm redis:start",
+    "predev:admin": "pnpm redis:start",
+    "predev:outlet-admin": "pnpm redis:start",
+    "predev:web": "pnpm redis:start",
     "dev": "turbo run dev",
     "dev:api": "pnpm --filter @rsc/api dev",
     "dev:admin": "pnpm --filter @rsc/admin dev",

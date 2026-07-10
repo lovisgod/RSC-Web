@@ -105,7 +105,7 @@ export class CatalogService {
         latitude: input.latitude ?? null,
         longitude: input.longitude ?? null,
         deliveryRadiusKm: input.deliveryRadiusKm ?? 15,
-        momentSubaccountCode: input.momentSubaccountCode,
+        paystackSubaccountCode: input.paystackSubaccountCode ?? null,
       }),
     );
   }

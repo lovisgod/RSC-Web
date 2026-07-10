@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, In, Repository } from "typeorm";
@@ -22,7 +22,12 @@ import { SubOrder } from "../orders/sub-order.entity";
 import type { InitiatePaymentDto } from "./dto/payment.dto";
 import type { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
-import { PAYMENT_ADAPTER, type PaymentAdapter, type PaymentSplitRoute } from "./payment-adapter";
+import {
+  PAYMENT_ADAPTER,
+  type ParsedWebhookEvent,
+  type PaymentAdapter,
+  type PaymentSplitRoute,
+} from "./payment-adapter";
 
 interface PricedLine {
   outletId: string;
@@ -32,6 +37,7 @@ interface PricedLine {
   quantity: number;
   lineTotalMinor: number;
   modifiersSnapshot: Array<{ id: string; name: string; priceDeltaMinor: number }>;
+  customerNote?: string | null;
 }
 
 export interface PlatformCharges {
@@ -52,6 +58,7 @@ interface PlatformChargesRow {
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
   private readonly platformCommissionBps: number;
   private readonly vatBps: number;
   private readonly deliveryFeeMinor: number;
@@ -68,7 +75,7 @@ export class PaymentsService {
     private readonly dataSource: DataSource,
     private readonly delivery: DeliveryService,
     private readonly piiCrypto: PiiCryptoService,
-    configService: ConfigService<ApplicationConfig, true>,
+    private readonly configService: ConfigService<ApplicationConfig, true>,
     @Inject(PAYMENT_ADAPTER) private readonly paymentAdapter: PaymentAdapter,
     private readonly realtime: RealtimeService,
   ) {
@@ -212,7 +219,7 @@ export class PaymentsService {
 
       return {
         outletId,
-        subaccountCode: outletById.get(outletId)?.momentSubaccountCode ?? null,
+        subaccountCode: outletById.get(outletId)?.paystackSubaccountCode ?? null,
         grossMinor,
         commissionMinor,
         netMinor: grossMinor - commissionMinor,
@@ -285,6 +292,7 @@ export class PaymentsService {
               lineTotalMinor: line.lineTotalMinor,
               currency: "NGN",
               modifiersSnapshot: line.modifiersSnapshot,
+              customerNote: line.customerNote ?? null,
             }),
           );
         }
@@ -324,6 +332,119 @@ export class PaymentsService {
       },
       splitBreakdown: splitRoutes,
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Webhook confirmation (server-authoritative, idempotent)
+  // ---------------------------------------------------------------------------
+
+  async confirmPayment(event: ParsedWebhookEvent): Promise<{ already: boolean }> {
+    // Idempotency: record this event, bail if already processed
+    try {
+      await this.dataSource.query(
+        `INSERT INTO payment_webhook_events (gateway, event_id, event_type, payload)
+         VALUES ($1, $2, $3, $4)`,
+        ["paystack", event.eventId, event.eventType, JSON.stringify(event.providerResponse)],
+      );
+    } catch {
+      // unique constraint violation → already processed
+      this.logger.log(`Webhook event ${event.eventId} already processed — skipping`);
+      return { already: true };
+    }
+
+    const payment = await this.payments.findOneBy({ reference: event.reference });
+
+    if (!payment) {
+      this.logger.warn(`Webhook: no payment found for reference ${event.reference}`);
+      return { already: false };
+    }
+
+    // Already in a terminal state — nothing to do
+    if (payment.status !== PaymentStatus.PENDING) {
+      return { already: true };
+    }
+
+    const nextPaymentStatus =
+      event.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
+    const nextOrderStatus =
+      event.status === "SUCCESS" ? MasterOrderStatus.CONFIRMED : MasterOrderStatus.CANCELLED;
+
+    payment.status = nextPaymentStatus;
+    await this.payments.save(payment);
+
+    const order = await this.masterOrders.findOneBy({ id: payment.masterOrderId });
+
+    if (order && order.status === MasterOrderStatus.PENDING_PAYMENT) {
+      order.status = nextOrderStatus;
+      await this.masterOrders.save(order);
+      this.realtime.emitOrderStatusUpdate({
+        masterOrderId: order.id,
+        customerId: order.customerId,
+        riderId: order.riderId,
+        status: order.status,
+        updatedAt: order.updatedAt,
+      });
+    }
+
+    this.logger.log(
+      `Payment ${payment.reference} confirmed: ${nextPaymentStatus} (order ${payment.masterOrderId})`,
+    );
+
+    return { already: false };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Verify — frontend polling fallback when webhook delivery is delayed
+  // ---------------------------------------------------------------------------
+
+  async verifyPayment(user: AuthenticatedUser, reference: string) {
+    const payment = await this.payments.findOneBy({ reference });
+
+    if (!payment) {
+      throw new NotFoundException("Payment not found");
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: payment.masterOrderId });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    // Customers can only query their own payments
+    if (order.customerId !== user.id) {
+      throw new NotFoundException("Payment not found");
+    }
+
+    // If already settled, return immediately without hitting the provider
+    if (payment.status !== PaymentStatus.PENDING) {
+      return { status: payment.status, orderStatus: order.status };
+    }
+
+    // Poll the provider
+    const result = await this.paymentAdapter.verify(reference);
+
+    if (result.status !== "PENDING") {
+      const event: ParsedWebhookEvent = {
+        eventId: `verify-${reference}`,
+        eventType: result.status === "SUCCESS" ? "charge.success" : "charge.failed",
+        reference,
+        status: result.status,
+        amountMinor: result.amountMinor,
+        providerResponse: result.providerResponse,
+      };
+      await this.confirmPayment(event);
+
+      // Reload after update
+      const updatedPayment = await this.payments.findOneBy({ reference });
+      const updatedOrder = await this.masterOrders.findOneBy({ id: payment.masterOrderId });
+
+      return {
+        status: updatedPayment?.status ?? payment.status,
+        orderStatus: updatedOrder?.status ?? order.status,
+      };
+    }
+
+    return { status: payment.status, orderStatus: order.status };
   }
 
   private async priceCart(input: InitiatePaymentDto): Promise<PricedLine[]> {
@@ -381,6 +502,7 @@ export class PaymentsService {
         unitPriceMinor,
         quantity: inputItem.quantity,
         lineTotalMinor: unitPriceMinor * inputItem.quantity,
+        customerNote: inputItem.customerNote || null,
         modifiersSnapshot: selectedModifiers.map((modifier) => ({
           id: modifier.id,
           name: modifier.name,
@@ -432,6 +554,98 @@ export class PaymentsService {
       if (!outlet || !outlet.isOnline) {
         throw new BadRequestException("One or more outlets are currently offline");
       }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Banks List
+  // ---------------------------------------------------------------------------
+
+  async getBanks(): Promise<Array<{ code: string; name: string }>> {
+    const paymentsConfig = this.configService.get("payments", { infer: true });
+
+    // Query configured Paystack base URL if paystack is active, otherwise default to Paystack's public endpoint
+    const url =
+      paymentsConfig.provider === "paystack"
+        ? `${paymentsConfig.paystack.baseUrl}/bank?currency=NGN`
+        : "https://api.paystack.co/bank?currency=NGN";
+
+    const headers: Record<string, string> = {};
+    if (paymentsConfig.provider === "paystack" && paymentsConfig.paystack.secretKey) {
+      headers["authorization"] = `Bearer ${paymentsConfig.paystack.secretKey}`;
+    }
+
+    try {
+      const response = await fetch(url, { headers });
+      if (!response.ok) {
+        throw new Error(`Paystack bank fetch failed with status ${response.status}`);
+      }
+      const payload = (await response.json()) as {
+        status: boolean;
+        message?: string;
+        data?: Array<{ code: string; name: string }>;
+      };
+      if (!payload.status || !Array.isArray(payload.data)) {
+        throw new Error(payload.message || "Failed to parse bank list from response");
+      }
+      return payload.data.map((b: { code: string; name: string }) => ({
+        code: b.code,
+        name: b.name,
+      }));
+    } catch (err) {
+      this.logger.error(`Failed to fetch bank list: ${(err as Error).message}`);
+      throw new Error(`Could not load bank listings: ${(err as Error).message}`);
+    }
+  }
+
+  async resolveBankAccount(
+    accountNumber: string,
+    bankCode: string,
+  ): Promise<{ accountNumber: string; accountName: string; bankCode: string }> {
+    const paymentsConfig = this.configService.get("payments", { infer: true });
+
+    if (paymentsConfig.provider !== "paystack") {
+      return {
+        accountNumber,
+        accountName: "Demo Settlement Account",
+        bankCode,
+      };
+    }
+
+    try {
+      const response = await fetch(
+        `${paymentsConfig.paystack.baseUrl}/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
+        {
+          headers: {
+            authorization: `Bearer ${paymentsConfig.paystack.secretKey}`,
+          },
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`Paystack account verification failed with status ${response.status}`);
+      }
+      const payload = (await response.json()) as {
+        status: boolean;
+        message?: string;
+        data?: {
+          account_number: string;
+          account_name: string;
+          bank_id: number;
+        };
+      };
+      if (!payload.status || !payload.data) {
+        throw new Error(payload.message || "Invalid response structure from Paystack");
+      }
+      return {
+        accountNumber: payload.data.account_number,
+        accountName: payload.data.account_name,
+        bankCode,
+      };
+    } catch (err) {
+      this.logger.error(`Failed to resolve bank account: ${(err as Error).message}`);
+      throw new BadRequestException(
+        `Could not verify bank account details: ${(err as Error).message}`,
+      );
     }
   }
 
