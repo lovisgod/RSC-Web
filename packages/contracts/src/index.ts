@@ -472,6 +472,7 @@ export const outletSummarySchema = z.object({
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
   isOnline: z.boolean(),
+  paystackSubaccountCode: z.string().optional(),
   momentSubaccountCode: z.string(),
   ratingAverage: z.coerce.number().min(0).max(5).default(0),
   ratingCount: z.int().nonnegative().default(0),

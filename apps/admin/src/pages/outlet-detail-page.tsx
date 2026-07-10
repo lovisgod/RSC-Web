@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { OutletAdminModal } from "../components/outlet-admin-modal";
+import { OutletMenuManager } from "../components/outlet-menu-manager";
 import { OutletOnboardModal } from "../components/outlet-onboard-modal";
 import { useDeleteOutlet } from "../hooks/use-delete-outlet";
 import { useDeleteOutletAdmin } from "../hooks/use-delete-outlet-admin";
@@ -329,7 +330,10 @@ export function OutletDetailPage() {
               {outlet.description && <p className="outlet-detail__desc">{outlet.description}</p>}
 
               <div className="outlet-detail__meta">
-                <MetaRow label="Subaccount Code" value={outlet.momentSubaccountCode} />
+                <MetaRow
+                  label="Paystack Subaccount Code"
+                  value={outlet.paystackSubaccountCode ?? outlet.momentSubaccountCode}
+                />
                 <MetaRow label="Outlet ID" value={outlet.id} mono copyable />
               </div>
             </div>
@@ -386,6 +390,8 @@ export function OutletDetailPage() {
             <EmptyState icon={<Users size={28} />} heading="No staff assigned yet" />
           )}
         </div>
+
+        {outlet && <OutletMenuManager outletId={outlet.id} />}
       </div>
     </>
   );
