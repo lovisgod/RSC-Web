@@ -30,7 +30,10 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
   const status = getStatusConfig(order.status);
 
   const reorderMutation = useMutation({
-    mutationFn: () => apiClient.reorder(order.id),
+    mutationFn: async () => {
+      const config = await apiClient.reorder(order.id);
+      return apiClient.initiatePayment(config);
+    },
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["orders"] });
       if (result.checkoutUrl) {

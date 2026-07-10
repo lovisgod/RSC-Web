@@ -20,14 +20,17 @@ export function useUpdateOrderStatus(outletId: string) {
       subOrderId,
       status,
       preparationTimeMinutes,
+      rejectionReason,
     }: {
       subOrderId: string;
       status: MasterOrderStatus;
       preparationTimeMinutes?: number;
+      rejectionReason?: string;
     }) =>
       updateSubOrderStatus(subOrderId, {
         status,
         ...(preparationTimeMinutes !== undefined ? { preparationTimeMinutes } : {}),
+        ...(rejectionReason !== undefined ? { rejectionReason } : {}),
       }),
     onMutate: async ({ subOrderId, status }) => {
       const queryKey = outletAdminKeys.orders(outletId);

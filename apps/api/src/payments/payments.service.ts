@@ -37,6 +37,7 @@ interface PricedLine {
   quantity: number;
   lineTotalMinor: number;
   modifiersSnapshot: Array<{ id: string; name: string; priceDeltaMinor: number }>;
+  customerNote?: string | null;
 }
 
 export interface PlatformCharges {
@@ -291,6 +292,7 @@ export class PaymentsService {
               lineTotalMinor: line.lineTotalMinor,
               currency: "NGN",
               modifiersSnapshot: line.modifiersSnapshot,
+              customerNote: line.customerNote ?? null,
             }),
           );
         }
@@ -500,6 +502,7 @@ export class PaymentsService {
         unitPriceMinor,
         quantity: inputItem.quantity,
         lineTotalMinor: unitPriceMinor * inputItem.quantity,
+        customerNote: inputItem.customerNote || null,
         modifiersSnapshot: selectedModifiers.map((modifier) => ({
           id: modifier.id,
           name: modifier.name,
