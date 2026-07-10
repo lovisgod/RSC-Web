@@ -250,8 +250,8 @@ export function OutletControlPage() {
                         <strong>{outlet.name}</strong>
                         <small className="outlet-card__cuisine">{outlet.cuisineType}</small>
                         <small>
-                          Paystack sub-account:{" "}
-                          {outlet.paystackSubaccountCode ?? outlet.momentSubaccountCode}
+                          Sub-account:{" "}
+                          {outlet.paystackSubaccountCode ?? "None (Pending Onboarding)"}
                         </small>
                       </div>
 

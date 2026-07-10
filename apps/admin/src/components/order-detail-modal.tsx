@@ -192,10 +192,7 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                 <div className="order-modal__sub-finance">
                   <div className="order-modal__finance-row">
                     <span className="order-modal__finance-label">
-                      Paystack Account:{" "}
-                      <code>
-                        {outlet?.paystackSubaccountCode ?? outlet?.momentSubaccountCode ?? "—"}
-                      </code>
+                      Paystack Account: <code>{outlet?.paystackSubaccountCode ?? "—"}</code>
                     </span>
                     <span className="order-modal__finance-payout">
                       Payout ({payoutPct}%): {fmt(sub.netMinor)}

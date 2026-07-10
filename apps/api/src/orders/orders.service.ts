@@ -235,6 +235,7 @@ export class OrdersService {
           modifiers: this.modifierIdsFromSnapshot(line.modifiersSnapshot).map((modifierId) => ({
             modifierId,
           })),
+          ...(line.customerNote ? { customerNote: line.customerNote } : {}),
         })),
     };
     if (order.deliveryAddress) {
@@ -247,7 +248,7 @@ export class OrdersService {
       input.deliveryLongitude = order.deliveryLongitude;
     }
 
-    return this.payments.initiate(user, input);
+    return input;
   }
 
   async updateStatus(user: AuthenticatedUser, id: string, input: UpdateOrderStatusDto) {
@@ -495,6 +496,9 @@ export class OrdersService {
     if (input.preparationTime !== undefined) {
       subOrder.preparationTime = input.preparationTime;
     }
+    if (subOrder.status === SubOrderStatus.REJECTED && input.rejectionReason) {
+      subOrder.preparationNote = input.rejectionReason;
+    }
     await this.subOrders.save(subOrder);
 
     const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
@@ -520,7 +524,11 @@ export class OrdersService {
       await this.masterOrders.save(order);
     }
 
-    await this.recordStatusEvent(order, user.id, input.note ?? null, subOrder);
+    const eventNote =
+      subOrder.status === SubOrderStatus.REJECTED && input.rejectionReason
+        ? `Rejection Reason: ${input.rejectionReason}`
+        : (input.note ?? null);
+    await this.recordStatusEvent(order, user.id, eventNote, subOrder);
     await this.autoAssignRiderIfReady(order, user);
     await this.notifyOrderStatus(order);
     this.realtime.emitOrderStatusUpdate({

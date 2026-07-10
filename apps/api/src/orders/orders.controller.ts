@@ -121,12 +121,12 @@ export class OrdersController {
     return this.orders.getDispatch(request.user!, id);
   }
 
-  @Post(":id/reorder")
-  @ApiMessage("Reorder initiated")
+  @Get(":id/reorder")
+  @ApiMessage("Reorder details retrieved")
   @ApiOperation({
-    summary: "Reorder my previous order",
+    summary: "Get previous order details for reorder",
     description:
-      "Customer-facing endpoint that creates a new checkout/payment initiation from a previous order owned by the authenticated end user.",
+      "Customer-facing endpoint that returns the items and configuration of a past order to allow the client to populate their cart/checkout flow.",
   })
   reorder(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
     return this.orders.reorder(request.user!, id);

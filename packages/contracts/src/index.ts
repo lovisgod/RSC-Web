@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
 export const nigerianPhoneNumberSchema = z
@@ -396,6 +396,11 @@ export const initiatePaymentResultSchema = z.object({
   ),
 });
 
+export const paymentVerifyResultSchema = z.object({
+  status: z.enum(["PENDING", "SUCCESS", "FAILED"]),
+  orderStatus: z.string().min(1),
+});
+
 export const menuCategorySchema = z.object({
   id: z.uuid(),
   outletId: z.uuid(),
@@ -709,6 +714,7 @@ export const orderLineItemSchema = z
       )
       .nullish()
       .transform((value) => value ?? []),
+    customerNote: z.string().nullable().optional(),
   })
   .passthrough();
 

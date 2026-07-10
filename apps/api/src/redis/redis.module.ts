@@ -14,11 +14,18 @@ import { RedisLifecycleService } from "./redis-lifecycle.service";
       useFactory: (configService: ConfigService<ApplicationConfig, true>) => {
         const { url } = configService.get("redis", { infer: true });
 
-        return new Redis(url, {
+        const client = new Redis(url, {
           lazyConnect: true,
           maxRetriesPerRequest: 1,
           enableReadyCheck: true,
         });
+
+        client.on("error", (err) => {
+          // Prevent crashes due to connection failures
+          console.error(`[Redis Client Error] ${err.message}`);
+        });
+
+        return client;
       },
     },
     RedisLifecycleService,

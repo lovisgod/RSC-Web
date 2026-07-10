@@ -47,7 +47,7 @@ function getInitialForm(outlet?: OutletSummary): FormState {
     description: outlet.description ?? "",
     cuisineType: outlet.cuisineType,
     isOnline: outlet.isOnline,
-    paystackSubaccountCode: outlet.paystackSubaccountCode ?? outlet.momentSubaccountCode ?? "",
+    paystackSubaccountCode: outlet.paystackSubaccountCode ?? "",
   };
 }
 
@@ -87,7 +87,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
         description: form.description.trim(),
         cuisineType: form.cuisineType.trim(),
         isOnline: form.isOnline,
-        paystackSubaccountCode: form.paystackSubaccountCode.trim(),
+        paystackSubaccountCode: form.paystackSubaccountCode.trim() || null,
         ...(resolvedImageUrl !== undefined && { imageUrl: resolvedImageUrl }),
       };
 
@@ -138,8 +138,6 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
     const errs: typeof fieldErrors = {};
     if (!form.name.trim()) errs.name = "Outlet name is required";
     if (!form.cuisineType.trim()) errs.cuisineType = "Cuisine type is required";
-    if (!form.paystackSubaccountCode.trim())
-      errs.paystackSubaccountCode = "Paystack subaccount code is required";
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -261,11 +259,11 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
 
           {/* Subaccount code */}
           <label className="field-label">
-            Paystack Subaccount Code *
+            Paystack Subaccount Code
             <input
               className={`field-input${fieldErrors.paystackSubaccountCode ? " field-input--error" : ""}`}
               type="text"
-              placeholder="e.g. ACCT_xxxxxxxxxx"
+              placeholder="e.g. ACCT_abc123xyz (optional)"
               {...field("paystackSubaccountCode")}
             />
             {fieldErrors.paystackSubaccountCode && (

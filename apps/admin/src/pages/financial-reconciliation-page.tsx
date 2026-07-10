@@ -51,9 +51,7 @@ export function FinancialReconciliationPage() {
                         <strong>{outlet.name}</strong>
                       </div>
                     </td>
-                    <td className="text-mono">
-                      {outlet.paystackSubaccountCode ?? outlet.momentSubaccountCode}
-                    </td>
+                    <td className="text-mono">{outlet.paystackSubaccountCode ?? "—"}</td>
                     <td>0</td>
                     <td>
                       <span className="amount amount--negative">₦0</span>
