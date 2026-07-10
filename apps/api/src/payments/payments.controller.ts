@@ -88,18 +88,18 @@ export class PaymentsController {
       "Receives charge.success / charge.failed events from Paystack. " +
       "Validates HMAC-SHA512 signature. No auth cookie required.",
   })
-  async webhook(
-    @Req() request: RawBodyRequest<Request>,
-    @Headers("x-paystack-signature") signature: string,
-  ) {
-    const rawBody = (request as unknown as { rawBody?: Buffer }).rawBody;
+  async webhook(@Req() request: RawBodyRequest<any>) {
+    const rawBody = request.rawBody;
 
     if (!rawBody) {
       this.logger.warn("Webhook received without rawBody — check rawBody: true in NestFactory");
       return { received: false };
     }
 
-    const event = await this.paymentAdapter.parseWebhookEvent(rawBody, signature ?? "");
+    const headers = request.headers as Record<string, string>;
+    const signature = headers["x-paystack-signature"] || headers["webhook-signature"] || "";
+
+    const event = await this.paymentAdapter.parseWebhookEvent(rawBody, signature, headers);
 
     if (!event) {
       // Invalid signature or unrecognised event type — return 200 to stop Paystack retries

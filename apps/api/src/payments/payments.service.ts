@@ -339,12 +339,15 @@ export class PaymentsService {
   // ---------------------------------------------------------------------------
 
   async confirmPayment(event: ParsedWebhookEvent): Promise<{ already: boolean }> {
+    const paymentsConfig = this.configService.get("payments", { infer: true });
+    const gateway = paymentsConfig.provider;
+
     // Idempotency: record this event, bail if already processed
     try {
       await this.dataSource.query(
         `INSERT INTO payment_webhook_events (gateway, event_id, event_type, payload)
          VALUES ($1, $2, $3, $4)`,
-        ["paystack", event.eventId, event.eventType, JSON.stringify(event.providerResponse)],
+        [gateway, event.eventId, event.eventType, JSON.stringify(event.providerResponse)],
       );
     } catch {
       // unique constraint violation → already processed

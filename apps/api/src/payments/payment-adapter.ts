@@ -69,7 +69,11 @@ export interface PaymentAdapter {
    * Parse and authenticate an inbound webhook payload.
    * Returns null if the signature is invalid or the event type is not actionable.
    */
-  parseWebhookEvent(rawBody: Buffer, signature: string): Promise<ParsedWebhookEvent | null>;
+  parseWebhookEvent(
+    rawBody: Buffer,
+    signature: string,
+    headers?: Record<string, string>,
+  ): Promise<ParsedWebhookEvent | null>;
 
   /**
    * Register a new subaccount (outlet bank account) with the provider.
