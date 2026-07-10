@@ -1,6 +1,6 @@
 import { Button, EmptyState } from "@rsc/ui";
 import Skeleton from "@mui/material/Skeleton";
-import { ArrowLeft, Check, Copy, Pencil, Store, Trash2, Users, X } from "lucide-react";
+import { ArrowLeft, Check, Copy, Pencil, Store, Trash2, Users, Utensils, X } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
@@ -207,6 +207,7 @@ export function OutletDetailPage() {
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<OutletAdminUser | null>(null);
+  const [activeSection, setActiveSection] = useState<"menu" | "staff">("menu");
 
   const { mutate: deleteOutlet, isPending: isDeleting } = useDeleteOutlet();
   const { mutate: removeStaff, isPending: isRemovingStaff } = useDeleteOutletAdmin(id!);
@@ -265,15 +266,6 @@ export function OutletDetailPage() {
             <ArrowLeft size={18} />
             <span>All Outlets</span>
           </button>
-
-          <Button
-            tone="navy"
-            disabled={isLoading || !outlet}
-            onClick={() => setAdminModalOpen(true)}
-          >
-            <span className="onboard-icon">+</span>
-            <span>Onboard Outlet Admin</span>
-          </Button>
         </div>
 
         {/* Content */}
@@ -330,7 +322,10 @@ export function OutletDetailPage() {
               {outlet.description && <p className="outlet-detail__desc">{outlet.description}</p>}
 
               <div className="outlet-detail__meta">
-                <MetaRow label="Subaccount Code" value={outlet.paystackSubaccountCode ?? "—"} />
+                <MetaRow
+                  label="Paystack Subaccount Code"
+                  value={outlet.paystackSubaccountCode ?? "—"}
+                />
                 <MetaRow label="Outlet ID" value={outlet.id} mono copyable />
               </div>
             </div>
@@ -340,55 +335,106 @@ export function OutletDetailPage() {
         )}
 
         {/* ── Staff section ─────────────────────────────────── */}
-        <div className="panel staff-panel">
-          <div className="staff-panel__head">
-            <h3 className="staff-panel__title">Outlet Staff</h3>
-            {staffList !== undefined && (
-              <span className="staff-panel__count">{staffList.length}</span>
+        {outlet && (
+          <>
+            <div className="outlet-detail-switcher" role="tablist" aria-label="Outlet workspace">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeSection === "menu"}
+                className={activeSection === "menu" ? "outlet-detail-switcher__btn--active" : ""}
+                onClick={() => setActiveSection("menu")}
+              >
+                <span>
+                  <Utensils size={18} />
+                </span>
+                <strong>Menu Items</strong>
+                <small>Items, modifiers, and categories</small>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeSection === "staff"}
+                className={activeSection === "staff" ? "outlet-detail-switcher__btn--active" : ""}
+                onClick={() => setActiveSection("staff")}
+              >
+                <span>
+                  <Users size={18} />
+                </span>
+                <strong>Outlet Staff</strong>
+                <small>Admins assigned to this outlet</small>
+              </button>
+            </div>
+
+            {activeSection === "staff" ? (
+              <div className="panel staff-panel">
+                <div className="staff-panel__head">
+                  <div>
+                    <h3 className="staff-panel__title">Outlet Staff</h3>
+                    <p className="staff-panel__subtitle">
+                      Manage staff who can operate this outlet.
+                    </p>
+                  </div>
+                  <div className="staff-panel__actions">
+                    {staffList !== undefined && (
+                      <span className="staff-panel__count">{staffList.length}</span>
+                    )}
+                    <Button tone="navy" onClick={() => setAdminModalOpen(true)}>
+                      <Users size={15} />
+                      Onboard Outlet Admin
+                    </Button>
+                  </div>
+                </div>
+
+                {isStaffLoading ? (
+                  <ul className="staff-list">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <li key={i} className="staff-item">
+                        <Skeleton
+                          variant="circular"
+                          width={40}
+                          height={40}
+                          sx={{ flexShrink: 0 }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <Skeleton variant="text" sx={{ fontSize: "0.9rem", width: "40%" }} />
+                          <Skeleton variant="text" sx={{ fontSize: "0.8rem", width: "60%" }} />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : staffList && staffList.length > 0 ? (
+                  <ul className="staff-list">
+                    {staffList.map((admin) => (
+                      <li key={admin.id} className="staff-item">
+                        <div className="staff-item__avatar" aria-hidden="true">
+                          {admin.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="staff-item__info">
+                          <span className="staff-item__name">{admin.name}</span>
+                          <span className="staff-item__sub">{admin.email}</span>
+                          {admin.phone && <span className="staff-item__sub">{admin.phone}</span>}
+                        </div>
+                        <button
+                          type="button"
+                          className="outlet-icon-btn outlet-icon-btn--delete"
+                          aria-label={`Remove ${admin.name}`}
+                          onClick={() => setStaffToDelete(admin)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState icon={<Users size={28} />} heading="No staff assigned yet" />
+                )}
+              </div>
+            ) : (
+              <OutletMenuManager outletId={outlet.id} />
             )}
-          </div>
-
-          {isStaffLoading ? (
-            <ul className="staff-list">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <li key={i} className="staff-item">
-                  <Skeleton variant="circular" width={40} height={40} sx={{ flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <Skeleton variant="text" sx={{ fontSize: "0.9rem", width: "40%" }} />
-                    <Skeleton variant="text" sx={{ fontSize: "0.8rem", width: "60%" }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : staffList && staffList.length > 0 ? (
-            <ul className="staff-list">
-              {staffList.map((admin) => (
-                <li key={admin.id} className="staff-item">
-                  <div className="staff-item__avatar" aria-hidden="true">
-                    {admin.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="staff-item__info">
-                    <span className="staff-item__name">{admin.name}</span>
-                    <span className="staff-item__sub">{admin.email}</span>
-                    {admin.phone && <span className="staff-item__sub">{admin.phone}</span>}
-                  </div>
-                  <button
-                    type="button"
-                    className="outlet-icon-btn outlet-icon-btn--delete"
-                    aria-label={`Remove ${admin.name}`}
-                    onClick={() => setStaffToDelete(admin)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState icon={<Users size={28} />} heading="No staff assigned yet" />
-          )}
-        </div>
-
-        {outlet && <OutletMenuManager outletId={outlet.id} />}
+          </>
+        )}
       </div>
     </>
   );

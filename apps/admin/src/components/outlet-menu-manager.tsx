@@ -1088,6 +1088,9 @@ function ModifierManagementCard({ outletId, outlet }: { outletId: string; outlet
 export function OutletMenuManager({ outletId }: { outletId: string }) {
   const { data: outlet, isLoading } = useOutletMenuData(outletId);
   const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>();
+  const [activeMenuSection, setActiveMenuSection] = useState<"items" | "modifiers" | "categories">(
+    "items",
+  );
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -1150,46 +1153,80 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
       <div className="admin-menu-section-head">
         <div>
           <h3>Menu & Inventory Manager</h3>
-          <p>Manage this outlet's items, availability, images, prices, and modifiers.</p>
+          <p>Manage this outlet's items, categories, reusable add-ons, images, and prices.</p>
         </div>
-        <Button tone="navy" onClick={() => setShowAddModal(true)}>
-          <Plus size={15} />
-          Add New Item
-        </Button>
+        {activeMenuSection === "items" && (
+          <Button tone="navy" onClick={() => setShowAddModal(true)}>
+            <Plus size={15} />
+            Add New Item
+          </Button>
+        )}
       </div>
 
-      <CategoryManagementCard outletId={outletId} outlet={outlet} />
+      <div className="admin-menu-tabs admin-menu-mode-tabs" aria-label="Menu manager sections">
+        <button
+          type="button"
+          className={`admin-menu-tab${activeMenuSection === "items" ? " admin-menu-tab--active" : ""}`}
+          onClick={() => setActiveMenuSection("items")}
+        >
+          Items
+        </button>
+        <button
+          type="button"
+          className={`admin-menu-tab${activeMenuSection === "modifiers" ? " admin-menu-tab--active" : ""}`}
+          onClick={() => setActiveMenuSection("modifiers")}
+        >
+          Modifiers
+        </button>
+        <button
+          type="button"
+          className={`admin-menu-tab${activeMenuSection === "categories" ? " admin-menu-tab--active" : ""}`}
+          onClick={() => setActiveMenuSection("categories")}
+        >
+          Categories
+        </button>
+      </div>
 
-      <ModifierManagementCard outletId={outletId} outlet={outlet} />
+      {activeMenuSection === "items" && (
+        <>
+          <CategoryTabs
+            categories={outlet.menuCategories}
+            activeCategoryId={activeCategoryId}
+            onChange={setActiveCategoryId}
+          />
 
-      <CategoryTabs
-        categories={outlet.menuCategories}
-        activeCategoryId={activeCategoryId}
-        onChange={setActiveCategoryId}
-      />
+          {visibleItems.length === 0 ? (
+            <div className="panel">
+              <EmptyState icon={<Utensils size={30} />} heading="No items in this category" />
+            </div>
+          ) : (
+            <div className="admin-menu-grid">
+              {visibleItems
+                .slice()
+                .sort(
+                  (left, right) =>
+                    left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
+                )
+                .map((item) => (
+                  <MenuItemCard
+                    key={`${item.id}:${item.isAvailable}`}
+                    item={item}
+                    outletId={outletId}
+                    onSelect={() => setSelectedItemId(item.id)}
+                    onEdit={() => setEditingItem(item)}
+                  />
+                ))}
+            </div>
+          )}
+        </>
+      )}
 
-      {visibleItems.length === 0 ? (
-        <div className="panel">
-          <EmptyState icon={<Utensils size={30} />} heading="No items in this category" />
-        </div>
-      ) : (
-        <div className="admin-menu-grid">
-          {visibleItems
-            .slice()
-            .sort(
-              (left, right) =>
-                left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
-            )
-            .map((item) => (
-              <MenuItemCard
-                key={`${item.id}:${item.isAvailable}`}
-                item={item}
-                outletId={outletId}
-                onSelect={() => setSelectedItemId(item.id)}
-                onEdit={() => setEditingItem(item)}
-              />
-            ))}
-        </div>
+      {activeMenuSection === "modifiers" && (
+        <ModifierManagementCard outletId={outletId} outlet={outlet} />
+      )}
+
+      {activeMenuSection === "categories" && (
+        <CategoryManagementCard outletId={outletId} outlet={outlet} />
       )}
 
       {showAddModal && (

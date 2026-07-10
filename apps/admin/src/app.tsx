@@ -7,6 +7,7 @@ import {
   Megaphone,
   Menu,
   Settings,
+  Store,
   SlidersHorizontal,
   Wallet,
 } from "lucide-react";
@@ -36,7 +37,14 @@ import { VerifyPage } from "./pages/verify-page";
 const navigation = [
   { label: "Platform Live Board", to: "/", icon: Gauge },
   { label: "Orders Feed", to: "/orders", icon: ClipboardList },
-  { label: "Outlet & Platform Control", to: "/outlets", icon: SlidersHorizontal },
+  {
+    label: "Outlet & Platform Control",
+    icon: SlidersHorizontal,
+    children: [
+      { label: "Outlet Management", to: "/outlets", icon: Store },
+      { label: "Platform Control", to: "/platform-control", icon: Settings },
+    ],
+  },
   { label: "Rider Reports", to: "/riders", icon: Bike },
   { label: "Financial Reconciliation", to: "/finance", icon: Wallet },
   { label: "Promotions Composer", to: "/promotions", icon: Megaphone },
@@ -45,7 +53,8 @@ const navigation = [
 const routeTitles: Record<string, string> = {
   "/": "Platform Live Board",
   "/orders": "Platform Orders Feed",
-  "/outlets": "Outlet & System Control",
+  "/outlets": "Outlet Management",
+  "/platform-control": "Platform Control",
   "/riders": "Rider Performance Reports",
   "/finance": "Reconciliation & Payouts Ledger",
   "/promotions": "Promotions Push Composer",
@@ -58,16 +67,58 @@ function getPageTitle(pathname: string): string {
 }
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+  const location = useLocation();
+
   return (
     <>
       <nav aria-label="Central operations">
-        {navigation.map(({ icon: Icon, label, to }) => (
-          <NavLink end={to === "/"} key={to} to={to} onClick={onNavigate}>
-            <Icon aria-hidden="true" size={19} strokeWidth={1.8} />
-            <span>{label}</span>
-            <ChevronRight className="nav-chevron" aria-hidden="true" size={15} />
-          </NavLink>
-        ))}
+        {navigation.map((item) => {
+          const Icon = item.icon;
+
+          if ("children" in item) {
+            const isGroupActive =
+              location.pathname === "/platform-control" || location.pathname.startsWith("/outlets");
+            const defaultChild = item.children[0];
+
+            return (
+              <div className="sidebar-nav-group" key={item.label}>
+                <NavLink
+                  className={`sidebar-nav-parent${isGroupActive ? " active" : ""}`}
+                  to={defaultChild.to}
+                  onClick={onNavigate}
+                >
+                  <Icon aria-hidden="true" size={19} strokeWidth={1.8} />
+                  <span>{item.label}</span>
+                  <ChevronRight className="nav-chevron" aria-hidden="true" size={15} />
+                </NavLink>
+                {isGroupActive && (
+                  <div className="sidebar-nav-children">
+                    {item.children.map(({ icon: ChildIcon, label, to }) => (
+                      <NavLink
+                        end={to === "/platform-control"}
+                        key={to}
+                        to={to}
+                        onClick={onNavigate}
+                      >
+                        <ChildIcon aria-hidden="true" size={17} strokeWidth={1.8} />
+                        <span>{label}</span>
+                        <ChevronRight className="nav-chevron" aria-hidden="true" size={15} />
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <NavLink end={item.to === "/"} key={item.to} to={item.to} onClick={onNavigate}>
+              <Icon aria-hidden="true" size={19} strokeWidth={1.8} />
+              <span>{item.label}</span>
+              <ChevronRight className="nav-chevron" aria-hidden="true" size={15} />
+            </NavLink>
+          );
+        })}
       </nav>
 
       <div className="sidebar__footer">
@@ -209,7 +260,8 @@ function AdminShell() {
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/orders" element={<OrdersFeedPage />} />
-            <Route path="/outlets" element={<OutletControlPage />} />
+            <Route path="/outlets" element={<OutletControlPage view="outlets" />} />
+            <Route path="/platform-control" element={<OutletControlPage view="platform" />} />
             <Route path="/outlets/:id" element={<OutletDetailPage />} />
             <Route path="/riders" element={<RiderReportsPage />} />
             <Route path="/finance" element={<FinancialReconciliationPage />} />
