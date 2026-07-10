@@ -246,9 +246,9 @@ export interface CreateMenuItemBody {
   modifierGroupIds?: string[];
 }
 
-export interface UpdateMenuItemBody extends CreateMenuItemBody {
+export type UpdateMenuItemBody = Partial<CreateMenuItemBody> & {
   imageUrl?: string;
-}
+};
 
 export const createMenuItem = (body: CreateMenuItemBody): Promise<MenuItem> =>
   post("/api/v1/menu-items", body);

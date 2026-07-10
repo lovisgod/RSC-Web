@@ -7,14 +7,10 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { MenuItem } from "@rsc/contracts";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 
 import { MenuItemCard } from "../components/menu-item-card";
@@ -26,6 +22,9 @@ import { useItemModifierGroups } from "../hooks/use-item-modifier-groups";
 import { useMenuCategories, useMenuItems } from "../hooks/use-menu-items";
 import { useOutletInfo } from "../hooks/use-outlet-info";
 import { useUpdateMenuItem } from "../hooks/use-update-menu-item";
+import { updateMenuItem } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
+import { toastBus } from "../lib/toast-bus";
 
 const EMPTY_MENU_ITEMS: MenuItem[] = [];
 
@@ -641,11 +640,25 @@ function EditItemModal({
 
 export function MenuPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const outletId = user?.outletId ?? "";
   const { data: outlet } = useOutletInfo(outletId);
   const { data: categories = [] } = useMenuCategories(outletId);
   const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>();
   const { data: menuItems, isLoading } = useMenuItems(outletId, activeCategoryId);
+  const reorderItems = useMutation({
+    mutationFn: async (items: MenuItem[]) => {
+      await Promise.all(items.map((item, index) => updateMenuItem(item.id, { sortOrder: index })));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.outlet.detail(outletId) });
+      toastBus.emit("Menu order updated", "success");
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.outlet.detail(outletId) });
+      toastBus.emit(err.message || "Could not update menu order", "error");
+    },
+  });
   const serverItems = menuItems ?? EMPTY_MENU_ITEMS;
   const sortKey = activeCategoryId ?? "all";
   const [itemOrderByCategory, setItemOrderByCategory] = useState<Record<string, string[]>>({});
@@ -686,7 +699,7 @@ export function MenuPage() {
       ...current,
       [sortKey]: nextItems.map((item) => item.id),
     }));
-    // TODO: persist via PATCH .../menu/items/reorder when endpoint is ready
+    reorderItems.mutate(nextItems);
   }
 
   // Resolve category name for the selected item
@@ -768,10 +781,7 @@ export function MenuPage() {
         <div className="py-16 text-center text-sm text-slate-400">No items in this category.</div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={sortedItems.map((i) => i.id)}
-            strategy={verticalListSortingStrategy}
-          >
+          <SortableContext items={sortedItems.map((i) => i.id)} strategy={rectSortingStrategy}>
             <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
               {sortedItems.map((item) => (
                 <SortableMenuItemCard

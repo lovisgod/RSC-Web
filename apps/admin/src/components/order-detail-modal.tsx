@@ -47,6 +47,16 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Cancelled",
 };
 
+const SUB_ORDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  ACCEPTED: "Accepted",
+  PREPARING: "Preparing",
+  READY: "Ready",
+  DISPATCHED: "Dispatched",
+  COLLECTED: "Collected",
+  REJECTED: "Rejected",
+};
+
 export function OrderDetailModal({ item, outletById, onClose }: Props) {
   const { order, subOrders, lineItems } = item;
 
@@ -149,8 +159,17 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                   <span className="order-modal__sub-name">
                     🔥 {outlet?.name ?? "Outlet"} Sub-Order
                   </span>
-                  <span className="order-modal__sub-subtotal">
-                    Subtotal: {fmt(sub.subtotalMinor)}
+                  <span className="order-modal__sub-head-meta">
+                    <span
+                      className={`order-modal__sub-status${
+                        sub.status === "REJECTED" ? " order-modal__sub-status--rejected" : ""
+                      }`}
+                    >
+                      {SUB_ORDER_STATUS_LABELS[sub.status] ?? sub.status}
+                    </span>
+                    <span className="order-modal__sub-subtotal">
+                      Subtotal: {fmt(sub.subtotalMinor)}
+                    </span>
                   </span>
                 </div>
 
