@@ -12,6 +12,7 @@ import {
   menuItemSchema,
   moneySchema,
   orderDetailSchema,
+  outletSummarySchema,
   operationsQueueSchema,
   operationsSummarySchema,
   orderPulseSchema,
@@ -435,6 +436,44 @@ describe("customer registration contracts", () => {
         hasMore: true,
       }),
     ).toBeTruthy();
+  });
+
+  it("normalizes outlet subaccount response field names", () => {
+    const baseOutlet = {
+      id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      name: "Salmas Grill",
+      cuisineType: "Grill",
+      description: null,
+      imageUrl: null,
+      isOnline: true,
+      ratingAverage: "0.00",
+      ratingCount: 0,
+      menuCategories: [],
+      menuItems: [],
+      itemModifierGroups: [],
+      itemModifiers: [],
+      menuItemModifierGroups: [],
+    };
+
+    expect(
+      outletSummarySchema.parse({
+        ...baseOutlet,
+        paystackSubaccountCode: "PAYSTACK_SALMAS",
+      }),
+    ).toMatchObject({
+      momentSubaccountCode: "PAYSTACK_SALMAS",
+      paystackSubaccountCode: "PAYSTACK_SALMAS",
+    });
+
+    expect(
+      outletSummarySchema.parse({
+        ...baseOutlet,
+        momentSubaccountCode: "MOMENT_SALMAS",
+      }),
+    ).toMatchObject({
+      momentSubaccountCode: "MOMENT_SALMAS",
+      paystackSubaccountCode: "MOMENT_SALMAS",
+    });
   });
 
   it("documents admin order list contracts", () => {

@@ -63,9 +63,13 @@ function OutletIdentity() {
 
   return (
     <div
-      className="mt-5 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 py-3"
+      className="relative mt-5 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 py-3"
       aria-label={`Current outlet: ${outletName}`}
     >
+      <span
+        className="absolute right-3 top-3 h-2 w-2 rounded-full bg-emerald-400"
+        aria-hidden="true"
+      />
       <span
         className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
         style={{ backgroundColor: "var(--rsc-main)", color: "var(--rsc-panel)" }}
@@ -76,10 +80,6 @@ function OutletIdentity() {
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-bold text-[var(--rsc-panel)]">
           {outletName}
-        </span>
-        <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/55">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-          {/* Outlet workspace */}
         </span>
       </span>
     </div>
