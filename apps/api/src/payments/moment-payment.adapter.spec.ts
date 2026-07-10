@@ -5,11 +5,12 @@ import { createHmac } from "node:crypto";
 
 import { MomentPaymentAdapter } from "./moment-payment.adapter";
 import { Payment } from "./payment.entity";
+import type { ApplicationConfig } from "../config/configuration";
 
 describe(MomentPaymentAdapter.name, () => {
   let adapter: MomentPaymentAdapter;
-  let configService: { get: ReturnType<typeof vi.fn> };
-  let dataSource: { getRepository: ReturnType<typeof vi.fn> };
+  let configService: ConfigService<ApplicationConfig, true>;
+  let dataSource: DataSource;
   let paymentRepository: { findOneBy: ReturnType<typeof vi.fn> };
 
   const secretKey = "sk_test_1234567890abcdef";
@@ -28,7 +29,7 @@ describe(MomentPaymentAdapter.name, () => {
         }
         return null;
       }),
-    };
+    } as unknown as ConfigService<ApplicationConfig, true>;
 
     paymentRepository = {
       findOneBy: vi.fn(),
@@ -36,23 +37,23 @@ describe(MomentPaymentAdapter.name, () => {
 
     dataSource = {
       getRepository: vi.fn().mockReturnValue(paymentRepository),
-    };
+    } as unknown as DataSource;
 
-    adapter = new MomentPaymentAdapter(
-      configService as unknown as ConfigService<any, true>,
-      dataSource as unknown as DataSource,
-    );
+    adapter = new MomentPaymentAdapter(configService, dataSource);
   });
 
   describe("initiate", () => {
     it("should successfully build metadata with split routes and return checkout url", async () => {
       const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
         ok: true,
-        json: async () => ({
-          id: "ps_kfAWZgfQIoeG0q",
-          session_url: "https://moment.momentpay.io/checkout/ckt802zEb2P2uS4Ql",
-        }),
-      } as any);
+        json: async () => {
+          await Promise.resolve();
+          return {
+            id: "ps_kfAWZgfQIoeG0q",
+            session_url: "https://moment.momentpay.io/checkout/ckt802zEb2P2uS4Ql",
+          };
+        },
+      } as unknown as Response);
 
       const result = await adapter.initiate({
         email: "customer@example.com",
@@ -126,12 +127,15 @@ describe(MomentPaymentAdapter.name, () => {
 
       const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
         ok: true,
-        json: async () => ({
-          status: "completed",
-          payment_outcome: "paid",
-          amount: 50000,
-        }),
-      } as any);
+        json: async () => {
+          await Promise.resolve();
+          return {
+            status: "completed",
+            payment_outcome: "paid",
+            amount: 50000,
+          };
+        },
+      } as unknown as Response);
 
       const result = await adapter.verify("pmt_master_123");
 
