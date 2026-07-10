@@ -288,6 +288,7 @@ export interface PosSubOrderItem {
   name: string;
   quantity: number;
   priceMinor: number;
+  customerNote?: string;
   modifiers?: PosSubOrderItemModifier[];
 }
 
@@ -302,6 +303,8 @@ export interface PosSubOrder {
   items: PosSubOrderItem[];
   totalAmountMinor: number;
   createdAt: string;
+  updatedAt: string;
+  preparationNote?: string;
   estimatedPrepTimeMinutes?: number;
 }
 
@@ -323,6 +326,9 @@ function toSubOrders(data: AdminOrdersResult, outletId: string): PosSubOrder[] {
             name: li.itemNameSnapshot,
             quantity: li.quantity,
             priceMinor: li.unitPriceMinor,
+            ...(typeof li.customerNote === "string" && li.customerNote.trim()
+              ? { customerNote: li.customerNote.trim() }
+              : {}),
             ...(li.modifiersSnapshot.length > 0
               ? {
                   modifiers: li.modifiersSnapshot.map((m) => ({
@@ -334,9 +340,13 @@ function toSubOrders(data: AdminOrdersResult, outletId: string): PosSubOrder[] {
           })),
         totalAmountMinor: sub.subtotalMinor,
         createdAt: sub.createdAt,
-        ...(sub.preparationTimeMinutes !== undefined
-          ? { estimatedPrepTimeMinutes: sub.preparationTimeMinutes }
-          : {}),
+        updatedAt: sub.updatedAt,
+        ...(sub.preparationNote ? { preparationNote: sub.preparationNote } : {}),
+        ...(sub.preparationTime !== undefined && sub.preparationTime !== null
+          ? { estimatedPrepTimeMinutes: sub.preparationTime }
+          : sub.preparationTimeMinutes !== undefined
+            ? { estimatedPrepTimeMinutes: sub.preparationTimeMinutes }
+            : {}),
       })),
   );
 }
