@@ -87,7 +87,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
         description: form.description.trim(),
         cuisineType: form.cuisineType.trim(),
         isOnline: form.isOnline,
-        paystackSubaccountCode: form.paystackSubaccountCode.trim(),
+        paystackSubaccountCode: form.paystackSubaccountCode.trim() || null,
         ...(resolvedImageUrl !== undefined && { imageUrl: resolvedImageUrl }),
       };
 
