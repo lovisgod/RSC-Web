@@ -21,6 +21,26 @@ import type {
 } from "./payment-adapter";
 import { Payment } from "./payment.entity";
 
+interface MomentInitializeResponse {
+  id?: string;
+  session_url?: string;
+  status?: string;
+  payment_outcome?: string;
+  amount?: number;
+  message?: string;
+}
+
+interface MomentWebhookPayload {
+  id?: string;
+  type?: string;
+  data?: {
+    external_reference?: string;
+    payment_outcome?: string;
+    status?: string;
+    amount?: number;
+  };
+}
+
 @Injectable()
 export class MomentPaymentAdapter implements PaymentAdapter {
   private readonly logger = new Logger(MomentPaymentAdapter.name);
@@ -64,7 +84,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
         body: JSON.stringify(body),
       });
 
-      const payload = (await response.json().catch(() => ({}))) as any;
+      const payload = (await response.json().catch(() => ({}))) as MomentInitializeResponse;
 
       if (!response.ok || !payload.session_url) {
         this.logger.error(
@@ -98,8 +118,8 @@ export class MomentPaymentAdapter implements PaymentAdapter {
         throw new NotFoundException(`Payment not found for reference ${reference}`);
       }
 
-      const providerResponse = payment.providerResponse as any;
-      const sessionId = providerResponse?.id;
+      const providerResponse = payment.providerResponse as Record<string, unknown> | null;
+      const sessionId = typeof providerResponse?.id === "string" ? providerResponse.id : undefined;
       if (!sessionId) {
         throw new BadRequestException(`No session ID found for payment reference ${reference}`);
       }
@@ -117,7 +137,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
         throw new BadGatewayException("Unable to verify payment with Moment");
       }
 
-      const payload = (await response.json()) as any;
+      const payload = (await response.json()) as MomentInitializeResponse;
       const momentStatus = payload.status;
       const momentOutcome = payload.payment_outcome;
 
@@ -136,7 +156,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
         reference,
         amountMinor: payload.amount ?? payment.amountMinor,
         status,
-        providerResponse: payload,
+        providerResponse: payload as unknown as Record<string, unknown>,
       };
     } catch (error) {
       if (
@@ -156,6 +176,8 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     signatureHeader: string,
     headers?: Record<string, string>,
   ): Promise<ParsedWebhookEvent | null> {
+    await Promise.resolve();
+
     if (!headers) {
       this.logger.warn("Moment webhook: parse request called without headers");
       return null;
@@ -178,9 +200,9 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       return null;
     }
 
-    let event: any;
+    let event: MomentWebhookPayload;
     try {
-      event = JSON.parse(rawBody.toString("utf8"));
+      event = JSON.parse(rawBody.toString("utf8")) as MomentWebhookPayload;
     } catch {
       this.logger.warn("Moment webhook: body is not valid JSON");
       return null;
@@ -206,11 +228,12 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       reference,
       status: data.payment_outcome === "paid" || data.status === "completed" ? "SUCCESS" : "FAILED",
       amountMinor: data.amount ?? 0,
-      providerResponse: event,
+      providerResponse: event as unknown as Record<string, unknown>,
     };
   }
 
   async provisionSubaccount(input: ProvisionSubaccountInput): Promise<ProvisionSubaccountResult> {
+    await Promise.resolve();
     // Subaccounts are managed via Moment's dashboard UI.
     // Return a mocked subaccount code to allow settings onboarding flow to proceed if called.
     const mockCode = `moment_sub_${Math.random().toString(36).substring(2, 10)}`;
