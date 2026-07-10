@@ -184,18 +184,9 @@ export const uploadMenuItemImage = (itemId: string, file: File): Promise<MenuIte
     .then((r) => r.data.data);
 };
 
-export interface UpdateMenuItemBody {
-  outletId: string;
-  categoryId: string;
-  name: string;
-  description?: string;
+export type UpdateMenuItemBody = Partial<CreateMenuItemBody> & {
   imageUrl?: string;
-  deliveryTimeRange?: string;
-  priceMinor: number;
-  isAvailable: boolean;
-  sortOrder?: number;
-  modifierGroupIds?: string[];
-}
+};
 
 export const updateMenuItem = (itemId: string, body: UpdateMenuItemBody): Promise<MenuItem> =>
   patchReq(`/api/v1/menu-items/${itemId}`, body);

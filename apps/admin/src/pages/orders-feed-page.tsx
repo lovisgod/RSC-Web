@@ -27,6 +27,17 @@ function statusLabel(status: string): string {
   return STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
 }
 
+function subOrderStatusLabel(status: string): string {
+  if (status === "REJECTED") return "Rejected";
+  if (status === "ACCEPTED") return "Accepted";
+  if (status === "PREPARING") return "Preparing";
+  if (status === "READY") return "Ready";
+  if (status === "DISPATCHED") return "Dispatched";
+  if (status === "COLLECTED") return "Collected";
+  if (status === "PENDING") return "Pending";
+  return status;
+}
+
 function formatOrderDateTime(value: string): string {
   const date = new Date(value);
   const day = date.toLocaleDateString("en-GB", {
@@ -164,6 +175,11 @@ export function OrdersFeedPage() {
                   const orderOutlets = subOrders.map((subOrder) => ({
                     id: subOrder.outletId,
                     name: outletById[subOrder.outletId]?.name ?? subOrder.outletId.slice(0, 8),
+                    status: subOrder.status,
+                    rejectionReason:
+                      subOrder.status === "REJECTED" && typeof subOrder.preparationNote === "string"
+                        ? subOrder.preparationNote.trim()
+                        : "",
                   }));
 
                   return (
@@ -187,9 +203,23 @@ export function OrdersFeedPage() {
                             ? orderOutlets.map((outlet) => (
                                 <span
                                   key={outlet.id}
-                                  className={`order-outlet-badge order-outlet-badge--${outletBadgeTone(outlet.id)}`}
+                                  className={`order-outlet-badge ${
+                                    outlet.status === "REJECTED"
+                                      ? "order-outlet-badge--rejected"
+                                      : `order-outlet-badge--${outletBadgeTone(outlet.id)}`
+                                  }`}
+                                  title={
+                                    outlet.status === "REJECTED" && outlet.rejectionReason
+                                      ? `Rejected: ${outlet.rejectionReason}`
+                                      : subOrderStatusLabel(outlet.status)
+                                  }
                                 >
-                                  {outlet.name}
+                                  <span className="order-outlet-badge__name">{outlet.name}</span>
+                                  {outlet.status === "REJECTED" && outlet.rejectionReason && (
+                                    <span className="order-outlet-badge__reason">
+                                      {outlet.rejectionReason}
+                                    </span>
+                                  )}
                                 </span>
                               ))
                             : "—"}
