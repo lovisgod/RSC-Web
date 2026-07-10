@@ -9,6 +9,7 @@ import { useOutletInfo } from "../hooks/use-outlet-info";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listBanks, provisionSubaccount, resolveBankAccount } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
+import { outletAdminKeys } from "../lib/query-keys";
 
 interface PasswordForm {
   currentPassword: string;
@@ -102,7 +103,7 @@ export function SettingsPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["outlet", "detail", outletId] });
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.outlet.detail(outletId) });
       toastBus.emit("Bank account registered successfully!", "success");
       setIsEditingBank(false);
     },
