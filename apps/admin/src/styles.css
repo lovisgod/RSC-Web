@@ -1230,6 +1230,7 @@ th {
 
 .rider-page-heading__copy {
   min-width: 0;
+  width: 100%;
 }
 
 .rider-page-heading__top {
@@ -1237,8 +1238,7 @@ th {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  width: min(100%, 800px);
-  margin-bottom: 0.45rem;
+  width: 100%;
 }
 
 .rider-page-heading__top .kicker {
@@ -1267,9 +1267,71 @@ th {
   margin-bottom: 1rem;
 }
 
+.rider-directory-panel {
+  margin-bottom: 1rem;
+}
+
+.rider-directory-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+  gap: 0.85rem;
+}
+
+.rider-directory-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-line) 80%, transparent);
+  border-radius: 18px;
+  padding: 0.9rem;
+  background: linear-gradient(135deg, white, color-mix(in srgb, var(--rsc-panel) 55%, white));
+  box-shadow: 0 12px 24px rgb(30 49 96 / 7%);
+}
+
+.rider-directory-card .rider-identity {
+  min-width: 0;
+}
+
+.rider-directory-meta {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.rider-directory-meta span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.28rem 0.5rem;
+  color: var(--rsc-navy-dark);
+  background: color-mix(in srgb, var(--rsc-navy-light) 8%, white);
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.rider-delete-btn {
+  display: inline-grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, #dc2626 18%, white);
+  border-radius: 12px;
+  color: #b91c1c;
+  background: color-mix(in srgb, #dc2626 8%, white);
+}
+
+.rider-delete-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .rider-report-panel {
   position: relative;
   overflow: hidden;
+  margin-bottom: 16px;
 }
 
 .rider-report-panel::before {
@@ -3010,5 +3072,14 @@ th {
   .rider-page-heading__top .rsc-button svg {
     width: 20px;
     height: 20px;
+  }
+
+  .rider-directory-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .rider-directory-meta {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 }
