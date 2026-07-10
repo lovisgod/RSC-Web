@@ -19,6 +19,7 @@ import { Payment } from "./payment.entity";
 import { PaymentsController } from "./payments.controller";
 import { PaymentsService } from "./payments.service";
 import { PaystackPaymentAdapter } from "./paystack-payment.adapter";
+import { MomentPaymentAdapter } from "./moment-payment.adapter";
 
 @Module({
   imports: [
@@ -41,17 +42,25 @@ import { PaystackPaymentAdapter } from "./paystack-payment.adapter";
     PaymentsService,
     LocalPaymentAdapter,
     PaystackPaymentAdapter,
+    MomentPaymentAdapter,
     {
       provide: PAYMENT_ADAPTER,
-      inject: [ConfigService, LocalPaymentAdapter, PaystackPaymentAdapter],
+      inject: [ConfigService, LocalPaymentAdapter, PaystackPaymentAdapter, MomentPaymentAdapter],
       useFactory: (
         configService: ConfigService<ApplicationConfig, true>,
         local: LocalPaymentAdapter,
         paystack: PaystackPaymentAdapter,
+        moment: MomentPaymentAdapter,
       ) => {
         const payments = configService.get("payments", { infer: true });
 
-        return payments.provider === "paystack" && payments.paystack.secretKey ? paystack : local;
+        if (payments.provider === "paystack" && payments.paystack.secretKey) {
+          return paystack;
+        }
+        if (payments.provider === "moment" && payments.moment.secretKey) {
+          return moment;
+        }
+        return local;
       },
     },
   ],

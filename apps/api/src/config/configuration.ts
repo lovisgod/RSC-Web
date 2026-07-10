@@ -58,10 +58,15 @@ export interface ApplicationConfig {
     };
   };
   payments: {
-    provider: "local" | "paystack";
+    provider: "local" | "paystack" | "moment";
     paystack: {
       secretKey: string;
       baseUrl: string;
+    };
+    moment: {
+      secretKey: string;
+      baseUrl: string;
+      webhookSecret: string;
     };
     platformCommissionBps: number;
     vatBps: number;
@@ -175,10 +180,15 @@ export default function configuration(): ApplicationConfig {
       },
     },
     payments: {
-      provider: process.env.PAYMENT_PROVIDER === "paystack" ? "paystack" : "local",
+      provider: (process.env.PAYMENT_PROVIDER as "paystack" | "moment" | "local") ?? "local",
       paystack: {
         secretKey: process.env.PAYSTACK_SECRET_KEY ?? "",
         baseUrl: (process.env.PAYSTACK_BASE_URL ?? "https://api.paystack.co").replace(/\/$/, ""),
+      },
+      moment: {
+        secretKey: process.env.MOMENT_SECRET_KEY ?? "",
+        baseUrl: (process.env.MOMENT_BASE_URL ?? "https://api.momentpay.net").replace(/\/$/, ""),
+        webhookSecret: process.env.MOMENT_WEBHOOK_SECRET ?? "",
       },
       platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
       vatBps: Number(process.env.VAT_BPS ?? 750),
