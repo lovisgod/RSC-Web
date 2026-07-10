@@ -1,6 +1,13 @@
 import { z } from "zod";
 
 export const NIGERIAN_MOBILE_NUMBER_PATTERN = /^(?:\+?234|0)[789][01]\d{8}$/;
+export const nigerianPhoneNumberSchema = z
+  .string()
+  .trim()
+  .regex(
+    NIGERIAN_MOBILE_NUMBER_PATTERN,
+    "Enter a valid Nigerian number (e.g. 08032000102 or +2348032000102)",
+  );
 
 export const customerStatusSchema = z.enum(["UNVERIFIED", "ACTIVE", "SUSPENDED"]);
 export const userRoleSchema = z.enum(["SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"]);
@@ -24,7 +31,7 @@ export const apiErrorResponseSchema = apiResponseSchema(apiErrorDataSchema);
 export const registerCustomerInputSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
-    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+    phone: nigerianPhoneNumberSchema,
     email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
     password: z.string().min(8).max(128),
   })
@@ -46,7 +53,7 @@ export const verifyUserInputSchema = z.discriminatedUnion("channel", [
   z
     .object({
       channel: z.literal("phone"),
-      phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+      phone: nigerianPhoneNumberSchema,
       code: z.string().regex(/^\d{6}$/),
     })
     .strict(),
@@ -72,7 +79,7 @@ export const userVerificationResultSchema = z.object({
 
 export const resendVerificationInputSchema = z.object({
   channel: verificationChannelSchema,
-  phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN).optional(),
+  phone: nigerianPhoneNumberSchema.optional(),
   email: z.string().trim().toLowerCase().pipe(z.email().max(254)).optional(),
 });
 
@@ -127,7 +134,7 @@ export const createAdminInputSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
     email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
-    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+    phone: nigerianPhoneNumberSchema,
     outletId: z.uuid(),
   })
   .strict();
@@ -137,6 +144,27 @@ export const adminResultSchema = z.object({
   name: z.string().min(1),
   role: z.literal("ADMIN"),
   outletId: z.uuid(),
+  temporaryPassword: z.string().min(8),
+});
+
+export const createRiderInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    phone: nigerianPhoneNumberSchema,
+    vehicleType: z.string().trim().min(2).max(40).optional(),
+    plateNumber: z.string().trim().min(2).max(40).optional(),
+  })
+  .strict();
+
+export const riderResultSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  role: z.literal("RIDER"),
+  outletId: z.uuid().nullable(),
+  vehicleType: z.string().nullable(),
+  plateNumber: z.string().nullable(),
+  riderStatus: z.string().nullable(),
   temporaryPassword: z.string().min(8),
 });
 
@@ -156,7 +184,7 @@ export const resendVerificationCodeInputSchema = z.discriminatedUnion("channel",
   z
     .object({
       channel: z.literal("phone"),
-      phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+      phone: nigerianPhoneNumberSchema,
     })
     .strict(),
   z
@@ -207,7 +235,7 @@ export const updateProfileInputSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
     email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
-    phone: z.string().trim().regex(NIGERIAN_MOBILE_NUMBER_PATTERN),
+    phone: nigerianPhoneNumberSchema,
   })
   .strict();
 
@@ -338,7 +366,7 @@ export const initiatePaymentInputSchema = z
     deliveryAddress: z.string().optional(),
     deliveryLatitude: z.number().optional(),
     deliveryLongitude: z.number().optional(),
-    recipientPhone: z.string().optional(),
+    recipientPhone: nigerianPhoneNumberSchema.optional(),
     preparationNote: z.string().max(1000).optional(),
   })
   .strict();
@@ -449,7 +477,8 @@ export const outletSummarySchema = z.object({
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
   isOnline: z.boolean(),
-  paystackSubaccountCode: z.string().nullable(),
+  paystackSubaccountCode: z.string().optional(),
+  momentSubaccountCode: z.string(),
   ratingAverage: z.coerce.number().min(0).max(5).default(0),
   ratingCount: z.int().nonnegative().default(0),
   menuCategories: z.array(menuCategorySchema),
@@ -554,6 +583,7 @@ export const adminOrderLineItemSchema = z.object({
   quantity: z.int().positive(),
   lineTotalMinor: z.int().nonnegative(),
   currency: currencySchema,
+  customerNote: z.string().nullable().optional(),
   modifiersSnapshot: z
     .array(
       z
@@ -912,6 +942,8 @@ export type LoginResult = z.infer<typeof loginResultSchema>;
 export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
+export type CreateRiderInput = z.infer<typeof createRiderInputSchema>;
+export type RiderResult = z.infer<typeof riderResultSchema>;
 export type OutletAdmin = z.infer<typeof outletAdminSchema>;
 export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
 export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;

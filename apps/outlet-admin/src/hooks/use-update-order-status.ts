@@ -29,17 +29,31 @@ export function useUpdateOrderStatus(outletId: string) {
     }) =>
       updateSubOrderStatus(subOrderId, {
         status,
-        ...(preparationTimeMinutes !== undefined ? { preparationTimeMinutes } : {}),
-        ...(rejectionReason !== undefined ? { rejectionReason } : {}),
+        ...(rejectionReason !== undefined ? { note: rejectionReason } : {}),
+        ...(preparationTimeMinutes !== undefined
+          ? { preparationTime: preparationTimeMinutes }
+          : {}),
       }),
-    onMutate: async ({ subOrderId, status }) => {
+    onMutate: async ({ subOrderId, status, preparationTimeMinutes }) => {
       const queryKey = outletAdminKeys.orders(outletId);
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<PosSubOrder[]>(queryKey);
       const subStatus = MASTER_TO_SUB[status];
+      const updatedAt = new Date().toISOString();
       if (subStatus) {
         queryClient.setQueryData<PosSubOrder[]>(queryKey, (orders) =>
-          orders?.map((o) => (o.id === subOrderId ? { ...o, status: subStatus } : o)),
+          orders?.map((o) =>
+            o.id === subOrderId
+              ? {
+                  ...o,
+                  status: subStatus,
+                  updatedAt,
+                  ...(preparationTimeMinutes !== undefined
+                    ? { estimatedPrepTimeMinutes: preparationTimeMinutes }
+                    : {}),
+                }
+              : o,
+          ),
         );
       }
       return { previous };

@@ -50,7 +50,11 @@ function OutletAvatar({ imageUrl, name }: { imageUrl: string | null; name: strin
   );
 }
 
-export function OutletControlPage() {
+type OutletControlPageProps = {
+  view?: "outlets" | "platform";
+};
+
+export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) {
   const navigate = useNavigate();
   const { data: outlets, isLoading } = useOutletsLive();
   const [onlineState, setOnlineState] = useState<Record<string, boolean>>({});
@@ -177,203 +181,209 @@ export function OutletControlPage() {
       />
 
       <div className="outlet-control">
-        <section className="outlet-availability">
-          <div className="outlet-availability__head">
-            <h2>Outlet Availability overrides</h2>
-            <Button tone="navy" onClick={() => setModalOutlet(null)}>
-              <span className="onboard-icon">+</span>
-              <span className="onboard-label">Onboard New Outlet</span>
-            </Button>
-          </div>
+        {view === "outlets" && (
+          <section className="outlet-availability">
+            <div className="outlet-availability__head">
+              <h2>Outlet Availability overrides</h2>
+              <Button tone="navy" onClick={() => setModalOutlet(null)}>
+                <span className="onboard-icon">+</span>
+                <span className="onboard-label">Onboard New Outlet</span>
+              </Button>
+            </div>
 
-          <div className="outlet-list">
-            {isLoading
-              ? Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton
-                    key={i}
-                    variant="rectangular"
-                    height={84}
-                    sx={{ borderRadius: CARD_RADIUS, transform: "none" }}
-                  />
-                ))
-              : outlets?.map((outlet) => {
-                  const isOnline = onlineState[outlet.id] ?? outlet.isOnline;
-                  const isDeleteReady = deleteReadyId === outlet.id;
-                  const isBeingDeleted = isDeleting && deletingId === outlet.id;
+            <div className="outlet-list">
+              {isLoading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      variant="rectangular"
+                      height={84}
+                      sx={{ borderRadius: CARD_RADIUS, transform: "none" }}
+                    />
+                  ))
+                : outlets?.map((outlet) => {
+                    const isOnline = onlineState[outlet.id] ?? outlet.isOnline;
+                    const isDeleteReady = deleteReadyId === outlet.id;
+                    const isBeingDeleted = isDeleting && deletingId === outlet.id;
 
-                  return (
-                    <div
-                      key={outlet.id}
-                      className={[
-                        "outlet-card",
-                        isDeleteReady ? "outlet-card--delete-ready" : "",
-                        isBeingDeleted ? "outlet-card--deleting" : "",
-                      ]
-                        .join(" ")
-                        .trim()}
-                      onClick={() => handleCardClick(outlet.id)}
-                      onDoubleClick={() => handleCardDoubleClick(outlet.id)}
-                    >
-                      {/* Side action buttons — slide in on double-tap */}
-                      <div className="outlet-card__side-actions">
+                    return (
+                      <div
+                        key={outlet.id}
+                        className={[
+                          "outlet-card",
+                          isDeleteReady ? "outlet-card--delete-ready" : "",
+                          isBeingDeleted ? "outlet-card--deleting" : "",
+                        ]
+                          .join(" ")
+                          .trim()}
+                        onClick={() => handleCardClick(outlet.id)}
+                        onDoubleClick={() => handleCardDoubleClick(outlet.id)}
+                      >
+                        {/* Side action buttons — slide in on double-tap */}
+                        <div className="outlet-card__side-actions">
+                          <button
+                            type="button"
+                            aria-label={`Edit ${outlet.name}`}
+                            className="outlet-edit-btn"
+                            tabIndex={isDeleteReady ? 0 : -1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteReadyId(null);
+                              setModalOutlet(outlet);
+                            }}
+                          >
+                            <Pencil size={15} />
+                          </button>
+
+                          <button
+                            type="button"
+                            aria-label={`Delete ${outlet.name}`}
+                            className="outlet-delete-btn"
+                            tabIndex={isDeleteReady ? 0 : -1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(outlet.id);
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+
+                        <OutletAvatar imageUrl={outlet.imageUrl} name={outlet.name} />
+
+                        <div className="outlet-card__info">
+                          <strong>{outlet.name}</strong>
+                          <small className="outlet-card__cuisine">{outlet.cuisineType}</small>
+                          <small>
+                            Sub-account:{" "}
+                            {outlet.paystackSubaccountCode ?? "None (Pending Onboarding)"}
+                          </small>
+                        </div>
+
+                        <span
+                          className={`outlet-status${isOnline ? "" : " outlet-status--closed"}`}
+                        >
+                          {isOnline ? "ONLINE & TRADING" : "REMOTELY CLOSED"}
+                        </span>
+
                         <button
                           type="button"
-                          aria-label={`Edit ${outlet.name}`}
-                          className="outlet-edit-btn"
-                          tabIndex={isDeleteReady ? 0 : -1}
+                          role="switch"
+                          aria-checked={isOnline}
+                          aria-label={`Toggle ${outlet.name} availability`}
+                          className={`outlet-toggle${isOnline ? " outlet-toggle--on" : ""}${pendingToggleId === outlet.id ? " outlet-toggle--pending" : ""}`}
+                          disabled={pendingToggleId === outlet.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDeleteReadyId(null);
-                            setModalOutlet(outlet);
+                            handleToggle(outlet, isOnline);
                           }}
-                        >
-                          <Pencil size={15} />
-                        </button>
-
-                        <button
-                          type="button"
-                          aria-label={`Delete ${outlet.name}`}
-                          className="outlet-delete-btn"
-                          tabIndex={isDeleteReady ? 0 : -1}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(outlet.id);
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        />
                       </div>
-
-                      <OutletAvatar imageUrl={outlet.imageUrl} name={outlet.name} />
-
-                      <div className="outlet-card__info">
-                        <strong>{outlet.name}</strong>
-                        <small className="outlet-card__cuisine">{outlet.cuisineType}</small>
-                        <small>
-                          Sub-account:{" "}
-                          {outlet.paystackSubaccountCode ?? "None (Pending Onboarding)"}
-                        </small>
-                      </div>
-
-                      <span className={`outlet-status${isOnline ? "" : " outlet-status--closed"}`}>
-                        {isOnline ? "ONLINE & TRADING" : "REMOTELY CLOSED"}
-                      </span>
-
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={isOnline}
-                        aria-label={`Toggle ${outlet.name} availability`}
-                        className={`outlet-toggle${isOnline ? " outlet-toggle--on" : ""}${pendingToggleId === outlet.id ? " outlet-toggle--pending" : ""}`}
-                        disabled={pendingToggleId === outlet.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggle(outlet, isOnline);
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-          </div>
-        </section>
+                    );
+                  })}
+            </div>
+          </section>
+        )}
 
         {/* Platform charges */}
-        <section className="panel platform-charges">
-          <h2 className="platform-charges__title">Adjust Platform Charges</h2>
-          {platformCharges.isError ? (
-            <div className="charges-form__error" role="alert">
-              <p>Platform charges could not be loaded.</p>
-              <Button tone="quiet" type="button" onClick={() => void platformCharges.refetch()}>
-                Try Again
-              </Button>
-            </div>
-          ) : platformCharges.isLoading || !platformCharges.data ? (
-            <div className="charges-form" aria-label="Loading platform charges">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton
-                  key={index}
-                  variant="rounded"
-                  height={68}
-                  sx={{ borderRadius: "12px", transform: "none" }}
-                />
-              ))}
-            </div>
-          ) : (
-            <form
-              key={[
-                platformCharges.data.platformCommissionBps,
-                platformCharges.data.defaultVatBps,
-                platformCharges.data.deliveryFeeMinor,
-                platformCharges.data.serviceFeeMinor,
-              ].join("-")}
-              className="charges-form"
-              onSubmit={handleSavePlatformCharges}
-            >
-              <label className="field-label">
-                Platform Commission (%)
-                <input
-                  className="field-input"
-                  name="commission"
-                  type="number"
-                  min={0}
-                  max={100}
-                  step="0.01"
-                  defaultValue={basisPointsToPercent(platformCharges.data.platformCommissionBps)}
-                  disabled={updatePlatformCharges.isPending}
-                  required
-                />
-              </label>
-              <label className="field-label">
-                VAT Rate (%)
-                <input
-                  className="field-input"
-                  name="vat"
-                  type="number"
-                  min={0}
-                  max={100}
-                  step="0.01"
-                  defaultValue={basisPointsToPercent(platformCharges.data.defaultVatBps)}
-                  disabled={updatePlatformCharges.isPending}
-                  required
-                />
-              </label>
-              <label className="field-label">
-                Flat Delivery Fee (₦)
-                <input
-                  className="field-input"
-                  name="deliveryFee"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  defaultValue={minorUnitsToNaira(platformCharges.data.deliveryFeeMinor)}
-                  disabled={updatePlatformCharges.isPending}
-                  required
-                />
-              </label>
-              <label className="field-label">
-                Service Fee (₦)
-                <input
-                  className="field-input"
-                  name="serviceFee"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  defaultValue={minorUnitsToNaira(platformCharges.data.serviceFeeMinor)}
-                  disabled={updatePlatformCharges.isPending}
-                  required
-                />
-              </label>
-              <Button
-                tone="navy"
-                fullWidth
-                type="submit"
-                disabled={updatePlatformCharges.isPending}
+        {view === "platform" && (
+          <section className="panel platform-charges">
+            <h2 className="platform-charges__title">Adjust Platform Charges</h2>
+            {platformCharges.isError ? (
+              <div className="charges-form__error" role="alert">
+                <p>Platform charges could not be loaded.</p>
+                <Button tone="quiet" type="button" onClick={() => void platformCharges.refetch()}>
+                  Try Again
+                </Button>
+              </div>
+            ) : platformCharges.isLoading || !platformCharges.data ? (
+              <div className="charges-form" aria-label="Loading platform charges">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Skeleton
+                    key={index}
+                    variant="rounded"
+                    height={68}
+                    sx={{ borderRadius: "12px", transform: "none" }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <form
+                key={[
+                  platformCharges.data.platformCommissionBps,
+                  platformCharges.data.defaultVatBps,
+                  platformCharges.data.deliveryFeeMinor,
+                  platformCharges.data.serviceFeeMinor,
+                ].join("-")}
+                className="charges-form"
+                onSubmit={handleSavePlatformCharges}
               >
-                {updatePlatformCharges.isPending ? "Saving…" : "Save Configuration"}
-              </Button>
-            </form>
-          )}
-        </section>
+                <label className="field-label">
+                  Platform Commission (%)
+                  <input
+                    className="field-input"
+                    name="commission"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    defaultValue={basisPointsToPercent(platformCharges.data.platformCommissionBps)}
+                    disabled={updatePlatformCharges.isPending}
+                    required
+                  />
+                </label>
+                <label className="field-label">
+                  VAT Rate (%)
+                  <input
+                    className="field-input"
+                    name="vat"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    defaultValue={basisPointsToPercent(platformCharges.data.defaultVatBps)}
+                    disabled={updatePlatformCharges.isPending}
+                    required
+                  />
+                </label>
+                <label className="field-label">
+                  Flat Delivery Fee (₦)
+                  <input
+                    className="field-input"
+                    name="deliveryFee"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    defaultValue={minorUnitsToNaira(platformCharges.data.deliveryFeeMinor)}
+                    disabled={updatePlatformCharges.isPending}
+                    required
+                  />
+                </label>
+                <label className="field-label">
+                  Service Fee (₦)
+                  <input
+                    className="field-input"
+                    name="serviceFee"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    defaultValue={minorUnitsToNaira(platformCharges.data.serviceFeeMinor)}
+                    disabled={updatePlatformCharges.isPending}
+                    required
+                  />
+                </label>
+                <Button
+                  tone="navy"
+                  fullWidth
+                  type="submit"
+                  disabled={updatePlatformCharges.isPending}
+                >
+                  {updatePlatformCharges.isPending ? "Saving…" : "Save Configuration"}
+                </Button>
+              </form>
+            )}
+          </section>
+        )}
       </div>
     </>
   );

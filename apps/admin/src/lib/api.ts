@@ -9,7 +9,12 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   platformChargesSchema,
+  createRiderInputSchema,
+  riderResultSchema,
   updatePlatformChargesInputSchema,
+  type ItemModifier,
+  type ItemModifierGroup,
+  type MenuCategorySummary,
   type OperationsQueue,
   type OperationsStatsQuery,
   type OperationsSummary,
@@ -26,10 +31,12 @@ import {
   type MenuItem,
   type NotificationCampaign,
   type CreateNotificationCampaignInput,
+  type CreateRiderInput,
   type OutletSummary,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
+  type RiderResult,
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
 } from "@rsc/contracts";
@@ -203,6 +210,104 @@ export const updateMenuItemAvailability = (
   body: { isAvailable: boolean },
 ): Promise<MenuItem> => patchReq(`/api/v1/menu-items/${id}/availability`, body);
 
+export interface SaveMenuCategoryBody {
+  outletId: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export const createMenuCategory = (body: SaveMenuCategoryBody): Promise<MenuCategorySummary> =>
+  post("/api/v1/menu-categories", body);
+
+export const updateMenuCategory = (
+  categoryId: string,
+  body: Partial<SaveMenuCategoryBody>,
+): Promise<MenuCategorySummary> => patchReq(`/api/v1/menu-categories/${categoryId}`, body);
+
+export const deleteMenuCategory = (categoryId: string): Promise<void> =>
+  http.delete(`/api/v1/menu-categories/${categoryId}`).then(() => undefined);
+
+export interface CreateMenuItemBody {
+  outletId: string;
+  categoryId: string;
+  name: string;
+  description?: string;
+  deliveryTimeRange?: string;
+  priceMinor: number;
+  isAvailable: boolean;
+  sortOrder?: number;
+  modifierGroupIds?: string[];
+}
+
+export interface UpdateMenuItemBody extends CreateMenuItemBody {
+  imageUrl?: string;
+}
+
+export const createMenuItem = (body: CreateMenuItemBody): Promise<MenuItem> =>
+  post("/api/v1/menu-items", body);
+
+export const uploadMenuItemImage = (itemId: string, file: File): Promise<MenuItem> => {
+  const form = new FormData();
+  form.append("file", file);
+  return http
+    .post<Envelope<MenuItem>>(`/api/v1/menu-items/${itemId}/image`, form)
+    .then((r) => r.data.data);
+};
+
+export const updateMenuItem = (itemId: string, body: UpdateMenuItemBody): Promise<MenuItem> =>
+  patchReq(`/api/v1/menu-items/${itemId}`, body);
+
+export const deleteMenuItem = (itemId: string): Promise<void> =>
+  http.delete(`/api/v1/menu-items/${itemId}`).then(() => undefined);
+
+export const getMenuItemById = (itemId: string): Promise<MenuItem> =>
+  get(`/api/v1/menu-items/${itemId}`);
+
+export const listItemModifierGroups = (outletId: string): Promise<ItemModifierGroup[]> =>
+  get(`/api/v1/item-modifier-groups?outletId=${encodeURIComponent(outletId)}`);
+
+export interface SaveItemModifierGroupBody {
+  outletId: string;
+  name: string;
+  minSelections: number;
+  maxSelections: number;
+  isRequired: boolean;
+  sortOrder: number;
+}
+
+export const createItemModifierGroup = (
+  body: SaveItemModifierGroupBody,
+): Promise<ItemModifierGroup> => post("/api/v1/item-modifier-groups", body);
+
+export const updateItemModifierGroup = (
+  groupId: string,
+  body: Partial<SaveItemModifierGroupBody>,
+): Promise<ItemModifierGroup> => patchReq(`/api/v1/item-modifier-groups/${groupId}`, body);
+
+export const deleteItemModifierGroup = (groupId: string): Promise<void> =>
+  http.delete(`/api/v1/item-modifier-groups/${groupId}`).then(() => undefined);
+
+export interface SaveItemModifierBody {
+  outletId: string;
+  groupId: string;
+  name: string;
+  priceDeltaMinor: number;
+  isAvailable: boolean;
+  sortOrder: number;
+}
+
+export const createItemModifier = (body: SaveItemModifierBody): Promise<ItemModifier> =>
+  post("/api/v1/item-modifiers", body);
+
+export const updateItemModifier = (
+  modifierId: string,
+  body: Partial<SaveItemModifierBody>,
+): Promise<ItemModifier> => patchReq(`/api/v1/item-modifiers/${modifierId}`, body);
+
+export const deleteItemModifier = (modifierId: string): Promise<void> =>
+  http.delete(`/api/v1/item-modifiers/${modifierId}`).then(() => undefined);
+
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 export type AdminOrderItem = AdminOrdersResult["orders"][number];
@@ -250,27 +355,10 @@ export const scheduleNotificationCampaign = (
 export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
   post("/api/v1/auth/admins", body);
 
-export interface CreateRiderInput {
-  name: string;
-  email: string;
-  phone: string;
-  vehicleType?: string;
-  plateNumber?: string;
-}
-
-export interface RiderResult {
-  id: string;
-  name: string;
-  role: "RIDER";
-  outletId: string | null;
-  vehicleType: string | null;
-  plateNumber: string | null;
-  riderStatus: string | null;
-  temporaryPassword: string;
-}
-
 export const createRider = (body: CreateRiderInput): Promise<RiderResult> =>
-  post("/api/v1/users/riders", body);
+  post<unknown>("/api/v1/users/riders", createRiderInputSchema.parse(body)).then((data) =>
+    riderResultSchema.parse(data),
+  );
 
 export interface OutletAdminUser {
   id: string;

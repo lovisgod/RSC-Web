@@ -51,6 +51,7 @@ export interface OrderSnapshot {
     outletId: string;
     outletName: string;
     items: Array<{
+      lineId?: string;
       id: string;
       name: string;
       quantity: number;

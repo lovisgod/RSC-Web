@@ -102,6 +102,12 @@ function KitchenBreakdown({
         const items = lineItems.filter((lineItem) => lineItem.subOrderId === subOrder.id);
         const normalizedStatus = subOrder.status.toUpperCase();
         const unavailable = normalizedStatus === "REJECTED" || normalizedStatus === "CANCELLED";
+        const preparationTimeMinutes =
+          typeof subOrder.preparationTime === "number" && !Number.isNaN(subOrder.preparationTime)
+            ? subOrder.preparationTime
+            : null;
+        const shouldShowPreparationTime =
+          preparationTimeMinutes !== null && !unavailable && normalizedStatus !== "READY";
 
         return (
           <Card
@@ -150,6 +156,17 @@ function KitchenBreakdown({
                   normalizedStatus.toLowerCase().replaceAll("_", " ")}
               </span>
             </div>
+
+            {shouldShowPreparationTime && (
+              <div className="mb-4 rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,white)] px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--rsc-brand-strong)]">
+                  Estimated preparation time
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-gray-800">
+                  {preparationTimeMinutes} minutes
+                </p>
+              </div>
+            )}
 
             {items.length > 0 ? (
               <ul className="space-y-2">
@@ -372,10 +389,13 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
   const status = getStatusConfig(order.status);
   const contentId = `tracking-order-${order.id}`;
   const normalizedStatus = order.status.toUpperCase();
-  const showHandoffCode =
-    !!order.deliveryCode &&
-    ((order.deliveryMode === "DELIVERY" && normalizedStatus === "OUT_FOR_DELIVERY") ||
-      (order.deliveryMode === "TAKEOUT" && normalizedStatus === "READY"));
+  const codeVisibleStatuses = new Set([
+    "CONFIRMED",
+    "PARTIALLY_READY",
+    "READY",
+    "OUT_FOR_DELIVERY",
+  ]);
+  const showHandoffCode = !!order.deliveryCode && codeVisibleStatuses.has(normalizedStatus);
 
   return (
     <div

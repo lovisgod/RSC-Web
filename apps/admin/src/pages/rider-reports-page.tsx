@@ -1,9 +1,8 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button, EmptyState, MetricCard } from "@rsc/ui";
-import { Bike, CalendarDays, Clock3, Info, Plus, Trophy } from "lucide-react";
+import { Bike, CalendarDays, Clock3, Plus, Trash2, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { PageHeading } from "../components/page-heading";
 import { RiderOnboardModal } from "../components/rider-onboard-modal";
 import { useOrdersFeed } from "../hooks/use-orders-feed";
 import type { AdminOrderItem } from "../lib/api";
@@ -55,7 +54,7 @@ function formatDateTime(value: string | null): string {
 
 function formatMinutes(minutes: number | null): string {
   if (minutes === null) return "—";
-  if (minutes < 60) return `${Math.round(minutes)}m`;
+  if (minutes < 60) return `${Math.round(minutes)}mins`;
 
   const hours = Math.floor(minutes / 60);
   const mins = Math.round(minutes % 60);
@@ -142,16 +141,9 @@ export function RiderReportsPage() {
     <>
       <RiderOnboardModal open={onboardOpen} onClose={() => setOnboardOpen(false)} />
 
-      <PageHeading
-        kicker="Rider operations"
-        title="Rider daily performance"
-        description="Review delivery workload, completion pace, and rider earnings from the current admin order feed."
-        action={
-          <div className="rider-report-actions">
-            <Button tone="navy" onClick={() => setOnboardOpen(true)}>
-              <Plus aria-hidden="true" size={16} />
-              Onboard Rider
-            </Button>
+      <section className="page-heading rider-page-heading py-4">
+        <div className="rider-page-heading__copy">
+          <div className="rider-page-heading__top">
             <label className="rider-date-filter">
               <CalendarDays aria-hidden="true" size={18} />
               <span className="sr-only">Report date</span>
@@ -161,19 +153,11 @@ export function RiderReportsPage() {
                 onChange={(event) => setReportDate(event.target.value)}
               />
             </label>
+            <Button tone="navy" onClick={() => setOnboardOpen(true)}>
+              <Plus aria-hidden="true" size={16} />
+              <span className="rider-onboard-label">Onboard Rider</span>
+            </Button>
           </div>
-        }
-      />
-
-      <section className="rider-endpoint-note" role="note">
-        <Info aria-hidden="true" size={18} />
-        <div>
-          <strong>Admin rider reporting endpoint is not ready yet.</strong>
-          <p>
-            The API currently exposes rider delivery reports only to the rider account. This screen
-            derives admin visibility from delivery orders until a dedicated admin report endpoint is
-            added.
-          </p>
         </div>
       </section>
 
@@ -228,18 +212,58 @@ export function RiderReportsPage() {
         )}
       </section>
 
-      <div className="panel orders-panel rider-report-panel">
-        <div className="orders-panel__head">
-          <div>
-            <p className="kicker">Daily rider table</p>
-            <h2 className="orders-panel__title">Rider performance overview</h2>
-          </div>
-          <span className="rider-report-chip">
-            <Bike aria-hidden="true" size={16} />
-            Delivery orders only
-          </span>
-        </div>
+      <section className="panel rider-directory-panel" aria-labelledby="rider-directory-title">
+        <h2 className="sr-only" id="rider-directory-title">
+          Visible riders
+        </h2>
 
+        {isPending ? (
+          <div className="rider-directory-list">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton
+                key={index}
+                variant="rectangular"
+                height={86}
+                sx={{ borderRadius: "18px" }}
+              />
+            ))}
+          </div>
+        ) : riderRows.length > 0 ? (
+          <div className="rider-directory-list">
+            {riderRows.map((row) => (
+              <article className="rider-directory-card" key={row.riderId}>
+                <div className="rider-identity">
+                  <span className="rider-rank">{riderLabel(row.riderId).slice(-1)}</span>
+                  <span>
+                    <strong>{riderLabel(row.riderId)}</strong>
+                    <small>{row.riderId}</small>
+                  </span>
+                </div>
+                <div
+                  className="rider-directory-meta"
+                  aria-label={`${riderLabel(row.riderId)} work summary`}
+                >
+                  <span>{row.activeOrders} open</span>
+                  <span>{row.completedDeliveries} delivered</span>
+                </div>
+                <button
+                  type="button"
+                  className="rider-delete-btn"
+                  disabled
+                  title="Delete will be enabled when the rider directory endpoint returns rider records."
+                  aria-label={`Delete ${riderLabel(row.riderId)} unavailable`}
+                >
+                  <Trash2 aria-hidden="true" size={15} />
+                </button>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={<Bike size={30} />} heading="No visible riders for this date" />
+        )}
+      </section>
+
+      <div className="panel orders-panel rider-report-panel" aria-label="Rider delivery orders">
         {isError ? (
           <div className="panel-state panel-state--error">
             <strong>Rider report is unavailable</strong>

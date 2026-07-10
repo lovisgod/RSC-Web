@@ -135,6 +135,12 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                 ? Math.round((sub.commissionMinor / sub.subtotalMinor) * 100)
                 : 0;
             const payoutPct = 100 - commPct;
+            const outletNote =
+              typeof sub.preparationNote === "string" ? sub.preparationNote.trim() : "";
+            const outletNoteLabel =
+              sub.status === "REJECTED" || order.status === "CANCELLED"
+                ? "Rejection reason"
+                : "Outlet note";
 
             return (
               <div key={sub.id} className="order-modal__sub-card">
@@ -168,6 +174,17 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                         <span className="order-modal__line-price">{fmt(li.lineTotalMinor)}</span>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {outletNote && (
+                  <div className="order-modal__sub-rejection" style={{ marginTop: "0.8rem" }}>
+                    <div className="order-modal__finance-row" style={{ alignItems: "flex-start" }}>
+                      <span className="order-modal__finance-label">{outletNoteLabel}</span>
+                      <span className="order-modal__finance-payout" style={{ textAlign: "right" }}>
+                        {outletNote}
+                      </span>
+                    </div>
                   </div>
                 )}
 

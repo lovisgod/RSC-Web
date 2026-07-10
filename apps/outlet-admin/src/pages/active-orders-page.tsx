@@ -217,26 +217,24 @@ export function ActiveOrdersPage() {
   );
 
   const incoming = activeOrders.filter((order) => order.status === "PENDING");
-  const preparing = activeOrders.filter(
-    (order) => order.status === "ACCEPTED" || order.status === "PREPARING",
-  );
+  const preparing = activeOrders
+    .filter((order) => order.status === "ACCEPTED" || order.status === "PREPARING")
+    .sort(
+      (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+    );
   const ready = activeOrders.filter((order) => order.status === "READY");
 
-  function handleAdvance(subOrderId: string, status: MasterOrderStatus) {
-    let rejectionReason: string | undefined;
-    if (status === "CANCELLED") {
-      const reason = window.prompt("Enter purpose of rejection:");
-      if (reason === null) return; // User clicked Cancel
-      if (!reason.trim()) {
-        alert("A rejection reason is required.");
-        return;
-      }
-      rejectionReason = reason.trim();
-    }
+  function handleAdvance(
+    subOrderId: string,
+    status: MasterOrderStatus,
+    preparationTimeMinutes?: number,
+    rejectionReason?: string,
+  ) {
     updateStatus({
       subOrderId,
       status,
-      ...(rejectionReason ? { rejectionReason } : {}),
+      ...(preparationTimeMinutes !== undefined ? { preparationTimeMinutes } : {}),
+      ...(rejectionReason !== undefined ? { rejectionReason } : {}),
     });
   }
 

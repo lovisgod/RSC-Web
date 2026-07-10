@@ -355,10 +355,10 @@ export function SettingsPage() {
                         {outlet.paystackSubaccountCode}
                       </code>
                     </p>
-                    <p className="mt-2 text-xs text-slate-500 leading-5">
+                    {/* <p className="mt-2 text-xs text-slate-500 leading-5">
                       Settlements for orders from this outlet will be paid out net of 10% platform
                       commission.
-                    </p>
+                    </p> */}
                     <div className="mt-3">
                       <Button tone="quiet" type="button" onClick={() => setIsEditingBank(true)}>
                         Change Settlement Details

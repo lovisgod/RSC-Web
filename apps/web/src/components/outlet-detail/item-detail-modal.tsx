@@ -81,6 +81,7 @@ function ModifierGroupSection({
 
 export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
+  const [preparationNote, setPreparationNote] = useState("");
   // groupId → Set of selected modifierIds
   const [selections, setSelections] = useState<Map<string, Set<string>>>(() => new Map());
   const addItem = useCartStore((s) => s.addItem);
@@ -125,6 +126,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
     const selectedModifiers = item.modifierGroups.flatMap((g) =>
       g.modifiers.filter((m) => selections.get(g.id)?.has(m.id)),
     );
+    const note = preparationNote.trim();
 
     addItem({
       outletId: item.outletId,
@@ -132,7 +134,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
       item: {
         id: item.id,
         name: item.name,
-        notes: selectedModifiers.map((m) => m.name).join(", "),
+        notes: note,
         quantity,
         unitPriceMinor: unitPrice,
         modifiers: selectedModifiers.map((m) => ({ modifierId: m.id })),
@@ -181,6 +183,24 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
               onToggle={(modifierId) => toggle(group, modifierId)}
             />
           ))}
+
+          <div className="rounded-2xl border border-gray-100 bg-white p-4">
+            <label htmlFor={`prep-note-${item.id}`} className="text-sm font-bold text-gray-900">
+              Preparation instruction
+            </label>
+            <p className="mt-1 text-xs text-gray-400">
+              Add item-specific notes like extra spicy, no onions, or sauce on the side.
+            </p>
+            <textarea
+              id={`prep-note-${item.id}`}
+              value={preparationNote}
+              onChange={(event) => setPreparationNote(event.target.value)}
+              rows={3}
+              maxLength={240}
+              placeholder="e.g. Extra spicy, no onions"
+              className="mt-3 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:bg-white focus:outline-none"
+            />
+          </div>
         </div>
 
         {/* Sticky footer */}

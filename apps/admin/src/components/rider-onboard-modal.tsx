@@ -1,10 +1,10 @@
 import { Button } from "@rsc/ui";
+import { createRiderInputSchema, type RiderResult } from "@rsc/contracts";
 import { Copy, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useOnboardRider } from "../hooks/use-onboard-rider";
-import type { RiderResult } from "../lib/api";
 
 interface Props {
   open: boolean;
@@ -18,6 +18,7 @@ const EMPTY_FORM = {
   vehicleType: "",
   plateNumber: "",
 };
+type FormErrors = Partial<Record<keyof typeof EMPTY_FORM, string>>;
 
 export function RiderOnboardModal({ open, onClose }: Props) {
   if (!open) return null;
@@ -27,6 +28,7 @@ export function RiderOnboardModal({ open, onClose }: Props) {
 
 function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [result, setResult] = useState<RiderResult | null>(null);
   const [copied, setCopied] = useState(false);
   const firstFieldRef = useRef<HTMLInputElement>(null);
@@ -66,15 +68,35 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) return;
+    const payload = {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      ...(form.vehicleType.trim() ? { vehicleType: form.vehicleType.trim() } : {}),
+      ...(form.plateNumber.trim() ? { plateNumber: form.plateNumber.trim() } : {}),
+    };
+    const parsed = createRiderInputSchema.safeParse(payload);
 
+    if (!parsed.success) {
+      const nextErrors: FormErrors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof FormErrors;
+        if (key in EMPTY_FORM && !nextErrors[key]) {
+          nextErrors[key] = issue.message;
+        }
+      }
+      setErrors(nextErrors);
+      return;
+    }
+
+    setErrors({});
     mutate(
       {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        ...(form.vehicleType.trim() ? { vehicleType: form.vehicleType.trim() } : {}),
-        ...(form.plateNumber.trim() ? { plateNumber: form.plateNumber.trim() } : {}),
+        name: parsed.data.name,
+        email: parsed.data.email,
+        phone: parsed.data.phone,
+        ...(parsed.data.vehicleType ? { vehicleType: parsed.data.vehicleType } : {}),
+        ...(parsed.data.plateNumber ? { plateNumber: parsed.data.plateNumber } : {}),
       },
       { onSuccess: (data) => setResult(data) },
     );
@@ -173,6 +195,7 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
                 required
                 {...field("name")}
               />
+              {errors.name && <small className="field-error">{errors.name}</small>}
             </label>
 
             <div className="modal-row">
@@ -185,6 +208,7 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
                   required
                   {...field("email")}
                 />
+                {errors.email && <small className="field-error">{errors.email}</small>}
               </label>
 
               <label className="field-label">
@@ -196,6 +220,7 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
                   required
                   {...field("phone")}
                 />
+                {errors.phone && <small className="field-error">{errors.phone}</small>}
               </label>
             </div>
 
