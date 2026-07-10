@@ -341,8 +341,6 @@ function MenuItemModal({
             <FormField label="Price (₦) *">
               <input
                 type="number"
-                min={1}
-                step={50}
                 value={price}
                 onChange={(event) => setPrice(event.target.value)}
                 required
@@ -846,12 +844,7 @@ function ModifierOptionEditor({
       </FormField>
       <div className="admin-menu-form-grid">
         <FormField label="Price Delta (₦)">
-          <input
-            type="number"
-            step={50}
-            value={price}
-            onChange={(event) => setPrice(event.target.value)}
-          />
+          <input type="number" value={price} onChange={(event) => setPrice(event.target.value)} />
         </FormField>
         <FormField label="Sort Order">
           <input

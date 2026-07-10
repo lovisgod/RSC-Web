@@ -16,6 +16,7 @@ import {
   type OutletSummary,
   type SubOrderStatus,
   type UploadedImage,
+  outletSummarySchema,
   userProfileSchema,
   type UserProfile,
 } from "@rsc/contracts";
@@ -114,7 +115,7 @@ export const getProfile = async (): Promise<UserProfile> =>
 // ─── Outlet ───────────────────────────────────────────────────────────────────
 
 export const getOutletById = (outletId: string): Promise<OutletSummary> =>
-  get(`/api/v1/outlets/${outletId}`);
+  get<unknown>(`/api/v1/outlets/${outletId}`).then((data) => outletSummarySchema.parse(data));
 
 export const toggleOutletOnlineStatus = (
   outletId: string,

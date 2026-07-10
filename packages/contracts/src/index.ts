@@ -470,23 +470,34 @@ export const menuItemModifierGroupSchema = z.object({
   sortOrder: z.int().nonnegative(),
 });
 
-export const outletSummarySchema = z.object({
-  id: z.uuid(),
-  name: z.string().min(1),
-  cuisineType: z.string().min(1),
-  description: z.string().nullable(),
-  imageUrl: z.string().nullable(),
-  isOnline: z.boolean(),
-  paystackSubaccountCode: z.string().optional(),
-  momentSubaccountCode: z.string(),
-  ratingAverage: z.coerce.number().min(0).max(5).default(0),
-  ratingCount: z.int().nonnegative().default(0),
-  menuCategories: z.array(menuCategorySchema),
-  menuItems: z.array(menuItemSchema),
-  itemModifierGroups: z.array(itemModifierGroupSchema),
-  itemModifiers: z.array(itemModifierSchema),
-  menuItemModifierGroups: z.array(menuItemModifierGroupSchema),
-});
+export const outletSummarySchema = z
+  .object({
+    id: z.uuid(),
+    name: z.string().min(1),
+    cuisineType: z.string().min(1),
+    description: z.string().nullable(),
+    imageUrl: z.string().nullable(),
+    isOnline: z.boolean(),
+    momentSubaccountCode: z.string().optional(),
+    paystackSubaccountCode: z.string().optional(),
+    ratingAverage: z.coerce.number().min(0).max(5).default(0),
+    ratingCount: z.int().nonnegative().default(0),
+    menuCategories: z.array(menuCategorySchema),
+    menuItems: z.array(menuItemSchema),
+    itemModifierGroups: z.array(itemModifierGroupSchema),
+    itemModifiers: z.array(itemModifierSchema),
+    menuItemModifierGroups: z.array(menuItemModifierGroupSchema),
+  })
+  .passthrough()
+  .transform((outlet) => {
+    const subaccountCode = outlet.paystackSubaccountCode ?? outlet.momentSubaccountCode ?? "";
+
+    return {
+      ...outlet,
+      momentSubaccountCode: outlet.momentSubaccountCode ?? subaccountCode,
+      paystackSubaccountCode: outlet.paystackSubaccountCode ?? subaccountCode,
+    };
+  });
 
 export const rateOutletInputSchema = z.object({
   rating: z.number().int().min(1).max(5),
