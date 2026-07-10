@@ -352,8 +352,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
                     className="field-input"
                     name="deliveryFee"
                     type="number"
-                    min={0}
-                    step="0.01"
                     defaultValue={minorUnitsToNaira(platformCharges.data.deliveryFeeMinor)}
                     disabled={updatePlatformCharges.isPending}
                     required
@@ -365,8 +363,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
                     className="field-input"
                     name="serviceFee"
                     type="number"
-                    min={0}
-                    step="0.01"
                     defaultValue={minorUnitsToNaira(platformCharges.data.serviceFeeMinor)}
                     disabled={updatePlatformCharges.isPending}
                     required
