@@ -45,6 +45,9 @@ export class OrderLineItem {
   @Column({ name: "modifiers_snapshot", type: "jsonb", default: () => "'[]'::jsonb" })
   modifiersSnapshot!: unknown[];
 
+  @Column({ name: "customer_note", type: "varchar", length: 500, nullable: true })
+  customerNote!: string | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

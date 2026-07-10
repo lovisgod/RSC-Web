@@ -223,7 +223,21 @@ export function ActiveOrdersPage() {
   const ready = activeOrders.filter((order) => order.status === "READY");
 
   function handleAdvance(subOrderId: string, status: MasterOrderStatus) {
-    updateStatus({ subOrderId, status });
+    let rejectionReason: string | undefined;
+    if (status === "CANCELLED") {
+      const reason = window.prompt("Enter purpose of rejection:");
+      if (reason === null) return; // User clicked Cancel
+      if (!reason.trim()) {
+        alert("A rejection reason is required.");
+        return;
+      }
+      rejectionReason = reason.trim();
+    }
+    updateStatus({
+      subOrderId,
+      status,
+      ...(rejectionReason ? { rejectionReason } : {}),
+    });
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -239,7 +253,22 @@ export function ActiveOrdersPage() {
       return;
     }
 
-    updateStatus({ subOrderId: order.id, status: nextStatus });
+    let rejectionReason: string | undefined;
+    if (nextStatus === "CANCELLED") {
+      const reason = window.prompt("Enter purpose of rejection:");
+      if (reason === null) return; // User clicked Cancel
+      if (!reason.trim()) {
+        alert("A rejection reason is required.");
+        return;
+      }
+      rejectionReason = reason.trim();
+    }
+
+    updateStatus({
+      subOrderId: order.id,
+      status: nextStatus,
+      ...(rejectionReason ? { rejectionReason } : {}),
+    });
   }
 
   return (

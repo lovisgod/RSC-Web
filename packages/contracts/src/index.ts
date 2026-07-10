@@ -684,6 +684,7 @@ export const orderLineItemSchema = z
       )
       .nullish()
       .transform((value) => value ?? []),
+    customerNote: z.string().nullable().optional(),
   })
   .passthrough();
 
