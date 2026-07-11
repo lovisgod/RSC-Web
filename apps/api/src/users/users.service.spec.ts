@@ -102,4 +102,48 @@ describe(UsersService.name, () => {
     expect(users.findOneBy).toHaveBeenCalledWith({ id: admin.id, role: UserRole.ADMIN });
     expect(users.softRemove).toHaveBeenCalledWith(admin);
   });
+
+  describe("rider management", () => {
+    const rider = Object.assign(new Customer(), {
+      id: "721da55a-e320-410e-a22a-f88fb66d6d45",
+      name: "Rider Joe",
+      role: UserRole.RIDER,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      emailEncrypted: "encrypted:joe@example.com",
+      phoneEncrypted: "encrypted:+2348033333333",
+      status: CustomerStatus.ACTIVE,
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+      updatedAt: new Date("2026-07-02T09:00:00.000Z"),
+    });
+
+    it("lists active riders", async () => {
+      users.find.mockResolvedValue([rider]);
+      await expect(service.listRiders(superAdmin)).resolves.toEqual([
+        {
+          id: rider.id,
+          name: "Rider Joe",
+          role: UserRole.RIDER,
+          outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+          email: "joe@example.com",
+          phone: "+2348033333333",
+          vehicleType: undefined,
+          plateNumber: undefined,
+          riderStatus: undefined,
+          status: CustomerStatus.ACTIVE,
+          createdAt: "2026-07-02T08:00:00.000Z",
+          updatedAt: "2026-07-02T09:00:00.000Z",
+        },
+      ]);
+    });
+
+    it("soft-deletes riders through deleteRider path", async () => {
+      users.findOneBy.mockResolvedValue(rider);
+      await expect(service.deleteRider(superAdmin, rider.id)).resolves.toEqual({
+        deleted: true,
+      });
+
+      expect(users.findOneBy).toHaveBeenCalledWith({ id: rider.id, role: UserRole.RIDER });
+      expect(users.softRemove).toHaveBeenCalledWith(rider);
+    });
+  });
 });

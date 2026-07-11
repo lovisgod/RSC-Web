@@ -168,6 +168,33 @@ export const riderResultSchema = z.object({
   temporaryPassword: z.string().min(8),
 });
 
+export const riderAdminSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().min(1),
+  role: z.literal("RIDER"),
+  outletId: z.uuid().nullable(),
+  vehicleType: z.string().nullable(),
+  plateNumber: z.string().nullable(),
+  riderStatus: z.string().nullable(),
+  status: customerStatusSchema,
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const updateRiderInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120).optional(),
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)).optional(),
+    phone: nigerianPhoneNumberSchema.optional(),
+    vehicleType: z.string().trim().min(2).max(40).nullable().optional(),
+    plateNumber: z.string().trim().min(2).max(40).nullable().optional(),
+    riderStatus: z.string().trim().min(2).max(40).nullable().optional(),
+    status: customerStatusSchema.optional(),
+  })
+  .strict();
+
 export const outletAdminSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1),
@@ -955,6 +982,9 @@ export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
 export type CreateRiderInput = z.infer<typeof createRiderInputSchema>;
 export type RiderResult = z.infer<typeof riderResultSchema>;
+export type RiderAdmin = z.infer<typeof riderAdminSchema>;
+export type UpdateRiderInput = z.infer<typeof updateRiderInputSchema>;
+
 export type OutletAdmin = z.infer<typeof outletAdminSchema>;
 export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
 export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
