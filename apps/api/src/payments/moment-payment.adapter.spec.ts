@@ -27,6 +27,9 @@ describe(MomentPaymentAdapter.name, () => {
             webhookSecret,
           };
         }
+        if (key === "app.customerWebUrl") {
+          return "https://customer.rscdev.tech";
+        }
         return null;
       }),
     } as unknown as ConfigService<ApplicationConfig, true>;
@@ -95,6 +98,12 @@ describe(MomentPaymentAdapter.name, () => {
             metadata: {
               fafallino_423fsdz432: "20000",
               kilimanjaro_42vff453: "30000",
+            },
+            options: {
+              checkout_options: {
+                success_url:
+                  "https://customer.rscdev.tech/tracking?reference=pmt_master_123&session_id={SESSION_ID}",
+              },
             },
           }),
         }),

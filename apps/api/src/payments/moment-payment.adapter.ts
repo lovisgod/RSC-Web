@@ -47,6 +47,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
   private readonly secretKey: string;
   private readonly baseUrl: string;
   private readonly webhookSecret: string;
+  private readonly customerWebUrl: string;
 
   constructor(
     configService: ConfigService<ApplicationConfig, true>,
@@ -56,6 +57,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     this.secretKey = config.secretKey;
     this.baseUrl = config.baseUrl;
     this.webhookSecret = config.webhookSecret;
+    this.customerWebUrl = configService.get("app.customerWebUrl", { infer: true });
   }
 
   async initiate(input: InitiateProviderPaymentInput): Promise<InitiateProviderPaymentResult> {
@@ -72,6 +74,11 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       type: "one_time",
       external_reference: input.reference,
       metadata,
+      options: {
+        checkout_options: {
+          success_url: this.buildSuccessUrl(input.reference),
+        },
+      },
     };
     const idempotencyKey = this.createIdempotencyKey(input.reference);
 
@@ -122,6 +129,14 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       .replace(/^-|-$/g, "");
 
     return sanitized ? sanitized.slice(0, 120) : "payment-session";
+  }
+
+  private buildSuccessUrl(reference: string): string {
+    const url = new URL("/tracking", this.customerWebUrl);
+    url.searchParams.set("reference", reference);
+    url.searchParams.set("session_id", "{SESSION_ID}");
+
+    return url.toString().replace("%7BSESSION_ID%7D", "{SESSION_ID}");
   }
 
   async verify(reference: string): Promise<VerifyProviderPaymentResult> {

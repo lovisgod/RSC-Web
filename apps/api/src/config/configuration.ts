@@ -4,6 +4,7 @@ export interface ApplicationConfig {
     port: number;
     version: string;
     corsOrigins: string[];
+    customerWebUrl: string;
     swaggerEnabled: boolean;
   };
   database: {
@@ -112,15 +113,21 @@ function resolveFirebasePrivateKey(): string {
 }
 
 export default function configuration(): ApplicationConfig {
+  const corsOrigins = parseOrigins(
+    process.env.CORS_ORIGINS ?? "http://localhost:3000,http://localhost:5173,http://localhost:5175",
+  );
+
   return {
     app: {
       environment: process.env.NODE_ENV ?? "development",
       port: Number(process.env.PORT ?? 4000),
       version: process.env.APP_VERSION ?? "development",
-      corsOrigins: parseOrigins(
-        process.env.CORS_ORIGINS ??
-          "http://localhost:3000,http://localhost:5173,http://localhost:5175",
-      ),
+      corsOrigins,
+      customerWebUrl: (
+        process.env.CUSTOMER_WEB_URL ??
+        corsOrigins[0] ??
+        "http://localhost:3000"
+      ).replace(/\/$/, ""),
       swaggerEnabled: process.env.SWAGGER_ENABLED !== "false",
     },
     database: {

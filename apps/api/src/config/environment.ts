@@ -8,6 +8,7 @@ export interface Environment {
   APP_VERSION: string;
   LOG_LEVEL: string;
   CORS_ORIGINS: string;
+  CUSTOMER_WEB_URL?: string;
   DATABASE_URL: string;
   DATABASE_SSL: boolean;
   REDIS_URL: string;
@@ -76,6 +77,10 @@ const environmentSchema = Joi.object<Environment>({
   CORS_ORIGINS: Joi.string().default(
     "http://localhost:3000,http://localhost:5173,http://localhost:5175",
   ),
+  CUSTOMER_WEB_URL: Joi.string()
+    .uri({ scheme: ["http", "https"] })
+    .optional()
+    .allow(""),
   DATABASE_URL: Joi.string()
     .uri({ scheme: ["postgres", "postgresql"] })
     .required(),
