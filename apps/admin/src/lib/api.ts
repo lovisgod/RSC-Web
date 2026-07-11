@@ -1,4 +1,5 @@
 import axios, { type AxiosError } from "axios";
+import { z } from "zod";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import {
   adminOrdersQuerySchema,
@@ -12,6 +13,8 @@ import {
   platformChargesSchema,
   createRiderInputSchema,
   riderResultSchema,
+  riderAdminSchema,
+  updateRiderInputSchema,
   updatePlatformChargesInputSchema,
   type ItemModifier,
   type ItemModifierGroup,
@@ -38,6 +41,8 @@ import {
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
   type RiderResult,
+  type RiderAdmin,
+  type UpdateRiderInput,
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
 } from "@rsc/contracts";
@@ -365,6 +370,23 @@ export const createRider = (body: CreateRiderInput): Promise<RiderResult> =>
   post<unknown>("/api/v1/users/riders", createRiderInputSchema.parse(body)).then((data) =>
     riderResultSchema.parse(data),
   );
+
+export const listRiders = (outletId?: string): Promise<RiderAdmin[]> => {
+  const qs = outletId ? `?outletId=${encodeURIComponent(outletId)}` : "";
+  return get<unknown>(`/api/v1/users/riders${qs}`).then((data) =>
+    z.array(riderAdminSchema).parse(data),
+  );
+};
+
+export const updateRider = (id: string, body: UpdateRiderInput): Promise<RiderAdmin> => {
+  const input = updateRiderInputSchema.parse(body);
+  return patchReq<unknown>(`/api/v1/users/riders/${id}`, input).then((data) =>
+    riderAdminSchema.parse(data),
+  );
+};
+
+export const deleteRider = (id: string): Promise<void> =>
+  http.delete(`/api/v1/users/riders/${id}`).then(() => undefined);
 
 export interface OutletAdminUser {
   id: string;
