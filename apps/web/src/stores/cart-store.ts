@@ -13,9 +13,13 @@ interface AddItemParams {
 
 interface CartState {
   cart: Cart;
+  ownerUserId: string | null;
+  cartsByUserId: Record<string, Cart>;
   addItem: (params: AddItemParams) => void;
   removeItem: (outletId: string, lineId: string) => void;
   updateQuantity: (outletId: string, lineId: string, quantity: number) => void;
+  claimActiveSessionOwner: (userId: string) => void;
+  reconcileOwner: (userId: string) => void;
   clear: () => void;
 }
 
@@ -64,10 +68,27 @@ function addMissingLineIds(cart: Cart): Cart {
   };
 }
 
+function hasCartItems(cart: Cart): boolean {
+  return cart.groups.some((group) => group.items.length > 0);
+}
+
+function withCurrentCartSaved(state: CartState): Record<string, Cart> {
+  if (!state.ownerUserId || !hasCartItems(state.cart)) {
+    return state.cartsByUserId;
+  }
+
+  return {
+    ...state.cartsByUserId,
+    [state.ownerUserId]: state.cart,
+  };
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       cart: EMPTY_CART,
+      ownerUserId: null,
+      cartsByUserId: {},
 
       addItem: ({ outletId, outletName, item }) =>
         set((state) => {
@@ -124,21 +145,88 @@ export const useCartStore = create<CartState>()(
           return { cart: { ...state.cart, groups } };
         }),
 
-      clear: () => set({ cart: EMPTY_CART }),
+      claimActiveSessionOwner: (userId) =>
+        set((state) => {
+          if (state.ownerUserId === userId) {
+            return state;
+          }
+
+          const cartsByUserId = withCurrentCartSaved(state);
+
+          return {
+            cart: cartsByUserId[userId] ?? EMPTY_CART,
+            ownerUserId: userId,
+            cartsByUserId,
+          };
+        }),
+
+      reconcileOwner: (userId) =>
+        set((state) => {
+          if (state.ownerUserId === userId) {
+            return state;
+          }
+
+          const cartsByUserId = withCurrentCartSaved(state);
+
+          return {
+            cart: cartsByUserId[userId] ?? EMPTY_CART,
+            ownerUserId: userId,
+            cartsByUserId,
+          };
+        }),
+
+      clear: () =>
+        set((state) => {
+          if (!state.ownerUserId) {
+            return { cart: EMPTY_CART };
+          }
+
+          const cartsByUserId = { ...state.cartsByUserId };
+          delete cartsByUserId[state.ownerUserId];
+
+          return { cart: EMPTY_CART, cartsByUserId };
+        }),
     }),
     {
       name: "rsc-customer-cart",
       storage: createJSONStorage(() => localStorage),
-      version: 4,
-      migrate: (persistedState) => {
+      version: 6,
+      migrate: (persistedState, version) => {
         if (!persistedState || typeof persistedState !== "object") return persistedState;
 
         const state = persistedState as Partial<CartState>;
+
+        if (version < 5) {
+          return {
+            ...state,
+            cart: EMPTY_CART,
+            ownerUserId: null,
+            cartsByUserId: {},
+          };
+        }
+
         if (!isCart(state.cart)) return persistedState;
+
+        if (version < 6) {
+          return {
+            ...state,
+            cart: addMissingLineIds(state.cart),
+            cartsByUserId:
+              state.ownerUserId && hasCartItems(state.cart)
+                ? { [state.ownerUserId]: addMissingLineIds(state.cart) }
+                : {},
+          };
+        }
 
         return {
           ...state,
           cart: addMissingLineIds(state.cart),
+          cartsByUserId: Object.fromEntries(
+            Object.entries(state.cartsByUserId ?? {}).map(([userId, cart]) => [
+              userId,
+              isCart(cart) ? addMissingLineIds(cart) : EMPTY_CART,
+            ]),
+          ),
         };
       },
     },

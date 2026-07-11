@@ -16,6 +16,8 @@ import {
   paginatedMenuItemsSchema,
   pickupSubOrderInputSchema,
   platformChargesSchema,
+  preparationSuggestionSchema,
+  queryPreparationSuggestionsInputSchema,
   profileUpdateResultSchema,
   orderDetailSchema,
   orderSummarySchema,
@@ -77,6 +79,8 @@ import {
   type PaginatedMenuItems,
   type PickupSubOrderInput,
   type PlatformCharges,
+  type PreparationSuggestion,
+  type QueryPreparationSuggestionsInput,
   type ProfileUpdateResult,
   type OrderDetail,
   type OrderSummary,
@@ -471,6 +475,21 @@ export function createApiClient(options: ApiClientOptions) {
       if (params.limit != null) sp.set("limit", String(params.limit));
       if (params.offset != null) sp.set("offset", String(params.offset));
       return request(`/api/v1/menu-items?${sp.toString()}`, paginatedMenuItemsSchema);
+    },
+    listPreparationSuggestions(
+      input: QueryPreparationSuggestionsInput = {},
+    ): Promise<PreparationSuggestion[]> {
+      const query = queryPreparationSuggestionsInputSchema.parse(input);
+      const sp = new URLSearchParams();
+      if (query.outletId) sp.set("outletId", query.outletId);
+      if (query.menuItemId) sp.set("menuItemId", query.menuItemId);
+      if (query.q) sp.set("q", query.q);
+
+      const qs = sp.toString();
+      return request(
+        `/api/v1/preparation-suggestions${qs ? `?${qs}` : ""}`,
+        z.array(preparationSuggestionSchema),
+      );
     },
     updateMenuItemAvailability(
       id: string,
