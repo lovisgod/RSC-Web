@@ -9,8 +9,10 @@ import type { OrderLineItem, SubOrderDetail } from "@rsc/contracts";
 import { Card, EmptyState } from "@rsc/ui";
 import { Bike, ChevronDown, MapPin, RefreshCw, Store, Wifi, WifiOff } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { useOrderDetail, useRiderTracking } from "@/src/hooks/use-order-tracking";
+import { useCartStore } from "@/src/stores/cart-store";
 import { useActiveOrders } from "@/src/hooks/use-orders";
 import { useOutlets } from "@/src/hooks/use-outlets";
 import { apiClient } from "@/src/lib/api";
@@ -479,6 +481,7 @@ export function TrackingView({
   paymentReference: string | null;
 }) {
   const queryClient = useQueryClient();
+  const clearCart = useCartStore((state) => state.clear);
   const { data: activeOrders, isPending, isError, refetch } = useActiveOrders();
   const [expandedId, setExpandedId] = useState<string | null | undefined>(orderId ?? undefined);
   const paymentVerification = useQuery({
@@ -492,6 +495,12 @@ export function TrackingView({
     retry: 2,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (paymentVerification.data?.status === "SUCCESS") {
+      clearCart();
+    }
+  }, [paymentVerification.data, clearCart]);
 
   if (isPending) {
     return <p className="py-8 text-center text-sm text-gray-400">Checking for active orders…</p>;
