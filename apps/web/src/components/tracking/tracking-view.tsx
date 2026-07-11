@@ -8,10 +8,12 @@ import { useState } from "react";
 import type { OrderLineItem, SubOrderDetail } from "@rsc/contracts";
 import { Card, EmptyState } from "@rsc/ui";
 import { Bike, ChevronDown, MapPin, RefreshCw, Store, Wifi, WifiOff } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useOrderDetail, useRiderTracking } from "@/src/hooks/use-order-tracking";
 import { useActiveOrders } from "@/src/hooks/use-orders";
 import { useOutlets } from "@/src/hooks/use-outlets";
+import { apiClient } from "@/src/lib/api";
 import { formatNaira } from "@/src/lib/data/cart";
 import { getStatusConfig, type Order } from "@/src/lib/data/orders";
 import { OrderTimeline } from "./order-timeline";
@@ -469,9 +471,27 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
   );
 }
 
-export function TrackingView({ orderId }: { orderId: string | null }) {
+export function TrackingView({
+  orderId,
+  paymentReference,
+}: {
+  orderId: string | null;
+  paymentReference: string | null;
+}) {
+  const queryClient = useQueryClient();
   const { data: activeOrders, isPending, isError, refetch } = useActiveOrders();
   const [expandedId, setExpandedId] = useState<string | null | undefined>(orderId ?? undefined);
+  const paymentVerification = useQuery({
+    queryKey: ["payment", "verify", paymentReference],
+    queryFn: async () => {
+      const result = await apiClient.verifyPayment(paymentReference!);
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      return result;
+    },
+    enabled: !!paymentReference,
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
 
   if (isPending) {
     return <p className="py-8 text-center text-sm text-gray-400">Checking for active orders…</p>;
@@ -505,6 +525,19 @@ export function TrackingView({ orderId }: { orderId: string | null }) {
 
   return (
     <div className="space-y-3">
+      {paymentReference && (
+        <Card className="border-[color:color-mix(in_srgb,var(--rsc-main)_16%,white)] bg-[color-mix(in_srgb,var(--rsc-main)_4%,white)]">
+          <p className="text-sm font-semibold text-gray-900">
+            {paymentVerification.isPending
+              ? "Confirming your payment..."
+              : paymentVerification.isError
+                ? "Payment received. We are still syncing your order status."
+                : paymentVerification.data.status === "SUCCESS"
+                  ? "Payment confirmed. Your order is now being tracked."
+                  : "Payment status updated. Your order will refresh shortly."}
+          </p>
+        </Card>
+      )}
       {activeOrders.length > 1 && (
         <p className="text-sm text-gray-500">
           You have {activeOrders.length} active orders. Open one to see its live progress.

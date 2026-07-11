@@ -137,9 +137,8 @@ export class MomentPaymentAdapter implements PaymentAdapter {
   private buildReturnUrl(reference: string): string {
     const url = new URL("/tracking", this.customerWebUrl);
     url.searchParams.set("reference", reference);
-    url.searchParams.set("session_id", "{SESSION_ID}");
 
-    return url.toString().replace("%7BSESSION_ID%7D", "{SESSION_ID}");
+    return url.toString();
   }
 
   async verify(reference: string): Promise<VerifyProviderPaymentResult> {
