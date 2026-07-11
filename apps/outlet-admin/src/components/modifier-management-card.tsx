@@ -271,8 +271,6 @@ function ModifierOptionEditor({
           </span>
           <input
             type="number"
-            min={0}
-            step="0.01"
             value={price}
             onChange={(event) => setPrice(event.target.value)}
             className={fieldClass}

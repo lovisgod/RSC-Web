@@ -1,5 +1,16 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button, EmptyState } from "@rsc/ui";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type {
   ItemModifier,
   ItemModifierGroup,
@@ -34,7 +45,6 @@ import {
   type SaveItemModifierBody,
   type SaveItemModifierGroupBody,
   type SaveMenuCategoryBody,
-  type UpdateMenuItemBody,
 } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
@@ -135,11 +145,17 @@ function MenuItemCard({
   outletId,
   onSelect,
   onEdit,
+  dragRef,
+  dragStyle,
+  dragListeners,
 }: {
   item: MenuItem;
   outletId: string;
   onSelect: () => void;
   onEdit: () => void;
+  dragRef?: (node: HTMLElement | null) => void;
+  dragStyle?: React.CSSProperties;
+  dragListeners?: React.HTMLAttributes<HTMLElement>;
 }) {
   const refresh = useRefreshOutletMenu(outletId);
   const [isAvailable, setIsAvailable] = useState(item.isAvailable);
@@ -166,7 +182,7 @@ function MenuItemCard({
   });
 
   return (
-    <article className="admin-menu-item-card">
+    <article ref={dragRef} style={dragStyle} className="admin-menu-item-card">
       {confirmDelete && (
         <div className="admin-menu-delete-cover">
           <p>
@@ -183,7 +199,15 @@ function MenuItemCard({
         </div>
       )}
 
-      <GripVertical className="admin-menu-grip" aria-hidden="true" size={16} />
+      <button
+        type="button"
+        {...dragListeners}
+        className="admin-menu-grip admin-menu-grip-button"
+        aria-label="Drag to reorder"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <GripVertical aria-hidden="true" size={16} />
+      </button>
       <button type="button" className="admin-menu-item-main" onClick={onSelect}>
         <span className="admin-menu-item-image">
           {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <span>🍽️</span>}
@@ -221,6 +245,38 @@ function MenuItemCard({
   );
 }
 
+function SortableMenuItemCard({
+  item,
+  outletId,
+  onSelect,
+  onEdit,
+}: {
+  item: MenuItem;
+  outletId: string;
+  onSelect: () => void;
+  onEdit: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+
+  return (
+    <MenuItemCard
+      item={item}
+      outletId={outletId}
+      onSelect={onSelect}
+      onEdit={onEdit}
+      dragRef={setNodeRef}
+      dragStyle={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+      }}
+      dragListeners={{ ...attributes, ...listeners } as React.HTMLAttributes<HTMLElement>}
+    />
+  );
+}
+
 function MenuItemModal({
   outletId,
   item,
@@ -253,20 +309,24 @@ function MenuItemModal({
         throw new Error("Enter an item name, category, and valid price.");
       }
 
-      const body: CreateMenuItemBody | UpdateMenuItemBody = {
+      const body: CreateMenuItemBody = {
         outletId,
         categoryId,
         name: name.trim(),
         ...(description.trim() ? { description: description.trim() } : {}),
         ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
-        ...(item?.imageUrl ? { imageUrl: item.imageUrl } : {}),
         priceMinor,
         isAvailable,
         sortOrder: Number.parseInt(sortOrder, 10) || 0,
         modifierGroupIds,
       };
 
-      const saved = item ? await updateMenuItem(item.id, body) : await createMenuItem(body);
+      const saved = item
+        ? await updateMenuItem(item.id, {
+            ...body,
+            ...(item.imageUrl ? { imageUrl: item.imageUrl } : {}),
+          })
+        : await createMenuItem(body);
       if (imageFile) {
         await uploadMenuItemImage(saved.id, imageFile);
       }
@@ -341,8 +401,6 @@ function MenuItemModal({
             <FormField label="Price (₦) *">
               <input
                 type="number"
-                min={1}
-                step={50}
                 value={price}
                 onChange={(event) => setPrice(event.target.value)}
                 required
@@ -846,12 +904,7 @@ function ModifierOptionEditor({
       </FormField>
       <div className="admin-menu-form-grid">
         <FormField label="Price Delta (₦)">
-          <input
-            type="number"
-            step={50}
-            value={price}
-            onChange={(event) => setPrice(event.target.value)}
-          />
+          <input type="number" value={price} onChange={(event) => setPrice(event.target.value)} />
         </FormField>
         <FormField label="Sort Order">
           <input
@@ -1087,6 +1140,7 @@ function ModifierManagementCard({ outletId, outlet }: { outletId: string; outlet
 
 export function OutletMenuManager({ outletId }: { outletId: string }) {
   const { data: outlet, isLoading } = useOutletMenuData(outletId);
+  const queryClient = useQueryClient();
   const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>();
   const [activeMenuSection, setActiveMenuSection] = useState<"items" | "modifiers" | "categories">(
     "items",
@@ -1094,12 +1148,68 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [itemOrderByCategory, setItemOrderByCategory] = useState<Record<string, string[]>>({});
 
   const items = outlet?.menuItems ?? EMPTY_ITEMS;
   const visibleItems = useMemo(
     () => (activeCategoryId ? items.filter((item) => item.categoryId === activeCategoryId) : items),
     [activeCategoryId, items],
   );
+  const sortKey = activeCategoryId ?? "all";
+  const sortedItems = useMemo(() => {
+    const baseItems = visibleItems
+      .slice()
+      .sort(
+        (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
+      );
+    const preferredOrder = itemOrderByCategory[sortKey];
+    if (!preferredOrder) return baseItems;
+
+    const itemsById = new Map(baseItems.map((item) => [item.id, item]));
+    const orderedItems = preferredOrder.flatMap((itemId) => {
+      const item = itemsById.get(itemId);
+      return item ? [item] : [];
+    });
+    const orderedIds = new Set(preferredOrder);
+    const newItems = baseItems.filter((item) => !orderedIds.has(item.id));
+
+    return [...orderedItems, ...newItems];
+  }, [itemOrderByCategory, sortKey, visibleItems]);
+  const reorderItems = useMutation({
+    mutationFn: async (nextItems: MenuItem[]) => {
+      await Promise.all(
+        nextItems.map((item, index) => updateMenuItem(item.id, { sortOrder: index })),
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: outletKey(outletId) });
+      toastBus.emit("Menu order updated", "success");
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: outletKey(outletId) });
+      toastBus.emit(err.message || "Could not update menu order", "error");
+    },
+  });
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortedItems.findIndex((item) => item.id === active.id);
+    const newIndex = sortedItems.findIndex((item) => item.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const nextItems = arrayMove(sortedItems, oldIndex, newIndex);
+    setItemOrderByCategory((current) => ({
+      ...current,
+      [sortKey]: nextItems.map((item) => item.id),
+    }));
+    reorderItems.mutate(nextItems);
+  }
   const availableModifierGroupIds = new Set(
     outlet?.itemModifierGroups.map((group) => group.id) ?? [],
   );
@@ -1195,28 +1305,33 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
             onChange={setActiveCategoryId}
           />
 
-          {visibleItems.length === 0 ? (
+          {sortedItems.length === 0 ? (
             <div className="panel">
               <EmptyState icon={<Utensils size={30} />} heading="No items in this category" />
             </div>
           ) : (
-            <div className="admin-menu-grid">
-              {visibleItems
-                .slice()
-                .sort(
-                  (left, right) =>
-                    left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
-                )
-                .map((item) => (
-                  <MenuItemCard
-                    key={`${item.id}:${item.isAvailable}`}
-                    item={item}
-                    outletId={outletId}
-                    onSelect={() => setSelectedItemId(item.id)}
-                    onEdit={() => setEditingItem(item)}
-                  />
-                ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sortedItems.map((item) => item.id)}
+                strategy={rectSortingStrategy}
+              >
+                <div className="admin-menu-grid">
+                  {sortedItems.map((item) => (
+                    <SortableMenuItemCard
+                      key={`${item.id}:${item.isAvailable}`}
+                      item={item}
+                      outletId={outletId}
+                      onSelect={() => setSelectedItemId(item.id)}
+                      onEdit={() => setEditingItem(item)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </>
       )}
