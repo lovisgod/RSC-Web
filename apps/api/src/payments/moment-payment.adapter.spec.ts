@@ -85,6 +85,7 @@ describe(MomentPaymentAdapter.name, () => {
           headers: {
             "content-type": "application/json",
             authorization: `Bearer sk_test_1234567890abcdef`,
+            "Idempotency-Key": "pmt_master_123",
           },
           body: JSON.stringify({
             amount: 50000,
