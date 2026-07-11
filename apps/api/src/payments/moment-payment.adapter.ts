@@ -59,10 +59,10 @@ export class MomentPaymentAdapter implements PaymentAdapter {
   }
 
   async initiate(input: InitiateProviderPaymentInput): Promise<InitiateProviderPaymentResult> {
-    const metadata: Record<string, number> = {};
+    const metadata: Record<string, string> = {};
     for (const route of input.splitRoutes) {
       if (route.subaccountCode) {
-        metadata[route.subaccountCode] = route.netMinor;
+        metadata[route.subaccountCode] = String(route.netMinor);
       }
     }
 

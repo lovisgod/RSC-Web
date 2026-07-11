@@ -93,8 +93,8 @@ describe(MomentPaymentAdapter.name, () => {
             type: "one_time",
             external_reference: "pmt_master_123",
             metadata: {
-              fafallino_423fsdz432: 20000,
-              kilimanjaro_42vff453: 30000,
+              fafallino_423fsdz432: "20000",
+              kilimanjaro_42vff453: "30000",
             },
           }),
         }),
