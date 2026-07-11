@@ -40,8 +40,11 @@
   -webkit-font-smoothing: antialiased;
 }
 
+html,
 body {
-  min-height: 100svh;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
 }
 
 button,
@@ -52,7 +55,8 @@ select {
 }
 
 #root {
-  height: 100svh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
