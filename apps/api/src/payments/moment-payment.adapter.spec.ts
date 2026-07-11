@@ -102,8 +102,7 @@ describe(MomentPaymentAdapter.name, () => {
             options: {
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
-                return_url:
-                  "https://customer.rscdev.tech/tracking?reference=pmt_master_123&session_id={SESSION_ID}",
+                return_url: "https://customer.rscdev.tech/tracking?reference=pmt_master_123",
               },
             },
           }),
