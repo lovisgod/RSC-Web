@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { formatNaira } from "@/src/lib/data/cart";
+import { formatOutletRating } from "@/src/lib/data/outlets";
 import type { MenuItem } from "@/src/lib/data/outlet-menu";
 import { useOutletMenu } from "@/src/hooks/use-outlet-menu";
 import { MenuItemCard } from "@/src/components/outlet-detail/menu-item-card";
 import { ItemDetailModal } from "@/src/components/outlet-detail/item-detail-modal";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
 
 function Skeleton() {
   return (
@@ -74,6 +75,7 @@ export function OutletDetailView({ id }: { id: string }) {
       : menu.items.filter((item) => item.categoryId === currentCategory);
   const isOffline = menu.isOnline === false;
   const activeSelectedItem = isOffline ? null : selectedItem;
+  const rating = formatOutletRating(menu.rating);
 
   return (
     <>
@@ -118,15 +120,15 @@ export function OutletDetailView({ id }: { id: string }) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{menu.outletName}</h1>
           <p className="text-sm text-gray-400 mt-0.5">{menu.cuisines.join(" · ")}</p>
-          {(menu.rating !== undefined ||
-            menu.deliveryTime ||
-            menu.deliveryFeeMinor !== undefined) && (
+          {(rating || menu.deliveryTime || menu.deliveryFeeMinor !== undefined) && (
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-              {menu.rating !== undefined && (
-                <span className="font-semibold" style={{ color: "var(--rsc-dark)" }}>
-                  ★ {menu.rating}
-                </span>
-              )}
+              <span
+                className="inline-flex items-center gap-1 font-semibold"
+                style={{ color: "var(--rsc-dark)" }}
+              >
+                <Star className="h-4 w-4 fill-current" aria-hidden="true" />
+                {rating}
+              </span>
               {menu.deliveryTime && <span>⏱ {menu.deliveryTime}</span>}
               {menu.deliveryFeeMinor !== undefined && (
                 <span>🚗 {formatNaira(menu.deliveryFeeMinor)} delivery</span>

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Clock10Icon, StarIcon } from "lucide-react";
 
-import type { Outlet } from "@/src/lib/data/outlets";
+import { formatOutletRating, type Outlet } from "@/src/lib/data/outlets";
 
 export function OutletCard({ outlet }: { outlet: Outlet }) {
   const isOffline = outlet.isOnline === false;
+  const rating = formatOutletRating(outlet.rating);
   const card = (
     <article
       data-disabled={isOffline}
@@ -52,17 +53,13 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
         <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
 
         <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
-          {outlet.rating != null ? (
-            <span
-              className="inline-flex items-center gap-1 justify-self-start font-semibold"
-              style={{ color: "var(--rsc-dark)" }}
-            >
-              <StarIcon className="h-3.5 w-3.5" aria-hidden="true" />
-              {outlet.rating}
-            </span>
-          ) : (
-            <span aria-hidden="true" />
-          )}
+          <span
+            className="inline-flex items-center gap-1 justify-self-start font-semibold"
+            style={{ color: "var(--rsc-dark)" }}
+          >
+            <StarIcon className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+            {rating}
+          </span>
 
           {outlet.deliveryTime && (
             <span className="inline-flex items-center justify-center gap-1 text-gray-500">
@@ -131,17 +128,13 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
           <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
 
           <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
-            {outlet.rating != null ? (
-              <span
-                className="inline-flex items-center gap-1 justify-self-start font-semibold"
-                style={{ color: "var(--rsc-dark)" }}
-              >
-                <StarIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                {outlet.rating}
-              </span>
-            ) : (
-              <span aria-hidden="true" />
-            )}
+            <span
+              className="inline-flex items-center gap-1 justify-self-start font-semibold"
+              style={{ color: "var(--rsc-dark)" }}
+            >
+              <StarIcon className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+              {rating}
+            </span>
 
             {outlet.deliveryTime && (
               <span className="inline-flex items-center justify-center gap-1 text-gray-500">

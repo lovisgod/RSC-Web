@@ -9,6 +9,7 @@ import { useCompletedOrders } from "@/src/hooks/use-orders";
 import { useOutlets } from "@/src/hooks/use-outlets";
 import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
+import { useAuthStore } from "@/src/stores/auth-store";
 import { useRatingPromptStore } from "@/src/stores/rating-prompt-store";
 
 const RATING_DELAY_MS = 30 * 60 * 1000;
@@ -185,10 +186,12 @@ function RatingModal({
 export function RecentOrderRatingPrompt() {
   const [isRating, setIsRating] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const authUserId = useAuthStore((state) => state.userId);
 
   const { data: profile } = useQuery({
-    queryKey: ["profile"],
+    queryKey: ["profile", authUserId],
     queryFn: () => apiClient.getProfile(),
+    enabled: Boolean(authUserId),
     staleTime: 5 * 60 * 1000,
   });
   const { data: completedOrders = [] } = useCompletedOrders();
@@ -201,39 +204,45 @@ export function RecentOrderRatingPrompt() {
   const markPrompted = useRatingPromptStore((state) => state.markPrompted);
   const showPrompt = useRatingPromptStore((state) => state.showPrompt);
   const dismissPrompt = useRatingPromptStore((state) => state.dismissPrompt);
-  const activeOrderId = profile ? (activePromptOrderByCustomer[profile.id] ?? null) : null;
+  const customerId = profile?.id === authUserId ? authUserId : null;
+  const activeOrderId = customerId ? (activePromptOrderByCustomer[customerId] ?? null) : null;
 
   const latestEligibleOrder = useMemo(
     () =>
       completedOrders
         .filter(
           (order) =>
+            order.customerId === customerId &&
             order.status.toUpperCase() === "DELIVERED" &&
             new Date(order.updatedAt).getTime() <= RATING_ELIGIBLE_BEFORE,
         )
         .sort(
           (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
         )[0] ?? null,
-    [completedOrders],
+    [completedOrders, customerId],
   );
 
   const candidateOrderId =
     activeOrderId ??
-    (profile &&
+    (customerId &&
     hasHydrated &&
     latestEligibleOrder &&
-    promptedOrderByCustomer[profile.id] !== latestEligibleOrder.id
+    promptedOrderByCustomer[customerId] !== latestEligibleOrder.id
       ? latestEligibleOrder.id
       : null);
 
   const { data: orderDetail } = useQuery({
-    queryKey: ["order", candidateOrderId, "rating-prompt"],
+    queryKey: ["order", candidateOrderId, authUserId, "rating-prompt"],
     queryFn: () => apiClient.getOrder(candidateOrderId!),
-    enabled: candidateOrderId !== null,
+    enabled: candidateOrderId !== null && Boolean(authUserId),
     staleTime: 5 * 60 * 1000,
   });
 
   const rateableItems = useMemo(() => {
+    if (!customerId || orderDetail?.order.customerId !== customerId) {
+      return [];
+    }
+
     const uniqueItems = new Map<string, OrderLineItem>();
 
     for (const item of orderDetail?.lineItems ?? []) {
@@ -243,38 +252,39 @@ export function RecentOrderRatingPrompt() {
     }
 
     return [...uniqueItems.values()];
-  }, [orderDetail]);
+  }, [customerId, orderDetail]);
 
   useEffect(() => {
-    if (!profile || !candidateOrderId || !orderDetail || activeOrderId) return;
+    if (!customerId || !candidateOrderId || !orderDetail || activeOrderId) return;
+    if (orderDetail.order.customerId !== customerId) return;
 
     if (rateableItems.length > 0) {
-      showPrompt(profile.id, candidateOrderId);
+      showPrompt(customerId, candidateOrderId);
     } else {
-      markPrompted(profile.id, candidateOrderId);
+      markPrompted(customerId, candidateOrderId);
     }
   }, [
     activeOrderId,
     candidateOrderId,
+    customerId,
     markPrompted,
     orderDetail,
-    profile,
     rateableItems.length,
     showPrompt,
   ]);
 
   useEffect(() => {
-    if (!isSubmitted || !profile) return;
+    if (!isSubmitted || !customerId) return;
 
-    const timer = window.setTimeout(() => dismissPrompt(profile.id), 2500);
+    const timer = window.setTimeout(() => dismissPrompt(customerId), 2500);
     return () => window.clearTimeout(timer);
-  }, [dismissPrompt, isSubmitted, profile]);
+  }, [customerId, dismissPrompt, isSubmitted]);
 
   useEffect(
     () => () => {
-      if (profile) dismissPrompt(profile.id);
+      if (customerId) dismissPrompt(customerId);
     },
-    [dismissPrompt, profile],
+    [customerId, dismissPrompt],
   );
 
   const outletById = useMemo(
@@ -301,7 +311,7 @@ export function RecentOrderRatingPrompt() {
     return [...grouped.values()];
   }, [outletById, rateableItems]);
 
-  if (!activeOrderId || rateableItems.length === 0) return null;
+  if (!customerId || !activeOrderId || rateableItems.length === 0) return null;
 
   const previewNames = rateableItems.slice(0, 3).map((item) => item.itemNameSnapshot);
   const remainingCount = rateableItems.length - previewNames.length;
@@ -336,7 +346,7 @@ export function RecentOrderRatingPrompt() {
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                onClick={() => profile && dismissPrompt(profile.id)}
+                onClick={() => dismissPrompt(customerId)}
                 className="rounded-full px-4 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-white/70 hover:text-gray-700"
               >
                 Not now
