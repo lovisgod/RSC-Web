@@ -73,6 +73,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       external_reference: input.reference,
       metadata,
     };
+    const idempotencyKey = this.createIdempotencyKey(input.reference);
 
     try {
       const response = await fetch(`${this.baseUrl}/collect/payment_sessions`, {
@@ -80,6 +81,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
         headers: {
           "content-type": "application/json",
           authorization: `Bearer ${this.secretKey}`,
+          "Idempotency-Key": idempotencyKey,
         },
         body: JSON.stringify(body),
       });
@@ -109,6 +111,17 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       this.logger.error(`Moment initiate request failed for reference ${input.reference}`, error);
       throw new BadGatewayException("Unable to initiate payment");
     }
+  }
+
+  private createIdempotencyKey(reference: string): string {
+    const sanitized = reference
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    return sanitized ? sanitized.slice(0, 120) : "payment-session";
   }
 
   async verify(reference: string): Promise<VerifyProviderPaymentResult> {
