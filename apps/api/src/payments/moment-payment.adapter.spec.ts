@@ -88,7 +88,7 @@ describe(MomentPaymentAdapter.name, () => {
           headers: {
             "content-type": "application/json",
             authorization: `Bearer sk_test_1234567890abcdef`,
-            "Idempotency-Key": "pmt_master_123",
+            "Idempotency-Key": "73d5d716-1df7-2577-b975-e3d4326b0726",
           },
           body: JSON.stringify({
             amount: 50000,
@@ -101,7 +101,8 @@ describe(MomentPaymentAdapter.name, () => {
             },
             options: {
               checkout_options: {
-                success_url:
+                presentation_mode: { mode: "redirect" },
+                return_url:
                   "https://customer.rscdev.tech/tracking?reference=pmt_master_123&session_id={SESSION_ID}",
               },
             },

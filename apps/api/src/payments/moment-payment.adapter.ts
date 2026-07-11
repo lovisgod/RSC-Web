@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import {
   BadGatewayException,
   Injectable,
@@ -76,7 +76,8 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       metadata,
       options: {
         checkout_options: {
-          success_url: this.buildSuccessUrl(input.reference),
+          presentation_mode: { mode: "redirect" },
+          return_url: this.buildReturnUrl(input.reference),
         },
       },
     };
@@ -121,17 +122,19 @@ export class MomentPaymentAdapter implements PaymentAdapter {
   }
 
   private createIdempotencyKey(reference: string): string {
-    const sanitized = reference
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9_-]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
+    const uuid = reference.match(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    )?.[0];
 
-    return sanitized ? sanitized.slice(0, 120) : "payment-session";
+    if (uuid) {
+      return uuid.toLowerCase();
+    }
+
+    const hash = createHash("sha256").update(reference).digest("hex").slice(0, 32);
+    return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
   }
 
-  private buildSuccessUrl(reference: string): string {
+  private buildReturnUrl(reference: string): string {
     const url = new URL("/tracking", this.customerWebUrl);
     url.searchParams.set("reference", reference);
     url.searchParams.set("session_id", "{SESSION_ID}");
