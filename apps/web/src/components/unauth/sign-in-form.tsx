@@ -15,10 +15,12 @@ import { apiClient } from "@/src/lib/api";
 import { inputClass, labelClass } from "@/src/lib/form-styles";
 import { PasswordInput } from "@/src/components/shared/password-input";
 import { AUTH_REDIRECT_KEY } from "@/src/components/auth/auth-guard";
+import { useCartStore } from "@/src/stores/cart-store";
 
 export function SignInForm() {
   const searchParams = useSearchParams();
   const signIn = useAuthStore((s) => s.signIn);
+  const reconcileCartOwner = useCartStore((s) => s.reconcileOwner);
 
   const {
     register,
@@ -29,8 +31,9 @@ export function SignInForm() {
   const mutation = useMutation({
     mutationFn: (data: SignInFormData) =>
       apiClient.login({ identifier: data.identifier, password: data.password }),
-    onSuccess: () => {
-      signIn();
+    onSuccess: (result) => {
+      reconcileCartOwner(result.user.id);
+      signIn(result.user.id);
       const stored = localStorage.getItem(AUTH_REDIRECT_KEY);
       if (stored) localStorage.removeItem(AUTH_REDIRECT_KEY);
       // Replace so /sign-in is gone from history — back button can't return here
