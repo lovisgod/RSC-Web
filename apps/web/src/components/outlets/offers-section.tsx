@@ -9,7 +9,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { useNotifications } from "@/src/hooks/use-notifications";
 
 function getOfferAppearance(type: string) {
-  switch (type.toUpperCase()) {
+  switch (type.trim().toUpperCase()) {
     case "PROMO":
       return { bg: "var(--rsc-main)", Icon: Tag };
     case "SPECIAL_PERIOD":
@@ -17,6 +17,22 @@ function getOfferAppearance(type: string) {
     default:
       return { bg: "var(--rsc-navy-light)", Icon: Bell };
   }
+}
+
+function isOfferNotification(notification: Notification) {
+  const type = notification.type.trim().toUpperCase();
+  const promoCode =
+    typeof notification.data.promoCode === "string" &&
+    notification.data.promoCode.trim().length > 0;
+  const deepLink =
+    typeof notification.data.deepLink === "string" ? notification.data.deepLink.toLowerCase() : "";
+
+  return (
+    ["PROMO", "SPECIAL_PERIOD", "DISCOUNT", "SEASONAL_OFFER"].includes(type) ||
+    promoCode ||
+    deepLink.includes("promo") ||
+    deepLink.includes("offer")
+  );
 }
 
 function OfferCard({
@@ -90,9 +106,8 @@ export function OffersSection() {
     );
   }
 
-  const ALLOWED_TYPES = new Set(["PROMO", "SPECIAL_PERIOD", "DISCOUNT"]);
   const visible = notifications.filter(
-    (n) => ALLOWED_TYPES.has(n.type.toUpperCase()) && !dismissed.has(n.id),
+    (notification) => isOfferNotification(notification) && !dismissed.has(notification.id),
   );
   if (visible.length === 0) return null;
 
@@ -108,7 +123,7 @@ export function OffersSection() {
       <div className="sm:hidden">
         <Swiper
           modules={[Pagination]}
-          slidesPerView={1.08}
+          slidesPerView={1}
           spaceBetween={12}
           pagination={{ clickable: true }}
           className="!pb-8"

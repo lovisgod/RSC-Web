@@ -12,6 +12,7 @@ const readyOrder: PosSubOrder = {
   items: [],
   totalAmountMinor: 100_000,
   createdAt: "2026-07-05T12:00:00.000Z",
+  updatedAt: "2026-07-05T12:00:00.000Z",
 };
 
 describe("isActiveQueueOrder", () => {

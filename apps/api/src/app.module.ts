@@ -13,6 +13,7 @@ import { HealthModule } from "./health/health.module";
 import { MediaModule } from "./media/media.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { OrdersModule } from "./orders/orders.module";
+import { OutletsModule } from "./outlets/outlets.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { RealtimeModule } from "./realtime/realtime.module";
 import { RedisModule } from "./redis/redis.module";
@@ -42,6 +43,7 @@ import { UsersModule } from "./users/users.module";
     StatsModule,
     RealtimeModule,
     PaymentsModule,
+    OutletsModule,
     OrdersModule,
     HealthModule,
   ],

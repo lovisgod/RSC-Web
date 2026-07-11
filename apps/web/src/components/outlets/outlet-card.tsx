@@ -8,7 +8,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
   const card = (
     <article
       data-disabled={isOffline}
-      className={`bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col transition-shadow duration-200 group-hover:shadow-md ${isOffline ? "opacity-65" : ""}`}
+      className={`bg-white rounded-2xl overflow-hidden shadow-[0_8px_22px_rgba(30,49,96,0.10)] flex flex-col transition-shadow duration-200 group-hover:shadow-[0_12px_28px_rgba(30,49,96,0.16)] ${isOffline ? "opacity-65" : ""}`}
     >
       {/* Coloured header */}
       <div
@@ -88,7 +88,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
 
   return (
     <Link href={`/outlets/${outlet.id}`} className="block group">
-      <article className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col transition-shadow duration-200 group-hover:shadow-md">
+      <article className="bg-white rounded-2xl overflow-hidden shadow-[0_8px_22px_rgba(30,49,96,0.10)] flex flex-col transition-shadow duration-200 group-hover:shadow-[0_12px_28px_rgba(30,49,96,0.16)]">
         {/* Coloured header */}
         <div
           className="relative h-36 sm:h-44 flex-shrink-0"

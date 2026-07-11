@@ -12,6 +12,7 @@ export interface DeliveryForm {
   longitude: number | null;
   zone: DeliveryZone | null;
   onBehalf: boolean;
+  recipientPhone: string;
   instructions: string;
 }
 
@@ -34,6 +35,7 @@ export const DEFAULT_DELIVERY: DeliveryForm = {
   longitude: null,
   zone: null,
   onBehalf: false,
+  recipientPhone: "",
   instructions: "",
 };
 
@@ -49,6 +51,7 @@ export interface OrderSnapshot {
     outletId: string;
     outletName: string;
     items: Array<{
+      lineId?: string;
       id: string;
       name: string;
       quantity: number;

@@ -8,7 +8,12 @@ import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import { CatalogService } from "./catalog.service";
-import { CreateOutletDto, UpdateOutletDto, UpdateOutletOnlineStatusDto } from "./dto/catalog.dto";
+import {
+  CreateOutletDto,
+  RateOutletDto,
+  UpdateOutletDto,
+  UpdateOutletOnlineStatusDto,
+} from "./dto/catalog.dto";
 
 @ApiTags("Outlets")
 @Controller({ path: "outlets", version: "1" })
@@ -56,6 +61,19 @@ export class OutletsController {
   @ApiMessage("Outlet online status updated successfully")
   updateOnlineStatus(@Param("id") id: string, @Body() input: UpdateOutletOnlineStatusDto) {
     return this.catalog.updateOutletOnlineStatus(id, input);
+  }
+
+  @Post(":id/rating")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  @ApiMessage("Outlet rated successfully")
+  rate(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() input: RateOutletDto,
+  ) {
+    return this.catalog.rateOutlet(request.user!, id, input);
   }
 
   @Delete(":id")

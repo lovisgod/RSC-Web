@@ -1,5 +1,5 @@
 import { Button } from "@rsc/ui";
-import { NIGERIAN_MOBILE_NUMBER_PATTERN, registerCustomerInputSchema } from "@rsc/contracts";
+import { nigerianPhoneNumberSchema, registerCustomerInputSchema } from "@rsc/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -30,7 +30,7 @@ const schema = z
 type FieldErrors = Partial<Record<"newPassword" | "confirmPassword", string>>;
 
 function isPhone(v: string) {
-  return NIGERIAN_MOBILE_NUMBER_PATTERN.test(v);
+  return nigerianPhoneNumberSchema.safeParse(v).success;
 }
 
 export function ResetPasswordPage() {

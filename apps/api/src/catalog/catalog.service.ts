@@ -13,7 +13,9 @@ import { ItemModifier } from "./item-modifier.entity";
 import { MenuCategory } from "./menu-category.entity";
 import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
 import { MenuItemRating } from "./menu-item-rating.entity";
+import { OutletRating } from "./outlet-rating.entity";
 import { MenuItem } from "./menu-item.entity";
+import { PreparationSuggestion } from "./preparation-suggestion.entity";
 import type {
   CreateItemModifierDto,
   CreateItemModifierGroupDto,
@@ -22,6 +24,7 @@ import type {
   CreateOutletDto,
   ListMenuItemsQueryDto,
   RateMenuItemDto,
+  RateOutletDto,
   UpdateItemModifierDto,
   UpdateItemModifierGroupDto,
   UpdateMenuCategoryDto,
@@ -29,6 +32,9 @@ import type {
   UpdateMenuItemDto,
   UpdateOutletOnlineStatusDto,
   UpdateOutletDto,
+  CreatePreparationSuggestionDto,
+  UpdatePreparationSuggestionDto,
+  QueryPreparationSuggestionsDto,
 } from "./dto/catalog.dto";
 
 export interface MenuItemsPage {
@@ -47,10 +53,13 @@ export class CatalogService {
     @InjectRepository(MenuCategory) private readonly categories: Repository<MenuCategory>,
     @InjectRepository(MenuItem) private readonly items: Repository<MenuItem>,
     @InjectRepository(MenuItemRating) private readonly ratings: Repository<MenuItemRating>,
+    @InjectRepository(OutletRating) private readonly outletRatings: Repository<OutletRating>,
     @InjectRepository(ItemModifierGroup) private readonly groups: Repository<ItemModifierGroup>,
     @InjectRepository(ItemModifier) private readonly modifiers: Repository<ItemModifier>,
     @InjectRepository(MenuItemModifierGroup)
     private readonly itemGroups: Repository<MenuItemModifierGroup>,
+    @InjectRepository(PreparationSuggestion)
+    private readonly preparationSuggestions: Repository<PreparationSuggestion>,
     private readonly media: MediaService,
     private readonly realtime: RealtimeService,
   ) {}
@@ -93,10 +102,10 @@ export class CatalogService {
         imageUrl: input.imageUrl ?? null,
         isOnline: input.isOnline ?? true,
         vatBps: input.vatBps ?? 0,
-        latitude: input.latitude,
-        longitude: input.longitude,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
         deliveryRadiusKm: input.deliveryRadiusKm ?? 15,
-        momentSubaccountCode: input.momentSubaccountCode,
+        paystackSubaccountCode: input.paystackSubaccountCode ?? null,
       }),
     );
   }
@@ -280,6 +289,8 @@ export class CatalogService {
       await this.replaceItemGroups(item.id, input.modifierGroupIds);
     }
 
+    const wasAvailable = item.isAvailable;
+
     Object.assign(item, {
       ...input,
       description: input.description === undefined ? item.description : input.description,
@@ -289,7 +300,18 @@ export class CatalogService {
     });
     delete (item as Partial<MenuItem> & { modifierGroupIds?: string[] }).modifierGroupIds;
 
-    return this.items.save(item);
+    const saved = await this.items.save(item);
+
+    if (wasAvailable !== saved.isAvailable) {
+      this.realtime.emitMenuItemAvailabilityUpdate({
+        menuItemId: saved.id,
+        outletId: saved.outletId,
+        isAvailable: saved.isAvailable,
+        updatedAt: saved.updatedAt,
+      });
+    }
+
+    return saved;
   }
 
   async updateItemAvailability(
@@ -298,9 +320,21 @@ export class CatalogService {
     input: UpdateMenuItemAvailabilityDto,
   ): Promise<MenuItem> {
     const item = await this.getItem(user, id);
+    const wasAvailable = item.isAvailable;
     item.isAvailable = input.isAvailable;
 
-    return this.items.save(item);
+    const saved = await this.items.save(item);
+
+    if (wasAvailable !== saved.isAvailable) {
+      this.realtime.emitMenuItemAvailabilityUpdate({
+        menuItemId: saved.id,
+        outletId: saved.outletId,
+        isAvailable: saved.isAvailable,
+        updatedAt: saved.updatedAt,
+      });
+    }
+
+    return saved;
   }
 
   async uploadItemImage(
@@ -346,6 +380,38 @@ export class CatalogService {
     await this.items.save(item);
 
     return this.getPublicItem(id);
+  }
+
+  async rateOutlet(
+    user: AuthenticatedUser,
+    id: string,
+    input: RateOutletDto,
+  ): Promise<PublicOutletCatalog> {
+    if (user.role !== UserRole.CUSTOMER) {
+      throw new ForbiddenException("Only customers can rate outlets");
+    }
+
+    const outlet = await this.requireOutlet(id);
+    const existing = await this.outletRatings.findOneBy({ outletId: id, customerId: user.id });
+
+    const rating = existing ?? this.outletRatings.create({ outletId: id, customerId: user.id });
+    rating.rating = input.rating;
+    rating.comment = input.comment ?? null;
+
+    await this.outletRatings.save(rating);
+
+    const aggregate = await this.outletRatings
+      .createQueryBuilder("rating")
+      .select("AVG(rating.rating)", "average")
+      .addSelect("COUNT(rating.id)", "count")
+      .where("rating.outletId = :id", { id })
+      .getRawOne<{ average: string | null; count: string }>();
+
+    outlet.ratingAverage = Number(aggregate?.average ?? 0).toFixed(2);
+    outlet.ratingCount = Number(aggregate?.count ?? 0);
+    await this.outlets.save(outlet);
+
+    return this.getPublicOutlet(id);
   }
 
   async deleteItem(user: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
@@ -706,6 +772,99 @@ export class CatalogService {
         menuItems.some((item) => item.id === itemGroup.menuItemId && item.outletId === outlet.id),
       ),
     }));
+  }
+
+  async listPreparationSuggestions(
+    query: QueryPreparationSuggestionsDto,
+  ): Promise<PreparationSuggestion[]> {
+    const qb = this.preparationSuggestions
+      .createQueryBuilder("suggestion")
+      .where("suggestion.isActive = true");
+
+    if (query.outletId) {
+      qb.andWhere("(suggestion.outletId IS NULL OR suggestion.outletId = :outletId)", {
+        outletId: query.outletId,
+      });
+    } else {
+      qb.andWhere("suggestion.outletId IS NULL");
+    }
+
+    if (query.menuItemId) {
+      qb.andWhere("(suggestion.menuItemId IS NULL OR suggestion.menuItemId = :menuItemId)", {
+        menuItemId: query.menuItemId,
+      });
+    } else {
+      qb.andWhere("suggestion.menuItemId IS NULL");
+    }
+
+    if (query.q) {
+      qb.andWhere("suggestion.text ILIKE :search", { search: `%${query.q}%` });
+    }
+
+    return qb.orderBy("suggestion.sortOrder", "ASC").addOrderBy("suggestion.text", "ASC").getMany();
+  }
+
+  async listPreparationSuggestionsAdmin(
+    query: QueryPreparationSuggestionsDto,
+  ): Promise<PreparationSuggestion[]> {
+    const qb = this.preparationSuggestions.createQueryBuilder("suggestion");
+
+    if (query.outletId) {
+      qb.andWhere("suggestion.outletId = :outletId", { outletId: query.outletId });
+    }
+    if (query.menuItemId) {
+      qb.andWhere("suggestion.menuItemId = :menuItemId", { menuItemId: query.menuItemId });
+    }
+    if (query.q) {
+      qb.andWhere("suggestion.text ILIKE :search", { search: `%${query.q}%` });
+    }
+
+    return qb.orderBy("suggestion.sortOrder", "ASC").addOrderBy("suggestion.text", "ASC").getMany();
+  }
+
+  async createPreparationSuggestion(
+    input: CreatePreparationSuggestionDto,
+  ): Promise<PreparationSuggestion> {
+    const suggestion = this.preparationSuggestions.create({
+      text: input.text,
+      outletId: input.outletId ?? null,
+      menuItemId: input.menuItemId ?? null,
+      isActive: input.isActive ?? true,
+      sortOrder: input.sortOrder ?? 0,
+    });
+    const saved = await this.preparationSuggestions.save(suggestion);
+    this.realtime.emitPreparationSuggestionCreated(saved);
+    return saved;
+  }
+
+  async updatePreparationSuggestion(
+    id: string,
+    input: UpdatePreparationSuggestionDto,
+  ): Promise<PreparationSuggestion> {
+    const suggestion = await this.preparationSuggestions.findOneBy({ id });
+    if (!suggestion) {
+      throw new NotFoundException("Preparation suggestion not found");
+    }
+
+    Object.assign(suggestion, {
+      ...input,
+      outletId: input.outletId === undefined ? suggestion.outletId : input.outletId,
+      menuItemId: input.menuItemId === undefined ? suggestion.menuItemId : input.menuItemId,
+    });
+
+    const saved = await this.preparationSuggestions.save(suggestion);
+    this.realtime.emitPreparationSuggestionUpdated(saved);
+    return saved;
+  }
+
+  async deletePreparationSuggestion(id: string): Promise<{ deleted: true }> {
+    const suggestion = await this.preparationSuggestions.findOneBy({ id });
+    if (!suggestion) {
+      throw new NotFoundException("Preparation suggestion not found");
+    }
+    await this.preparationSuggestions.remove(suggestion);
+    this.realtime.emitPreparationSuggestionDeleted(id);
+    return { deleted: true };
   }
 }
 

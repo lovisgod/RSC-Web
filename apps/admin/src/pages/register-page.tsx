@@ -1,5 +1,5 @@
 import { Button, Input } from "@rsc/ui";
-import { NIGERIAN_MOBILE_NUMBER_PATTERN, registerCustomerInputSchema } from "@rsc/contracts";
+import { nigerianPhoneNumberSchema, registerCustomerInputSchema } from "@rsc/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -13,10 +13,7 @@ const schema = z
   .object({
     name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
     email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
-    phone: z
-      .string()
-      .trim()
-      .regex(NIGERIAN_MOBILE_NUMBER_PATTERN, "Enter a valid Nigerian number e.g. 08012345678"),
+    phone: nigerianPhoneNumberSchema,
     password: registerCustomerInputSchema.shape.password.refine(
       (p) => p.length >= 8,
       "Password must be at least 8 characters",

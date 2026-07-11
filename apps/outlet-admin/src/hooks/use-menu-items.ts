@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getOutletById } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
 
 export function useMenuCategories(outletId: string) {
   return useQuery({
-    queryKey: ["pos", "outlet", outletId],
+    queryKey: outletAdminKeys.outlet.detail(outletId),
     queryFn: () => getOutletById(outletId),
     enabled: Boolean(outletId),
     staleTime: 60_000,
@@ -13,7 +14,7 @@ export function useMenuCategories(outletId: string) {
 
 export function useMenuItems(outletId: string, categoryId?: string) {
   return useQuery({
-    queryKey: ["pos", "outlet", outletId],
+    queryKey: outletAdminKeys.outlet.detail(outletId),
     queryFn: () => getOutletById(outletId),
     enabled: Boolean(outletId),
     staleTime: 60_000,

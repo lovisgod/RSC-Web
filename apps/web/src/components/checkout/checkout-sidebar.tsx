@@ -50,7 +50,7 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
                 <div>
                   <p className="text-sm font-bold text-gray-900">{group.outletName}</p>
                   {group.items.map((item) => (
-                    <p key={item.id} className="text-xs text-gray-400 mt-0.5">
+                    <p key={item.lineId ?? item.id} className="text-xs text-gray-400 mt-0.5">
                       {item.name}
                       {item.quantity > 1 ? ` x${item.quantity}` : ""}
                       {item.notes ? ` · ${item.notes}` : ""}
@@ -108,7 +108,7 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
               <div>
                 <p className="text-sm font-bold text-gray-900">{group.outletName}</p>
                 {group.items.map((item) => (
-                  <p key={item.id} className="text-xs text-gray-400 mt-0.5">
+                  <p key={item.lineId ?? item.id} className="text-xs text-gray-400 mt-0.5">
                     {itemLabel(item)}
                   </p>
                 ))}

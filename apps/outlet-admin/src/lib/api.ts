@@ -1,11 +1,14 @@
 import axios, { type AxiosError } from "axios";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import {
+  adminOrdersResultSchema,
   changePasswordInputSchema,
   changePasswordResultSchema,
+  type AdminOrdersResult,
   type ChangePasswordInput,
   type ChangePasswordResult,
   type ItemModifierGroup,
+  type ItemModifier,
   type LoginResult,
   type LogoutResult,
   type MasterOrderStatus,
@@ -13,6 +16,7 @@ import {
   type OutletSummary,
   type SubOrderStatus,
   type UploadedImage,
+  outletSummarySchema,
   userProfileSchema,
   type UserProfile,
 } from "@rsc/contracts";
@@ -111,12 +115,42 @@ export const getProfile = async (): Promise<UserProfile> =>
 // ─── Outlet ───────────────────────────────────────────────────────────────────
 
 export const getOutletById = (outletId: string): Promise<OutletSummary> =>
-  get(`/api/v1/outlets/${outletId}`);
+  get<unknown>(`/api/v1/outlets/${outletId}`).then((data) => outletSummarySchema.parse(data));
 
 export const toggleOutletOnlineStatus = (
   outletId: string,
   body: { isOnline: boolean },
 ): Promise<OutletSummary> => patchReq(`/api/v1/outlets/${outletId}/online-status`, body);
+
+export interface ProvisionSubaccountBody {
+  businessName: string;
+  bankCode: string;
+  accountNumber: string;
+  force?: boolean;
+}
+
+export const provisionSubaccount = (
+  outletId: string,
+  body: ProvisionSubaccountBody,
+): Promise<{ subaccountCode: string; outlet: OutletSummary }> =>
+  post(`/api/v1/outlets/${outletId}/subaccount`, body);
+
+export const setSubaccountCode = (
+  outletId: string,
+  body: { subaccountCode: string },
+): Promise<{ subaccountCode: string; outlet: OutletSummary }> =>
+  http.put(`/api/v1/outlets/${outletId}/subaccount-code`, body).then((r) => r.data.data);
+
+export const listBanks = (): Promise<Array<{ code: string; name: string }>> =>
+  get("/api/v1/payments/banks");
+
+export const resolveBankAccount = (
+  accountNumber: string,
+  bankCode: string,
+): Promise<{ accountNumber: string; accountName: string; bankCode: string }> =>
+  get(
+    `/api/v1/payments/resolve-account?accountNumber=${encodeURIComponent(accountNumber)}&bankCode=${encodeURIComponent(bankCode)}`,
+  );
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────
 
@@ -150,18 +184,9 @@ export const uploadMenuItemImage = (itemId: string, file: File): Promise<MenuIte
     .then((r) => r.data.data);
 };
 
-export interface UpdateMenuItemBody {
-  outletId: string;
-  categoryId: string;
-  name: string;
-  description?: string;
+export type UpdateMenuItemBody = Partial<CreateMenuItemBody> & {
   imageUrl?: string;
-  deliveryTimeRange?: string;
-  priceMinor: number;
-  isAvailable: boolean;
-  sortOrder?: number;
-  modifierGroupIds?: string[];
-}
+};
 
 export const updateMenuItem = (itemId: string, body: UpdateMenuItemBody): Promise<MenuItem> =>
   patchReq(`/api/v1/menu-items/${itemId}`, body);
@@ -174,8 +199,47 @@ export const getMenuItemById = (itemId: string): Promise<MenuItem> =>
 
 // ─── Item modifier groups ─────────────────────────────────────────────────────
 
-export const listItemModifierGroups = (): Promise<ItemModifierGroup[]> =>
-  get("/api/v1/item-modifier-groups");
+export const listItemModifierGroups = (outletId: string): Promise<ItemModifierGroup[]> =>
+  get(`/api/v1/item-modifier-groups?outletId=${encodeURIComponent(outletId)}`);
+
+export interface SaveItemModifierGroupBody {
+  name: string;
+  minSelections: number;
+  maxSelections: number;
+  isRequired: boolean;
+  sortOrder: number;
+}
+
+export const createItemModifierGroup = (
+  body: SaveItemModifierGroupBody,
+): Promise<ItemModifierGroup> => post("/api/v1/item-modifier-groups", body);
+
+export const updateItemModifierGroup = (
+  groupId: string,
+  body: Partial<SaveItemModifierGroupBody>,
+): Promise<ItemModifierGroup> => patchReq(`/api/v1/item-modifier-groups/${groupId}`, body);
+
+export const deleteItemModifierGroup = (groupId: string): Promise<void> =>
+  http.delete(`/api/v1/item-modifier-groups/${groupId}`).then(() => undefined);
+
+export interface SaveItemModifierBody {
+  groupId: string;
+  name: string;
+  priceDeltaMinor: number;
+  isAvailable: boolean;
+  sortOrder: number;
+}
+
+export const createItemModifier = (body: SaveItemModifierBody): Promise<ItemModifier> =>
+  post("/api/v1/item-modifiers", body);
+
+export const updateItemModifier = (
+  modifierId: string,
+  body: Partial<SaveItemModifierBody>,
+): Promise<ItemModifier> => patchReq(`/api/v1/item-modifiers/${modifierId}`, body);
+
+export const deleteItemModifier = (modifierId: string): Promise<void> =>
+  http.delete(`/api/v1/item-modifiers/${modifierId}`).then(() => undefined);
 
 export const uploadImage = (file: File): Promise<UploadedImage> => {
   const body = new FormData();
@@ -184,11 +248,26 @@ export const uploadImage = (file: File): Promise<UploadedImage> => {
   return post("/api/v1/media/images", body);
 };
 
-export const verifyHandoffCode = (
-  outletId: string,
-  body: { code: string },
-): Promise<{ verified: boolean; orderId?: string }> =>
-  post(`/api/v1/outlets/${outletId}/orders/verify-handoff`, body);
+/** Outlet-admin: customer walks in and presents their pickup code → marks sub-order COLLECTED. */
+export const verifyTakeoutHandoff = (body: {
+  code: string;
+}): Promise<{
+  verified: boolean;
+  subOrderId: string;
+  masterOrderId: string;
+  masterStatus: string;
+}> => post("/api/v1/orders/outlet/verify-handoff", body);
+
+/** Outlet-admin: rider arrives at counter and presents pickup code → marks sub-order DISPATCHED. */
+export const riderCollect = (body: {
+  code: string;
+  note?: string;
+}): Promise<{
+  collected: boolean;
+  subOrderId: string;
+  masterOrderId: string;
+  masterStatus: string;
+}> => post("/api/v1/orders/outlet/rider-collect", body);
 
 // ─── Orders / Sub-orders ──────────────────────────────────────────────────────
 
@@ -201,6 +280,7 @@ export interface PosSubOrderItem {
   name: string;
   quantity: number;
   priceMinor: number;
+  customerNote?: string;
   modifiers?: PosSubOrderItemModifier[];
 }
 
@@ -209,58 +289,18 @@ export interface PosSubOrder {
   masterOrderId: string;
   masterOrderStatus: MasterOrderStatus;
   status: SubOrderStatus;
+  pickupCode?: string;
   deliveryMode: string;
-  deliveryCode: string;
+  deliveryCode: string | null;
   items: PosSubOrderItem[];
   totalAmountMinor: number;
   createdAt: string;
+  updatedAt: string;
+  preparationNote?: string;
   estimatedPrepTimeMinutes?: number;
 }
 
-// ─── GET /api/v1/orders/admin response types ──────────────────────────────────
-
-interface AdminLineItem {
-  id: string;
-  subOrderId: string;
-  outletId: string;
-  itemNameSnapshot: string;
-  quantity: number;
-  unitPriceMinor: number;
-  lineTotalMinor: number;
-  modifiersSnapshot: { id: string; name: string; priceDeltaMinor: number }[];
-}
-
-interface AdminSubOrder {
-  id: string;
-  masterOrderId: string;
-  outletId: string;
-  status: string;
-  subtotalMinor: number;
-  currency: string;
-  createdAt: string;
-  preparationTimeMinutes?: number;
-}
-
-interface AdminOrderEntry {
-  order: {
-    id: string;
-    status: MasterOrderStatus;
-    deliveryMode: string;
-    deliveryCode: string;
-    createdAt: string;
-  };
-  subOrders: AdminSubOrder[];
-  lineItems: AdminLineItem[];
-}
-
-interface AdminOrdersData {
-  orders: AdminOrderEntry[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
+function toSubOrders(data: AdminOrdersResult, outletId: string): PosSubOrder[] {
   return data.orders.flatMap(({ order, subOrders, lineItems }) =>
     subOrders
       .filter((sub) => sub.outletId === outletId)
@@ -269,6 +309,7 @@ function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
         masterOrderId: order.id,
         masterOrderStatus: order.status,
         status: sub.status as SubOrderStatus,
+        ...(sub.pickupCode ? { pickupCode: sub.pickupCode } : {}),
         deliveryMode: order.deliveryMode,
         deliveryCode: order.deliveryCode,
         items: lineItems
@@ -277,6 +318,9 @@ function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
             name: li.itemNameSnapshot,
             quantity: li.quantity,
             priceMinor: li.unitPriceMinor,
+            ...(typeof li.customerNote === "string" && li.customerNote.trim()
+              ? { customerNote: li.customerNote.trim() }
+              : {}),
             ...(li.modifiersSnapshot.length > 0
               ? {
                   modifiers: li.modifiersSnapshot.map((m) => ({
@@ -288,9 +332,13 @@ function toSubOrders(data: AdminOrdersData, outletId: string): PosSubOrder[] {
           })),
         totalAmountMinor: sub.subtotalMinor,
         createdAt: sub.createdAt,
-        ...(sub.preparationTimeMinutes !== undefined
-          ? { estimatedPrepTimeMinutes: sub.preparationTimeMinutes }
-          : {}),
+        updatedAt: sub.updatedAt,
+        ...(sub.preparationNote ? { preparationNote: sub.preparationNote } : {}),
+        ...(sub.preparationTime !== undefined && sub.preparationTime !== null
+          ? { estimatedPrepTimeMinutes: sub.preparationTime }
+          : sub.preparationTimeMinutes !== undefined
+            ? { estimatedPrepTimeMinutes: sub.preparationTimeMinutes }
+            : {}),
       })),
   );
 }
@@ -311,14 +359,14 @@ export function isActiveQueueOrder(order: PosSubOrder): boolean {
 }
 
 export const listAdminOrders = (outletId: string): Promise<PosSubOrder[]> =>
-  get<AdminOrdersData>(`/api/v1/orders/admin?outletId=${encodeURIComponent(outletId)}`).then(
-    (data) => toSubOrders(data, outletId),
-  );
+  get<unknown>(`/api/v1/orders/admin?outletId=${encodeURIComponent(outletId)}`)
+    .then((data) => adminOrdersResultSchema.parse(data))
+    .then((data) => toSubOrders(data, outletId));
 
 // PATCH /api/v1/orders/{subOrderId}/status
 // Body accepts MasterOrderStatus values; the server maps them to sub-order status internally:
 //   CONFIRMED → ACCEPTED | PARTIALLY_READY → PREPARING | READY → READY | DELIVERED → COLLECTED
 export const updateSubOrderStatus = (
   subOrderId: string,
-  body: { status: MasterOrderStatus; preparationTimeMinutes?: number },
+  body: { status: MasterOrderStatus; preparationTimeMinutes?: number; rejectionReason?: string },
 ): Promise<unknown> => patchReq(`/api/v1/orders/${subOrderId}/status`, body);

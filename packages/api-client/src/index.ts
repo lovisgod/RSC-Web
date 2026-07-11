@@ -16,6 +16,8 @@ import {
   paginatedMenuItemsSchema,
   pickupSubOrderInputSchema,
   platformChargesSchema,
+  preparationSuggestionSchema,
+  queryPreparationSuggestionsInputSchema,
   profileUpdateResultSchema,
   rateMenuItemInputSchema,
   orderDetailSchema,
@@ -30,8 +32,11 @@ import {
   updatePlatformChargesInputSchema,
   createDeliveryAddressInputSchema,
   deliveryAddressSummarySchema,
+  deliveryAddressSuggestionSchema,
   validateAddressInputSchema,
   validateAddressResultSchema,
+  resolveDeliveryAddressInputSchema,
+  resolvedDeliveryAddressSchema,
   forgotPasswordInputSchema,
   forgotPasswordResultSchema,
   menuCategorySchema,
@@ -53,6 +58,10 @@ import {
   registrationResultSchema,
   resendVerificationInputSchema,
   resendVerificationResultSchema,
+  rateOutletInputSchema,
+  rejectAssignedOrderInputSchema,
+  rejectAssignedOrderResultSchema,
+  riderDispatchSchema,
   uploadedImageSchema,
   userVerificationResultSchema,
   verifyUserInputSchema,
@@ -71,6 +80,8 @@ import {
   type PaginatedMenuItems,
   type PickupSubOrderInput,
   type PlatformCharges,
+  type PreparationSuggestion,
+  type QueryPreparationSuggestionsInput,
   type ProfileUpdateResult,
   type RateMenuItemInput,
   type OrderDetail,
@@ -85,8 +96,11 @@ import {
   type UpdateNotificationPreferencesInput,
   type CreateDeliveryAddressInput,
   type DeliveryAddressSummary,
+  type DeliveryAddressSuggestion,
   type ValidateAddressInput,
   type ValidateAddressResult,
+  type ResolveDeliveryAddressInput,
+  type ResolvedDeliveryAddress,
   type ForgotPasswordInput,
   type ForgotPasswordResult,
   type MenuCategorySummary,
@@ -109,6 +123,10 @@ import {
   type RegistrationResult,
   type ResendVerificationInput,
   type ResendVerificationResult,
+  type RateOutletInput,
+  type RejectAssignedOrderInput,
+  type RejectAssignedOrderResult,
+  type RiderDispatch,
   type UploadedImage,
   type UserVerificationResult,
   type VerifyUserInput,
@@ -219,7 +237,11 @@ export function createApiClient(options: ApiClientOptions) {
     const parsedEnvelope = apiResponseSchema(schema).safeParse(payload);
 
     if (!parsedEnvelope.success) {
-      console.error("API contract validation failed", parsedEnvelope.error.flatten());
+      console.error("API contract validation failed", {
+        path,
+        issues: parsedEnvelope.error.issues,
+        fieldErrors: parsedEnvelope.error.flatten().fieldErrors,
+      });
       throw new ApiContractError(
         "The server returned an unexpected response.",
         parsedEnvelope.error.issues,
@@ -354,6 +376,28 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
+    searchDeliveryAddressSuggestions(
+      q: string,
+      sessionToken?: string,
+    ): Promise<DeliveryAddressSuggestion[]> {
+      const params = new URLSearchParams({ q });
+      if (sessionToken) params.set("sessionToken", sessionToken);
+
+      return request(
+        `/api/v1/delivery/address-suggestions?${params.toString()}`,
+        z.array(deliveryAddressSuggestionSchema),
+      );
+    },
+    resolveDeliveryAddress(
+      input: ResolveDeliveryAddressInput,
+    ): Promise<ResolvedDeliveryAddress | null> {
+      const body = resolveDeliveryAddressInputSchema.parse(input);
+
+      return request("/api/v1/delivery/resolve-address", resolvedDeliveryAddressSchema.nullable(), {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     listGeofenceZones(): Promise<GeofenceZone[]> {
       return request("/api/v1/delivery/geofence-zones", z.array(geofenceZoneSchema));
     },
@@ -401,6 +445,14 @@ export function createApiClient(options: ApiClientOptions) {
     listOutlets(): Promise<OutletSummary[]> {
       return request("/api/v1/outlets", z.array(outletSummarySchema));
     },
+    rateOutlet(id: string, input: RateOutletInput): Promise<OutletSummary> {
+      const body = rateOutletInputSchema.parse(input);
+
+      return request(`/api/v1/outlets/${encodeURIComponent(id)}/rating`, outletSummarySchema, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
     listMenuCategories(outletId: string): Promise<MenuCategorySummary[]> {
       return request(
         `/api/v1/menu-categories?outletId=${encodeURIComponent(outletId)}`,
@@ -425,6 +477,21 @@ export function createApiClient(options: ApiClientOptions) {
       if (params.limit != null) sp.set("limit", String(params.limit));
       if (params.offset != null) sp.set("offset", String(params.offset));
       return request(`/api/v1/menu-items?${sp.toString()}`, paginatedMenuItemsSchema);
+    },
+    listPreparationSuggestions(
+      input: QueryPreparationSuggestionsInput = {},
+    ): Promise<PreparationSuggestion[]> {
+      const query = queryPreparationSuggestionsInputSchema.parse(input);
+      const sp = new URLSearchParams();
+      if (query.outletId) sp.set("outletId", query.outletId);
+      if (query.menuItemId) sp.set("menuItemId", query.menuItemId);
+      if (query.q) sp.set("q", query.q);
+
+      const qs = sp.toString();
+      return request(
+        `/api/v1/preparation-suggestions${qs ? `?${qs}` : ""}`,
+        z.array(preparationSuggestionSchema),
+      );
     },
     updateMenuItemAvailability(
       id: string,
@@ -469,6 +536,24 @@ export function createApiClient(options: ApiClientOptions) {
         riderLocationSchema.nullable(),
       );
     },
+    listAssignedRiderOrders(): Promise<RiderDispatch[]> {
+      return request("/api/v1/riders/me/assigned-orders", z.array(riderDispatchSchema));
+    },
+    rejectAssignedRiderOrder(
+      id: string,
+      input: RejectAssignedOrderInput,
+    ): Promise<RejectAssignedOrderResult> {
+      const body = rejectAssignedOrderInputSchema.parse(input);
+
+      return request(
+        `/api/v1/riders/me/assigned-orders/${encodeURIComponent(id)}/reject`,
+        rejectAssignedOrderResultSchema,
+        {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        },
+      );
+    },
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
     },
@@ -498,13 +583,10 @@ export function createApiClient(options: ApiClientOptions) {
     listNotificationCampaigns(): Promise<NotificationCampaign[]> {
       return request("/api/v1/notifications/campaigns", z.array(notificationCampaignSchema));
     },
-    reorder(id: string): Promise<InitiatePaymentResult> {
+    reorder(id: string): Promise<InitiatePaymentInput> {
       return request(
         `/api/v1/orders/${encodeURIComponent(id)}/reorder`,
-        initiatePaymentResultSchema,
-        {
-          method: "POST",
-        },
+        initiatePaymentInputSchema,
       );
     },
     getPlatformCharges(): Promise<PlatformCharges> {

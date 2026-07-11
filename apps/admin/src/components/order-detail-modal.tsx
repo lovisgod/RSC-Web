@@ -47,6 +47,16 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Cancelled",
 };
 
+const SUB_ORDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  ACCEPTED: "Accepted",
+  PREPARING: "Preparing",
+  READY: "Ready",
+  DISPATCHED: "Dispatched",
+  COLLECTED: "Collected",
+  REJECTED: "Rejected",
+};
+
 export function OrderDetailModal({ item, outletById, onClose }: Props) {
   const { order, subOrders, lineItems } = item;
 
@@ -135,6 +145,12 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                 ? Math.round((sub.commissionMinor / sub.subtotalMinor) * 100)
                 : 0;
             const payoutPct = 100 - commPct;
+            const outletNote =
+              typeof sub.preparationNote === "string" ? sub.preparationNote.trim() : "";
+            const outletNoteLabel =
+              sub.status === "REJECTED" || order.status === "CANCELLED"
+                ? "Rejection reason"
+                : "Outlet note";
 
             return (
               <div key={sub.id} className="order-modal__sub-card">
@@ -143,8 +159,17 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                   <span className="order-modal__sub-name">
                     🔥 {outlet?.name ?? "Outlet"} Sub-Order
                   </span>
-                  <span className="order-modal__sub-subtotal">
-                    Subtotal: {fmt(sub.subtotalMinor)}
+                  <span className="order-modal__sub-head-meta">
+                    <span
+                      className={`order-modal__sub-status${
+                        sub.status === "REJECTED" ? " order-modal__sub-status--rejected" : ""
+                      }`}
+                    >
+                      {SUB_ORDER_STATUS_LABELS[sub.status] ?? sub.status}
+                    </span>
+                    <span className="order-modal__sub-subtotal">
+                      Subtotal: {fmt(sub.subtotalMinor)}
+                    </span>
                   </span>
                 </div>
 
@@ -159,8 +184,17 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                           </span>
                           {li.modifiersSnapshot && li.modifiersSnapshot.length > 0 && (
                             <span className="order-modal__line-mods">
-                              {(li.modifiersSnapshot as Array<{ name: string }>)
-                                .map((m) => m.name)
+                              {(
+                                li.modifiersSnapshot as Array<{
+                                  name: string;
+                                  priceDeltaMinor?: number;
+                                }>
+                              )
+                                .map((m) =>
+                                  m.priceDeltaMinor && m.priceDeltaMinor > 0
+                                    ? `${m.name} (+${fmt(m.priceDeltaMinor)})`
+                                    : m.name,
+                                )
                                 .join(" · ")}
                             </span>
                           )}
@@ -171,11 +205,22 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                   </div>
                 )}
 
+                {outletNote && (
+                  <div className="order-modal__sub-rejection" style={{ marginTop: "0.8rem" }}>
+                    <div className="order-modal__finance-row" style={{ alignItems: "flex-start" }}>
+                      <span className="order-modal__finance-label">{outletNoteLabel}</span>
+                      <span className="order-modal__finance-payout" style={{ textAlign: "right" }}>
+                        {outletNote}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Financial breakdown */}
                 <div className="order-modal__sub-finance">
                   <div className="order-modal__finance-row">
                     <span className="order-modal__finance-label">
-                      Moment Account: <code>{outlet?.momentSubaccountCode ?? "—"}</code>
+                      Paystack Account: <code>{outlet?.paystackSubaccountCode ?? "—"}</code>
                     </span>
                     <span className="order-modal__finance-payout">
                       Payout ({payoutPct}%): {fmt(sub.netMinor)}
