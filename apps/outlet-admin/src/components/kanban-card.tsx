@@ -321,43 +321,49 @@ function IncomingCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
           </div>
         )}
 
-        <label className="block">
-          <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
-            Estimated prep time
-          </span>
-          <div className="mt-1 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={240}
-              value={preparationTimeMinutes}
-              onChange={(event) => setPreparationTimeMinutes(event.target.value.replace(/\D/g, ""))}
-              placeholder="20"
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-300"
-            />
-            <span className="shrink-0 text-xs font-semibold text-slate-400">mins</span>
-          </div>
-        </label>
+        {!showRejectModal && (
+          <>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                Estimated prep time
+              </span>
+              <div className="mt-1 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={240}
+                  value={preparationTimeMinutes}
+                  onChange={(event) =>
+                    setPreparationTimeMinutes(event.target.value.replace(/\D/g, ""))
+                  }
+                  placeholder="20"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-300"
+                />
+                <span className="shrink-0 text-xs font-semibold text-slate-400">mins</span>
+              </div>
+            </label>
 
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            disabled={isAdvancing}
-            onClick={() => setShowRejectModal(true)}
-            className="rounded-lg border border-red-600 bg-[var(--rsc-danger)] px-3 py-1 text-xs font-semibold text-[var(--rsc-panel)] transition hover:bg-red-100 disabled:opacity-50"
-          >
-            Reject
-          </button>
-          <button
-            type="button"
-            disabled={isAdvancing || !canAccept}
-            onClick={() => onAdvance(order.id, "CONFIRMED", parsedPreparationTime)}
-            className="rounded-lg bg-emerald-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
-          >
-            Accept
-          </button>
-        </div>
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                disabled={isAdvancing}
+                onClick={() => setShowRejectModal(true)}
+                className="rounded-lg border border-red-600 bg-[var(--rsc-danger)] px-3 py-1 text-xs font-semibold text-[var(--rsc-panel)] transition hover:bg-red-100 disabled:opacity-50"
+              >
+                Reject
+              </button>
+              <button
+                type="button"
+                disabled={isAdvancing || !canAccept}
+                onClick={() => onAdvance(order.id, "CONFIRMED", parsedPreparationTime)}
+                className="rounded-lg bg-emerald-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+              >
+                Accept
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </CardShell>
   );

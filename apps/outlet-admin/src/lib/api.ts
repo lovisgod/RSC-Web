@@ -16,6 +16,7 @@ import {
   type OutletSummary,
   type SubOrderStatus,
   type UploadedImage,
+  outletSummarySchema,
   userProfileSchema,
   type UserProfile,
 } from "@rsc/contracts";
@@ -114,7 +115,7 @@ export const getProfile = async (): Promise<UserProfile> =>
 // ─── Outlet ───────────────────────────────────────────────────────────────────
 
 export const getOutletById = (outletId: string): Promise<OutletSummary> =>
-  get(`/api/v1/outlets/${outletId}`);
+  get<unknown>(`/api/v1/outlets/${outletId}`).then((data) => outletSummarySchema.parse(data));
 
 export const toggleOutletOnlineStatus = (
   outletId: string,
@@ -183,18 +184,9 @@ export const uploadMenuItemImage = (itemId: string, file: File): Promise<MenuIte
     .then((r) => r.data.data);
 };
 
-export interface UpdateMenuItemBody {
-  outletId: string;
-  categoryId: string;
-  name: string;
-  description?: string;
+export type UpdateMenuItemBody = Partial<CreateMenuItemBody> & {
   imageUrl?: string;
-  deliveryTimeRange?: string;
-  priceMinor: number;
-  isAvailable: boolean;
-  sortOrder?: number;
-  modifierGroupIds?: string[];
-}
+};
 
 export const updateMenuItem = (itemId: string, body: UpdateMenuItemBody): Promise<MenuItem> =>
   patchReq(`/api/v1/menu-items/${itemId}`, body);

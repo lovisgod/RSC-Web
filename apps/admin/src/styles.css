@@ -139,7 +139,7 @@ select {
   color: rgb(255 255 255 / 82%);
   text-decoration: none;
   font-size: 0.88rem;
-  font-weight: 800;
+  font-weight: inherit;
   letter-spacing: 0.01em;
 }
 
@@ -667,6 +667,33 @@ th {
   border: 1px solid color-mix(in srgb, var(--outlet-badge-color) 24%, white);
 }
 
+.order-outlet-badge--rejected {
+  max-width: 12rem;
+  flex-direction: column;
+  align-items: flex-start;
+  border-color: color-mix(in srgb, var(--rsc-danger) 36%, white);
+  color: var(--rsc-danger);
+  background: color-mix(in srgb, var(--rsc-danger) 12%, white);
+  white-space: normal;
+}
+
+.order-outlet-badge__name {
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-outlet-badge__reason {
+  max-width: 10rem;
+  margin-top: 0.08rem;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--rsc-danger) 78%, black);
+  font-size: 0.58rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+}
+
 .order-outlet-badge--1 {
   --outlet-badge-color: var(--rsc-main);
 }
@@ -1159,7 +1186,7 @@ th {
   color: rgb(255 255 255 / 86%);
   text-decoration: none;
   font-size: 0.95rem;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .mobile-nav-drawer .sidebar-nav-parent .nav-chevron {
@@ -1805,6 +1832,31 @@ th {
   color: var(--rsc-navy-dark);
 }
 
+.order-modal__sub-head-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.order-modal__sub-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.22rem 0.55rem;
+  color: var(--rsc-navy-light);
+  background: color-mix(in srgb, var(--rsc-navy-light) 10%, white);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.order-modal__sub-status--rejected {
+  color: var(--rsc-danger);
+  background: color-mix(in srgb, var(--rsc-danger) 12%, white);
+}
+
 .order-modal__sub-subtotal {
   font-size: 0.875rem;
   font-weight: 700;
@@ -2307,6 +2359,18 @@ th {
 .admin-menu-grip {
   flex: 0 0 auto;
   color: #cbd5e1;
+}
+
+.admin-menu-grip-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.admin-menu-grip-button:active {
+  cursor: grabbing;
 }
 
 .admin-menu-item-main {
