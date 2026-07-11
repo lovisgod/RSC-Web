@@ -75,6 +75,16 @@ export interface ApplicationConfig {
       privateKey: string;
     };
   };
+  addressAutocomplete: {
+    provider: "google" | "opencage";
+    google: {
+      apiKey: string;
+    };
+    opencage: {
+      apiKey: string;
+      baseUrl: string;
+    };
+  };
 }
 
 function parseOrigins(value: string): string[] {
@@ -180,6 +190,18 @@ export default function configuration(): ApplicationConfig {
         projectId: process.env.FIREBASE_PROJECT_ID ?? "",
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "",
         privateKey: resolveFirebasePrivateKey(),
+      },
+    },
+    addressAutocomplete: {
+      provider: process.env.ADDRESS_AUTOCOMPLETE_PROVIDER === "opencage" ? "opencage" : "google",
+      google: {
+        apiKey: process.env.GOOGLE_MAPS_API_KEY ?? "",
+      },
+      opencage: {
+        apiKey: process.env.OPENCAGE_API_KEY ?? process.env.NEXT_GEOCODE_KEY ?? "",
+        baseUrl: (
+          process.env.OPENCAGE_BASE_URL ?? "https://api.opencagedata.com/geocode/v1/json"
+        ).replace(/\/$/, ""),
       },
     },
   };

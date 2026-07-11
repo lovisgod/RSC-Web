@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { MasterOrderStatus, SubOrderStatus } from "@rsc/contracts";
 import { updateSubOrderStatus, type PosSubOrder } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
 import { toastBus } from "../lib/toast-bus";
 
 // Server maps master status → sub-order status. Mirror it for optimistic updates.
@@ -19,23 +20,40 @@ export function useUpdateOrderStatus(outletId: string) {
       subOrderId,
       status,
       preparationTimeMinutes,
+      rejectionReason,
     }: {
       subOrderId: string;
       status: MasterOrderStatus;
       preparationTimeMinutes?: number;
+      rejectionReason?: string;
     }) =>
       updateSubOrderStatus(subOrderId, {
         status,
-        ...(preparationTimeMinutes !== undefined ? { preparationTimeMinutes } : {}),
+        ...(rejectionReason !== undefined ? { note: rejectionReason } : {}),
+        ...(preparationTimeMinutes !== undefined
+          ? { preparationTime: preparationTimeMinutes }
+          : {}),
       }),
-    onMutate: async ({ subOrderId, status }) => {
-      const queryKey = ["pos", "orders", outletId] as const;
+    onMutate: async ({ subOrderId, status, preparationTimeMinutes }) => {
+      const queryKey = outletAdminKeys.orders(outletId);
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<PosSubOrder[]>(queryKey);
       const subStatus = MASTER_TO_SUB[status];
+      const updatedAt = new Date().toISOString();
       if (subStatus) {
         queryClient.setQueryData<PosSubOrder[]>(queryKey, (orders) =>
-          orders?.map((o) => (o.id === subOrderId ? { ...o, status: subStatus } : o)),
+          orders?.map((o) =>
+            o.id === subOrderId
+              ? {
+                  ...o,
+                  status: subStatus,
+                  updatedAt,
+                  ...(preparationTimeMinutes !== undefined
+                    ? { estimatedPrepTimeMinutes: preparationTimeMinutes }
+                    : {}),
+                }
+              : o,
+          ),
         );
       }
       return { previous };
@@ -44,11 +62,11 @@ export function useUpdateOrderStatus(outletId: string) {
       toastBus.emit("Order updated", "success");
     },
     onError: (err: Error, _vars, ctx) => {
-      queryClient.setQueryData(["pos", "orders", outletId], ctx?.previous);
+      queryClient.setQueryData(outletAdminKeys.orders(outletId), ctx?.previous);
       toastBus.emit(err.message, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["pos", "orders", outletId] });
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.orders(outletId) });
     },
   });
 }

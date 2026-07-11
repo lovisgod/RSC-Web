@@ -25,7 +25,9 @@ import {
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
   PickupSubOrderDto,
+  RiderCollectSubOrderDto,
   UpdateOrderStatusDto,
+  VerifyPickupCodeDto,
 } from "./dto/orders.dto";
 import { OrdersService } from "./orders.service";
 
@@ -60,6 +62,41 @@ export class OrdersController {
     return this.orders.listAdmin(request.user!, query);
   }
 
+  // ─── Outlet-admin handoff verification ─────────────────────────────────────
+  // NOTE: These routes must be declared BEFORE GET /:id to avoid NestJS
+  // treating "outlet" as a literal order-id path parameter.
+
+  @Post("outlet/verify-handoff")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiMessage("Customer pickup verified")
+  @ApiOperation({
+    summary: "Verify customer walk-in pickup code",
+    description:
+      "Outlet-admin endpoint. Customer presents their sub-order pickup code; the matching READY sub-order is marked COLLECTED and the master order status is re-derived.",
+  })
+  verifyOutletHandoff(@Req() request: AuthenticatedRequest, @Body() input: VerifyPickupCodeDto) {
+    return this.orders.verifyOutletHandoff(request.user!, input);
+  }
+
+  @Post("outlet/rider-collect")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiMessage("Rider collection confirmed")
+  @ApiOperation({
+    summary: "Verify rider collection pickup code",
+    description:
+      "Outlet-admin endpoint. Rider presents the sub-order pickup code at the counter; the matching READY sub-order is marked DISPATCHED and the master order status is re-derived. Master order becomes OUT_FOR_DELIVERY when all non-rejected sub-orders are dispatched or collected.",
+  })
+  riderCollectSubOrder(
+    @Req() request: AuthenticatedRequest,
+    @Body() input: RiderCollectSubOrderDto,
+  ) {
+    return this.orders.riderCollectSubOrderByCode(request.user!, input);
+  }
+
+  // ─── Order detail / customer routes ─────────────────────────────────────────
+
   @Get(":id")
   @ApiMessage("Order retrieved")
   @ApiOperation({
@@ -84,12 +121,12 @@ export class OrdersController {
     return this.orders.getDispatch(request.user!, id);
   }
 
-  @Post(":id/reorder")
-  @ApiMessage("Reorder initiated")
+  @Get(":id/reorder")
+  @ApiMessage("Reorder details retrieved")
   @ApiOperation({
-    summary: "Reorder my previous order",
+    summary: "Get previous order details for reorder",
     description:
-      "Customer-facing endpoint that creates a new checkout/payment initiation from a previous order owned by the authenticated end user.",
+      "Customer-facing endpoint that returns the items and configuration of a past order to allow the client to populate their cart/checkout flow.",
   })
   reorder(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
     return this.orders.reorder(request.user!, id);

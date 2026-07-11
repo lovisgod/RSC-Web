@@ -15,6 +15,7 @@ import { Outlet } from "../outlets/outlet.entity";
 import { RealtimeService } from "../realtime/realtime.service";
 import type { InitiatePaymentDto } from "../payments/dto/payment.dto";
 import { PaymentsService } from "../payments/payments.service";
+import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { MasterOrder } from "./master-order.entity";
 import { OrderLineItem } from "./order-line-item.entity";
 import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
@@ -25,7 +26,10 @@ import type {
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
   PickupSubOrderDto,
+  RejectAssignedOrderDto,
+  RiderCollectSubOrderDto,
   UpdateOrderStatusDto,
+  VerifyPickupCodeDto,
 } from "./dto/orders.dto";
 
 export interface LatestLocation {
@@ -61,10 +65,11 @@ export interface RiderDispatch {
     outletId: string;
     outletName: string;
     pickupAddress: string | null;
-    pickupLatitude: number;
-    pickupLongitude: number;
+    pickupLatitude: number | null;
+    pickupLongitude: number | null;
     pickupCode: string;
     status: SubOrderStatus;
+    preparationNote: string | null;
     items: Array<{
       id: string;
       name: string;
@@ -93,6 +98,7 @@ export class OrdersService {
     private readonly payments: PaymentsService,
     private readonly notifications: NotificationsService,
     private readonly realtime: RealtimeService,
+    private readonly piiCrypto: PiiCryptoService,
   ) {}
 
   listMine(user: AuthenticatedUser): Promise<MasterOrder[]> {
@@ -229,6 +235,7 @@ export class OrdersService {
           modifiers: this.modifierIdsFromSnapshot(line.modifiersSnapshot).map((modifierId) => ({
             modifierId,
           })),
+          ...(line.customerNote ? { customerNote: line.customerNote } : {}),
         })),
     };
     if (order.deliveryAddress) {
@@ -241,7 +248,7 @@ export class OrdersService {
       input.deliveryLongitude = order.deliveryLongitude;
     }
 
-    return this.payments.initiate(user, input);
+    return input;
   }
 
   async updateStatus(user: AuthenticatedUser, id: string, input: UpdateOrderStatusDto) {
@@ -262,8 +269,14 @@ export class OrdersService {
       order.riderId = order.riderId ?? user.id;
     }
 
+    if (input.preparationTime !== undefined) {
+      order.preparationTime = input.preparationTime;
+    }
+
     order.status = input.status;
     await this.masterOrders.save(order);
+
+    await this.autoAssignRiderIfReady(order, user);
     await this.recordStatusEvent(order, user.id, input.note ?? null);
     await this.notifyOrderStatus(order);
     this.realtime.emitOrderStatusUpdate({
@@ -286,43 +299,13 @@ export class OrdersService {
     }
 
     const order = await this.requireOperationalOrder(user, id);
-    const rider = await this.findFairAvailableRider(user, order);
-
-    order.riderId = rider.id;
-    await this.masterOrders.save(order);
-    await this.recordStatusEvent(
+    await this.assignFairRider(
+      user,
       order,
-      user.id,
-      input.note ?? `Available rider assigned fairly (${rider.assignmentCount} recent assignments)`,
+      input.note ?? "Available rider assigned fairly",
+      [],
+      true,
     );
-    const dispatch = await this.buildRiderDispatch(order);
-    await this.notifications.createAndPush({
-      recipientId: rider.id,
-      recipientRole: UserRole.RIDER,
-      type: "ORDER_ASSIGNMENT",
-      title: "New delivery assigned",
-      body: this.formatDispatchNotificationBody(dispatch),
-      data: {
-        deepLink: `rsc://rider/dispatch/${order.id}`,
-        masterOrderId: order.id,
-        pickupCodes: dispatch.outlets.map((outlet) => outlet.pickupCode).join(","),
-        outletNames: dispatch.outlets.map((outlet) => outlet.outletName).join(", "),
-        dropOff: {
-          address: dispatch.deliveryAddress,
-          latitude: dispatch.deliveryLatitude,
-          longitude: dispatch.deliveryLongitude,
-        },
-        outlets: dispatch.outlets.map((outlet) => ({
-          subOrderId: outlet.subOrderId,
-          outletId: outlet.outletId,
-          name: outlet.outletName,
-          address: outlet.pickupAddress,
-          latitude: outlet.pickupLatitude,
-          longitude: outlet.pickupLongitude,
-          pickupCode: outlet.pickupCode,
-        })),
-      },
-    });
     this.realtime.emitOrderStatusUpdate({
       masterOrderId: order.id,
       customerId: order.customerId,
@@ -332,6 +315,80 @@ export class OrdersService {
     });
 
     return this.buildOrderDetail(order);
+  }
+
+  async listAssignedDispatches(user: AuthenticatedUser): Promise<RiderDispatch[]> {
+    if (user.role !== UserRole.RIDER) {
+      throw new ForbiddenException("Only riders can view assigned orders");
+    }
+
+    const orders = await this.masterOrders.find({
+      where: {
+        riderId: user.id,
+        status: In([
+          MasterOrderStatus.CONFIRMED,
+          MasterOrderStatus.PARTIALLY_READY,
+          MasterOrderStatus.READY,
+          MasterOrderStatus.OUT_FOR_DELIVERY,
+        ]),
+      },
+      order: { createdAt: "DESC" },
+      take: 50,
+    });
+
+    return Promise.all(orders.map((order) => this.buildRiderDispatch(order)));
+  }
+
+  async rejectAssignedOrder(user: AuthenticatedUser, id: string, input: RejectAssignedOrderDto) {
+    if (user.role !== UserRole.RIDER) {
+      throw new ForbiddenException("Only riders can reject assigned orders");
+    }
+
+    const order = await this.masterOrders.findOneBy({ id });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    if (order.riderId !== user.id) {
+      throw new ForbiddenException("Cannot reject another rider's order");
+    }
+
+    if (
+      order.status === MasterOrderStatus.DELIVERED ||
+      order.status === MasterOrderStatus.CANCELLED
+    ) {
+      throw new BadRequestException("Completed or cancelled orders cannot be rejected");
+    }
+
+    const rejectedRiderId = order.riderId;
+    order.riderId = null;
+    await this.masterOrders.save(order);
+    await this.recordStatusEvent(order, user.id, `Rider rejected assignment: ${input.reason}`);
+
+    const reassignment = await this.assignFairRider(
+      user,
+      order,
+      `Auto reassigned after rider rejection: ${input.reason}`,
+      [rejectedRiderId],
+      false,
+    );
+
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: reassignment?.riderId ?? rejectedRiderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return {
+      rejected: true,
+      reassigned: Boolean(reassignment),
+      previousRiderId: rejectedRiderId,
+      riderId: order.riderId,
+      order: await this.buildOrderDetail(order),
+    };
   }
 
   async getDispatch(user: AuthenticatedUser, id: string): Promise<RiderDispatch> {
@@ -436,17 +493,43 @@ export class OrdersService {
     }
 
     subOrder.status = this.toSubOrderStatus(input.status);
+    if (input.preparationTime !== undefined) {
+      subOrder.preparationTime = input.preparationTime;
+    }
+    if (subOrder.status === SubOrderStatus.REJECTED && input.rejectionReason) {
+      subOrder.preparationNote = input.rejectionReason;
+    }
     await this.subOrders.save(subOrder);
 
     const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
     const derivedStatus = this.deriveMasterStatus(subOrders);
 
+    const prepTimes = subOrders
+      .map((so) => so.preparationTime)
+      .filter((t): t is number => t !== null && typeof t === "number" && !isNaN(t));
+    const newPrepTime = prepTimes.length ? Math.max(...prepTimes) : null;
+
+    let orderChanged = false;
+    if ((order.preparationTime ?? null) !== newPrepTime) {
+      order.preparationTime = newPrepTime;
+      orderChanged = true;
+    }
+
     if (derivedStatus !== order.status) {
       order.status = derivedStatus;
+      orderChanged = true;
+    }
+
+    if (orderChanged) {
       await this.masterOrders.save(order);
     }
 
-    await this.recordStatusEvent(order, user.id, input.note ?? null, subOrder);
+    const eventNote =
+      subOrder.status === SubOrderStatus.REJECTED && input.rejectionReason
+        ? `Rejection Reason: ${input.rejectionReason}`
+        : (input.note ?? null);
+    await this.recordStatusEvent(order, user.id, eventNote, subOrder);
+    await this.autoAssignRiderIfReady(order, user);
     await this.notifyOrderStatus(order);
     this.realtime.emitOrderStatusUpdate({
       masterOrderId: order.id,
@@ -495,6 +578,129 @@ export class OrdersService {
     return this.buildOrderDetail(order);
   }
 
+  /**
+   * Outlet-admin verifies a customer walk-in pickup.
+   * Finds the READY sub-order for this outlet matching the code → COLLECTED.
+   */
+  async verifyOutletHandoff(user: AuthenticatedUser, input: VerifyPickupCodeDto) {
+    if (user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Only outlet admins can verify customer handoffs");
+    }
+
+    const outletId = await this.requireAdminOutletId(user);
+    const subOrder = await this.subOrders.findOneBy({ outletId, pickupCode: input.code });
+
+    if (!subOrder) {
+      throw new NotFoundException("No order found for that pickup code");
+    }
+
+    if (subOrder.status !== SubOrderStatus.READY) {
+      throw new BadRequestException(
+        `Sub-order is not ready for pickup (current status: ${subOrder.status})`,
+      );
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: subOrder.masterOrderId });
+
+    if (!order) {
+      throw new NotFoundException("Master order not found");
+    }
+
+    subOrder.status = SubOrderStatus.COLLECTED;
+    await this.subOrders.save(subOrder);
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+
+    if (derivedStatus !== order.status) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
+
+    await this.recordStatusEvent(order, user.id, "Customer walk-in pickup verified", subOrder);
+    await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return {
+      verified: true,
+      subOrderId: subOrder.id,
+      masterOrderId: order.id,
+      masterStatus: order.status,
+    };
+  }
+
+  /**
+   * Outlet-admin verifies a rider arriving to collect an order.
+   * Finds the READY sub-order for this outlet matching the code → DISPATCHED.
+   * Master order becomes OUT_FOR_DELIVERY when all non-rejected sub-orders are dispatched/collected.
+   */
+  async riderCollectSubOrderByCode(user: AuthenticatedUser, input: RiderCollectSubOrderDto) {
+    if (user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Only outlet admins can verify rider collection");
+    }
+
+    const outletId = await this.requireAdminOutletId(user);
+    const subOrder = await this.subOrders.findOneBy({ outletId, pickupCode: input.code });
+
+    if (!subOrder) {
+      throw new NotFoundException("No order found for that pickup code");
+    }
+
+    if (subOrder.status !== SubOrderStatus.READY) {
+      throw new BadRequestException(
+        `Sub-order is not ready for collection (current status: ${subOrder.status})`,
+      );
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: subOrder.masterOrderId });
+
+    if (!order) {
+      throw new NotFoundException("Master order not found");
+    }
+
+    subOrder.status = SubOrderStatus.DISPATCHED;
+    await this.subOrders.save(subOrder);
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+
+    if (derivedStatus !== order.status) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
+
+    await this.recordStatusEvent(
+      order,
+      user.id,
+      input.note ?? "Rider collected sub-order from outlet",
+      subOrder,
+    );
+    await this.notifyOrderStatus(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+      ...(order.status === MasterOrderStatus.OUT_FOR_DELIVERY
+        ? { riderLocationTracking: "START" as const }
+        : {}),
+    });
+
+    return {
+      collected: true,
+      subOrderId: subOrder.id,
+      masterOrderId: order.id,
+      masterStatus: order.status,
+    };
+  }
+
   async latestRiderLocation(user: AuthenticatedUser, id: string): Promise<LatestLocation | null> {
     await this.requireCustomerOrder(user, id);
 
@@ -512,7 +718,23 @@ export class OrdersService {
       this.getLatestRiderLocation(order.id),
     ]);
 
-    return { order, subOrders, lineItems, events, latestRiderLocation };
+    let rider = null;
+    if (order.riderId) {
+      const riderUser = await this.users.findOneBy({ id: order.riderId });
+      if (riderUser) {
+        rider = {
+          id: riderUser.id,
+          name: riderUser.name,
+          phone: this.piiCrypto.decrypt(riderUser.phoneEncrypted),
+          email: this.piiCrypto.decrypt(riderUser.emailEncrypted),
+          avatarUrl: riderUser.avatarUrl,
+          vehicleType: riderUser.vehicleType,
+          plateNumber: riderUser.plateNumber,
+        };
+      }
+    }
+
+    return { order, subOrders, lineItems, events, latestRiderLocation, rider };
   }
 
   private async buildRiderDispatch(order: MasterOrder): Promise<RiderDispatch> {
@@ -542,10 +764,11 @@ export class OrdersService {
           outletId: subOrder.outletId,
           outletName: outlet?.name ?? "Outlet",
           pickupAddress: outlet?.address ?? null,
-          pickupLatitude: outlet?.latitude ?? 0,
-          pickupLongitude: outlet?.longitude ?? 0,
+          pickupLatitude: outlet?.latitude ?? null,
+          pickupLongitude: outlet?.longitude ?? null,
           pickupCode: subOrder.pickupCode,
           status: subOrder.status,
+          preparationNote: subOrder.preparationNote,
           items: lineItems
             .filter((lineItem) => lineItem.subOrderId === subOrder.id)
             .map((lineItem) => ({
@@ -566,6 +789,87 @@ export class OrdersService {
     const dropOff = dispatch.deliveryAddress ?? "customer drop-off";
 
     return `Order ${dispatch.orderId}: pick up from ${outletSummary}. Drop off: ${dropOff}.`;
+  }
+
+  private async assignFairRider(
+    actor: AuthenticatedUser,
+    order: MasterOrder,
+    note: string,
+    excludedRiderIds: string[] = [],
+    throwWhenUnavailable = true,
+  ): Promise<{ riderId: string; dispatch: RiderDispatch } | null> {
+    let rider: FairAvailableRiderRow;
+
+    try {
+      rider = await this.findFairAvailableRider(actor, order, excludedRiderIds);
+    } catch (error) {
+      if (!throwWhenUnavailable && error instanceof NotFoundException) {
+        return null;
+      }
+
+      throw error;
+    }
+
+    order.riderId = rider.id;
+    await this.masterOrders.save(order);
+    await this.recordStatusEvent(
+      order,
+      actor.id,
+      `${note} (${rider.assignmentCount} recent assignments)`,
+    );
+
+    const dispatch = await this.buildRiderDispatch(order);
+    await this.notifications.createAndPush({
+      recipientId: rider.id,
+      recipientRole: UserRole.RIDER,
+      type: "ORDER_ASSIGNMENT",
+      title: "New delivery assigned",
+      body: this.formatDispatchNotificationBody(dispatch),
+      data: {
+        deepLink: `rsc://rider/dispatch/${order.id}`,
+        masterOrderId: order.id,
+        pickupCodes: dispatch.outlets.map((outlet) => outlet.pickupCode).join(","),
+        outletNames: dispatch.outlets.map((outlet) => outlet.outletName).join(", "),
+        dropOff: {
+          address: dispatch.deliveryAddress,
+          latitude: dispatch.deliveryLatitude,
+          longitude: dispatch.deliveryLongitude,
+        },
+        outlets: dispatch.outlets.map((outlet) => ({
+          subOrderId: outlet.subOrderId,
+          outletId: outlet.outletId,
+          name: outlet.outletName,
+          address: outlet.pickupAddress,
+          latitude: outlet.pickupLatitude,
+          longitude: outlet.pickupLongitude,
+          pickupCode: outlet.pickupCode,
+          preparationNote: outlet.preparationNote,
+        })),
+      },
+    });
+
+    return { riderId: rider.id, dispatch };
+  }
+
+  private async autoAssignRiderIfReady(
+    order: MasterOrder,
+    actor: AuthenticatedUser,
+  ): Promise<{ riderId: string; dispatch: RiderDispatch } | null> {
+    if (
+      order.riderId ||
+      order.deliveryMode !== "DELIVERY" ||
+      order.status !== MasterOrderStatus.READY
+    ) {
+      return null;
+    }
+
+    return this.assignFairRider(
+      { ...actor, role: UserRole.SUPER_ADMIN },
+      order,
+      "Auto assigned when order became ready",
+      [],
+      false,
+    );
   }
 
   private async requireCustomerOrder(user: AuthenticatedUser, id: string): Promise<MasterOrder> {
@@ -610,6 +914,7 @@ export class OrdersService {
   private async findFairAvailableRider(
     user: AuthenticatedUser,
     order: MasterOrder,
+    excludedRiderIds: string[] = [],
   ): Promise<FairAvailableRiderRow> {
     if (order.deliveryMode !== "DELIVERY") {
       throw new BadRequestException("Riders can only be assigned to delivery orders");
@@ -620,6 +925,7 @@ export class OrdersService {
       ["AVAILABLE", "ACTIVE"],
     ];
     let outletFilter = "";
+    let excludedRiderFilter = "";
 
     if (user.role === UserRole.ADMIN) {
       const outletId = await this.requireAdminOutletId(user);
@@ -637,6 +943,11 @@ export class OrdersService {
       outletFilter = `AND u.outlet_id = $${params.length}`;
     }
 
+    if (excludedRiderIds.length > 0) {
+      params.push(excludedRiderIds);
+      excludedRiderFilter = `AND u.id <> ALL($${params.length}::uuid[])`;
+    }
+
     const rows = await this.dataSource.query<FairAvailableRiderRow[]>(
       `
         SELECT
@@ -650,9 +961,10 @@ export class OrdersService {
           AND recent_orders.deleted_at IS NULL
         WHERE u.role = 'RIDER'
           AND u.status = 'ACTIVE'
-          AND u.rider_status = ANY($2)
+          AND COALESCE(u.rider_status, 'AVAILABLE') = ANY($2)
           AND u.deleted_at IS NULL
           ${outletFilter}
+          ${excludedRiderFilter}
           AND NOT EXISTS (
             SELECT 1
             FROM master_orders active_orders

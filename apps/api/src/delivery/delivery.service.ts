@@ -1,11 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
+import type { ApplicationConfig } from "../config/configuration";
 import { DeliveryAddress } from "./delivery-address.entity";
 import type {
+  AddressSuggestionsQueryDto,
   CreateDeliveryAddressDto,
+  ResolveAddressDto,
   UpdateDeliveryAddressDto,
   ValidateAddressDto,
 } from "./dto/delivery-address.dto";
@@ -25,12 +29,31 @@ export interface GeofenceZoneResult {
   updatedAt: Date;
 }
 
+export interface DeliveryAddressSuggestion {
+  id: string;
+  description: string;
+  provider: "google" | "opencage";
+  sessionToken: string | null;
+}
+
+export interface ResolvedDeliveryAddress {
+  addressLine: string;
+  city: string;
+  state: string;
+  label: string;
+  displayName: string;
+  latitude: number;
+  longitude: number;
+  provider: "google" | "opencage";
+}
+
 @Injectable()
 export class DeliveryService {
   constructor(
     @InjectRepository(DeliveryAddress)
     private readonly addresses: Repository<DeliveryAddress>,
     private readonly dataSource: DataSource,
+    private readonly config: ConfigService<ApplicationConfig, true>,
   ) {}
 
   listAddresses(user: AuthenticatedUser): Promise<DeliveryAddress[]> {
@@ -161,6 +184,53 @@ export class DeliveryService {
     return { deliverable: Boolean(zone), zone };
   }
 
+  async searchAddressSuggestions(
+    query: AddressSuggestionsQueryDto,
+  ): Promise<DeliveryAddressSuggestion[]> {
+    const config = this.config.get("addressAutocomplete", { infer: true });
+    const providers =
+      config.provider === "google" ? ["google", "opencage"] : ["opencage", "google"];
+
+    for (const provider of providers) {
+      const suggestions =
+        provider === "google"
+          ? await this.searchGoogleSuggestions(query.q, query.sessionToken ?? null)
+          : await this.searchOpenCageSuggestions(query.q, query.sessionToken ?? null);
+
+      if (suggestions.length > 0) {
+        return suggestions;
+      }
+    }
+
+    return [];
+  }
+
+  async resolveAddress(input: ResolveAddressDto): Promise<ResolvedDeliveryAddress | null> {
+    if (!input.suggestionId && !input.input) {
+      throw new BadRequestException("Address input or suggestionId is required");
+    }
+
+    const preferredProvider =
+      input.provider ?? this.config.get("addressAutocomplete", { infer: true }).provider;
+    const providers =
+      preferredProvider === "google"
+        ? (["google", "opencage"] as const)
+        : (["opencage", "google"] as const);
+
+    for (const provider of providers) {
+      const resolved =
+        provider === "google"
+          ? await this.resolveGoogleAddress(input)
+          : await this.resolveOpenCageAddress(input);
+
+      if (resolved) {
+        return resolved;
+      }
+    }
+
+    return null;
+  }
+
   async listGeofenceZones(): Promise<GeofenceZoneResult[]> {
     return this.queryGeofenceZones(`WHERE is_active = true ORDER BY name ASC`);
   }
@@ -244,6 +314,178 @@ export class DeliveryService {
     return { deleted: true };
   }
 
+  private async searchGoogleSuggestions(
+    input: string,
+    sessionToken: string | null,
+  ): Promise<DeliveryAddressSuggestion[]> {
+    const { google } = this.config.get("addressAutocomplete", { infer: true });
+
+    if (!google.apiKey) {
+      return [];
+    }
+
+    try {
+      const response = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": google.apiKey,
+          "X-Goog-FieldMask":
+            "suggestions.placePrediction.placeId,suggestions.placePrediction.text.text",
+        },
+        body: JSON.stringify({
+          input: normalizeLagosQuery(input),
+          includedRegionCodes: ["ng"],
+          regionCode: "ng",
+          languageCode: "en",
+          ...(sessionToken ? { sessionToken } : {}),
+          locationRestriction: {
+            rectangle: {
+              low: { latitude: 6.35, longitude: 3.25 },
+              high: { latitude: 6.65, longitude: 3.75 },
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        return [];
+      }
+
+      const data = (await response.json()) as GoogleAutocompleteResponse;
+
+      return (data.suggestions ?? [])
+        .map((suggestion) => suggestion.placePrediction)
+        .filter((prediction): prediction is GooglePlacePrediction => Boolean(prediction?.placeId))
+        .map((prediction) => ({
+          id: prediction.placeId,
+          description: prediction.text?.text ?? prediction.placeId,
+          provider: "google" as const,
+          sessionToken,
+        }));
+    } catch {
+      return [];
+    }
+  }
+
+  private async resolveGoogleAddress(
+    input: ResolveAddressDto,
+  ): Promise<ResolvedDeliveryAddress | null> {
+    const { google } = this.config.get("addressAutocomplete", { infer: true });
+    const placeId = input.provider === "google" ? input.suggestionId : input.suggestionId;
+
+    if (!google.apiKey || !placeId) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(
+        `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": google.apiKey,
+            "X-Goog-FieldMask": "id,displayName,formattedAddress,location,addressComponents",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const place = (await response.json()) as GooglePlaceDetailsResponse;
+
+      if (!place.location) {
+        return null;
+      }
+
+      const addressLine = (place.formattedAddress ?? input.input ?? "").trim();
+      const city =
+        findGoogleAddressComponent(place.addressComponents ?? [], [
+          "locality",
+          "administrative_area_level_2",
+        ]) ?? "Lagos";
+      const state =
+        findGoogleAddressComponent(place.addressComponents ?? [], [
+          "administrative_area_level_1",
+        ]) ?? "Lagos State";
+      const label =
+        findGoogleAddressComponent(place.addressComponents ?? [], [
+          "route",
+          "neighborhood",
+          "sublocality",
+        ]) ??
+        place.displayName?.text ??
+        addressLine;
+
+      return {
+        addressLine,
+        city,
+        state,
+        label: label.slice(0, 30),
+        displayName: place.formattedAddress ?? addressLine,
+        latitude: place.location.latitude,
+        longitude: place.location.longitude,
+        provider: "google",
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async searchOpenCageSuggestions(
+    input: string,
+    sessionToken: string | null,
+  ): Promise<DeliveryAddressSuggestion[]> {
+    const response = await this.fetchOpenCage(input, 5);
+
+    return (response?.results ?? []).map((result, index) => ({
+      id: encodeOpenCageSuggestionId(result.formatted, index),
+      description: result.formatted,
+      provider: "opencage" as const,
+      sessionToken,
+    }));
+  }
+
+  private async resolveOpenCageAddress(
+    input: ResolveAddressDto,
+  ): Promise<ResolvedDeliveryAddress | null> {
+    const query = input.input ?? decodeOpenCageSuggestionId(input.suggestionId ?? "");
+    const response = await this.fetchOpenCage(query, 1);
+    const first = response?.results?.[0];
+
+    return first ? normalizeOpenCageResult(first, input.input ?? query) : null;
+  }
+
+  private async fetchOpenCage(input: string, limit: number): Promise<OpenCageResponse | null> {
+    const { opencage } = this.config.get("addressAutocomplete", { infer: true });
+
+    if (!opencage.apiKey || !input.trim()) {
+      return null;
+    }
+
+    try {
+      const url = new URL(opencage.baseUrl);
+      url.searchParams.set("q", normalizeLagosQuery(input));
+      url.searchParams.set("key", opencage.apiKey);
+      url.searchParams.set("countrycode", "ng");
+      url.searchParams.set("limit", String(limit));
+      url.searchParams.set("no_annotations", "1");
+      url.searchParams.set("language", "en");
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        return null;
+      }
+
+      return (await response.json()) as OpenCageResponse;
+    } catch {
+      return null;
+    }
+  }
+
   private async queryGeofenceZones(
     whereClause: string,
     params: unknown[] = [],
@@ -285,4 +527,121 @@ function normalizeGeofenceZone(zone: GeofenceZoneResult): GeofenceZoneResult {
 
 function parseGeoJson(value: string): unknown {
   return JSON.parse(value) as unknown;
+}
+
+interface GoogleAutocompleteResponse {
+  suggestions?: Array<{
+    placePrediction?: GooglePlacePrediction;
+  }>;
+}
+
+interface GooglePlacePrediction {
+  placeId: string;
+  text?: { text?: string };
+}
+
+interface GoogleAddressComponent {
+  longText?: string;
+  shortText?: string;
+  types?: string[];
+}
+
+interface GooglePlaceDetailsResponse {
+  formattedAddress?: string;
+  displayName?: { text?: string };
+  location?: { latitude: number; longitude: number };
+  addressComponents?: GoogleAddressComponent[];
+}
+
+interface OpenCageComponents {
+  road?: string;
+  neighbourhood?: string;
+  suburb?: string;
+  city?: string;
+  town?: string;
+  village?: string;
+  county?: string;
+  state?: string;
+}
+
+interface OpenCageResult {
+  geometry: { lat: number; lng: number };
+  formatted: string;
+  components: OpenCageComponents;
+}
+
+interface OpenCageResponse {
+  results?: OpenCageResult[];
+}
+
+function normalizeLagosQuery(raw: string): string {
+  const query = raw.trim();
+  const lower = query.toLowerCase();
+
+  if (/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(query)) {
+    return query;
+  }
+
+  return lower.includes("lagos") || lower.includes("nigeria") ? query : `${query}, Lagos, Nigeria`;
+}
+
+function findGoogleAddressComponent(
+  components: GoogleAddressComponent[],
+  types: string[],
+): string | null {
+  const component = components.find((entry) => types.some((type) => entry.types?.includes(type)));
+
+  return component?.longText ?? component?.shortText ?? null;
+}
+
+function normalizeOpenCageResult(
+  result: OpenCageResult,
+  originalText: string,
+): ResolvedDeliveryAddress {
+  const components = result.components;
+  const formattedParts = result.formatted
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part && !/^\d+$/.test(part) && part.toLowerCase() !== "nigeria");
+  const addressLine = (originalText || result.formatted.split(",")[0] || "").trim().slice(0, 80);
+  const city =
+    components.city ??
+    components.town ??
+    components.village ??
+    components.county ??
+    (formattedParts.length >= 2 ? formattedParts[formattedParts.length - 2] : null) ??
+    "Lagos";
+  const state =
+    components.state ??
+    (formattedParts.length >= 1 ? formattedParts[formattedParts.length - 1] : null) ??
+    "Lagos State";
+  const label = (components.road ?? components.suburb ?? components.neighbourhood ?? addressLine)
+    .trim()
+    .slice(0, 30);
+
+  return {
+    addressLine,
+    city,
+    state,
+    label,
+    displayName: result.formatted,
+    latitude: result.geometry.lat,
+    longitude: result.geometry.lng,
+    provider: "opencage",
+  };
+}
+
+function encodeOpenCageSuggestionId(formatted: string, index: number): string {
+  return Buffer.from(`${index}:${formatted}`, "utf8").toString("base64url");
+}
+
+function decodeOpenCageSuggestionId(value: string): string {
+  if (!value) {
+    return "";
+  }
+
+  const decoded = Buffer.from(value, "base64url").toString("utf8");
+  const separator = decoded.indexOf(":");
+
+  return separator === -1 ? decoded : decoded.slice(separator + 1);
 }

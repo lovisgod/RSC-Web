@@ -7,23 +7,24 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { MenuItem } from "@rsc/contracts";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 
 import { MenuItemCard } from "../components/menu-item-card";
 import { MenuItemDetail } from "../components/menu-item-detail";
+import { ModifierManagementCard } from "../components/modifier-management-card";
 import { useAuth } from "../hooks/use-auth";
 import { useCreateMenuItem } from "../hooks/use-create-menu-item";
 import { useItemModifierGroups } from "../hooks/use-item-modifier-groups";
 import { useMenuCategories, useMenuItems } from "../hooks/use-menu-items";
+import { useOutletInfo } from "../hooks/use-outlet-info";
 import { useUpdateMenuItem } from "../hooks/use-update-menu-item";
+import { updateMenuItem } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
+import { toastBus } from "../lib/toast-bus";
 
 const EMPTY_MENU_ITEMS: MenuItem[] = [];
 
@@ -110,7 +111,7 @@ function AddItemModal({
   onClose: () => void;
 }) {
   const { mutate: createItem, isPending } = useCreateMenuItem(outletId);
-  const { data: modifierGroups = [] } = useItemModifierGroups();
+  const { data: modifierGroups = [] } = useItemModifierGroups(outletId);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState("");
@@ -251,8 +252,6 @@ function AddItemModal({
               <input
                 type="number"
                 required
-                min={1}
-                step={50}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="e.g. 4500"
@@ -370,15 +369,17 @@ function EditItemModal({
   item,
   outletId,
   categories,
+  assignedModifierGroupIds,
   onClose,
 }: {
   item: MenuItem;
   outletId: string;
   categories: { id: string; name: string }[];
+  assignedModifierGroupIds: string[];
   onClose: () => void;
 }) {
   const { mutate: updateItem, isPending } = useUpdateMenuItem(outletId);
-  const { data: modifierGroups = [] } = useItemModifierGroups();
+  const { data: modifierGroups = [] } = useItemModifierGroups(outletId);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState(item.name);
@@ -389,7 +390,8 @@ function EditItemModal({
   const [isAvailable, setIsAvailable] = useState(item.isAvailable);
   const [sortOrder, setSortOrder] = useState(String(item.sortOrder));
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
-  const [selectedModifierGroupIds, setSelectedModifierGroupIds] = useState<string[]>([]);
+  const [selectedModifierGroupIds, setSelectedModifierGroupIds] =
+    useState<string[]>(assignedModifierGroupIds);
   const [shaking, setShaking] = useState(false);
 
   function triggerShake() {
@@ -423,9 +425,7 @@ function EditItemModal({
           priceMinor,
           isAvailable,
           sortOrder: parseInt(sortOrder, 10) || 0,
-          ...(selectedModifierGroupIds.length > 0
-            ? { modifierGroupIds: selectedModifierGroupIds }
-            : {}),
+          modifierGroupIds: selectedModifierGroupIds,
         },
         ...(imageFile ? { imageFile } : {}),
       },
@@ -528,8 +528,6 @@ function EditItemModal({
               <input
                 type="number"
                 required
-                min={1}
-                step={50}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
@@ -642,10 +640,25 @@ function EditItemModal({
 
 export function MenuPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const outletId = user?.outletId ?? "";
+  const { data: outlet } = useOutletInfo(outletId);
   const { data: categories = [] } = useMenuCategories(outletId);
   const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>();
   const { data: menuItems, isLoading } = useMenuItems(outletId, activeCategoryId);
+  const reorderItems = useMutation({
+    mutationFn: async (items: MenuItem[]) => {
+      await Promise.all(items.map((item, index) => updateMenuItem(item.id, { sortOrder: index })));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.outlet.detail(outletId) });
+      toastBus.emit("Menu order updated", "success");
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: outletAdminKeys.outlet.detail(outletId) });
+      toastBus.emit(err.message || "Could not update menu order", "error");
+    },
+  });
   const serverItems = menuItems ?? EMPTY_MENU_ITEMS;
   const sortKey = activeCategoryId ?? "all";
   const [itemOrderByCategory, setItemOrderByCategory] = useState<Record<string, string[]>>({});
@@ -686,7 +699,7 @@ export function MenuPage() {
       ...current,
       [sortKey]: nextItems.map((item) => item.id),
     }));
-    // TODO: persist via PATCH .../menu/items/reorder when endpoint is ready
+    reorderItems.mutate(nextItems);
   }
 
   // Resolve category name for the selected item
@@ -694,6 +707,13 @@ export function MenuPage() {
     ? categories.find((c) => c.id === serverItems.find((i) => i.id === selectedItemId)?.categoryId)
         ?.name
     : undefined;
+  const availableModifierGroupIds = new Set(
+    outlet?.itemModifierGroups.map((group) => group.id) ?? [],
+  );
+  const assignedModifierGroupIds = (itemId: string) =>
+    outlet?.menuItemModifierGroups
+      .filter((link) => link.menuItemId === itemId && availableModifierGroupIds.has(link.groupId))
+      .map((link) => link.groupId) ?? [];
 
   if (selectedItemId) {
     return (
@@ -710,6 +730,7 @@ export function MenuPage() {
             item={editingItem}
             outletId={outletId}
             categories={categories}
+            assignedModifierGroupIds={assignedModifierGroupIds(editingItem.id)}
             onClose={() => setEditingItem(null)}
           />
         )}
@@ -718,20 +739,22 @@ export function MenuPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="min-w-0 overflow-x-hidden p-4 sm:p-6">
+      <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-bold text-slate-900">Menu &amp; Inventory Manager</h1>
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          className="w-full rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 sm:w-auto"
         >
           + Add New Item
         </button>
       </div>
 
+      <ModifierManagementCard outletId={outletId} />
+
       {categories.length > 0 && (
-        <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+        <div className="mb-5 flex max-w-full gap-2 overflow-x-auto pb-1">
           <TabButton
             label="All"
             active={!activeCategoryId}
@@ -749,7 +772,7 @@ export function MenuPage() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
           ))}
@@ -758,14 +781,11 @@ export function MenuPage() {
         <div className="py-16 text-center text-sm text-slate-400">No items in this category.</div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={sortedItems.map((i) => i.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="grid grid-cols-2 gap-4">
+          <SortableContext items={sortedItems.map((i) => i.id)} strategy={rectSortingStrategy}>
+            <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
               {sortedItems.map((item) => (
                 <SortableMenuItemCard
-                  key={item.id}
+                  key={`${item.id}:${item.isAvailable}`}
                   item={item}
                   outletId={outletId}
                   onSelect={() => setSelectedItemId(item.id)}
@@ -790,6 +810,7 @@ export function MenuPage() {
           item={editingItem}
           outletId={outletId}
           categories={categories}
+          assignedModifierGroupIds={assignedModifierGroupIds(editingItem.id)}
           onClose={() => setEditingItem(null)}
         />
       )}

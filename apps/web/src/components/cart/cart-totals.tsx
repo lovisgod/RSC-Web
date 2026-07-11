@@ -26,8 +26,11 @@ export function CartTotals({ cart }: { cart: Cart }) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-gray-900">{group.outletName}</p>
-                {group.items.map((item) => (
-                  <p key={item.id} className="text-xs text-gray-400 mt-0.5">
+                {group.items.map((item, index) => (
+                  <p
+                    key={item.lineId ?? `${item.id}-${index}`}
+                    className="text-xs text-gray-400 mt-0.5"
+                  >
                     {itemLabel(item)}
                   </p>
                 ))}

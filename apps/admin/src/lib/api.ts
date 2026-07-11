@@ -1,13 +1,21 @@
 import axios, { type AxiosError } from "axios";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import {
+  adminOrdersQuerySchema,
+  adminOrdersResultSchema,
   operationsQueueSchema,
   operationsStatsQuerySchema,
   operationsSummarySchema,
   orderPulseQuerySchema,
   orderPulseSchema,
+  outletSummarySchema,
   platformChargesSchema,
+  createRiderInputSchema,
+  riderResultSchema,
   updatePlatformChargesInputSchema,
+  type ItemModifier,
+  type ItemModifierGroup,
+  type MenuCategorySummary,
   type OperationsQueue,
   type OperationsStatsQuery,
   type OperationsSummary,
@@ -15,25 +23,28 @@ import {
   type OrderPulseQuery,
   type PlatformCharges,
   type AdminResult,
+  type AdminOrdersQuery,
+  type AdminOrdersResult,
   type CreateAdminInput,
-  type CustomerOrder,
   type ForgotPasswordResult,
   type LoginResult,
   type LogoutResult,
   type MenuItem,
   type NotificationCampaign,
   type CreateNotificationCampaignInput,
-  type OrderLineItem,
+  type CreateRiderInput,
   type OutletSummary,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
-  type SubOrderDetail,
+  type RiderResult,
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
+
+export type { AdminOrdersQuery, AdminOrdersResult } from "@rsc/contracts";
 
 // ─── Axios instance ───────────────────────────────────────────────────────────
 
@@ -170,25 +181,30 @@ export interface OutletBody {
   description?: string;
   cuisineType: string;
   isOnline?: boolean;
-  momentSubaccountCode: string;
+  paystackSubaccountCode?: string | null;
   imageUrl?: string;
 }
 
-export const listOutlets = (): Promise<OutletSummary[]> => get("/api/v1/outlets");
+export const listOutlets = (): Promise<OutletSummary[]> =>
+  get<unknown>("/api/v1/outlets").then((data) => outletSummarySchema.array().parse(data));
 
-export const getOutlet = (id: string): Promise<OutletSummary> => get(`/api/v1/outlets/${id}`);
+export const getOutlet = (id: string): Promise<OutletSummary> =>
+  get<unknown>(`/api/v1/outlets/${id}`).then((data) => outletSummarySchema.parse(data));
 
 export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
-  post("/api/v1/outlets", body);
+  post<unknown>("/api/v1/outlets", body).then((data) => outletSummarySchema.parse(data));
 
 export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<OutletSummary> =>
-  patchReq(`/api/v1/outlets/${id}`, body);
+  patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) => outletSummarySchema.parse(data));
 
 /** PATCH — dedicated endpoint for toggling online status only */
 export const toggleOutletOnlineStatus = (
   id: string,
   body: { isOnline: boolean },
-): Promise<OutletSummary> => patchReq(`/api/v1/outlets/${id}/online-status`, body);
+): Promise<OutletSummary> =>
+  patchReq<unknown>(`/api/v1/outlets/${id}/online-status`, body).then((data) =>
+    outletSummarySchema.parse(data),
+  );
 
 export const deleteOutlet = (id: string): Promise<void> =>
   http.delete(`/api/v1/outlets/${id}`).then(() => undefined);
@@ -200,46 +216,124 @@ export const updateMenuItemAvailability = (
   body: { isAvailable: boolean },
 ): Promise<MenuItem> => patchReq(`/api/v1/menu-items/${id}/availability`, body);
 
+export interface SaveMenuCategoryBody {
+  outletId: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export const createMenuCategory = (body: SaveMenuCategoryBody): Promise<MenuCategorySummary> =>
+  post("/api/v1/menu-categories", body);
+
+export const updateMenuCategory = (
+  categoryId: string,
+  body: Partial<SaveMenuCategoryBody>,
+): Promise<MenuCategorySummary> => patchReq(`/api/v1/menu-categories/${categoryId}`, body);
+
+export const deleteMenuCategory = (categoryId: string): Promise<void> =>
+  http.delete(`/api/v1/menu-categories/${categoryId}`).then(() => undefined);
+
+export interface CreateMenuItemBody {
+  outletId: string;
+  categoryId: string;
+  name: string;
+  description?: string;
+  deliveryTimeRange?: string;
+  priceMinor: number;
+  isAvailable: boolean;
+  sortOrder?: number;
+  modifierGroupIds?: string[];
+}
+
+export type UpdateMenuItemBody = Partial<CreateMenuItemBody> & {
+  imageUrl?: string;
+};
+
+export const createMenuItem = (body: CreateMenuItemBody): Promise<MenuItem> =>
+  post("/api/v1/menu-items", body);
+
+export const uploadMenuItemImage = (itemId: string, file: File): Promise<MenuItem> => {
+  const form = new FormData();
+  form.append("file", file);
+  return http
+    .post<Envelope<MenuItem>>(`/api/v1/menu-items/${itemId}/image`, form)
+    .then((r) => r.data.data);
+};
+
+export const updateMenuItem = (itemId: string, body: UpdateMenuItemBody): Promise<MenuItem> =>
+  patchReq(`/api/v1/menu-items/${itemId}`, body);
+
+export const deleteMenuItem = (itemId: string): Promise<void> =>
+  http.delete(`/api/v1/menu-items/${itemId}`).then(() => undefined);
+
+export const getMenuItemById = (itemId: string): Promise<MenuItem> =>
+  get(`/api/v1/menu-items/${itemId}`);
+
+export const listItemModifierGroups = (outletId: string): Promise<ItemModifierGroup[]> =>
+  get(`/api/v1/item-modifier-groups?outletId=${encodeURIComponent(outletId)}`);
+
+export interface SaveItemModifierGroupBody {
+  outletId: string;
+  name: string;
+  minSelections: number;
+  maxSelections: number;
+  isRequired: boolean;
+  sortOrder: number;
+}
+
+export const createItemModifierGroup = (
+  body: SaveItemModifierGroupBody,
+): Promise<ItemModifierGroup> => post("/api/v1/item-modifier-groups", body);
+
+export const updateItemModifierGroup = (
+  groupId: string,
+  body: Partial<SaveItemModifierGroupBody>,
+): Promise<ItemModifierGroup> => patchReq(`/api/v1/item-modifier-groups/${groupId}`, body);
+
+export const deleteItemModifierGroup = (groupId: string): Promise<void> =>
+  http.delete(`/api/v1/item-modifier-groups/${groupId}`).then(() => undefined);
+
+export interface SaveItemModifierBody {
+  outletId: string;
+  groupId: string;
+  name: string;
+  priceDeltaMinor: number;
+  isAvailable: boolean;
+  sortOrder: number;
+}
+
+export const createItemModifier = (body: SaveItemModifierBody): Promise<ItemModifier> =>
+  post("/api/v1/item-modifiers", body);
+
+export const updateItemModifier = (
+  modifierId: string,
+  body: Partial<SaveItemModifierBody>,
+): Promise<ItemModifier> => patchReq(`/api/v1/item-modifiers/${modifierId}`, body);
+
+export const deleteItemModifier = (modifierId: string): Promise<void> =>
+  http.delete(`/api/v1/item-modifiers/${modifierId}`).then(() => undefined);
+
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-export interface AdminOrdersQuery {
-  outletId?: string;
-  status?: string;
-  subOrderStatus?: string;
-  deliveryMode?: string;
-  customerId?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface AdminOrderItem {
-  order: CustomerOrder;
-  subOrders: SubOrderDetail[];
-  lineItems: OrderLineItem[];
-}
-
-export interface AdminOrdersResult {
-  orders: AdminOrderItem[];
-  total: number;
-  limit: number;
-  offset: number;
-}
+export type AdminOrderItem = AdminOrdersResult["orders"][number];
 
 export const listAdminOrders = (params?: AdminOrdersQuery): Promise<AdminOrdersResult> => {
+  const queryParams = adminOrdersQuerySchema.parse(params ?? {});
   const qs = new URLSearchParams();
-  if (params?.outletId) qs.set("outletId", params.outletId);
-  if (params?.status) qs.set("status", params.status);
-  if (params?.subOrderStatus) qs.set("subOrderStatus", params.subOrderStatus);
-  if (params?.deliveryMode) qs.set("deliveryMode", params.deliveryMode);
-  if (params?.customerId) qs.set("customerId", params.customerId);
-  if (params?.dateFrom) qs.set("dateFrom", params.dateFrom);
-  if (params?.dateTo) qs.set("dateTo", params.dateTo);
-  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
-  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  if (queryParams.outletId) qs.set("outletId", queryParams.outletId);
+  if (queryParams.status) qs.set("status", queryParams.status);
+  if (queryParams.subOrderStatus) qs.set("subOrderStatus", queryParams.subOrderStatus);
+  if (queryParams.deliveryMode) qs.set("deliveryMode", queryParams.deliveryMode);
+  if (queryParams.customerId) qs.set("customerId", queryParams.customerId);
+  if (queryParams.dateFrom) qs.set("dateFrom", queryParams.dateFrom);
+  if (queryParams.dateTo) qs.set("dateTo", queryParams.dateTo);
+  if (queryParams.limit !== undefined) qs.set("limit", String(queryParams.limit));
+  if (queryParams.offset !== undefined) qs.set("offset", String(queryParams.offset));
   const query = qs.toString();
-  return get(`/api/v1/orders/admin${query ? `?${query}` : ""}`);
+  return get<unknown>(`/api/v1/orders/admin${query ? `?${query}` : ""}`).then((data) =>
+    adminOrdersResultSchema.parse(data),
+  );
 };
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -266,6 +360,11 @@ export const scheduleNotificationCampaign = (
 
 export const createOutletAdmin = (body: CreateAdminInput): Promise<AdminResult> =>
   post("/api/v1/auth/admins", body);
+
+export const createRider = (body: CreateRiderInput): Promise<RiderResult> =>
+  post<unknown>("/api/v1/users/riders", createRiderInputSchema.parse(body)).then((data) =>
+    riderResultSchema.parse(data),
+  );
 
 export interface OutletAdminUser {
   id: string;

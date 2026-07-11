@@ -15,6 +15,7 @@ import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
 import type { OrderStatusEvent } from "./order-status-event.entity";
 import { OrdersService } from "./orders.service";
 import { SubOrder } from "./sub-order.entity";
+import type { PiiCryptoService } from "../common/security/pii-crypto.service";
 
 function createMasterOrderQueryBuilder(orders: MasterOrder[], total: number) {
   const queryBuilder = {
@@ -55,9 +56,39 @@ function createService(input: {
         ) ?? null,
       );
     }),
+    findOneBy: vi.fn((where: Partial<Customer>) => {
+      if (where.role === UserRole.ADMIN) {
+        return Promise.resolve(
+          input.adminOutletId === undefined
+            ? null
+            : Object.assign(new Customer(), { id: "admin-id", outletId: input.adminOutletId }),
+        );
+      }
+
+      return Promise.resolve(
+        (input.riders ?? []).find((rider) =>
+          Object.entries(where).every(([key, value]) => rider[key as keyof Customer] === value),
+        ) ?? null,
+      );
+    }),
   };
   const masterOrders = {
     createQueryBuilder: vi.fn(() => queryBuilder),
+    find: vi.fn(({ where }: { where: Partial<MasterOrder> }) =>
+      Promise.resolve(
+        (input.orders ?? []).filter((order) =>
+          Object.entries(where).every(([key, value]) => {
+            const orderValue = order[key as keyof MasterOrder];
+
+            if (value && typeof value === "object" && "_value" in value) {
+              return (value as { _value: unknown[] })._value.includes(orderValue);
+            }
+
+            return orderValue === value;
+          }),
+        ),
+      ),
+    ),
     findOneBy: vi.fn(({ id }: { id: string }) =>
       Promise.resolve((input.orders ?? []).find((order) => order.id === id) ?? null),
     ),
@@ -96,6 +127,9 @@ function createService(input: {
       Promise.resolve(sql.includes("FROM users u") ? (input.availableRiders ?? []) : []),
     ),
   };
+  const piiCrypto = {
+    decrypt: vi.fn((val: string): string => val),
+  };
   const service = new OrdersService(
     users as unknown as Repository<Customer>,
     outlets as unknown as Repository<Outlet>,
@@ -107,6 +141,7 @@ function createService(input: {
     {} as PaymentsService,
     notifications as unknown as NotificationsService,
     realtime as unknown as RealtimeService,
+    piiCrypto as unknown as PiiCryptoService,
   );
 
   return {
@@ -129,6 +164,12 @@ describe(OrdersService.name, () => {
   const adminUser: AuthenticatedUser = {
     id: "admin-id",
     role: UserRole.ADMIN,
+    sessionId: "session-id",
+    accessTokenId: "access-token-id",
+  };
+  const riderUser: AuthenticatedUser = {
+    id: "07c89f55-9343-4e69-bd41-bc18dcaf1478",
+    role: UserRole.RIDER,
     sessionId: "session-id",
     accessTokenId: "access-token-id",
   };
@@ -310,6 +351,53 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("auto-assigns an available rider when an order becomes ready", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.PARTIALLY_READY,
+      deliveryMode: "DELIVERY",
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const outletSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      pickupCode: "123456",
+      status: SubOrderStatus.PREPARING,
+    });
+    const riderId = "07c89f55-9343-4e69-bd41-bc18dcaf1478";
+    const { service, notifications, realtime, dataSource } = createService({
+      adminOutletId: outletId,
+      orders: [order],
+      availableRiders: [{ id: riderId, assignmentCount: 0 }],
+      outlets: [Object.assign(new Outlet(), { id: outletId, name: "Outlet One" })],
+      subOrders: [outletSubOrder],
+    });
+
+    await service.updateStatus(adminUser, outletSubOrder.id, {
+      status: MasterOrderStatus.READY,
+    });
+
+    expect(order.status).toBe(MasterOrderStatus.READY);
+    expect(order.riderId).toBe(riderId);
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: riderId,
+        recipientRole: UserRole.RIDER,
+        type: "ORDER_ASSIGNMENT",
+      }),
+    );
+    expect(realtime.emitOrderStatusUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ masterOrderId: order.id, riderId }),
+    );
+    expect(dataSource.query).toHaveBeenCalledWith(
+      expect.stringContaining('ORDER BY "assignmentCount" ASC'),
+      expect.not.arrayContaining([outletId]),
+    );
+  });
+
   it("returns not found when no available free rider exists", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
@@ -335,6 +423,107 @@ describe(OrdersService.name, () => {
 
     await expect(service.assignRider(adminUser, order.id, {})).rejects.toThrow(
       "No available free rider",
+    );
+  });
+
+  it("lists active dispatches assigned to the calling rider", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: riderUser.id,
+      status: MasterOrderStatus.READY,
+      deliveryMode: "DELIVERY",
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const subOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      pickupCode: "123456",
+      status: SubOrderStatus.READY,
+    });
+    const lineItem = Object.assign(new OrderLineItem(), {
+      id: "a43a459d-a9c0-4c81-a9be-f5ed41d9dfde",
+      masterOrderId: order.id,
+      subOrderId: subOrder.id,
+      itemNameSnapshot: "Jollof Rice",
+      quantity: 2,
+      modifiersSnapshot: [],
+    });
+    const { service } = createService({
+      orders: [order],
+      outlets: [Object.assign(new Outlet(), { id: outletId, name: "Outlet One" })],
+      subOrders: [subOrder],
+      lineItems: [lineItem],
+    });
+
+    const result = await service.listAssignedDispatches(riderUser);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        orderId: order.id,
+        riderId: riderUser.id,
+        outlets: [
+          expect.objectContaining({
+            pickupCode: "123456",
+            items: [expect.objectContaining({ name: "Jollof Rice", quantity: 2 })],
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("lets a rider reject an assigned order and reassigns another fair rider", async () => {
+    const replacementRiderId = "607f5f68-1346-487f-88c9-d1dde472ce28";
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: riderUser.id,
+      status: MasterOrderStatus.READY,
+      deliveryMode: "DELIVERY",
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const subOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      pickupCode: "123456",
+      status: SubOrderStatus.READY,
+    });
+    const { service, masterOrders, statusEvents, notifications, dataSource } = createService({
+      orders: [order],
+      availableRiders: [{ id: replacementRiderId, assignmentCount: 0 }],
+      outlets: [Object.assign(new Outlet(), { id: outletId, name: "Outlet One" })],
+      subOrders: [subOrder],
+    });
+
+    const result = await service.rejectAssignedOrder(riderUser, order.id, {
+      reason: "Bike issue",
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        rejected: true,
+        reassigned: true,
+        previousRiderId: riderUser.id,
+        riderId: replacementRiderId,
+      }),
+    );
+    expect(order.riderId).toBe(replacementRiderId);
+    expect(masterOrders.save).toHaveBeenCalledTimes(2);
+    expect(masterOrders.save).toHaveBeenCalledWith(
+      expect.objectContaining({ riderId: replacementRiderId }),
+    );
+    expect(statusEvents.create).toHaveBeenCalledWith(
+      expect.objectContaining({ note: "Rider rejected assignment: Bike issue" }),
+    );
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({ recipientId: replacementRiderId, type: "ORDER_ASSIGNMENT" }),
+    );
+    expect(dataSource.query).toHaveBeenCalledWith(
+      expect.stringContaining("u.id <> ALL"),
+      expect.arrayContaining([expect.arrayContaining([riderUser.id])]),
     );
   });
 });

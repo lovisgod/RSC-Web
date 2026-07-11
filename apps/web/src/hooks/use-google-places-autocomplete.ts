@@ -16,11 +16,11 @@ export function useGooglePlacesAutocomplete(input: string, enabled = true) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
-  const sessionTokenRef = useRef<unknown | null>(null);
+  const sessionTokenRef = useRef<string | null>(null);
   const isConfigured = isGooglePlacesConfigured();
 
-  const ensureSessionToken = useCallback(async (): Promise<unknown> => {
-    sessionTokenRef.current ??= await createGooglePlacesSessionToken();
+  const ensureSessionToken = useCallback((): string => {
+    sessionTokenRef.current ??= createGooglePlacesSessionToken();
 
     return sessionTokenRef.current;
   }, []);
@@ -36,8 +36,7 @@ export function useGooglePlacesAutocomplete(input: string, enabled = true) {
 
       setIsLoading(true);
       setError(null);
-      void ensureSessionToken()
-        .then((sessionToken) => searchGoogleAddressSuggestions(input, sessionToken))
+      void searchGoogleAddressSuggestions(input, ensureSessionToken())
         .then((nextSuggestions) => {
           if (requestId !== requestIdRef.current) return;
           setSuggestions(nextSuggestions);

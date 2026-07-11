@@ -1,10 +1,23 @@
 import { Button, Input } from "@rsc/ui";
+import { nigerianPhoneNumberSchema } from "@rsc/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { z } from "zod";
 
 import { forgotPassword } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
+
+const identifierSchema = z
+  .string()
+  .trim()
+  .min(1, "Email or phone is required")
+  .refine(
+    (value) =>
+      z.string().email().safeParse(value).success ||
+      nigerianPhoneNumberSchema.safeParse(value).success,
+    "Enter a valid email address or Nigerian phone number",
+  );
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -13,8 +26,8 @@ export function ForgotPasswordPage() {
 
   const { mutate, isPending, error, reset } = useMutation({
     mutationFn: () => {
-      if (!identifier.trim()) throw new Error("Email or phone is required");
-      return forgotPassword({ identifier: identifier.trim() });
+      const parsed = identifierSchema.parse(identifier);
+      return forgotPassword({ identifier: parsed });
     },
     onSuccess: (data) => {
       toastBus.emit("Reset code sent!", "success");
@@ -30,8 +43,9 @@ export function ForgotPasswordPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!identifier.trim()) {
-      setFieldError("Email or phone is required");
+    const parsed = identifierSchema.safeParse(identifier);
+    if (!parsed.success) {
+      setFieldError(parsed.error.issues[0]?.message ?? "Enter a valid email or phone number");
       return;
     }
     setFieldError("");

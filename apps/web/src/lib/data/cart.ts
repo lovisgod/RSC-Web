@@ -1,4 +1,5 @@
 export interface CartItem {
+  lineId?: string;
   id: string;
   name: string;
   notes: string;

@@ -6,9 +6,11 @@ import { toDisplayOutlet, type Outlet } from "@/src/lib/data/outlets";
 export const OUTLETS_QUERY = {
   queryKey: ["outlets"] as const,
   queryFn: () => apiClient.listOutlets(),
-  // Poll so the offline banner reacts to admin toggling in real time.
-  refetchInterval: 5_000,
+  // Outlet status and menu item availability changes are pushed through OutletRealtimeBridge.
+  // Keep this as a normal cache fetch, not a customer-wide polling loop.
+  staleTime: 60_000,
   refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
 };
 
 export function useOutlets() {

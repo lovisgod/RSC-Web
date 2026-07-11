@@ -15,9 +15,12 @@ import { MenuCategoriesController } from "./menu-categories.controller";
 import { MenuCategory } from "./menu-category.entity";
 import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
 import { MenuItemRating } from "./menu-item-rating.entity";
+import { OutletRating } from "./outlet-rating.entity";
 import { MenuItemsController } from "./menu-items.controller";
 import { MenuItem } from "./menu-item.entity";
 import { OutletsController } from "./outlets.controller";
+import { PreparationSuggestion } from "./preparation-suggestion.entity";
+import { PreparationSuggestionsController } from "./preparation-suggestions.controller";
 
 @Module({
   imports: [
@@ -30,9 +33,11 @@ import { OutletsController } from "./outlets.controller";
       MenuCategory,
       MenuItem,
       MenuItemRating,
+      OutletRating,
       ItemModifierGroup,
       ItemModifier,
       MenuItemModifierGroup,
+      PreparationSuggestion,
     ]),
   ],
   controllers: [
@@ -41,6 +46,7 @@ import { OutletsController } from "./outlets.controller";
     MenuItemsController,
     ItemModifierGroupsController,
     ItemModifiersController,
+    PreparationSuggestionsController,
   ],
   providers: [CatalogService],
   exports: [CatalogService],

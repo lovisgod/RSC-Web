@@ -12,6 +12,8 @@ import { MenuCategory } from "./menu-category.entity";
 import { MenuItemModifierGroup } from "./menu-item-modifier-group.entity";
 import { MenuItemRating } from "./menu-item-rating.entity";
 import { MenuItem } from "./menu-item.entity";
+import { OutletRating } from "./outlet-rating.entity";
+import type { PreparationSuggestion } from "./preparation-suggestion.entity";
 
 describe(CatalogService.name, () => {
   const outletId = "4273e96c-2887-49a5-a6d5-269f007f04f0";
@@ -50,6 +52,12 @@ describe(CatalogService.name, () => {
     save: ReturnType<typeof vi.fn>;
     createQueryBuilder: ReturnType<typeof vi.fn>;
   };
+  let outletRatings: {
+    findOneBy: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+    createQueryBuilder: ReturnType<typeof vi.fn>;
+  };
   let groups: {
     find: ReturnType<typeof vi.fn>;
     findOneBy: ReturnType<typeof vi.fn>;
@@ -72,7 +80,10 @@ describe(CatalogService.name, () => {
     save: ReturnType<typeof vi.fn>;
   };
   let media: { uploadImage: ReturnType<typeof vi.fn> };
-  let realtime: { emitOutletStatusUpdate: ReturnType<typeof vi.fn> };
+  let realtime: {
+    emitOutletStatusUpdate: ReturnType<typeof vi.fn>;
+    emitMenuItemAvailabilityUpdate: ReturnType<typeof vi.fn>;
+  };
   let service: CatalogService;
 
   beforeEach(() => {
@@ -126,6 +137,17 @@ describe(CatalogService.name, () => {
         getRawOne: vi.fn().mockResolvedValue({ average: "5.00", count: "1" }),
       })),
     };
+    outletRatings = {
+      findOneBy: vi.fn().mockResolvedValue(null),
+      create: vi.fn((value: Partial<OutletRating>) => Object.assign(new OutletRating(), value)),
+      save: vi.fn((value: OutletRating) => Promise.resolve(value)),
+      createQueryBuilder: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        addSelect: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        getRawOne: vi.fn().mockResolvedValue({ average: "4.50", count: "2" }),
+      })),
+    };
     groups = {
       find: vi.fn().mockResolvedValue([]),
       findOneBy: vi.fn().mockResolvedValue(Object.assign(new ItemModifierGroup(), { outletId })),
@@ -159,6 +181,21 @@ describe(CatalogService.name, () => {
     };
     realtime = {
       emitOutletStatusUpdate: vi.fn(),
+      emitMenuItemAvailabilityUpdate: vi.fn(),
+    };
+    const preparationSuggestions = {
+      find: vi.fn().mockResolvedValue([]),
+      findOneBy: vi.fn().mockResolvedValue(null),
+      create: vi.fn((val: unknown) => val),
+      save: vi.fn((val: unknown) => Promise.resolve(val)),
+      remove: vi.fn().mockResolvedValue(undefined),
+      createQueryBuilder: vi.fn(() => ({
+        where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
+        getMany: vi.fn().mockResolvedValue([]),
+      })),
     };
     service = new CatalogService(
       outlets as unknown as Repository<Outlet>,
@@ -166,9 +203,11 @@ describe(CatalogService.name, () => {
       categories as unknown as Repository<MenuCategory>,
       items as unknown as Repository<MenuItem>,
       ratings as unknown as Repository<MenuItemRating>,
+      outletRatings as unknown as Repository<OutletRating>,
       groups as unknown as Repository<ItemModifierGroup>,
       modifiers as unknown as Repository<ItemModifier>,
       itemGroups as unknown as Repository<MenuItemModifierGroup>,
+      preparationSuggestions as unknown as Repository<PreparationSuggestion>,
       media as never,
       realtime as never,
     );
@@ -212,6 +251,12 @@ describe(CatalogService.name, () => {
 
     expect(result.isAvailable).toBe(false);
     expect(items.save).toHaveBeenCalledWith(expect.objectContaining({ isAvailable: false }));
+    expect(realtime.emitMenuItemAvailabilityUpdate).toHaveBeenCalledWith({
+      menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+      outletId,
+      isAvailable: false,
+      updatedAt: result.updatedAt,
+    });
   });
 
   it("blocks outlet admins from changing outlet online status through generic updates", async () => {
@@ -230,5 +275,32 @@ describe(CatalogService.name, () => {
       isOnline: false,
       updatedAt: result.updatedAt,
     });
+  });
+
+  it("lets customers rate an outlet and updates the aggregate rating", async () => {
+    const customerUser = {
+      id: "9bf9dce7-30c1-4a91-b3a4-37143f0e1bf9",
+      role: UserRole.CUSTOMER,
+      sessionId: "session-id",
+      accessTokenId: "access-token-id",
+    };
+
+    const result = await service.rateOutlet(customerUser, outletId, {
+      rating: 5,
+      comment: "Great food",
+    });
+
+    expect(outletRatings.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outletId,
+        customerId: customerUser.id,
+        rating: 5,
+        comment: "Great food",
+      }),
+    );
+    expect(outlets.save).toHaveBeenCalledWith(
+      expect.objectContaining({ ratingAverage: "4.50", ratingCount: 2 }),
+    );
+    expect(result.id).toBe(outletId);
   });
 });
