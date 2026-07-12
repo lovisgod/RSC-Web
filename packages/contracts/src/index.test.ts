@@ -565,6 +565,7 @@ describe("customer registration contracts", () => {
           },
         ],
         total: 1,
+        totalSubOrders: 1,
         limit: 50,
         offset: 0,
       }),
