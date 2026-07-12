@@ -251,7 +251,7 @@ export function FulfillmentStep({
   }, []);
 
   const subtotal = cart ? cartSubtotalMinor(cart) : 0;
-  const deliveryFee = mode === "delivery" && cart ? cart.deliveryFeeMinor : 0;
+  const deliveryFee = mode === "delivery" && platformCharges ? platformCharges.deliveryFeeMinor : 0;
   const serviceFee = platformCharges?.serviceFeeMinor ?? 0;
 
   const vat = cart
