@@ -395,6 +395,12 @@ export const initiatePaymentInputSchema = z
     deliveryLongitude: z.number().optional(),
     recipientPhone: nigerianPhoneNumberSchema.optional(),
     preparationNote: z.string().max(1000).optional(),
+    subtotalMinor: z.int().nonnegative(),
+    deliveryFeeMinor: z.int().nonnegative(),
+    serviceFeeMinor: z.int().nonnegative(),
+    vatMinor: z.int().nonnegative(),
+    platformCommissionMinor: z.int().nonnegative(),
+    totalMinor: z.int().nonnegative(),
   })
   .strict();
 
@@ -409,6 +415,7 @@ export const initiatePaymentResultSchema = z.object({
     deliveryFeeMinor: z.int().nonnegative(),
     serviceFeeMinor: z.int().nonnegative(),
     vatMinor: z.int().nonnegative(),
+    platformCommissionMinor: z.int().nonnegative(),
     totalMinor: z.int().nonnegative(),
     currency: currencySchema,
   }),
@@ -548,6 +555,7 @@ export const outletSummarySchema = z
     settlementSubaccountCode: z.string().nullable().optional(),
     ratingAverage: z.coerce.number().min(0).max(5).default(0),
     ratingCount: z.int().nonnegative().default(0),
+    vatBps: z.int().min(0).max(10_000).default(0),
     menuCategories: z.array(menuCategorySchema).default([]),
     menuItems: z.array(menuItemSchema).default([]),
     itemModifierGroups: z.array(itemModifierGroupSchema).default([]),
