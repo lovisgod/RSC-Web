@@ -18,8 +18,8 @@ import type {
   MenuItem,
   OutletSummary,
 } from "@rsc/contracts";
-import { ArrowLeft, GripVertical, Pencil, Plus, Trash2, Utensils } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft, GripVertical, Lightbulb, Pencil, Plus, Trash2, Utensils } from "lucide-react";
+import { type FormEvent, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -35,6 +35,9 @@ import {
   getMenuItemById,
   getOutlet,
   listItemModifierGroups,
+  listPreparationSuggestions,
+  createPreparationSuggestion,
+  deletePreparationSuggestion,
   updateItemModifier,
   updateItemModifierGroup,
   updateMenuCategory,
@@ -1138,13 +1141,171 @@ function ModifierManagementCard({ outletId, outlet }: { outletId: string; outlet
   );
 }
 
+// ─── Suggestions Management Card ─────────────────────────────────────────
+
+function SuggestionsManagementCard({ outletId }: { outletId: string }) {
+  const queryClient = useQueryClient();
+  const suggestionsKey = ["admin", "preparation-suggestions", outletId] as const;
+
+  const { data: suggestions = [], isLoading } = useQuery({
+    queryKey: suggestionsKey,
+    queryFn: () => listPreparationSuggestions({ outletId }),
+    enabled: Boolean(outletId),
+    staleTime: 30_000,
+  });
+
+  const [newText, setNewText] = useState("");
+  const [fieldError, setFieldError] = useState<string | null>(null);
+
+  const createMutation = useMutation({
+    mutationFn: (text: string) => createPreparationSuggestion({ text, outletId, isActive: true }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: suggestionsKey });
+      setNewText("");
+      setFieldError(null);
+      toastBus.emit("Preparation suggestion added", "success");
+    },
+    onError: (err: Error) => toastBus.emit(err.message, "error"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deletePreparationSuggestion(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: suggestionsKey });
+      toastBus.emit("Suggestion removed", "success");
+    },
+    onError: (err: Error) => toastBus.emit(err.message, "error"),
+  });
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = newText.trim();
+    if (!trimmed) {
+      setFieldError("Suggestion text is required.");
+      return;
+    }
+    if (trimmed.length > 255) {
+      setFieldError("Must be 255 characters or fewer.");
+      return;
+    }
+    setFieldError(null);
+    createMutation.mutate(trimmed);
+  }
+
+  return (
+    <section className="panel">
+      <div className="staff-panel__head">
+        <div>
+          <h3 className="staff-panel__title">Preparation Suggestions</h3>
+          <p className="staff-panel__subtitle">
+            Quick-fill autocomplete hints shown to customers when leaving notes on an item.
+          </p>
+        </div>
+        <span className="staff-panel__count">{suggestions.length}</span>
+      </div>
+
+      {/* Create form */}
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          display: "flex",
+          gap: "0.5rem",
+          alignItems: "flex-start",
+          marginBottom: "1.25rem",
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <input
+            id="prep-suggestion-input"
+            type="text"
+            placeholder="e.g. No onions, Extra sauce, Well done"
+            value={newText}
+            onChange={(e) => {
+              setNewText(e.target.value);
+              if (fieldError) setFieldError(null);
+            }}
+            disabled={createMutation.isPending}
+            maxLength={255}
+            aria-label="New preparation suggestion"
+            aria-invalid={Boolean(fieldError)}
+            aria-describedby={fieldError ? "prep-suggestion-error" : undefined}
+            style={{
+              width: "100%",
+              padding: "0.5rem 0.75rem",
+              borderRadius: "0.5rem",
+              border: fieldError ? "1.5px solid #e57373" : "1.5px solid #e0e0e0",
+              fontSize: "0.875rem",
+              outline: "none",
+            }}
+          />
+          {fieldError && (
+            <p
+              id="prep-suggestion-error"
+              style={{ color: "#e53935", fontSize: "0.75rem", marginTop: "0.25rem" }}
+            >
+              {fieldError}
+            </p>
+          )}
+        </div>
+        <Button tone="navy" type="submit" disabled={createMutation.isPending}>
+          <Plus size={15} />
+          {createMutation.isPending ? "Adding…" : "Add"}
+        </Button>
+      </form>
+
+      {/* List */}
+      {isLoading ? (
+        <ul className="staff-list">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <li key={i} className="staff-item">
+              <Skeleton variant="text" sx={{ flex: 1, fontSize: "0.9rem" }} />
+            </li>
+          ))}
+        </ul>
+      ) : suggestions.length === 0 ? (
+        <EmptyState
+          icon={<Lightbulb size={28} />}
+          heading="No suggestions yet"
+          body="Add your first preparation hint above."
+        />
+      ) : (
+        <ul className="staff-list">
+          {suggestions.map((suggestion) => (
+            <li key={suggestion.id} className="staff-item">
+              <div className="staff-item__info" style={{ flex: 1 }}>
+                <span className="staff-item__name">{suggestion.text}</span>
+                {!suggestion.isActive && (
+                  <span
+                    className="staff-item__sub"
+                    style={{ color: "#9e9e9e", fontSize: "0.72rem" }}
+                  >
+                    inactive
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="outlet-icon-btn outlet-icon-btn--delete"
+                aria-label={`Remove suggestion: ${suggestion.text}`}
+                disabled={deleteMutation.isPending}
+                onClick={() => deleteMutation.mutate(suggestion.id)}
+              >
+                <Trash2 size={15} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 export function OutletMenuManager({ outletId }: { outletId: string }) {
   const { data: outlet, isLoading } = useOutletMenuData(outletId);
   const queryClient = useQueryClient();
   const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>();
-  const [activeMenuSection, setActiveMenuSection] = useState<"items" | "modifiers" | "categories">(
-    "items",
-  );
+  const [activeMenuSection, setActiveMenuSection] = useState<
+    "items" | "modifiers" | "categories" | "suggestions"
+  >("items");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -1295,6 +1456,13 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
         >
           Categories
         </button>
+        <button
+          type="button"
+          className={`admin-menu-tab${activeMenuSection === "suggestions" ? " admin-menu-tab--active" : ""}`}
+          onClick={() => setActiveMenuSection("suggestions")}
+        >
+          Suggestions
+        </button>
       </div>
 
       {activeMenuSection === "items" && (
@@ -1343,6 +1511,8 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
       {activeMenuSection === "categories" && (
         <CategoryManagementCard outletId={outletId} outlet={outlet} />
       )}
+
+      {activeMenuSection === "suggestions" && <SuggestionsManagementCard outletId={outletId} />}
 
       {showAddModal && (
         <MenuItemModal

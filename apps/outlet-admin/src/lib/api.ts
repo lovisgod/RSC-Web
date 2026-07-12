@@ -354,6 +354,7 @@ const ACTIVE_QUEUE_SUB_ORDER_STATUSES = new Set<SubOrderStatus>([
 
 export function isActiveQueueOrder(order: PosSubOrder): boolean {
   return (
+    order.masterOrderStatus !== "PENDING_PAYMENT" &&
     order.masterOrderStatus !== "DELIVERED" &&
     order.masterOrderStatus !== "CANCELLED" &&
     ACTIVE_QUEUE_SUB_ORDER_STATUSES.has(order.status)
