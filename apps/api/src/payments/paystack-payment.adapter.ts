@@ -110,6 +110,7 @@ export class PaystackPaymentAdapter implements PaymentAdapter {
       currency: input.currency,
       reference: input.reference,
       ...(splitCode ? { split_code: splitCode } : {}),
+      ...(input.returnUrl ? { callback_url: input.returnUrl } : {}),
     };
 
     try {
