@@ -122,6 +122,59 @@ describe(MomentPaymentAdapter.name, () => {
 
       fetchMock.mockRestore();
     });
+
+    it("uses a mobile return URL when one is provided", async () => {
+      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => {
+          await Promise.resolve();
+          return {
+            id: "ps_mobile",
+            session_url: "https://moment.momentpay.io/checkout/ckt_mobile",
+          };
+        },
+      } as unknown as Response);
+
+      await adapter.initiate({
+        email: "customer@example.com",
+        amountMinor: 925500,
+        currency: "NGN",
+        reference: "pmt_master_mobile",
+        returnUrl: "rsc://payment/return",
+        splitRoutes: [
+          {
+            outletId: "outlet_1",
+            subaccountCode: "salmas_423fsdz432",
+            grossMinor: 660000,
+            commissionMinor: 66000,
+            netMinor: 594000,
+          },
+        ],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.momentpay.net/collect/payment_sessions",
+        expect.objectContaining({
+          body: JSON.stringify({
+            amount: 925500,
+            currency: "NGN",
+            type: "one_time",
+            external_reference: "pmt_master_mobile",
+            metadata: {
+              salmas_423fsdz432: "594000",
+            },
+            options: {
+              checkout_options: {
+                presentation_mode: { mode: "redirect" },
+                return_url: "rsc://payment/return?reference=pmt_master_mobile",
+              },
+            },
+          }),
+        }),
+      );
+
+      fetchMock.mockRestore();
+    });
   });
 
   describe("verify", () => {

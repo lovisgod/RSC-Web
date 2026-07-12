@@ -252,12 +252,14 @@ describe(PaymentsService.name, () => {
         vatMinor: 49500,
         platformCommissionMinor: 66000,
         totalMinor: 925500,
+        returnUrl: "rsc://payment/return",
       },
     );
 
     expect(initiatePayment).toHaveBeenCalledWith(
       expect.objectContaining({
         amountMinor: 925500,
+        returnUrl: "rsc://payment/return",
       }),
     );
   });
@@ -432,6 +434,17 @@ describe(PaymentsService.name, () => {
           { ...validPayload, totalMinor: 600000 },
         ),
       ).rejects.toThrow(/Total mismatch/);
+    });
+
+    it("throws BadRequestException on invalid return URL", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, returnUrl: "not-a-url" },
+        ),
+      ).rejects.toThrow(/Payment return URL/);
+
+      expect(initiatePayment).not.toHaveBeenCalled();
     });
   });
 });

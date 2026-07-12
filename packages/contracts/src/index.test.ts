@@ -6,6 +6,7 @@ import {
   adminOrdersResultSchema,
   createAdminInputSchema,
   customerOrderSchema,
+  initiatePaymentInputSchema,
   loginInputSchema,
   menuItemsPageSchema,
   loginResultSchema,
@@ -75,6 +76,52 @@ describe("platform charges contracts", () => {
       updatePlatformChargesInputSchema.parse({ platformCommissionBps: 10_001 }),
     ).toThrow();
     expect(() => updatePlatformChargesInputSchema.parse({ currency: "NGN" })).toThrow();
+  });
+});
+
+describe("payment contracts", () => {
+  it("accepts an optional mobile return URL on payment initiation", () => {
+    expect(
+      initiatePaymentInputSchema.parse({
+        items: [
+          {
+            menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            quantity: 1,
+            modifiers: [],
+          },
+        ],
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "12 Admiralty Way",
+        deliveryLatitude: 6.4474,
+        deliveryLongitude: 3.4542,
+        subtotalMinor: 660000,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 0,
+        vatMinor: 49500,
+        platformCommissionMinor: 66000,
+        totalMinor: 925500,
+        returnUrl: "rsc://payment/return",
+      }),
+    ).toEqual({
+      items: [
+        {
+          menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+          quantity: 1,
+          modifiers: [],
+        },
+      ],
+      deliveryMode: "DELIVERY",
+      deliveryAddress: "12 Admiralty Way",
+      deliveryLatitude: 6.4474,
+      deliveryLongitude: 3.4542,
+      subtotalMinor: 660000,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 0,
+      vatMinor: 49500,
+      platformCommissionMinor: 66000,
+      totalMinor: 925500,
+      returnUrl: "rsc://payment/return",
+    });
   });
 });
 

@@ -12,6 +12,7 @@ export interface InitiateProviderPaymentInput {
   currency: "NGN";
   reference: string;
   splitRoutes: PaymentSplitRoute[];
+  returnUrl?: string;
 }
 
 export interface InitiateProviderPaymentResult {
