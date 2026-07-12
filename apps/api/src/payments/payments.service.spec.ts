@@ -82,7 +82,7 @@ describe(PaymentsService.name, () => {
       findOneBy: vi.fn().mockResolvedValue({
         id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
         masterOrderId: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
-        amountMinor: 600000,
+        amountMinor: 645000,
         currency: "NGN",
         gateway: "local",
         reference: "RSC-reference",
@@ -183,6 +183,12 @@ describe(PaymentsService.name, () => {
               quantity: 1,
             },
           ],
+          subtotalMinor: 450000,
+          deliveryFeeMinor: 150000,
+          serviceFeeMinor: 0,
+          vatMinor: 0,
+          platformCommissionMinor: 45000,
+          totalMinor: 645000,
         },
       ),
     ).rejects.toThrow(BadRequestException);
@@ -269,6 +275,12 @@ describe(PaymentsService.name, () => {
             quantity: 1,
           },
         ],
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 0,
+        vatMinor: 0,
+        platformCommissionMinor: 45000,
+        totalMinor: 645000,
       },
     );
 
@@ -280,5 +292,80 @@ describe(PaymentsService.name, () => {
       expect.any(Function),
       expect.objectContaining({ preparationNote: "No onions across the order" }),
     );
+  });
+
+  describe("Initiate totals validation", () => {
+    const validPayload = {
+      deliveryMode: "DELIVERY" as const,
+      deliveryAddress: "12 Admiralty Way",
+      deliveryLatitude: 6.4474,
+      deliveryLongitude: 3.4542,
+      items: [
+        {
+          menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+          quantity: 1,
+        },
+      ],
+      subtotalMinor: 450000,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 0,
+      vatMinor: 0,
+      platformCommissionMinor: 45000,
+      totalMinor: 645000,
+    };
+
+    it("throws BadRequestException on subtotalMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, subtotalMinor: 400000 },
+        ),
+      ).rejects.toThrow(/Subtotal mismatch/);
+    });
+
+    it("throws BadRequestException on deliveryFeeMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, deliveryFeeMinor: 100000 },
+        ),
+      ).rejects.toThrow(/Delivery fee mismatch/);
+    });
+
+    it("throws BadRequestException on serviceFeeMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, serviceFeeMinor: 100 },
+        ),
+      ).rejects.toThrow(/Service fee mismatch/);
+    });
+
+    it("throws BadRequestException on vatMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, vatMinor: 100 },
+        ),
+      ).rejects.toThrow(/VAT mismatch/);
+    });
+
+    it("throws BadRequestException on platformCommissionMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, platformCommissionMinor: 100 },
+        ),
+      ).rejects.toThrow(/Platform commission mismatch/);
+    });
+
+    it("throws BadRequestException on totalMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, totalMinor: 600000 },
+        ),
+      ).rejects.toThrow(/Total mismatch/);
+    });
   });
 });

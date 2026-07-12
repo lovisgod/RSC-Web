@@ -87,6 +87,36 @@ export class InitiatePaymentDto {
   @IsString()
   @Length(1, 1_000)
   preparationNote?: string;
+
+  @ApiProperty({ example: 450000 })
+  @IsInt()
+  @Min(0)
+  subtotalMinor!: number;
+
+  @ApiProperty({ example: 150000 })
+  @IsInt()
+  @Min(0)
+  deliveryFeeMinor!: number;
+
+  @ApiProperty({ example: 0 })
+  @IsInt()
+  @Min(0)
+  serviceFeeMinor!: number;
+
+  @ApiProperty({ example: 33750 })
+  @IsInt()
+  @Min(0)
+  vatMinor!: number;
+
+  @ApiProperty({ example: 45000 })
+  @IsInt()
+  @Min(0)
+  platformCommissionMinor!: number;
+
+  @ApiProperty({ example: 678750 })
+  @IsInt()
+  @Min(0)
+  totalMinor!: number;
 }
 
 export class ProcessRefundDto {

@@ -230,6 +230,9 @@ export class OrdersService {
   async reorder(user: AuthenticatedUser, id: string) {
     const order = await this.requireCustomerOrder(user, id);
     const lines = await this.lineItems.find({ where: { masterOrderId: order.id } });
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const platformCommissionMinor = subOrders.reduce((sum, so) => sum + so.commissionMinor, 0);
+
     const input: InitiatePaymentDto = {
       deliveryMode: order.deliveryMode,
       items: lines
@@ -242,6 +245,12 @@ export class OrdersService {
           })),
           ...(line.customerNote ? { customerNote: line.customerNote } : {}),
         })),
+      subtotalMinor: order.subtotalMinor,
+      deliveryFeeMinor: order.deliveryFeeMinor,
+      serviceFeeMinor: order.serviceFeeMinor,
+      vatMinor: order.vatMinor,
+      platformCommissionMinor,
+      totalMinor: order.totalMinor,
     };
     if (order.deliveryAddress) {
       input.deliveryAddress = order.deliveryAddress;

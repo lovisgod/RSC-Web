@@ -35,6 +35,9 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
     // Use server-calculated totals from the initiatePayment response
     const { totals, groups } = snapshot;
     const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : "7.5";
+    const commPct = charges
+      ? (charges.platformCommissionBps / 100).toFixed(2).replace(/\.?0+$/, "")
+      : "10";
 
     return (
       <Card style={{ padding: 0 }} className="overflow-hidden">
@@ -72,6 +75,13 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
             value={totals.deliveryFeeMinor === 0 ? "Free" : formatNaira(totals.deliveryFeeMinor)}
           />
           <FeeLine label={`VAT (${vatPct}%)`} value={formatNaira(totals.vatMinor)} muted />
+          {totals.platformCommissionMinor > 0 && (
+            <FeeLine
+              label={`Platform commission (${commPct}%)`}
+              value={formatNaira(totals.platformCommissionMinor)}
+              muted
+            />
+          )}
           {totals.serviceFeeMinor > 0 && (
             <FeeLine label="Service fee" value={formatNaira(totals.serviceFeeMinor)} muted />
           )}

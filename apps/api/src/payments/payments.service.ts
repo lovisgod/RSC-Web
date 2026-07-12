@@ -212,7 +212,7 @@ export class PaymentsService {
 
       return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
     }, 0);
-    const totalMinor = subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor;
+
     const splitRoutes: PaymentSplitRoute[] = outletIds.map((outletId) => {
       const grossMinor = grouped.get(outletId)!.reduce((sum, line) => sum + line.lineTotalMinor, 0);
       const commissionMinor = Math.round(
@@ -227,6 +227,40 @@ export class PaymentsService {
         netMinor: grossMinor - commissionMinor,
       };
     });
+
+    const platformCommissionMinor = splitRoutes.reduce((sum, r) => sum + r.commissionMinor, 0);
+    const totalMinor =
+      subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor + platformCommissionMinor;
+
+    // Validate client-provided totals to prevent cheating/manipulation
+    if (input.subtotalMinor !== subtotalMinor) {
+      throw new BadRequestException(
+        `Subtotal mismatch: expected ${subtotalMinor}, got ${input.subtotalMinor}`,
+      );
+    }
+    if (input.deliveryFeeMinor !== deliveryFeeMinor) {
+      throw new BadRequestException(
+        `Delivery fee mismatch: expected ${deliveryFeeMinor}, got ${input.deliveryFeeMinor}`,
+      );
+    }
+    if (input.serviceFeeMinor !== serviceFeeMinor) {
+      throw new BadRequestException(
+        `Service fee mismatch: expected ${serviceFeeMinor}, got ${input.serviceFeeMinor}`,
+      );
+    }
+    if (input.vatMinor !== vatMinor) {
+      throw new BadRequestException(`VAT mismatch: expected ${vatMinor}, got ${input.vatMinor}`);
+    }
+    if (input.platformCommissionMinor !== platformCommissionMinor) {
+      throw new BadRequestException(
+        `Platform commission mismatch: expected ${platformCommissionMinor}, got ${input.platformCommissionMinor}`,
+      );
+    }
+    if (input.totalMinor !== totalMinor) {
+      throw new BadRequestException(
+        `Total mismatch: expected ${totalMinor}, got ${input.totalMinor}`,
+      );
+    }
     const reference = `RSC-${randomUUID()}`;
     const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
     const recipientPhone = this.normalizeRecipientPhone(input.recipientPhone);
@@ -329,6 +363,7 @@ export class PaymentsService {
         deliveryFeeMinor,
         serviceFeeMinor,
         vatMinor,
+        platformCommissionMinor,
         totalMinor,
         currency: "NGN",
       },

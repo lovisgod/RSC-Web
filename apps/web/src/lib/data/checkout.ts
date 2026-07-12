@@ -64,6 +64,7 @@ export interface OrderSnapshot {
     deliveryFeeMinor: number;
     serviceFeeMinor: number;
     vatMinor: number;
+    platformCommissionMinor: number;
     totalMinor: number;
   };
 }
