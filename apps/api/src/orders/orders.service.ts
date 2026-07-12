@@ -47,6 +47,7 @@ export interface AdminOrderListResult {
     lineItems: OrderLineItem[];
   }>;
   total: number;
+  totalSubOrders: number;
   limit: number;
   offset: number;
 }
@@ -182,7 +183,7 @@ export class OrdersService {
     const orderIds = orders.map((order) => order.id);
 
     if (orderIds.length === 0) {
-      return { orders: [], total, limit, offset };
+      return { orders: [], total, totalSubOrders: 0, limit, offset };
     }
 
     const subOrderWhere = {
@@ -216,6 +217,7 @@ export class OrdersService {
         lineItems: lineItems.filter((lineItem) => lineItem.masterOrderId === order.id),
       })),
       total,
+      totalSubOrders: subOrders.length,
       limit,
       offset,
     };

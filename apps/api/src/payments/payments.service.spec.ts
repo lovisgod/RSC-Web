@@ -18,6 +18,8 @@ import type { RealtimeService } from "../realtime/realtime.service";
 import type { Payment } from "./payment.entity";
 import { PaymentStatus } from "./payment.entity";
 import type {
+  InitiateProviderPaymentInput,
+  InitiateProviderPaymentResult,
   PaymentAdapter,
   RefundProviderPaymentInput,
   RefundProviderPaymentResult,
@@ -42,6 +44,9 @@ describe(PaymentsService.name, () => {
   let dataSource: { query: ReturnType<typeof vi.fn>; transaction: ReturnType<typeof vi.fn> };
   let delivery: { validateAddress: ReturnType<typeof vi.fn> };
   let paymentAdapter: PaymentAdapter;
+  let initiatePayment: (
+    input: InitiateProviderPaymentInput,
+  ) => Promise<InitiateProviderPaymentResult>;
   let refundPayment: (input: RefundProviderPaymentInput) => Promise<RefundProviderPaymentResult>;
   let realtime: { emitSuborderNew: ReturnType<typeof vi.fn> };
 
@@ -114,14 +119,15 @@ describe(PaymentsService.name, () => {
         status: "SUCCESS",
         providerResponse: {},
       });
+    initiatePayment = vi.fn().mockResolvedValue({
+      gateway: "local",
+      reference: "RSC-reference",
+      status: "SUCCESS",
+      checkoutUrl: null,
+      providerResponse: {},
+    });
     paymentAdapter = {
-      initiate: vi.fn().mockResolvedValue({
-        gateway: "local",
-        reference: "RSC-reference",
-        status: "SUCCESS",
-        checkoutUrl: null,
-        providerResponse: {},
-      }),
+      initiate: initiatePayment,
       verify: vi.fn().mockResolvedValue({
         status: "SUCCESS",
         amountMinor: 0,
@@ -194,6 +200,66 @@ describe(PaymentsService.name, () => {
     ).rejects.toThrow(BadRequestException);
 
     expect(dataSource.transaction).not.toHaveBeenCalled();
+  });
+
+  it("sends VAT and platform commission in the provider payment amount", async () => {
+    menuItems.findBy.mockResolvedValue([
+      Object.assign(new MenuItem(), {
+        id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+        outletId,
+        name: "Garlic Bread",
+        priceMinor: 180000,
+        isAvailable: true,
+      }),
+    ]);
+    outlets.findBy.mockResolvedValue([
+      Object.assign(new Outlet(), {
+        id: outletId,
+        name: "Farfallino Kitchen",
+        latitude: 6.4474,
+        longitude: 3.4542,
+        deliveryRadiusKm: 15,
+        isOnline: true,
+        vatBps: 750,
+        settlementSubaccountCode: "fafallino_423fsdz432",
+      }),
+    ]);
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: "https://moment.example/checkout",
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    await service.initiate(
+      { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+      {
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "12 Admiralty Way",
+        deliveryLatitude: 6.4474,
+        deliveryLongitude: 3.4542,
+        items: [{ menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9", quantity: 1 }],
+        subtotalMinor: 180000,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 0,
+        vatMinor: 13500,
+        platformCommissionMinor: 18000,
+        totalMinor: 361500,
+      },
+    );
+
+    expect(initiatePayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amountMinor: 361500,
+      }),
+    );
   });
 
   it("processes a super admin refund for a successful payment", async () => {

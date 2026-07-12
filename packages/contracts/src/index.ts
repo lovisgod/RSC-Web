@@ -700,6 +700,7 @@ export const adminOrderSummarySchema = z.object({
 export const adminOrdersResultSchema = z.object({
   orders: z.array(adminOrderSummarySchema),
   total: z.int().nonnegative(),
+  totalSubOrders: z.int().nonnegative(),
   limit: z.int().min(1).max(100),
   offset: z.int().min(0),
 });
