@@ -10,7 +10,6 @@ import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { cartSubtotalMinor, formatNaira } from "@/src/lib/data/cart";
 import {
-  VAT_RATE,
   type DeliveryForm,
   type DeliveryZone,
   type FulfillmentMode,
@@ -21,6 +20,7 @@ import { geocodeAddress } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
+import { calcCharges, usePlatformCharges } from "@/src/hooks/use-platform-charges";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -57,6 +57,7 @@ export function FulfillmentStep({
   const qc = useQueryClient();
 
   const { data: savedAddresses = [] } = useDeliveryAddresses();
+  const { data: charges } = usePlatformCharges();
   const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? null;
 
   const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
@@ -246,9 +247,18 @@ export function FulfillmentStep({
   }, []);
 
   const subtotal = cart ? cartSubtotalMinor(cart) : 0;
-  const deliveryFee = mode === "delivery" && cart ? cart.deliveryFeeMinor : 0;
-  const vat = Math.round((subtotal + deliveryFee) * VAT_RATE);
-  const grandTotal = subtotal + deliveryFee + vat;
+  const fees = charges
+    ? calcCharges(subtotal, charges, { includeDelivery: mode === "delivery" })
+    : null;
+  const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : "—";
+  const commissionPct = charges
+    ? (charges.platformCommissionBps / 100).toFixed(2).replace(/\.?0+$/, "")
+    : "—";
+  const deliveryFee = fees?.delivery ?? 0;
+  const vat = fees?.vat ?? 0;
+  const platformCommission = fees?.commission ?? 0;
+  const serviceFee = fees?.service ?? 0;
+  const grandTotal = fees?.total ?? subtotal;
 
   const initiateMutation = useMutation({
     onError: (err) => {
@@ -281,7 +291,7 @@ export function FulfillmentStep({
         ...(onBehalf ? { recipientPhone: recipientPhone.trim() } : {}),
       };
 
-      return apiClient.initiatePayment(
+      const payload =
         mode === "delivery"
           ? {
               ...base,
@@ -289,8 +299,9 @@ export function FulfillmentStep({
               deliveryLatitude: coords!.latitude,
               deliveryLongitude: coords!.longitude,
             }
-          : base,
-      );
+          : base;
+
+      return apiClient.initiatePayment(payload);
     },
     onSuccess: (result) => {
       // Snapshot cart before clearing so the sidebar stays populated on later steps
@@ -306,7 +317,14 @@ export function FulfillmentStep({
             unitPriceMinor: item.unitPriceMinor,
           })),
         })),
-        totals: result.totals,
+        totals: {
+          subtotalMinor: subtotal,
+          deliveryFeeMinor: deliveryFee,
+          serviceFeeMinor: serviceFee,
+          vatMinor: vat,
+          platformCommissionMinor: platformCommission,
+          totalMinor: grandTotal,
+        },
       };
       onComplete(
         {
@@ -573,9 +591,19 @@ export function FulfillmentStep({
             <span>{deliveryFee === 0 ? "₦0" : formatNaira(deliveryFee)}</span>
           </div>
           <div className="flex justify-between text-gray-500">
-            <span>VAT (7.5%)</span>
+            <span>VAT ({vatPct}%)</span>
             <span>{formatNaira(vat)}</span>
           </div>
+          <div className="flex justify-between text-gray-500">
+            <span>Platform commission ({commissionPct}%)</span>
+            <span>{formatNaira(platformCommission)}</span>
+          </div>
+          {serviceFee > 0 && (
+            <div className="flex justify-between text-gray-500">
+              <span>Service fee</span>
+              <span>{formatNaira(serviceFee)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200">
             <span>Grand Total</span>
             <span style={{ color: "var(--rsc-dark)" }}>{formatNaira(grandTotal)}</span>

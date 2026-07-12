@@ -8,10 +8,17 @@ import {
   type Cart,
 } from "@/src/lib/data/cart";
 import { CheckoutButton } from "@/src/components/cart/checkout-button";
+import { calcCharges, usePlatformCharges } from "@/src/hooks/use-platform-charges";
+
+function pctFromBps(bps: number): string {
+  return (bps / 100).toFixed(2).replace(/\.?0+$/, "");
+}
 
 export function CartTotals({ cart }: { cart: Cart }) {
+  const { data: charges } = usePlatformCharges();
   const subtotal = cartSubtotalMinor(cart);
-  const total = subtotal + cart.deliveryFeeMinor;
+  const fees = charges ? calcCharges(subtotal, charges) : null;
+  const total = fees?.total ?? subtotal;
 
   return (
     <Card style={{ padding: 0 }} className="flex flex-col overflow-hidden">
@@ -50,8 +57,30 @@ export function CartTotals({ cart }: { cart: Cart }) {
         </div>
         <div className="flex justify-between text-sm text-gray-500">
           <span>Delivery</span>
-          <span className="font-medium text-gray-900">{formatNaira(cart.deliveryFeeMinor)}</span>
+          <span className="font-medium text-gray-900">
+            {fees ? formatNaira(fees.delivery) : "—"}
+          </span>
         </div>
+        <div className="flex justify-between text-sm text-gray-500">
+          <span>{charges ? `VAT (${pctFromBps(charges.defaultVatBps)}%)` : "VAT"}</span>
+          <span className="font-medium text-gray-900">{fees ? formatNaira(fees.vat) : "—"}</span>
+        </div>
+        <div className="flex justify-between text-sm text-gray-500">
+          <span>
+            {charges
+              ? `Platform commission (${pctFromBps(charges.platformCommissionBps)}%)`
+              : "Platform commission"}
+          </span>
+          <span className="font-medium text-gray-900">
+            {fees ? formatNaira(fees.commission) : "—"}
+          </span>
+        </div>
+        {fees && fees.service > 0 && (
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>Service fee</span>
+            <span className="font-medium text-gray-900">{formatNaira(fees.service)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-gray-100">
           <span>Total</span>
           <span>{formatNaira(total)}</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@rsc/ui";
-import { ExternalLink } from "lucide-react";
+import { AlertCircle, ExternalLink } from "lucide-react";
 
 import { formatNaira } from "@/src/lib/data/cart";
 
@@ -9,20 +9,17 @@ export function PaymentStep({
   checkoutUrl,
   totalMinor,
   onBack,
-  onSuccess,
 }: {
   checkoutUrl: string | null;
   totalMinor: number | null;
   onBack: () => void;
-  onSuccess: () => void;
 }) {
-  function handleContinue() {
-    if (checkoutUrl) {
-      window.location.assign(checkoutUrl);
-      return;
-    }
+  const isProviderUnavailable = !checkoutUrl;
 
-    onSuccess();
+  function handleContinue() {
+    if (!checkoutUrl) return;
+
+    window.location.assign(checkoutUrl);
   }
 
   return (
@@ -31,7 +28,7 @@ export function PaymentStep({
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Payment</p>
           <h2 className="mt-1 text-lg font-bold text-gray-900">
-            {checkoutUrl ? "Continue to secure payment" : "Order received"}
+            {checkoutUrl ? "Continue to secure payment" : "Payment unavailable"}
           </h2>
         </div>
         {totalMinor !== null && (
@@ -40,22 +37,36 @@ export function PaymentStep({
       </div>
 
       <div className="space-y-5 p-5">
-        <p className="text-sm leading-relaxed text-gray-500">
-          {checkoutUrl
-            ? "We have prepared your order. Continue to the payment gateway to complete payment securely."
-            : "Your order has been created. Payment gateway redirection is not available yet, so you can continue to confirmation."}
-        </p>
+        {isProviderUnavailable ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+              <div>
+                <p className="text-sm font-semibold text-amber-900">
+                  Payment provider currently unavailable.
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-amber-800">
+                  Please try again later. Your cart is still available, so you can return when the
+                  payment gateway is ready.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm leading-relaxed text-gray-500">
+            We have prepared your order. Continue to the payment gateway to complete payment
+            securely.
+          </p>
+        )}
 
-        <Button tone="navy" fullWidth type="button" onClick={handleContinue}>
-          {checkoutUrl ? (
+        {!isProviderUnavailable && (
+          <Button tone="navy" fullWidth type="button" onClick={handleContinue}>
             <span className="inline-flex items-center justify-center gap-2">
               Continue to payment
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </span>
-          ) : (
-            "Continue to confirmation"
-          )}
-        </Button>
+          </Button>
+        )}
 
         <div className="text-center">
           <button
