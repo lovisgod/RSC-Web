@@ -20,7 +20,7 @@ interface FormState {
   description: string;
   cuisineType: string;
   isOnline: boolean;
-  paystackSubaccountCode: string;
+  settlementSubaccountCode: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -28,7 +28,7 @@ const EMPTY_FORM: FormState = {
   description: "",
   cuisineType: "",
   isOnline: true,
-  paystackSubaccountCode: "",
+  settlementSubaccountCode: "",
 };
 
 export function OutletOnboardModal({ open, onClose, outlet }: Props) {
@@ -47,7 +47,7 @@ function getInitialForm(outlet?: OutletSummary): FormState {
     description: outlet.description ?? "",
     cuisineType: outlet.cuisineType,
     isOnline: outlet.isOnline,
-    paystackSubaccountCode: outlet.paystackSubaccountCode ?? "",
+    settlementSubaccountCode: outlet.settlementSubaccountCode ?? "",
   };
 }
 
@@ -87,7 +87,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
         description: form.description.trim(),
         cuisineType: form.cuisineType.trim(),
         isOnline: form.isOnline,
-        paystackSubaccountCode: form.paystackSubaccountCode.trim() || null,
+        settlementSubaccountCode: form.settlementSubaccountCode.trim() || null,
         ...(resolvedImageUrl !== undefined && { imageUrl: resolvedImageUrl }),
       };
 
@@ -257,17 +257,17 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
             />
           </label>
 
-          {/* Subaccount code */}
+          {/* Settlement account code */}
           <label className="field-label">
-            Paystack Subaccount Code
+            Settlement Subaccount Code
             <input
-              className={`field-input${fieldErrors.paystackSubaccountCode ? " field-input--error" : ""}`}
+              className={`field-input${fieldErrors.settlementSubaccountCode ? " field-input--error" : ""}`}
               type="text"
-              placeholder="e.g. ACCT_abc123xyz (optional)"
-              {...field("paystackSubaccountCode")}
+              placeholder="Provider subaccount code (optional)"
+              {...field("settlementSubaccountCode")}
             />
-            {fieldErrors.paystackSubaccountCode && (
-              <span className="field-error">{fieldErrors.paystackSubaccountCode}</span>
+            {fieldErrors.settlementSubaccountCode && (
+              <span className="field-error">{fieldErrors.settlementSubaccountCode}</span>
             )}
           </label>
 

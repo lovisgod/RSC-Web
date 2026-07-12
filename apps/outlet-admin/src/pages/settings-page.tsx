@@ -341,7 +341,7 @@ export function SettingsPage() {
           <div className="p-5 sm:p-6">
             {isLoadingOutlet ? (
               <p className="text-sm text-slate-500">Loading settlement details...</p>
-            ) : outlet?.paystackSubaccountCode && !isEditingBank ? (
+            ) : outlet?.settlementSubaccountCode && !isEditingBank ? (
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
                 <div className="flex items-start gap-3">
                   <span className="text-emerald-600 mt-0.5">
@@ -350,9 +350,9 @@ export function SettingsPage() {
                   <div>
                     <h3 className="text-sm font-bold text-emerald-900">Settlements are active</h3>
                     <p className="mt-1 text-xs text-emerald-700 leading-5">
-                      Your payout bank account is linked to Paystack subaccount:{" "}
+                      Your payout bank account is linked to settlement subaccount:{" "}
                       <code className="bg-emerald-100/80 px-1.5 py-0.5 rounded font-mono text-emerald-950 font-semibold">
-                        {outlet.paystackSubaccountCode}
+                        {outlet.settlementSubaccountCode}
                       </code>
                     </p>
                     {/* <p className="mt-2 text-xs text-slate-500 leading-5">
@@ -486,7 +486,7 @@ export function SettingsPage() {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-3">
-                  {outlet?.paystackSubaccountCode && (
+                  {outlet?.settlementSubaccountCode && (
                     <Button
                       tone="quiet"
                       type="button"

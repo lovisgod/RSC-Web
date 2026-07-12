@@ -323,8 +323,8 @@ export function OutletDetailPage() {
 
               <div className="outlet-detail__meta">
                 <MetaRow
-                  label="Paystack Subaccount Code"
-                  value={outlet.paystackSubaccountCode ?? "—"}
+                  label="Settlement Subaccount Code"
+                  value={outlet.settlementSubaccountCode ?? "—"}
                 />
                 <MetaRow label="Outlet ID" value={outlet.id} mono copyable />
               </div>

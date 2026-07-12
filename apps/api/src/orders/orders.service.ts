@@ -43,7 +43,7 @@ export interface LatestLocation {
 export interface AdminOrderListResult {
   orders: Array<{
     order: MasterOrder;
-    subOrders: SubOrder[];
+    subOrders: SerializedSubOrder[];
     lineItems: OrderLineItem[];
   }>;
   total: number;
@@ -70,6 +70,7 @@ export interface RiderDispatch {
     pickupCode: string;
     status: SubOrderStatus;
     preparationNote: string | null;
+    rejectionReason: string | null;
     items: Array<{
       id: string;
       name: string;
@@ -83,6 +84,8 @@ interface FairAvailableRiderRow {
   id: string;
   assignmentCount: number;
 }
+
+type SerializedSubOrder = SubOrder & { rejectionReason: string | null };
 
 @Injectable()
 export class OrdersService {
@@ -207,7 +210,9 @@ export class OrdersService {
     return {
       orders: orders.map((order) => ({
         order,
-        subOrders: subOrders.filter((subOrder) => subOrder.masterOrderId === order.id),
+        subOrders: subOrders
+          .filter((subOrder) => subOrder.masterOrderId === order.id)
+          .map((subOrder) => this.serializeSubOrder(subOrder)),
         lineItems: lineItems.filter((lineItem) => lineItem.masterOrderId === order.id),
       })),
       total,
@@ -734,7 +739,14 @@ export class OrdersService {
       }
     }
 
-    return { order, subOrders, lineItems, events, latestRiderLocation, rider };
+    return {
+      order,
+      subOrders: subOrders.map((subOrder) => this.serializeSubOrder(subOrder)),
+      lineItems,
+      events,
+      latestRiderLocation,
+      rider,
+    };
   }
 
   private async buildRiderDispatch(order: MasterOrder): Promise<RiderDispatch> {
@@ -769,6 +781,7 @@ export class OrdersService {
           pickupCode: subOrder.pickupCode,
           status: subOrder.status,
           preparationNote: subOrder.preparationNote,
+          rejectionReason: this.rejectionReasonFor(subOrder),
           items: lineItems
             .filter((lineItem) => lineItem.subOrderId === subOrder.id)
             .map((lineItem) => ({
@@ -780,6 +793,21 @@ export class OrdersService {
         };
       }),
     };
+  }
+
+  private serializeSubOrder(subOrder: SubOrder): SerializedSubOrder {
+    return Object.assign(subOrder, {
+      rejectionReason: this.rejectionReasonFor(subOrder),
+    });
+  }
+
+  private rejectionReasonFor(subOrder: SubOrder): string | null {
+    if (subOrder.status !== SubOrderStatus.REJECTED) {
+      return null;
+    }
+
+    const reason = subOrder.preparationNote?.trim();
+    return reason ? reason : null;
   }
 
   private formatDispatchNotificationBody(dispatch: RiderDispatch): string {
