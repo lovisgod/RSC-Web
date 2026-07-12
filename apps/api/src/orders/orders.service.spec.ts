@@ -217,6 +217,7 @@ describe(OrdersService.name, () => {
     ).resolves.toEqual({
       orders: [{ order, subOrders: [subOrder], lineItems: [lineItem] }],
       total: 1,
+      totalSubOrders: 1,
       limit: 50,
       offset: 0,
     });
@@ -243,7 +244,7 @@ describe(OrdersService.name, () => {
         limit: 25,
         offset: 10,
       }),
-    ).resolves.toEqual({ orders: [], total: 0, limit: 25, offset: 10 });
+    ).resolves.toEqual({ orders: [], total: 0, totalSubOrders: 0, limit: 25, offset: 10 });
 
     expect(queryBuilder.take).toHaveBeenCalledWith(25);
     expect(queryBuilder.skip).toHaveBeenCalledWith(10);

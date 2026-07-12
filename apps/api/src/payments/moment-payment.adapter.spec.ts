@@ -60,7 +60,7 @@ describe(MomentPaymentAdapter.name, () => {
 
       const result = await adapter.initiate({
         email: "customer@example.com",
-        amountMinor: 50000,
+        amountMinor: 361500,
         currency: "NGN",
         reference: "pmt_master_123",
         splitRoutes: [
@@ -91,7 +91,7 @@ describe(MomentPaymentAdapter.name, () => {
             "Idempotency-Key": "73d5d716-1df7-2577-b975-e3d4326b0726",
           },
           body: JSON.stringify({
-            amount: 50000,
+            amount: 361500,
             currency: "NGN",
             type: "one_time",
             external_reference: "pmt_master_123",
