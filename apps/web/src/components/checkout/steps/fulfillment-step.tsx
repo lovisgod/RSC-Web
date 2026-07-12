@@ -10,7 +10,6 @@ import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { cartSubtotalMinor, formatNaira } from "@/src/lib/data/cart";
 import {
-  VAT_RATE,
   type DeliveryForm,
   type DeliveryZone,
   type FulfillmentMode,
@@ -257,8 +256,9 @@ export function FulfillmentStep({
   const vat = cart
     ? cart.groups.reduce((sum, group) => {
         const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
-        const vatBps =
-          outletById.get(group.outletId)?.vatBps ?? platformCharges?.defaultVatBps ?? 750;
+        const outletVatBps = outletById.get(group.outletId)?.vatBps ?? 0;
+        const defaultVatBps = platformCharges?.defaultVatBps ?? 750;
+        const vatBps = outletVatBps > 0 ? outletVatBps : defaultVatBps;
         return sum + Math.round((groupSubtotal * vatBps) / 10_000);
       }, 0)
     : 0;

@@ -208,7 +208,8 @@ export class PaymentsService {
       const outletSubtotalMinor = grouped
         .get(outletId)!
         .reduce((lineSum, line) => lineSum + line.lineTotalMinor, 0);
-      const vatBps = outletById.get(outletId)?.vatBps ?? platformCharges.defaultVatBps;
+      const outletVatBps = outletById.get(outletId)?.vatBps ?? 0;
+      const vatBps = outletVatBps > 0 ? outletVatBps : platformCharges.defaultVatBps;
 
       return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
     }, 0);
