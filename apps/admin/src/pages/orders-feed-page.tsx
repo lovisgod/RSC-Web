@@ -177,8 +177,8 @@ export function OrdersFeedPage() {
                     name: outletById[subOrder.outletId]?.name ?? subOrder.outletId.slice(0, 8),
                     status: subOrder.status,
                     rejectionReason:
-                      subOrder.status === "REJECTED" && typeof subOrder.preparationNote === "string"
-                        ? subOrder.preparationNote.trim()
+                      subOrder.status === "REJECTED" && typeof subOrder.rejectionReason === "string"
+                        ? subOrder.rejectionReason.trim()
                         : "",
                   }));
 

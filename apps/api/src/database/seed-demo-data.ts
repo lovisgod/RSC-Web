@@ -43,7 +43,7 @@ const outlets = [
     description: "Italian comfort food, fresh pasta, and family-style plates.",
     cuisineType: "Italian",
     imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
-    paystackSubaccountCode: "LOCAL_ACCT_FARFALLINO",
+    settlementSubaccountCode: "LOCAL_ACCT_FARFALLINO",
     latitude: 6.4281,
     longitude: 3.4219,
     deliveryRadiusKm: 12,
@@ -107,7 +107,7 @@ const outlets = [
     description: "Charcoal-grilled Nigerian classics and quick lunch bowls.",
     cuisineType: "Nigerian Grill",
     imageUrl: "https://images.unsplash.com/photo-1544025162-d76694265947",
-    paystackSubaccountCode: "LOCAL_ACCT_SALMAS",
+    settlementSubaccountCode: "LOCAL_ACCT_SALMAS",
     latitude: 6.4474,
     longitude: 3.4542,
     deliveryRadiusKm: 15,
@@ -233,7 +233,7 @@ async function upsertOutlet(seed: (typeof outlets)[number]): Promise<Outlet> {
   const outletsRepository = dataSource.getRepository(Outlet);
   const outlet =
     (await outletsRepository.findOneBy({ name: seed.name })) ??
-    outletsRepository.create({ paystackSubaccountCode: seed.paystackSubaccountCode });
+    outletsRepository.create({ settlementSubaccountCode: seed.settlementSubaccountCode });
 
   outlet.name = seed.name;
   outlet.description = seed.description;

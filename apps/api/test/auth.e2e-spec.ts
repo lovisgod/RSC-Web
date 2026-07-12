@@ -1,7 +1,7 @@
 import type { Server } from "node:http";
 
-import type { INestApplication } from "@nestjs/common";
 import { ValidationPipe, VersioningType } from "@nestjs/common";
+import type { ExecutionContext, INestApplication } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
@@ -66,7 +66,26 @@ describe("Customer registration HTTP contract", () => {
       ],
     })
       .overrideGuard(AuthGuard)
-      .useValue({ canActivate: () => true })
+      .useValue({
+        canActivate: (context: ExecutionContext) => {
+          const request = context.switchToHttp().getRequest<{
+            user?: {
+              id: string;
+              role: UserRole;
+              sessionId: string;
+              accessTokenId: string;
+            };
+          }>();
+          request.user = {
+            id: "super-admin-id",
+            role: UserRole.SUPER_ADMIN,
+            sessionId: "session-id",
+            accessTokenId: "access-token-id",
+          };
+
+          return true;
+        },
+      })
       .overrideGuard(RolesGuard)
       .useValue({ canActivate: () => true })
       .compile();

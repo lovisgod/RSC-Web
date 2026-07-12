@@ -62,7 +62,7 @@ describe(PaymentsService.name, () => {
           deliveryRadiusKm: 15,
           isOnline: true,
           vatBps: 0,
-          momentSubaccountCode: "MOMENT_LEKKI",
+          settlementSubaccountCode: "MOMENT_LEKKI",
         }),
       ]),
     };
