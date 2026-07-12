@@ -17,6 +17,7 @@ export interface Outlet {
   headerColor: string;
   image: string;
   isOnline?: boolean;
+  vatBps: number;
   // Optional — not yet returned by the API
   rating?: number;
   deliveryTime?: string;
@@ -43,6 +44,7 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     headerColor: palette.headerColor,
     image: summary.imageUrl ?? palette.image,
     isOnline: summary.isOnline,
+    vatBps: summary.vatBps,
     ...(!summary.isOnline ? { tag: "Offline" } : {}),
     ...metrics,
   };

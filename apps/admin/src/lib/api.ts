@@ -12,7 +12,9 @@ import {
   outletSummarySchema,
   outletSettlementSummaryListSchema,
   outletSettlementSummarySchema,
+  paymentRefundSchema,
   platformChargesSchema,
+  processRefundInputSchema,
   createRiderInputSchema,
   riderResultSchema,
   riderAdminSchema,
@@ -40,6 +42,7 @@ import {
   type CreateRiderInput,
   type OutletSummary,
   type OutletSettlementSummary,
+  type PaymentRefund,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
@@ -48,6 +51,7 @@ import {
   type UpdateRiderInput,
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
+  type ProcessRefundInput,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
@@ -134,6 +138,17 @@ const post = <T>(path: string, body?: unknown): Promise<T> =>
 const patchReq = <T>(path: string, body?: unknown): Promise<T> =>
   http.patch<Envelope<T>>(path, body).then((r) => r.data.data);
 
+function parseResponse<T>(schema: z.ZodType<T>, data: unknown): T {
+  const parsed = schema.safeParse(data);
+
+  if (!parsed.success) {
+    console.error("API response validation failed", parsed.error);
+    throw new Error("The server response was incomplete. Please refresh and try again.");
+  }
+
+  return parsed.data;
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export const login = (body: { identifier: string; password: string }): Promise<LoginResult> =>
@@ -194,16 +209,18 @@ export interface OutletBody {
 }
 
 export const listOutlets = (): Promise<OutletSummary[]> =>
-  get<unknown>("/api/v1/outlets").then((data) => outletSummarySchema.array().parse(data));
+  get<unknown>("/api/v1/outlets").then((data) => parseResponse(outletSummarySchema.array(), data));
 
 export const getOutlet = (id: string): Promise<OutletSummary> =>
-  get<unknown>(`/api/v1/outlets/${id}`).then((data) => outletSummarySchema.parse(data));
+  get<unknown>(`/api/v1/outlets/${id}`).then((data) => parseResponse(outletSummarySchema, data));
 
 export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
-  post<unknown>("/api/v1/outlets", body).then((data) => outletSummarySchema.parse(data));
+  post<unknown>("/api/v1/outlets", body).then((data) => parseResponse(outletSummarySchema, data));
 
 export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<OutletSummary> =>
-  patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) => outletSummarySchema.parse(data));
+  patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) =>
+    parseResponse(outletSummarySchema, data),
+  );
 
 export const listOutletSettlements = (): Promise<OutletSettlementSummary[]> =>
   get<unknown>("/api/v1/finance/outlet-settlements").then((data) =>
@@ -214,6 +231,15 @@ export const approveOutletSettlement = (outletId: string): Promise<OutletSettlem
   post<unknown>(`/api/v1/finance/outlet-settlements/${outletId}/approve`).then((data) =>
     outletSettlementSummarySchema.parse(data),
   );
+
+export const processPaymentRefund = (
+  reference: string,
+  body: ProcessRefundInput = {},
+): Promise<PaymentRefund> =>
+  post<unknown>(
+    `/api/v1/payments/${encodeURIComponent(reference)}/refund`,
+    processRefundInputSchema.parse(body),
+  ).then((data) => parseResponse(paymentRefundSchema, data));
 
 /** PATCH — dedicated endpoint for toggling online status only */
 export const toggleOutletOnlineStatus = (

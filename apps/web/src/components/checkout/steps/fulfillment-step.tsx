@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
@@ -20,7 +20,8 @@ import { geocodeAddress } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
-import { calcCharges, usePlatformCharges } from "@/src/hooks/use-platform-charges";
+import { useOutlets } from "@/src/hooks/use-outlets";
+import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -54,10 +55,12 @@ export function FulfillmentStep({
   ) => void;
 }) {
   const { data: cart } = useCart();
+  const { data: platformCharges } = usePlatformCharges();
+  const { data: outlets = [] } = useOutlets();
+  const outletById = new Map(outlets.map((o) => [o.id, o]));
   const qc = useQueryClient();
 
   const { data: savedAddresses = [] } = useDeliveryAddresses();
-  const { data: charges } = usePlatformCharges();
   const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? null;
 
   const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
@@ -247,18 +250,27 @@ export function FulfillmentStep({
   }, []);
 
   const subtotal = cart ? cartSubtotalMinor(cart) : 0;
-  const fees = charges
-    ? calcCharges(subtotal, charges, { includeDelivery: mode === "delivery" })
-    : null;
-  const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : "—";
-  const commissionPct = charges
-    ? (charges.platformCommissionBps / 100).toFixed(2).replace(/\.?0+$/, "")
-    : "—";
-  const deliveryFee = fees?.delivery ?? 0;
-  const vat = fees?.vat ?? 0;
-  const platformCommission = fees?.commission ?? 0;
-  const serviceFee = fees?.service ?? 0;
-  const grandTotal = fees?.total ?? subtotal;
+  const deliveryFee = mode === "delivery" && platformCharges ? platformCharges.deliveryFeeMinor : 0;
+  const serviceFee = platformCharges?.serviceFeeMinor ?? 0;
+
+  const vat = cart
+    ? cart.groups.reduce((sum, group) => {
+        const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
+        const vatBps =
+          outletById.get(group.outletId)?.vatBps ?? platformCharges?.defaultVatBps ?? 750;
+        return sum + Math.round((groupSubtotal * vatBps) / 10_000);
+      }, 0)
+    : 0;
+
+  const platformCommission = cart
+    ? cart.groups.reduce((sum, group) => {
+        const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
+        const commissionBps = platformCharges?.platformCommissionBps ?? 1000;
+        return sum + Math.round((groupSubtotal * commissionBps) / 10_000);
+      }, 0)
+    : 0;
+
+  const grandTotal = subtotal + deliveryFee + serviceFee + vat + platformCommission;
 
   const initiateMutation = useMutation({
     onError: (err) => {
@@ -289,9 +301,15 @@ export function FulfillmentStep({
         items,
         deliveryMode: mode === "delivery" ? ("DELIVERY" as const) : ("TAKEOUT" as const),
         ...(onBehalf ? { recipientPhone: recipientPhone.trim() } : {}),
+        subtotalMinor: subtotal,
+        deliveryFeeMinor: deliveryFee,
+        serviceFeeMinor: serviceFee,
+        vatMinor: vat,
+        platformCommissionMinor: platformCommission,
+        totalMinor: grandTotal,
       };
 
-      const payload =
+      return apiClient.initiatePayment(
         mode === "delivery"
           ? {
               ...base,
@@ -299,9 +317,8 @@ export function FulfillmentStep({
               deliveryLatitude: coords!.latitude,
               deliveryLongitude: coords!.longitude,
             }
-          : base;
-
-      return apiClient.initiatePayment(payload);
+          : base,
+      );
     },
     onSuccess: (result) => {
       // Snapshot cart before clearing so the sidebar stays populated on later steps
@@ -317,14 +334,7 @@ export function FulfillmentStep({
             unitPriceMinor: item.unitPriceMinor,
           })),
         })),
-        totals: {
-          subtotalMinor: subtotal,
-          deliveryFeeMinor: deliveryFee,
-          serviceFeeMinor: serviceFee,
-          vatMinor: vat,
-          platformCommissionMinor: platformCommission,
-          totalMinor: grandTotal,
-        },
+        totals: result.totals,
       };
       onComplete(
         {
@@ -362,7 +372,7 @@ export function FulfillmentStep({
               mode === m ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            <span>{m === "delivery" ? "🚴" : "🛍️"}</span>
+            <span>{m === "delivery" ? "??" : "???"}</span>
             <span className="capitalize">{m}</span>
           </button>
         ))}
@@ -588,19 +598,19 @@ export function FulfillmentStep({
           </div>
           <div className="flex justify-between text-gray-500">
             <span>Delivery Fee</span>
-            <span>{deliveryFee === 0 ? "₦0" : formatNaira(deliveryFee)}</span>
+            <span>{deliveryFee === 0 ? "?0" : formatNaira(deliveryFee)}</span>
           </div>
           <div className="flex justify-between text-gray-500">
-            <span>VAT ({vatPct}%)</span>
+            <span>VAT</span>
             <span>{formatNaira(vat)}</span>
           </div>
           <div className="flex justify-between text-gray-500">
-            <span>Platform commission ({commissionPct}%)</span>
+            <span>Platform Commission</span>
             <span>{formatNaira(platformCommission)}</span>
           </div>
           {serviceFee > 0 && (
             <div className="flex justify-between text-gray-500">
-              <span>Service fee</span>
+              <span>Service Fee</span>
               <span>{formatNaira(serviceFee)}</span>
             </div>
           )}
@@ -648,7 +658,7 @@ export function FulfillmentStep({
               Placing order…
             </span>
           ) : (
-            "Proceed to Payment 🚀"
+            "Proceed to Payment ??"
           )}
         </Button>
       </div>

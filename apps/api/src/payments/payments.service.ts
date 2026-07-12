@@ -22,6 +22,7 @@ import { SubOrder } from "../orders/sub-order.entity";
 import type { InitiatePaymentDto } from "./dto/payment.dto";
 import type { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
+import { PaymentRefund } from "./payment-refund.entity";
 import {
   PAYMENT_ADAPTER,
   type ParsedWebhookEvent,
@@ -72,6 +73,7 @@ export class PaymentsService {
     @InjectRepository(SubOrder) private readonly subOrders: Repository<SubOrder>,
     @InjectRepository(OrderLineItem) private readonly lineItems: Repository<OrderLineItem>,
     @InjectRepository(Payment) private readonly payments: Repository<Payment>,
+    @InjectRepository(PaymentRefund) private readonly refunds: Repository<PaymentRefund>,
     private readonly dataSource: DataSource,
     private readonly delivery: DeliveryService,
     private readonly piiCrypto: PiiCryptoService,
@@ -210,7 +212,7 @@ export class PaymentsService {
 
       return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
     }, 0);
-    const totalMinor = subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor;
+
     const splitRoutes: PaymentSplitRoute[] = outletIds.map((outletId) => {
       const grossMinor = grouped.get(outletId)!.reduce((sum, line) => sum + line.lineTotalMinor, 0);
       const commissionMinor = Math.round(
@@ -225,6 +227,40 @@ export class PaymentsService {
         netMinor: grossMinor - commissionMinor,
       };
     });
+
+    const platformCommissionMinor = splitRoutes.reduce((sum, r) => sum + r.commissionMinor, 0);
+    const totalMinor =
+      subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor + platformCommissionMinor;
+
+    // Validate client-provided totals to prevent cheating/manipulation
+    if (input.subtotalMinor !== subtotalMinor) {
+      throw new BadRequestException(
+        `Subtotal mismatch: expected ${subtotalMinor}, got ${input.subtotalMinor}`,
+      );
+    }
+    if (input.deliveryFeeMinor !== deliveryFeeMinor) {
+      throw new BadRequestException(
+        `Delivery fee mismatch: expected ${deliveryFeeMinor}, got ${input.deliveryFeeMinor}`,
+      );
+    }
+    if (input.serviceFeeMinor !== serviceFeeMinor) {
+      throw new BadRequestException(
+        `Service fee mismatch: expected ${serviceFeeMinor}, got ${input.serviceFeeMinor}`,
+      );
+    }
+    if (input.vatMinor !== vatMinor) {
+      throw new BadRequestException(`VAT mismatch: expected ${vatMinor}, got ${input.vatMinor}`);
+    }
+    if (input.platformCommissionMinor !== platformCommissionMinor) {
+      throw new BadRequestException(
+        `Platform commission mismatch: expected ${platformCommissionMinor}, got ${input.platformCommissionMinor}`,
+      );
+    }
+    if (input.totalMinor !== totalMinor) {
+      throw new BadRequestException(
+        `Total mismatch: expected ${totalMinor}, got ${input.totalMinor}`,
+      );
+    }
     const reference = `RSC-${randomUUID()}`;
     const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
     const recipientPhone = this.normalizeRecipientPhone(input.recipientPhone);
@@ -327,6 +363,7 @@ export class PaymentsService {
         deliveryFeeMinor,
         serviceFeeMinor,
         vatMinor,
+        platformCommissionMinor,
         totalMinor,
         currency: "NGN",
       },
@@ -448,6 +485,60 @@ export class PaymentsService {
     }
 
     return { status: payment.status, orderStatus: order.status };
+  }
+
+  async processRefund(
+    user: AuthenticatedUser,
+    reference: string,
+    input: { amountMinor?: number; reason?: string },
+  ): Promise<PaymentRefund> {
+    const payment = await this.payments.findOneBy({ reference });
+
+    if (!payment) {
+      throw new NotFoundException("Payment not found");
+    }
+    if (payment.status !== PaymentStatus.SUCCESS) {
+      throw new BadRequestException("Only successful payments can be refunded");
+    }
+
+    const requestedAmountMinor = input.amountMinor ?? payment.amountMinor;
+    if (requestedAmountMinor <= 0 || requestedAmountMinor > payment.amountMinor) {
+      throw new BadRequestException(
+        "Refund amount must be greater than 0 and not exceed payment amount",
+      );
+    }
+
+    const existingRefunds = await this.refunds.find({ where: { paymentId: payment.id } });
+    const alreadyRefundedMinor = existingRefunds
+      .filter((refund) => refund.status !== "FAILED")
+      .reduce((sum, refund) => sum + refund.amountMinor, 0);
+
+    if (alreadyRefundedMinor + requestedAmountMinor > payment.amountMinor) {
+      throw new BadRequestException("Refund amount exceeds remaining refundable balance");
+    }
+
+    const reason = input.reason?.trim() || null;
+    const providerRefund = await this.paymentAdapter.refund({
+      reference: payment.reference,
+      amountMinor: requestedAmountMinor,
+      currency: payment.currency,
+      ...(reason ? { reason } : {}),
+    });
+
+    return this.refunds.save(
+      this.refunds.create({
+        paymentId: payment.id,
+        reference: payment.reference,
+        amountMinor: requestedAmountMinor,
+        currency: payment.currency,
+        status: providerRefund.status,
+        reason,
+        provider: payment.gateway,
+        providerRefundId: providerRefund.providerRefundId,
+        requestedBy: user.id,
+        providerResponse: providerRefund.providerResponse,
+      }),
+    );
   }
 
   private async priceCart(input: InitiatePaymentDto): Promise<PricedLine[]> {
