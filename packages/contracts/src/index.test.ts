@@ -450,7 +450,7 @@ describe("customer registration contracts", () => {
     ).toBeTruthy();
   });
 
-  it("normalizes outlet subaccount response field names", () => {
+  it("normalizes outlet settlement subaccount response field", () => {
     const baseOutlet = {
       id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
       name: "Salmas Grill",
@@ -470,21 +470,14 @@ describe("customer registration contracts", () => {
     expect(
       outletSummarySchema.parse({
         ...baseOutlet,
-        paystackSubaccountCode: "PAYSTACK_SALMAS",
+        settlementSubaccountCode: "SETTLEMENT_SALMAS",
       }),
     ).toMatchObject({
-      momentSubaccountCode: "PAYSTACK_SALMAS",
-      paystackSubaccountCode: "PAYSTACK_SALMAS",
+      settlementSubaccountCode: "SETTLEMENT_SALMAS",
     });
 
-    expect(
-      outletSummarySchema.parse({
-        ...baseOutlet,
-        momentSubaccountCode: "MOMENT_SALMAS",
-      }),
-    ).toMatchObject({
-      momentSubaccountCode: "MOMENT_SALMAS",
-      paystackSubaccountCode: "MOMENT_SALMAS",
+    expect(outletSummarySchema.parse(baseOutlet)).toMatchObject({
+      settlementSubaccountCode: null,
     });
   });
 

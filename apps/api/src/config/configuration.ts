@@ -4,6 +4,7 @@ export interface ApplicationConfig {
     port: number;
     version: string;
     corsOrigins: string[];
+    customerWebUrl: string;
     swaggerEnabled: boolean;
   };
   database: {
@@ -58,10 +59,15 @@ export interface ApplicationConfig {
     };
   };
   payments: {
-    provider: "local" | "paystack";
+    provider: "local" | "paystack" | "moment";
     paystack: {
       secretKey: string;
       baseUrl: string;
+    };
+    moment: {
+      secretKey: string;
+      baseUrl: string;
+      webhookSecret: string;
     };
     platformCommissionBps: number;
     vatBps: number;
@@ -107,15 +113,21 @@ function resolveFirebasePrivateKey(): string {
 }
 
 export default function configuration(): ApplicationConfig {
+  const corsOrigins = parseOrigins(
+    process.env.CORS_ORIGINS ?? "http://localhost:3000,http://localhost:5173,http://localhost:5175",
+  );
+
   return {
     app: {
       environment: process.env.NODE_ENV ?? "development",
       port: Number(process.env.PORT ?? 4000),
       version: process.env.APP_VERSION ?? "development",
-      corsOrigins: parseOrigins(
-        process.env.CORS_ORIGINS ??
-          "http://localhost:3000,http://localhost:5173,http://localhost:5175",
-      ),
+      corsOrigins,
+      customerWebUrl: (
+        process.env.CUSTOMER_WEB_URL ??
+        corsOrigins[0] ??
+        "http://localhost:3000"
+      ).replace(/\/$/, ""),
       swaggerEnabled: process.env.SWAGGER_ENABLED !== "false",
     },
     database: {
@@ -175,10 +187,15 @@ export default function configuration(): ApplicationConfig {
       },
     },
     payments: {
-      provider: process.env.PAYMENT_PROVIDER === "paystack" ? "paystack" : "local",
+      provider: (process.env.PAYMENT_PROVIDER as "paystack" | "moment" | "local") ?? "local",
       paystack: {
         secretKey: process.env.PAYSTACK_SECRET_KEY ?? "",
         baseUrl: (process.env.PAYSTACK_BASE_URL ?? "https://api.paystack.co").replace(/\/$/, ""),
+      },
+      moment: {
+        secretKey: process.env.MOMENT_SECRET_KEY ?? "",
+        baseUrl: (process.env.MOMENT_BASE_URL ?? "https://api.momentpay.net").replace(/\/$/, ""),
+        webhookSecret: process.env.MOMENT_WEBHOOK_SECRET ?? "",
       },
       platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
       vatBps: Number(process.env.VAT_BPS ?? 750),

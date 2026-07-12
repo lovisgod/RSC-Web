@@ -8,6 +8,7 @@ export interface Environment {
   APP_VERSION: string;
   LOG_LEVEL: string;
   CORS_ORIGINS: string;
+  CUSTOMER_WEB_URL?: string;
   DATABASE_URL: string;
   DATABASE_SSL: boolean;
   REDIS_URL: string;
@@ -40,9 +41,12 @@ export interface Environment {
   CLOUDINARY_API_KEY?: string;
   CLOUDINARY_API_SECRET?: string;
   CLOUDINARY_FOLDER: string;
-  PAYMENT_PROVIDER: "local" | "paystack";
+  PAYMENT_PROVIDER: "local" | "paystack" | "moment";
   PAYSTACK_SECRET_KEY?: string;
   PAYSTACK_BASE_URL: string;
+  MOMENT_SECRET_KEY?: string;
+  MOMENT_BASE_URL: string;
+  MOMENT_WEBHOOK_SECRET?: string;
   PLATFORM_COMMISSION_BPS: number;
   VAT_BPS: number;
   DELIVERY_FEE_MINOR: number;
@@ -73,6 +77,10 @@ const environmentSchema = Joi.object<Environment>({
   CORS_ORIGINS: Joi.string().default(
     "http://localhost:3000,http://localhost:5173,http://localhost:5175",
   ),
+  CUSTOMER_WEB_URL: Joi.string()
+    .uri({ scheme: ["http", "https"] })
+    .optional()
+    .allow(""),
   DATABASE_URL: Joi.string()
     .uri({ scheme: ["postgres", "postgresql"] })
     .required(),
@@ -161,7 +169,7 @@ const environmentSchema = Joi.object<Environment>({
     otherwise: Joi.string().optional().allow(""),
   }),
   CLOUDINARY_FOLDER: Joi.string().min(1).default("rsc"),
-  PAYMENT_PROVIDER: Joi.string().valid("local", "paystack").default("local"),
+  PAYMENT_PROVIDER: Joi.string().valid("local", "paystack", "moment").default("local"),
   PAYSTACK_SECRET_KEY: Joi.when("PAYMENT_PROVIDER", {
     is: "paystack",
     then: Joi.string().min(10).required(),
@@ -170,6 +178,19 @@ const environmentSchema = Joi.object<Environment>({
   PAYSTACK_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
     .default("https://api.paystack.co"),
+  MOMENT_SECRET_KEY: Joi.when("PAYMENT_PROVIDER", {
+    is: "moment",
+    then: Joi.string().min(10).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  MOMENT_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://api.momentpay.net"),
+  MOMENT_WEBHOOK_SECRET: Joi.when("PAYMENT_PROVIDER", {
+    is: "moment",
+    then: Joi.string().min(10).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
   PLATFORM_COMMISSION_BPS: Joi.number().integer().min(0).max(10_000).default(1_000),
   VAT_BPS: Joi.number().integer().min(0).max(10_000).default(750),
   DELIVERY_FEE_MINOR: Joi.number().integer().min(0).default(1_500_00),

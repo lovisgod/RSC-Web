@@ -3159,6 +3159,11 @@ th {
   background: #fef3c7;
 }
 
+.badge--neutral {
+  color: #475569;
+  background: #e2e8f0;
+}
+
 .badge--paid {
   color: #14532d;
   background: #dcfce7;

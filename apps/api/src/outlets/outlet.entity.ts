@@ -30,8 +30,8 @@ export class Outlet {
   @Column({ name: "is_online", type: "boolean", default: true })
   isOnline!: boolean;
 
-  @Column({ name: "paystack_subaccount_code", type: "varchar", length: 100, nullable: true })
-  paystackSubaccountCode!: string | null;
+  @Column({ name: "settlement_subaccount_code", type: "varchar", length: 100, nullable: true })
+  settlementSubaccountCode!: string | null;
 
   @Column({ name: "vat_bps", type: "integer", default: 0 })
   vatBps!: number;

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { RiderOnboardModal } from "../components/rider-onboard-modal";
 import { useOrdersFeed } from "../hooks/use-orders-feed";
+import { useDeleteRider, useRiders } from "../hooks/use-riders";
 import type { AdminOrderItem } from "../lib/api";
 
 const REPORT_LIMIT = 100;
@@ -129,6 +130,9 @@ export function RiderReportsPage() {
     limit: REPORT_LIMIT,
   });
 
+  const { data: ridersData, isPending: isRidersPending } = useRiders();
+  const { mutate: deleteRiderMutate, isPending: isDeletePending } = useDeleteRider();
+
   const riderRows = useMemo(() => aggregateRiderReports(data?.orders ?? []), [data?.orders]);
   const activeRiderCount = riderRows.filter((row) => row.activeOrders > 0).length;
   const completedDeliveries = riderRows.reduce((total, row) => total + row.completedDeliveries, 0);
@@ -136,6 +140,24 @@ export function RiderReportsPage() {
   const measuredDeliveries = riderRows.reduce((total, row) => total + row.measuredDeliveries, 0);
   const totalMinutes = riderRows.reduce((total, row) => total + row.totalMinutes, 0);
   const averageMinutes = measuredDeliveries > 0 ? totalMinutes / measuredDeliveries : null;
+
+  const directoryRiders = useMemo(() => {
+    if (!ridersData) return [];
+    return ridersData.map((r) => {
+      const statsRow = riderRows.find((row) => row.riderId === r.id);
+      return {
+        id: r.id,
+        name: r.name,
+        activeOrders: statsRow?.activeOrders ?? 0,
+        completedDeliveries: statsRow?.completedDeliveries ?? 0,
+      };
+    });
+  }, [ridersData, riderRows]);
+
+  const riderName = (riderId: string) => {
+    const rider = ridersData?.find((r) => r.id === riderId);
+    return rider ? rider.name : riderLabel(riderId);
+  };
 
   return (
     <>
@@ -217,7 +239,7 @@ export function RiderReportsPage() {
           Visible riders
         </h2>
 
-        {isPending ? (
+        {isPending || isRidersPending ? (
           <div className="rider-directory-list">
             {Array.from({ length: 3 }).map((_, index) => (
               <Skeleton
@@ -228,30 +250,32 @@ export function RiderReportsPage() {
               />
             ))}
           </div>
-        ) : riderRows.length > 0 ? (
+        ) : directoryRiders.length > 0 ? (
           <div className="rider-directory-list">
-            {riderRows.map((row) => (
-              <article className="rider-directory-card" key={row.riderId}>
+            {directoryRiders.map((row) => (
+              <article className="rider-directory-card" key={row.id}>
                 <div className="rider-identity">
-                  <span className="rider-rank">{riderLabel(row.riderId).slice(-1)}</span>
+                  <span className="rider-rank">{riderLabel(row.id).slice(-1)}</span>
                   <span>
-                    <strong>{riderLabel(row.riderId)}</strong>
-                    <small>{row.riderId}</small>
+                    <strong>{row.name}</strong>
+                    <small>{row.id}</small>
                   </span>
                 </div>
-                <div
-                  className="rider-directory-meta"
-                  aria-label={`${riderLabel(row.riderId)} work summary`}
-                >
+                <div className="rider-directory-meta" aria-label={`${row.name} work summary`}>
                   <span>{row.activeOrders} open</span>
                   <span>{row.completedDeliveries} delivered</span>
                 </div>
                 <button
                   type="button"
                   className="rider-delete-btn"
-                  disabled
-                  title="Delete will be enabled when the rider directory endpoint returns rider records."
-                  aria-label={`Delete ${riderLabel(row.riderId)} unavailable`}
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete rider ${row.name}?`)) {
+                      deleteRiderMutate(row.id);
+                    }
+                  }}
+                  disabled={isDeletePending}
+                  title={`Delete ${row.name}`}
+                  aria-label={`Delete ${row.name}`}
                 >
                   <Trash2 aria-hidden="true" size={15} />
                 </button>
@@ -259,7 +283,7 @@ export function RiderReportsPage() {
             ))}
           </div>
         ) : (
-          <EmptyState icon={<Bike size={30} />} heading="No visible riders for this date" />
+          <EmptyState icon={<Bike size={30} />} heading="No visible riders" />
         )}
       </section>
 
@@ -309,7 +333,7 @@ export function RiderReportsPage() {
                           <span className="rider-identity">
                             <span className="rider-rank">{index + 1}</span>
                             <span>
-                              <strong>{riderLabel(row.riderId)}</strong>
+                              <strong>{riderName(row.riderId)}</strong>
                               <small>{row.riderId}</small>
                             </span>
                           </span>

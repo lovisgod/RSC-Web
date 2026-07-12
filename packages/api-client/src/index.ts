@@ -53,6 +53,7 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
+  paymentVerifyResultSchema,
   riderLocationSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -118,6 +119,7 @@ import {
   type OrderPulse,
   type OrderPulseQuery,
   type OutletSummary,
+  type PaymentVerifyResult,
   type RiderLocation,
   type RegisterCustomerInput,
   type RegistrationResult,
@@ -607,6 +609,12 @@ export function createApiClient(options: ApiClientOptions) {
         method: "POST",
         body: JSON.stringify(body),
       });
+    },
+    verifyPayment(reference: string): Promise<PaymentVerifyResult> {
+      return request(
+        `/api/v1/payments/verify/${encodeURIComponent(reference)}`,
+        paymentVerifyResultSchema,
+      );
     },
     pickupSubOrder(
       id: string,

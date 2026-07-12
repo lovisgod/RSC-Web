@@ -94,13 +94,13 @@ export class CreateOutletDto {
   @Min(0.1)
   deliveryRadiusKm?: number;
 
-  @ApiPropertyOptional({ example: "ACCT_abc123" })
+  @ApiPropertyOptional({ example: "merchant_outlet_123" })
   @Transform(trim)
   @IsOptional()
   @ValidateIf((object, value) => value !== null && value !== "")
   @IsString()
   @Length(2, 100)
-  paystackSubaccountCode?: string | null;
+  settlementSubaccountCode?: string | null;
 }
 
 export class UpdateOutletDto extends PartialType(CreateOutletDto) {}

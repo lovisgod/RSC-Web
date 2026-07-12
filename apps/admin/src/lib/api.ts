@@ -1,4 +1,5 @@
 import axios, { type AxiosError } from "axios";
+import { z } from "zod";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import {
   adminOrdersQuerySchema,
@@ -9,9 +10,13 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
+  outletSettlementSummaryListSchema,
+  outletSettlementSummarySchema,
   platformChargesSchema,
   createRiderInputSchema,
   riderResultSchema,
+  riderAdminSchema,
+  updateRiderInputSchema,
   updatePlatformChargesInputSchema,
   type ItemModifier,
   type ItemModifierGroup,
@@ -34,10 +39,13 @@ import {
   type CreateNotificationCampaignInput,
   type CreateRiderInput,
   type OutletSummary,
+  type OutletSettlementSummary,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
   type RiderResult,
+  type RiderAdmin,
+  type UpdateRiderInput,
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
 } from "@rsc/contracts";
@@ -181,7 +189,7 @@ export interface OutletBody {
   description?: string;
   cuisineType: string;
   isOnline?: boolean;
-  paystackSubaccountCode?: string | null;
+  settlementSubaccountCode?: string | null;
   imageUrl?: string;
 }
 
@@ -196,6 +204,16 @@ export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
 
 export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<OutletSummary> =>
   patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) => outletSummarySchema.parse(data));
+
+export const listOutletSettlements = (): Promise<OutletSettlementSummary[]> =>
+  get<unknown>("/api/v1/finance/outlet-settlements").then((data) =>
+    outletSettlementSummaryListSchema.parse(data),
+  );
+
+export const approveOutletSettlement = (outletId: string): Promise<OutletSettlementSummary> =>
+  post<unknown>(`/api/v1/finance/outlet-settlements/${outletId}/approve`).then((data) =>
+    outletSettlementSummarySchema.parse(data),
+  );
 
 /** PATCH — dedicated endpoint for toggling online status only */
 export const toggleOutletOnlineStatus = (
@@ -365,6 +383,23 @@ export const createRider = (body: CreateRiderInput): Promise<RiderResult> =>
   post<unknown>("/api/v1/users/riders", createRiderInputSchema.parse(body)).then((data) =>
     riderResultSchema.parse(data),
   );
+
+export const listRiders = (outletId?: string): Promise<RiderAdmin[]> => {
+  const qs = outletId ? `?outletId=${encodeURIComponent(outletId)}` : "";
+  return get<unknown>(`/api/v1/users/riders${qs}`).then((data) =>
+    z.array(riderAdminSchema).parse(data),
+  );
+};
+
+export const updateRider = (id: string, body: UpdateRiderInput): Promise<RiderAdmin> => {
+  const input = updateRiderInputSchema.parse(body);
+  return patchReq<unknown>(`/api/v1/users/riders/${id}`, input).then((data) =>
+    riderAdminSchema.parse(data),
+  );
+};
+
+export const deleteRider = (id: string): Promise<void> =>
+  http.delete(`/api/v1/users/riders/${id}`).then(() => undefined);
 
 export interface OutletAdminUser {
   id: string;

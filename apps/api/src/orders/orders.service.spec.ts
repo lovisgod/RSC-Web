@@ -297,6 +297,42 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("returns rejectionReason when an outlet admin rejects a sub-order", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.CONFIRMED,
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const outletSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.PENDING,
+    });
+    const { service } = createService({
+      adminOutletId: outletId,
+      orders: [order],
+      subOrders: [outletSubOrder],
+    });
+
+    const result = await service.updateStatus(adminUser, outletSubOrder.id, {
+      status: MasterOrderStatus.CANCELLED,
+      rejectionReason: "Ingredient unavailable",
+    });
+
+    expect(outletSubOrder.status).toBe(SubOrderStatus.REJECTED);
+    expect(outletSubOrder.preparationNote).toBe("Ingredient unavailable");
+    expect(result.subOrders).toContainEqual(
+      expect.objectContaining({
+        id: outletSubOrder.id,
+        status: SubOrderStatus.REJECTED,
+        rejectionReason: "Ingredient unavailable",
+      }),
+    );
+  });
+
   it("allows outlet admins to assign a fair available rider from their outlet", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",

@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   HttpCode,
   Param,
   Patch,
@@ -13,6 +12,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import type { Request } from "express";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
@@ -88,18 +88,31 @@ export class PaymentsController {
       "Receives charge.success / charge.failed events from Paystack. " +
       "Validates HMAC-SHA512 signature. No auth cookie required.",
   })
-  async webhook(
-    @Req() request: RawBodyRequest<Request>,
-    @Headers("x-paystack-signature") signature: string,
-  ) {
-    const rawBody = (request as unknown as { rawBody?: Buffer }).rawBody;
+  async webhook(@Req() request: RawBodyRequest<Request>) {
+    const rawBody = request.rawBody;
 
     if (!rawBody) {
       this.logger.warn("Webhook received without rawBody — check rawBody: true in NestFactory");
       return { received: false };
     }
 
-    const event = await this.paymentAdapter.parseWebhookEvent(rawBody, signature ?? "");
+    const headers = request.headers;
+    const getHeader = (name: string): string => {
+      const val = headers[name];
+      if (Array.isArray(val)) return val[0] ?? "";
+      return val ?? "";
+    };
+
+    const signature = getHeader("x-paystack-signature") || getHeader("webhook-signature");
+
+    const headersMap: Record<string, string> = {};
+    for (const [key, val] of Object.entries(headers)) {
+      if (val !== undefined) {
+        headersMap[key] = Array.isArray(val) ? (val[0] ?? "") : val;
+      }
+    }
+
+    const event = await this.paymentAdapter.parseWebhookEvent(rawBody, signature, headersMap);
 
     if (!event) {
       // Invalid signature or unrecognised event type — return 200 to stop Paystack retries

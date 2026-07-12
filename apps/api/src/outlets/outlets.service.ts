@@ -1,12 +1,14 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { ConfigService } from "@nestjs/config";
 
 import { PAYMENT_ADAPTER, type PaymentAdapter } from "../payments/payment-adapter";
 import { Outlet } from "./outlet.entity";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
 import { ForbiddenException } from "@nestjs/common";
+import type { ApplicationConfig } from "../config/configuration";
 
 export interface ProvisionOutletSubaccountInput {
   businessName: string;
@@ -22,6 +24,7 @@ export class OutletsService {
     @InjectRepository(Outlet) private readonly outlets: Repository<Outlet>,
     @InjectRepository(Customer) private readonly users: Repository<Customer>,
     @Inject(PAYMENT_ADAPTER) private readonly paymentAdapter: PaymentAdapter,
+    private readonly configService: ConfigService<ApplicationConfig, true>,
   ) {}
 
   async checkOwnOutletAccess(userId: string, role: UserRole, outletId: string): Promise<void> {
@@ -77,13 +80,12 @@ export class OutletsService {
       throw new NotFoundException("Outlet not found");
     }
 
-    if (outlet.paystackSubaccountCode && !force) {
-      return { subaccountCode: outlet.paystackSubaccountCode, outlet };
+    if (outlet.settlementSubaccountCode && !force) {
+      return { subaccountCode: outlet.settlementSubaccountCode, outlet };
     }
 
-    // Resolve platform commission percentage from bps stored on outlet (or use 0 as default)
-    // Actual per-transaction commission is deducted via split logic; this field controls what
-    // Paystack records as the default settlement percentage for the subaccount.
+    // Actual per-transaction commission is deducted via split logic; provider-level
+    // subaccount defaults are kept at 0 so the platform split remains source of truth.
     const commissionPct = 0; // Platform keeps remainder via split_code bearer_type=account
 
     const result = await this.paymentAdapter.provisionSubaccount({
@@ -93,7 +95,7 @@ export class OutletsService {
       percentageCharge: commissionPct,
     });
 
-    outlet.paystackSubaccountCode = result.subaccountCode;
+    outlet.settlementSubaccountCode = result.subaccountCode;
     await this.outlets.save(outlet);
 
     this.logger.log(
@@ -103,10 +105,7 @@ export class OutletsService {
     return { subaccountCode: result.subaccountCode, outlet };
   }
 
-  /**
-   * Manually set a Paystack subaccount code on an outlet.
-   * Use when the subaccount was registered externally (e.g. via Paystack dashboard).
-   */
+  /** Manually set a settlement subaccount code that was registered externally. */
   async setSubaccountCode(
     outletId: string,
     subaccountCode: string,
@@ -117,13 +116,23 @@ export class OutletsService {
       throw new NotFoundException("Outlet not found");
     }
 
-    if (!subaccountCode.startsWith("ACCT_")) {
-      throw new BadRequestException(
-        "Invalid subaccount code format — Paystack codes must start with ACCT_",
-      );
+    const paymentsConfig = this.configService.get("payments", { infer: true });
+
+    if (paymentsConfig.provider === "paystack") {
+      if (!subaccountCode.startsWith("ACCT_")) {
+        throw new BadRequestException(
+          "Invalid subaccount code format — Paystack codes must start with ACCT_",
+        );
+      }
+    } else {
+      if (subaccountCode.length < 2) {
+        throw new BadRequestException(
+          "Subaccount code must be longer than or equal to 2 characters",
+        );
+      }
     }
 
-    outlet.paystackSubaccountCode = subaccountCode;
+    outlet.settlementSubaccountCode = subaccountCode;
     await this.outlets.save(outlet);
 
     return { subaccountCode, outlet };

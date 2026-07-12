@@ -24,7 +24,7 @@ import { UserRole } from "../auth/user-role.enum";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { MediaService, type UploadedImageFile } from "../media/media.service";
 import type { OutletAdminQueryDto } from "./dto/outlet-admin-query.dto";
-import type { CreateRiderDto } from "./dto/rider.dto";
+import type { CreateRiderDto, UpdateRiderDto } from "./dto/rider.dto";
 import type { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
 
 export interface ProfileResult {
@@ -52,6 +52,21 @@ export interface RiderResult {
   plateNumber: string | null;
   riderStatus: string | null;
   temporaryPassword: string;
+}
+
+export interface RiderAdminResult {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole.RIDER;
+  outletId: string | null;
+  vehicleType: string | null;
+  plateNumber: string | null;
+  riderStatus: string | null;
+  status: CustomerStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OutletAdminResult {
@@ -261,6 +276,152 @@ export class UsersService {
       plateNumber: saved.plateNumber,
       riderStatus: saved.riderStatus,
       temporaryPassword,
+    };
+  }
+
+  async listRiders(actor: AuthenticatedUser, outletId?: string): Promise<RiderAdminResult[]> {
+    let targetOutletId = outletId || null;
+
+    if (actor.role === UserRole.ADMIN) {
+      const adminOutletId = await this.requireAdminOutletId(actor.id);
+      if (outletId && outletId !== adminOutletId) {
+        throw new ForbiddenException("Outlet admins can only retrieve riders for their own outlet");
+      }
+      targetOutletId = adminOutletId;
+    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only admins can list riders");
+    }
+
+    const riders = await this.users.find({
+      where: {
+        role: UserRole.RIDER,
+        ...(targetOutletId ? { outletId: targetOutletId } : {}),
+      },
+      order: { createdAt: "DESC" },
+    });
+
+    return riders.map((rider) => this.toRiderAdmin(rider));
+  }
+
+  async getRider(actor: AuthenticatedUser, id: string): Promise<RiderAdminResult> {
+    const rider = await this.users.findOneBy({ id, role: UserRole.RIDER });
+
+    if (!rider) {
+      throw new BadRequestException("Rider not found");
+    }
+
+    if (actor.role === UserRole.ADMIN) {
+      const adminOutletId = await this.requireAdminOutletId(actor.id);
+      if (rider.outletId !== adminOutletId) {
+        throw new ForbiddenException("Outlet admins can only retrieve riders for their own outlet");
+      }
+    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only admins can retrieve riders");
+    }
+
+    return this.toRiderAdmin(rider);
+  }
+
+  async updateRider(
+    actor: AuthenticatedUser,
+    id: string,
+    input: UpdateRiderDto,
+  ): Promise<RiderAdminResult> {
+    const rider = await this.users.findOneBy({ id, role: UserRole.RIDER });
+
+    if (!rider) {
+      throw new BadRequestException("Rider not found");
+    }
+
+    if (actor.role === UserRole.ADMIN) {
+      const adminOutletId = await this.requireAdminOutletId(actor.id);
+      if (rider.outletId !== adminOutletId) {
+        throw new ForbiddenException("Outlet admins can only update riders for their own outlet");
+      }
+    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only admins can update riders");
+    }
+
+    if (input.name !== undefined) {
+      rider.name = input.name;
+    }
+
+    if (input.phone !== undefined) {
+      const phone = normalizeNigerianPhoneNumber(input.phone);
+      const phoneHash = this.piiCrypto.searchHash(phone);
+
+      if (phoneHash !== rider.phoneHash) {
+        await this.ensureIdentityAvailable(phoneHash, "phone");
+        rider.phoneEncrypted = this.piiCrypto.encrypt(phone);
+        rider.phoneHash = phoneHash;
+      }
+    }
+
+    if (input.email !== undefined) {
+      const email = input.email.trim().toLowerCase();
+      const emailHash = this.piiCrypto.searchHash(email);
+
+      if (emailHash !== rider.emailHash) {
+        await this.ensureIdentityAvailable(emailHash, "email");
+        rider.emailEncrypted = this.piiCrypto.encrypt(email);
+        rider.emailHash = emailHash;
+      }
+    }
+
+    if (input.vehicleType !== undefined) {
+      rider.vehicleType = input.vehicleType;
+    }
+
+    if (input.plateNumber !== undefined) {
+      rider.plateNumber = input.plateNumber;
+    }
+
+    if (input.riderStatus !== undefined) {
+      rider.riderStatus = input.riderStatus;
+    }
+
+    if (input.status !== undefined) {
+      rider.status = input.status;
+    }
+
+    const saved = await this.saveUser(rider);
+    return this.toRiderAdmin(saved);
+  }
+
+  async deleteRider(actor: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
+    const rider = await this.users.findOneBy({ id, role: UserRole.RIDER });
+
+    if (!rider) {
+      throw new BadRequestException("Rider not found");
+    }
+
+    if (actor.role === UserRole.ADMIN) {
+      const adminOutletId = await this.requireAdminOutletId(actor.id);
+      if (rider.outletId !== adminOutletId) {
+        throw new ForbiddenException("Outlet admins can only delete riders for their own outlet");
+      }
+    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException("Only admins can delete riders");
+    }
+
+    await this.users.softRemove(rider);
+    return { deleted: true };
+  }
+
+  private toRiderAdmin(user: Customer): RiderAdminResult {
+    return {
+      id: user.id,
+      name: user.name,
+      role: UserRole.RIDER,
+      outletId: user.outletId,
+      email: this.piiCrypto.decrypt(user.emailEncrypted),
+      phone: this.piiCrypto.decrypt(user.phoneEncrypted),
+      vehicleType: user.vehicleType,
+      plateNumber: user.plateNumber,
+      riderStatus: user.riderStatus,
+      status: user.status,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
   }
 

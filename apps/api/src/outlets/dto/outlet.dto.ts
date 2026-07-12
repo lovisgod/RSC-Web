@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, Length, Matches } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, Length } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class ProvisionSubaccountDto {
@@ -35,6 +35,6 @@ export class ProvisionSubaccountDto {
 export class SetSubaccountCodeDto {
   @ApiProperty({ example: "ACCT_abc123xyz" })
   @IsString()
-  @Matches(/^ACCT_/, { message: "Paystack subaccount codes must start with ACCT_" })
+  @Length(2, 128, { message: "Subaccount code must be between 2 and 128 characters long" })
   subaccountCode!: string;
 }
