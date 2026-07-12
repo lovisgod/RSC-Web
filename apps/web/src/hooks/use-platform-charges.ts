@@ -21,10 +21,11 @@ export function calcCharges(
     deliveryFeeMinor: number;
     serviceFeeMinor: number;
   },
+  options: { includeDelivery?: boolean } = {},
 ) {
   const commission = Math.round((subtotalMinor * charges.platformCommissionBps) / 10_000);
   const vat = Math.round((subtotalMinor * charges.defaultVatBps) / 10_000);
-  const delivery = charges.deliveryFeeMinor;
+  const delivery = options.includeDelivery === false ? 0 : charges.deliveryFeeMinor;
   const service = charges.serviceFeeMinor;
   const total = subtotalMinor + commission + vat + delivery + service;
   return { commission, vat, delivery, service, total };
