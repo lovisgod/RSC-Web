@@ -10,6 +10,8 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
+  outletSettlementSummaryListSchema,
+  outletSettlementSummarySchema,
   platformChargesSchema,
   createRiderInputSchema,
   riderResultSchema,
@@ -37,6 +39,7 @@ import {
   type CreateNotificationCampaignInput,
   type CreateRiderInput,
   type OutletSummary,
+  type OutletSettlementSummary,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
@@ -186,7 +189,7 @@ export interface OutletBody {
   description?: string;
   cuisineType: string;
   isOnline?: boolean;
-  paystackSubaccountCode?: string | null;
+  settlementSubaccountCode?: string | null;
   imageUrl?: string;
 }
 
@@ -201,6 +204,16 @@ export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
 
 export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<OutletSummary> =>
   patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) => outletSummarySchema.parse(data));
+
+export const listOutletSettlements = (): Promise<OutletSettlementSummary[]> =>
+  get<unknown>("/api/v1/finance/outlet-settlements").then((data) =>
+    outletSettlementSummaryListSchema.parse(data),
+  );
+
+export const approveOutletSettlement = (outletId: string): Promise<OutletSettlementSummary> =>
+  post<unknown>(`/api/v1/finance/outlet-settlements/${outletId}/approve`).then((data) =>
+    outletSettlementSummarySchema.parse(data),
+  );
 
 /** PATCH — dedicated endpoint for toggling online status only */
 export const toggleOutletOnlineStatus = (

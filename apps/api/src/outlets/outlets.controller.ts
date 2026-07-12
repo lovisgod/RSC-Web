@@ -38,8 +38,8 @@ export class OutletsController {
   }
 
   /**
-   * Register an outlet's bank account with Paystack.
-   * Creates a Paystack subaccount and saves the ACCT_xxx code back to the outlet.
+   * Register an outlet's bank account with the active payment provider.
+   * Saves the provider-issued subaccount code back to the outlet.
    * SUPER_ADMIN or own outlet's ADMIN only.
    */
   @Post(":id/subaccount")
@@ -47,9 +47,9 @@ export class OutletsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({
-    summary: "Provision Paystack subaccount for an outlet",
+    summary: "Provision settlement subaccount for an outlet",
     description:
-      "Calls the Paystack subaccount API with the outlet's bank details. " +
+      "Calls the active payment provider with the outlet's bank details. " +
       "Idempotent — pass force=true to re-provision.",
   })
   @ApiMessage("Outlet subaccount provisioned")
@@ -64,8 +64,7 @@ export class OutletsController {
   }
 
   /**
-   * Manually assign a Paystack subaccount code that was registered externally
-   * (e.g. via Paystack dashboard rather than the API).
+   * Manually assign a settlement subaccount code that was registered externally.
    * SUPER_ADMIN or own outlet's ADMIN only.
    */
   @Put(":id/subaccount-code")
@@ -73,9 +72,8 @@ export class OutletsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({
-    summary: "Manually set an outlet's Paystack subaccount code",
-    description:
-      "Use when the subaccount was created outside the API. " + "Code must start with ACCT_.",
+    summary: "Manually set an outlet's settlement subaccount code",
+    description: "Use when the subaccount was created outside the API.",
   })
   @ApiMessage("Subaccount code updated")
   async setSubaccountCode(

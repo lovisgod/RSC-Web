@@ -219,7 +219,7 @@ export class PaymentsService {
 
       return {
         outletId,
-        subaccountCode: outletById.get(outletId)?.paystackSubaccountCode ?? null,
+        subaccountCode: outletById.get(outletId)?.settlementSubaccountCode ?? null,
         grossMinor,
         commissionMinor,
         netMinor: grossMinor - commissionMinor,

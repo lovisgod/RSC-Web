@@ -80,13 +80,12 @@ export class OutletsService {
       throw new NotFoundException("Outlet not found");
     }
 
-    if (outlet.paystackSubaccountCode && !force) {
-      return { subaccountCode: outlet.paystackSubaccountCode, outlet };
+    if (outlet.settlementSubaccountCode && !force) {
+      return { subaccountCode: outlet.settlementSubaccountCode, outlet };
     }
 
-    // Resolve platform commission percentage from bps stored on outlet (or use 0 as default)
-    // Actual per-transaction commission is deducted via split logic; this field controls what
-    // Paystack records as the default settlement percentage for the subaccount.
+    // Actual per-transaction commission is deducted via split logic; provider-level
+    // subaccount defaults are kept at 0 so the platform split remains source of truth.
     const commissionPct = 0; // Platform keeps remainder via split_code bearer_type=account
 
     const result = await this.paymentAdapter.provisionSubaccount({
@@ -96,7 +95,7 @@ export class OutletsService {
       percentageCharge: commissionPct,
     });
 
-    outlet.paystackSubaccountCode = result.subaccountCode;
+    outlet.settlementSubaccountCode = result.subaccountCode;
     await this.outlets.save(outlet);
 
     this.logger.log(
@@ -106,10 +105,7 @@ export class OutletsService {
     return { subaccountCode: result.subaccountCode, outlet };
   }
 
-  /**
-   * Manually set a Paystack subaccount code on an outlet.
-   * Use when the subaccount was registered externally (e.g. via Paystack dashboard).
-   */
+  /** Manually set a settlement subaccount code that was registered externally. */
   async setSubaccountCode(
     outletId: string,
     subaccountCode: string,
@@ -136,7 +132,7 @@ export class OutletsService {
       }
     }
 
-    outlet.paystackSubaccountCode = subaccountCode;
+    outlet.settlementSubaccountCode = subaccountCode;
     await this.outlets.save(outlet);
 
     return { subaccountCode, outlet };

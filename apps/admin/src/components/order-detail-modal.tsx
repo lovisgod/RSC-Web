@@ -146,7 +146,11 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                 : 0;
             const payoutPct = 100 - commPct;
             const outletNote =
-              typeof sub.preparationNote === "string" ? sub.preparationNote.trim() : "";
+              sub.status === "REJECTED" && typeof sub.rejectionReason === "string"
+                ? sub.rejectionReason.trim()
+                : typeof sub.preparationNote === "string"
+                  ? sub.preparationNote.trim()
+                  : "";
             const outletNoteLabel =
               sub.status === "REJECTED" || order.status === "CANCELLED"
                 ? "Rejection reason"
@@ -220,7 +224,7 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                 <div className="order-modal__sub-finance">
                   <div className="order-modal__finance-row">
                     <span className="order-modal__finance-label">
-                      Paystack Account: <code>{outlet?.paystackSubaccountCode ?? "—"}</code>
+                      Settlement Account: <code>{outlet?.settlementSubaccountCode ?? "—"}</code>
                     </span>
                     <span className="order-modal__finance-payout">
                       Payout ({payoutPct}%): {fmt(sub.netMinor)}

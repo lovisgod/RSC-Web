@@ -428,6 +428,25 @@ export const paymentVerifyResultSchema = z.object({
   orderStatus: z.string().min(1),
 });
 
+export const settlementStatusSchema = z.enum(["NO_ACTIVITY", "PENDING", "APPROVED"]);
+
+export const outletSettlementSummarySchema = z.object({
+  outletId: z.uuid(),
+  outletName: z.string().min(1),
+  imageUrl: z.string().nullable(),
+  subaccountCode: z.string().nullable(),
+  completedSubOrders: z.int().nonnegative(),
+  pendingSubOrders: z.int().nonnegative(),
+  grossMinor: z.int().nonnegative(),
+  commissionMinor: z.int().nonnegative(),
+  netMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  status: settlementStatusSchema,
+  latestApprovedAt: z.iso.datetime().nullable(),
+});
+
+export const outletSettlementSummaryListSchema = z.array(outletSettlementSummarySchema);
+
 export const menuCategorySchema = z.object({
   id: z.uuid(),
   outletId: z.uuid(),
@@ -505,8 +524,7 @@ export const outletSummarySchema = z
     description: z.string().nullable(),
     imageUrl: z.string().nullable(),
     isOnline: z.boolean(),
-    momentSubaccountCode: z.string().optional(),
-    paystackSubaccountCode: z.string().optional(),
+    settlementSubaccountCode: z.string().nullable().optional(),
     ratingAverage: z.coerce.number().min(0).max(5).default(0),
     ratingCount: z.int().nonnegative().default(0),
     menuCategories: z.array(menuCategorySchema),
@@ -517,12 +535,9 @@ export const outletSummarySchema = z
   })
   .passthrough()
   .transform((outlet) => {
-    const subaccountCode = outlet.paystackSubaccountCode ?? outlet.momentSubaccountCode ?? "";
-
     return {
       ...outlet,
-      momentSubaccountCode: outlet.momentSubaccountCode ?? subaccountCode,
-      paystackSubaccountCode: outlet.paystackSubaccountCode ?? subaccountCode,
+      settlementSubaccountCode: outlet.settlementSubaccountCode ?? null,
     };
   });
 
@@ -604,6 +619,7 @@ export const adminOrderSubOrderSchema = z.object({
   currency: currencySchema,
   preparationTime: z.number().int().nullable().optional(),
   preparationNote: z.string().nullable().optional(),
+  rejectionReason: z.string().nullable().optional(),
   preparationTimeMinutes: z.int().nonnegative().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -724,6 +740,7 @@ export const subOrderDetailSchema = z
     currency: currencySchema.default("NGN"),
     preparationTime: z.coerce.number().int().nullable().optional(),
     preparationNote: z.string().nullable().optional(),
+    rejectionReason: z.string().nullable().optional(),
     createdAt: z.string().min(1),
   })
   .passthrough();
@@ -806,6 +823,7 @@ export const riderDispatchSchema = z.object({
       pickupCode: z.string().min(1),
       status: subOrderStatusSchema,
       preparationNote: z.string().nullable().optional(),
+      rejectionReason: z.string().nullable().optional(),
       items: z.array(
         z.object({
           id: z.uuid(),
@@ -1085,6 +1103,8 @@ export type PlatformCharges = z.infer<typeof platformChargesSchema>;
 export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
 export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;
 export type RateOutletInput = z.infer<typeof rateOutletInputSchema>;
+export type SettlementStatus = z.infer<typeof settlementStatusSchema>;
+export type OutletSettlementSummary = z.infer<typeof outletSettlementSummarySchema>;
 
 export const preparationSuggestionSchema = z.object({
   id: z.uuid(),
