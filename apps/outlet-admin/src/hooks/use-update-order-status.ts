@@ -29,7 +29,7 @@ export function useUpdateOrderStatus(outletId: string) {
     }) =>
       updateSubOrderStatus(subOrderId, {
         status,
-        ...(rejectionReason !== undefined ? { note: rejectionReason } : {}),
+        ...(rejectionReason !== undefined ? { rejectionReason } : {}),
         ...(preparationTimeMinutes !== undefined
           ? { preparationTime: preparationTimeMinutes }
           : {}),

@@ -481,6 +481,26 @@ describe("customer registration contracts", () => {
     });
   });
 
+  it("defaults outlet relation arrays when create responses omit them", () => {
+    expect(
+      outletSummarySchema.parse({
+        id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        name: "Manjaro",
+        cuisineType: "Nigerian Locals",
+        description: "For the foodies",
+        imageUrl: null,
+        isOnline: true,
+        settlementSubaccountCode: "Manjaro_123ert",
+      }),
+    ).toMatchObject({
+      menuCategories: [],
+      menuItems: [],
+      itemModifierGroups: [],
+      itemModifiers: [],
+      menuItemModifierGroups: [],
+    });
+  });
+
   it("documents admin order list contracts", () => {
     expect(
       adminOrdersQuerySchema.parse({

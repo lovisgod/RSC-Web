@@ -294,6 +294,7 @@ export interface PosSubOrder {
   deliveryCode: string | null;
   items: PosSubOrderItem[];
   totalAmountMinor: number;
+  totalSubOrders: number;
   createdAt: string;
   updatedAt: string;
   preparationNote?: string;
@@ -331,6 +332,7 @@ function toSubOrders(data: AdminOrdersResult, outletId: string): PosSubOrder[] {
               : {}),
           })),
         totalAmountMinor: sub.subtotalMinor,
+        totalSubOrders: subOrders.length,
         createdAt: sub.createdAt,
         updatedAt: sub.updatedAt,
         ...(sub.preparationNote ? { preparationNote: sub.preparationNote } : {}),
@@ -368,5 +370,5 @@ export const listAdminOrders = (outletId: string): Promise<PosSubOrder[]> =>
 //   CONFIRMED → ACCEPTED | PARTIALLY_READY → PREPARING | READY → READY | DELIVERED → COLLECTED
 export const updateSubOrderStatus = (
   subOrderId: string,
-  body: { status: MasterOrderStatus; preparationTimeMinutes?: number; rejectionReason?: string },
+  body: { status: MasterOrderStatus; preparationTime?: number; rejectionReason?: string },
 ): Promise<unknown> => patchReq(`/api/v1/orders/${subOrderId}/status`, body);

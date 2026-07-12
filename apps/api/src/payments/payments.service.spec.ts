@@ -17,7 +17,12 @@ import { Outlet } from "../outlets/outlet.entity";
 import type { RealtimeService } from "../realtime/realtime.service";
 import type { Payment } from "./payment.entity";
 import { PaymentStatus } from "./payment.entity";
-import type { PaymentAdapter } from "./payment-adapter";
+import type {
+  PaymentAdapter,
+  RefundProviderPaymentInput,
+  RefundProviderPaymentResult,
+} from "./payment-adapter";
+import type { PaymentRefund } from "./payment-refund.entity";
 import { PaymentsService } from "./payments.service";
 
 describe(PaymentsService.name, () => {
@@ -28,9 +33,16 @@ describe(PaymentsService.name, () => {
   let menuItems: { findBy: ReturnType<typeof vi.fn> };
   let modifiers: { findBy: ReturnType<typeof vi.fn> };
   let outlets: { findBy: ReturnType<typeof vi.fn> };
+  let payments: { findOneBy: ReturnType<typeof vi.fn> };
+  let refunds: {
+    find: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+  };
   let dataSource: { query: ReturnType<typeof vi.fn>; transaction: ReturnType<typeof vi.fn> };
   let delivery: { validateAddress: ReturnType<typeof vi.fn> };
   let paymentAdapter: PaymentAdapter;
+  let refundPayment: (input: RefundProviderPaymentInput) => Promise<RefundProviderPaymentResult>;
   let realtime: { emitSuborderNew: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
@@ -66,6 +78,28 @@ describe(PaymentsService.name, () => {
         }),
       ]),
     };
+    payments = {
+      findOneBy: vi.fn().mockResolvedValue({
+        id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+        masterOrderId: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+        amountMinor: 645000,
+        currency: "NGN",
+        gateway: "local",
+        reference: "RSC-reference",
+        status: PaymentStatus.SUCCESS,
+      }),
+    };
+    refunds = {
+      find: vi.fn().mockResolvedValue([]),
+      create: vi.fn((value: Partial<PaymentRefund>) => value),
+      save: vi.fn((value: Partial<PaymentRefund>) =>
+        Promise.resolve({
+          id: "2d314436-919a-4873-ad0f-92d8d79ce448",
+          createdAt: new Date("2026-07-12T12:00:00.000Z"),
+          ...value,
+        }),
+      ),
+    };
     dataSource = { query: vi.fn().mockResolvedValue([]), transaction: vi.fn() };
     delivery = {
       validateAddress: vi.fn().mockResolvedValue({
@@ -73,6 +107,13 @@ describe(PaymentsService.name, () => {
         zone: { id: "lagos-expanded", name: "Lagos Island Expanded Delivery Zone" },
       }),
     };
+    refundPayment = vi
+      .fn<(input: RefundProviderPaymentInput) => Promise<RefundProviderPaymentResult>>()
+      .mockResolvedValue({
+        providerRefundId: "local_refund_RSC-reference",
+        status: "SUCCESS",
+        providerResponse: {},
+      });
     paymentAdapter = {
       initiate: vi.fn().mockResolvedValue({
         gateway: "local",
@@ -91,6 +132,7 @@ describe(PaymentsService.name, () => {
       provisionSubaccount: vi
         .fn()
         .mockResolvedValue({ subaccountCode: "LOCAL_ACCT_TEST", providerResponse: {} }),
+      refund: refundPayment,
     };
     realtime = { emitSuborderNew: vi.fn() };
 
@@ -102,7 +144,8 @@ describe(PaymentsService.name, () => {
       {} as Repository<MasterOrder>,
       {} as Repository<SubOrder>,
       {} as Repository<OrderLineItem>,
-      {} as Repository<Payment>,
+      payments as unknown as Repository<Payment>,
+      refunds as unknown as Repository<PaymentRefund>,
       dataSource as unknown as DataSource,
       delivery as unknown as DeliveryService,
       {
@@ -140,11 +183,47 @@ describe(PaymentsService.name, () => {
               quantity: 1,
             },
           ],
+          subtotalMinor: 450000,
+          deliveryFeeMinor: 150000,
+          serviceFeeMinor: 0,
+          vatMinor: 0,
+          platformCommissionMinor: 45000,
+          totalMinor: 645000,
         },
       ),
     ).rejects.toThrow(BadRequestException);
 
     expect(dataSource.transaction).not.toHaveBeenCalled();
+  });
+
+  it("processes a super admin refund for a successful payment", async () => {
+    const result = await service.processRefund(
+      {
+        id: "46a60575-b4aa-40d7-a9de-b1af448263fe",
+        role: UserRole.SUPER_ADMIN,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      },
+      "RSC-reference",
+      { amountMinor: 250000, reason: "Customer cancellation" },
+    );
+
+    expect(refundPayment).toHaveBeenCalledWith({
+      reference: "RSC-reference",
+      amountMinor: 250000,
+      currency: "NGN",
+      reason: "Customer cancellation",
+    });
+    expect(refunds.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paymentId: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+        amountMinor: 250000,
+        reason: "Customer cancellation",
+        provider: "local",
+        requestedBy: "46a60575-b4aa-40d7-a9de-b1af448263fe",
+      }),
+    );
+    expect(result).toEqual(expect.objectContaining({ status: "SUCCESS", amountMinor: 250000 }));
   });
 
   it("stores recipient phone on the master order and preparation note on every sub-order", async () => {
@@ -196,6 +275,12 @@ describe(PaymentsService.name, () => {
             quantity: 1,
           },
         ],
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 0,
+        vatMinor: 0,
+        platformCommissionMinor: 45000,
+        totalMinor: 645000,
       },
     );
 
@@ -207,5 +292,80 @@ describe(PaymentsService.name, () => {
       expect.any(Function),
       expect.objectContaining({ preparationNote: "No onions across the order" }),
     );
+  });
+
+  describe("Initiate totals validation", () => {
+    const validPayload = {
+      deliveryMode: "DELIVERY" as const,
+      deliveryAddress: "12 Admiralty Way",
+      deliveryLatitude: 6.4474,
+      deliveryLongitude: 3.4542,
+      items: [
+        {
+          menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+          quantity: 1,
+        },
+      ],
+      subtotalMinor: 450000,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 0,
+      vatMinor: 0,
+      platformCommissionMinor: 45000,
+      totalMinor: 645000,
+    };
+
+    it("throws BadRequestException on subtotalMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, subtotalMinor: 400000 },
+        ),
+      ).rejects.toThrow(/Subtotal mismatch/);
+    });
+
+    it("throws BadRequestException on deliveryFeeMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, deliveryFeeMinor: 100000 },
+        ),
+      ).rejects.toThrow(/Delivery fee mismatch/);
+    });
+
+    it("throws BadRequestException on serviceFeeMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, serviceFeeMinor: 100 },
+        ),
+      ).rejects.toThrow(/Service fee mismatch/);
+    });
+
+    it("throws BadRequestException on vatMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, vatMinor: 100 },
+        ),
+      ).rejects.toThrow(/VAT mismatch/);
+    });
+
+    it("throws BadRequestException on platformCommissionMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, platformCommissionMinor: 100 },
+        ),
+      ).rejects.toThrow(/Platform commission mismatch/);
+    });
+
+    it("throws BadRequestException on totalMinor mismatch", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, totalMinor: 600000 },
+        ),
+      ).rejects.toThrow(/Total mismatch/);
+    });
   });
 });
