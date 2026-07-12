@@ -52,6 +52,12 @@ import {
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
   type ProcessRefundInput,
+  preparationSuggestionSchema,
+  createPreparationSuggestionInputSchema,
+  queryPreparationSuggestionsInputSchema,
+  type PreparationSuggestion,
+  type CreatePreparationSuggestionInput,
+  type QueryPreparationSuggestionsInput,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
@@ -469,6 +475,35 @@ function statsQuery(input: OperationsStatsQuery | OrderPulseQuery): string {
   const query = params.toString();
   return query ? `?${query}` : "";
 }
+
+// ─── Preparation Suggestions ─────────────────────────────────────────────────
+
+export const listPreparationSuggestions = (
+  input: QueryPreparationSuggestionsInput = {},
+): Promise<PreparationSuggestion[]> => {
+  const query = queryPreparationSuggestionsInputSchema.parse(input);
+  const sp = new URLSearchParams();
+  if (query.outletId) sp.set("outletId", query.outletId);
+  if (query.menuItemId) sp.set("menuItemId", query.menuItemId);
+  if (query.q) sp.set("q", query.q);
+  const qs = sp.toString();
+  return get<unknown>(`/api/v1/preparation-suggestions${qs ? `?${qs}` : ""}`).then((data) =>
+    preparationSuggestionSchema.array().parse(data),
+  );
+};
+
+export const createPreparationSuggestion = (
+  input: CreatePreparationSuggestionInput,
+): Promise<PreparationSuggestion> =>
+  post<unknown>(
+    "/api/v1/preparation-suggestions/admin",
+    createPreparationSuggestionInputSchema.parse(input),
+  ).then((data) => preparationSuggestionSchema.parse(data));
+
+export const deletePreparationSuggestion = (id: string): Promise<{ deleted: true }> =>
+  http.delete(`/api/v1/preparation-suggestions/admin/${encodeURIComponent(id)}`).then(() => ({
+    deleted: true as const,
+  }));
 
 export const getOperationsSummary = async (
   input: OperationsStatsQuery = {},

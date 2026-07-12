@@ -19,6 +19,7 @@ import {
   preparationSuggestionSchema,
   queryPreparationSuggestionsInputSchema,
   profileUpdateResultSchema,
+  rateMenuItemInputSchema,
   orderDetailSchema,
   orderSummarySchema,
   outletAdminSchema,
@@ -83,6 +84,7 @@ import {
   type PreparationSuggestion,
   type QueryPreparationSuggestionsInput,
   type ProfileUpdateResult,
+  type RateMenuItemInput,
   type OrderDetail,
   type OrderSummary,
   type OutletAdmin,
@@ -501,6 +503,14 @@ export function createApiClient(options: ApiClientOptions) {
 
       return request(`/api/v1/menu-items/${encodeURIComponent(id)}/availability`, menuItemSchema, {
         method: "PATCH",
+        body: JSON.stringify(body),
+      });
+    },
+    rateMenuItem(id: string, input: RateMenuItemInput): Promise<MenuItem> {
+      const body = rateMenuItemInputSchema.parse(input);
+
+      return request(`/api/v1/menu-items/${encodeURIComponent(id)}/rating`, menuItemSchema, {
+        method: "POST",
         body: JSON.stringify(body),
       });
     },

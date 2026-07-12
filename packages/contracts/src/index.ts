@@ -516,6 +516,13 @@ export const updateMenuItemAvailabilityInputSchema = z
   })
   .strict();
 
+export const rateMenuItemInputSchema = z
+  .object({
+    rating: z.int().min(1).max(5),
+    comment: z.string().trim().max(1_000).optional(),
+  })
+  .strict();
+
 export const itemModifierGroupSchema = z.object({
   id: z.uuid(),
   outletId: z.uuid(),
@@ -1043,6 +1050,7 @@ export type MenuItemModifierGroup = z.infer<typeof menuItemModifierGroupSchema>;
 export type MenuItem = z.infer<typeof menuItemSchema>;
 export type MenuItemsPage = z.infer<typeof menuItemsPageSchema>;
 export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
+export type RateMenuItemInput = z.infer<typeof rateMenuItemInputSchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
 export type DeliveryMode = z.infer<typeof deliveryModeSchema>;

@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 
 import { OutletsView } from "@/src/components/outlets/outlets-view";
 import { OffersSection } from "@/src/components/outlets/offers-section";
+import { RecentOrderRatingPrompt } from "@/src/components/ratings/recent-order-rating-prompt";
 
 export const metadata: Metadata = { title: "Kitchens" };
 
@@ -30,6 +31,7 @@ export default function OutletsPage() {
         </Link>
       </div>
 
+      <RecentOrderRatingPrompt />
       <OffersSection />
       <OutletsView />
     </div>
