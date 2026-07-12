@@ -35,4 +35,13 @@ describe("isActiveQueueOrder", () => {
       }),
     ).toBe(false);
   });
+
+  it("filters out orders that are pending payment", () => {
+    expect(
+      isActiveQueueOrder({
+        ...readyOrder,
+        masterOrderStatus: "PENDING_PAYMENT",
+      }),
+    ).toBe(false);
+  });
 });
