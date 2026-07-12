@@ -10,6 +10,7 @@ coverage
 !.env.example
 .DS_Store
 pnpm-debug.log*
+.tmp/
 **/.dev-logs/
 **/.tmp-dev-logs/
 .env.deploy

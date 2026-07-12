@@ -9,7 +9,6 @@ import { CheckoutSidebar } from "@/src/components/checkout/checkout-sidebar";
 import { FulfillmentStep } from "@/src/components/checkout/steps/fulfillment-step";
 import { PaymentStep } from "@/src/components/checkout/steps/payment-step";
 import { ConfirmationStep } from "@/src/components/checkout/steps/confirmation-step";
-import { useCartStore } from "@/src/stores/cart-store";
 
 const EMPTY_DELIVERY: DeliveryForm = {
   mode: "delivery",
@@ -28,7 +27,6 @@ const STEP_TO_PROGRESS: Record<Step, number> = { 1: 1, 2: 2, 3: 3 };
 
 export function CheckoutView() {
   const router = useRouter();
-  const clearCart = useCartStore((state) => state.clear);
   const [step, setStep] = useState<Step>(1);
   const [delivery, setDelivery] = useState<DeliveryForm>(EMPTY_DELIVERY);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -77,10 +75,6 @@ export function CheckoutView() {
               checkoutUrl={checkoutUrl}
               totalMinor={snapshot?.totals.totalMinor ?? null}
               onBack={() => router.push("/outlets")}
-              onSuccess={() => {
-                clearCart();
-                setStep(3);
-              }}
             />
           )}
 

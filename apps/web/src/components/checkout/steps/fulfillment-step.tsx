@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
@@ -373,7 +373,7 @@ export function FulfillmentStep({
               mode === m ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            <span>{m === "delivery" ? "🚴" : "🛍️"}</span>
+            <span>{m === "delivery" ? "??" : "???"}</span>
             <span className="capitalize">{m}</span>
           </button>
         ))}
@@ -599,7 +599,7 @@ export function FulfillmentStep({
           </div>
           <div className="flex justify-between text-gray-500">
             <span>Delivery Fee</span>
-            <span>{deliveryFee === 0 ? "₦0" : formatNaira(deliveryFee)}</span>
+            <span>{deliveryFee === 0 ? "?0" : formatNaira(deliveryFee)}</span>
           </div>
           <div className="flex justify-between text-gray-500">
             <span>VAT</span>
@@ -659,7 +659,7 @@ export function FulfillmentStep({
               Placing order…
             </span>
           ) : (
-            "Proceed to Payment 🚀"
+            "Proceed to Payment ??"
           )}
         </Button>
       </div>

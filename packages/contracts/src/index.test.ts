@@ -18,6 +18,7 @@ import {
   orderPulseSchema,
   platformChargesSchema,
   profileUpdateResultSchema,
+  rateMenuItemInputSchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -130,6 +131,17 @@ describe("media contracts", () => {
       code: "482901",
     });
     expect(() => verifyProfileChangeInputSchema.parse({ code: "12345" })).toThrow();
+  });
+});
+
+describe("menu item rating contracts", () => {
+  it("accepts one-to-five stars with an optional comment", () => {
+    expect(rateMenuItemInputSchema.parse({ rating: 5, comment: "Loved it" })).toEqual({
+      rating: 5,
+      comment: "Loved it",
+    });
+    expect(() => rateMenuItemInputSchema.parse({ rating: 0 })).toThrow();
+    expect(() => rateMenuItemInputSchema.parse({ rating: 6 })).toThrow();
   });
 });
 

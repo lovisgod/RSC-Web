@@ -2,6 +2,14 @@ import type { OutletSummary } from "@rsc/contracts";
 
 import { computeOutletMetrics } from "@/src/lib/data/outlet-menu";
 
+export const DEFAULT_OUTLET_RATING = 4.0;
+
+export function formatOutletRating(rating: number | null | undefined): string {
+  const value = typeof rating === "number" && rating > 0 ? rating : DEFAULT_OUTLET_RATING;
+
+  return value.toFixed(1);
+}
+
 export interface Outlet {
   id: string;
   name: string;
