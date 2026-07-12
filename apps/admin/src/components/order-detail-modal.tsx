@@ -1,11 +1,13 @@
 import { Button } from "@rsc/ui";
 import type { OutletSummary } from "@rsc/contracts";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, X } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-import type { AdminOrderItem } from "../lib/api";
+import { processPaymentRefund, type AdminOrderItem } from "../lib/api";
 import { orderStatusClass } from "../lib/order-status";
+import { toastBus } from "../lib/toast-bus";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -59,6 +61,24 @@ const SUB_ORDER_STATUS_LABELS: Record<string, string> = {
 
 export function OrderDetailModal({ item, outletById, onClose }: Props) {
   const { order, subOrders, lineItems } = item;
+  const queryClient = useQueryClient();
+  const refundMutation = useMutation({
+    mutationFn: () => {
+      if (!order.paymentReference) {
+        throw new Error("This order has no payment reference");
+      }
+
+      return processPaymentRefund(order.paymentReference, {
+        reason: `Refund for order ${order.id.slice(0, 8).toUpperCase()}`,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      toastBus.emit("Refund request processed", "success");
+      onClose();
+    },
+    onError: (err: Error) => toastBus.emit(err.message, "error"),
+  });
 
   // Group line items by their sub-order
   const linesBySubOrder: Record<string, typeof lineItems> = {};
@@ -67,6 +87,17 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
   }
 
   const statusText = STATUS_LABELS[order.status] ?? order.status;
+  const canRefund = order.status !== "PENDING_PAYMENT" && !!order.paymentReference;
+
+  function handleRefund() {
+    if (!canRefund || refundMutation.isPending) return;
+    const confirmed = window.confirm(
+      `Process a full refund for order #${order.id.slice(0, 8).toUpperCase()}?`,
+    );
+    if (confirmed) {
+      refundMutation.mutate();
+    }
+  }
 
   return createPortal(
     <div className="modal-overlay" aria-hidden="true" onClick={onClose}>
@@ -277,7 +308,14 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
           <Button tone="quiet" onClick={onClose}>
             Close Panel
           </Button>
-          <Button tone="danger">Process Refund 💸</Button>
+          <Button
+            tone="danger"
+            type="button"
+            disabled={!canRefund || refundMutation.isPending}
+            onClick={handleRefund}
+          >
+            {refundMutation.isPending ? "Processing…" : "Process Refund"}
+          </Button>
         </div>
       </div>
     </div>,

@@ -88,3 +88,20 @@ export class InitiatePaymentDto {
   @Length(1, 1_000)
   preparationNote?: string;
 }
+
+export class ProcessRefundDto {
+  @ApiPropertyOptional({
+    example: 250000,
+    description: "Minor currency unit. Omit for full refund.",
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  amountMinor?: number;
+
+  @ApiPropertyOptional({ example: "Customer requested cancellation", maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @Length(1, 500)
+  reason?: string;
+}
