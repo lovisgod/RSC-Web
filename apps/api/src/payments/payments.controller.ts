@@ -20,7 +20,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
-import { InitiatePaymentDto } from "./dto/payment.dto";
+import { InitiatePaymentDto, ProcessRefundDto } from "./dto/payment.dto";
 import { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { PaymentsService } from "./payments.service";
 import { PAYMENT_ADAPTER, type PaymentAdapter } from "./payment-adapter";
@@ -133,5 +133,23 @@ export class PaymentsController {
   @ApiMessage("Payment status retrieved")
   verify(@Req() request: AuthenticatedRequest, @Param("reference") reference: string) {
     return this.payments.verifyPayment(request.user!, reference);
+  }
+
+  @Post(":reference/refund")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("Refund processed")
+  @ApiOperation({
+    summary: "Process a payment refund",
+    description:
+      "Super-admin endpoint for full or partial refunds. Omit amountMinor to refund the remaining full payment amount.",
+  })
+  refund(
+    @Req() request: AuthenticatedRequest,
+    @Param("reference") reference: string,
+    @Body() input: ProcessRefundDto,
+  ) {
+    return this.payments.processRefund(request.user!, reference, input);
   }
 }

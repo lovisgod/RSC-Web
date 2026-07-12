@@ -428,6 +428,27 @@ export const paymentVerifyResultSchema = z.object({
   orderStatus: z.string().min(1),
 });
 
+export const processRefundInputSchema = z
+  .object({
+    amountMinor: z.int().positive().optional(),
+    reason: z.string().trim().min(1).max(500).optional(),
+  })
+  .strict();
+
+export const paymentRefundSchema = z.object({
+  id: z.uuid(),
+  paymentId: z.uuid(),
+  reference: z.string().min(1),
+  amountMinor: z.int().positive(),
+  currency: currencySchema,
+  status: z.enum(["PENDING", "SUCCESS", "FAILED"]),
+  reason: z.string().nullable(),
+  provider: z.string().min(1),
+  providerRefundId: z.string().nullable(),
+  requestedBy: z.uuid(),
+  createdAt: z.iso.datetime(),
+});
+
 export const settlementStatusSchema = z.enum(["NO_ACTIVITY", "PENDING", "APPROVED"]);
 
 export const outletSettlementSummarySchema = z.object({
@@ -527,11 +548,11 @@ export const outletSummarySchema = z
     settlementSubaccountCode: z.string().nullable().optional(),
     ratingAverage: z.coerce.number().min(0).max(5).default(0),
     ratingCount: z.int().nonnegative().default(0),
-    menuCategories: z.array(menuCategorySchema),
-    menuItems: z.array(menuItemSchema),
-    itemModifierGroups: z.array(itemModifierGroupSchema),
-    itemModifiers: z.array(itemModifierSchema),
-    menuItemModifierGroups: z.array(menuItemModifierGroupSchema),
+    menuCategories: z.array(menuCategorySchema).default([]),
+    menuItems: z.array(menuItemSchema).default([]),
+    itemModifierGroups: z.array(itemModifierGroupSchema).default([]),
+    itemModifiers: z.array(itemModifierSchema).default([]),
+    menuItemModifierGroups: z.array(menuItemModifierGroupSchema).default([]),
   })
   .passthrough()
   .transform((outlet) => {
@@ -1050,6 +1071,8 @@ export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
 export type InitiatePaymentInput = z.infer<typeof initiatePaymentInputSchema>;
 export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type PaymentVerifyResult = z.infer<typeof paymentVerifyResultSchema>;
+export type ProcessRefundInput = z.infer<typeof processRefundInputSchema>;
+export type PaymentRefund = z.infer<typeof paymentRefundSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;

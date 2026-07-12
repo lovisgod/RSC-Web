@@ -16,6 +16,7 @@ import type { ApplicationConfig } from "../config/configuration";
 import { LocalPaymentAdapter } from "./local-payment.adapter";
 import { PAYMENT_ADAPTER } from "./payment-adapter";
 import { Payment } from "./payment.entity";
+import { PaymentRefund } from "./payment-refund.entity";
 import { PaymentsController } from "./payments.controller";
 import { PaymentsService } from "./payments.service";
 import { PaystackPaymentAdapter } from "./paystack-payment.adapter";
@@ -35,6 +36,7 @@ import { MomentPaymentAdapter } from "./moment-payment.adapter";
       SubOrder,
       OrderLineItem,
       Payment,
+      PaymentRefund,
     ]),
   ],
   controllers: [PaymentsController],

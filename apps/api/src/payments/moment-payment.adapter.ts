@@ -17,6 +17,7 @@ import type {
   PaymentAdapter,
   ProvisionSubaccountInput,
   ProvisionSubaccountResult,
+  RefundProviderPaymentResult,
   VerifyProviderPaymentResult,
 } from "./payment-adapter";
 import { Payment } from "./payment.entity";
@@ -271,6 +272,11 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       subaccountCode: mockCode,
       providerResponse: { info: "Provisioned via dashboard UI mock fallback", input },
     };
+  }
+
+  async refund(): Promise<RefundProviderPaymentResult> {
+    await Promise.resolve();
+    throw new BadGatewayException("Refunds are not supported by the Moment adapter yet");
   }
 
   private verifyMomentSignature(signedContent: string, signatureHeader: string): boolean {
