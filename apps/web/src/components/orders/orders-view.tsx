@@ -3,7 +3,7 @@
 import { Button, EmptyState } from "@rsc/ui";
 import { useState } from "react";
 
-import { useActiveOrders } from "@/src/hooks/use-orders";
+import { useProfileActiveOrders } from "@/src/hooks/use-orders";
 import { useCompletedOrders } from "@/src/hooks/use-orders";
 import { OrderCard } from "@/src/components/orders/order-card";
 
@@ -26,7 +26,7 @@ function TabButton({
 }
 
 function ActiveTab() {
-  const { data: orders, isPending, isError } = useActiveOrders();
+  const { data: orders, isPending, isError } = useProfileActiveOrders();
 
   if (isPending) {
     return <p className="text-sm text-gray-400 py-8 text-center">Checking for active orders…</p>;

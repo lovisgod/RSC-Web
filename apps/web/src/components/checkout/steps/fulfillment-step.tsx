@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
@@ -10,7 +10,6 @@ import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { cartSubtotalMinor, formatNaira } from "@/src/lib/data/cart";
 import {
-  VAT_RATE,
   type DeliveryForm,
   type DeliveryZone,
   type FulfillmentMode,
@@ -21,6 +20,8 @@ import { geocodeAddress } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
+import { useOutlets } from "@/src/hooks/use-outlets";
+import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -54,6 +55,9 @@ export function FulfillmentStep({
   ) => void;
 }) {
   const { data: cart } = useCart();
+  const { data: platformCharges } = usePlatformCharges();
+  const { data: outlets = [] } = useOutlets();
+  const outletById = new Map(outlets.map((o) => [o.id, o]));
   const qc = useQueryClient();
 
   const { data: savedAddresses = [] } = useDeliveryAddresses();
@@ -246,14 +250,30 @@ export function FulfillmentStep({
   }, []);
 
   const subtotal = cart ? cartSubtotalMinor(cart) : 0;
-  const deliveryFee = mode === "delivery" && cart ? cart.deliveryFeeMinor : 0;
-  const vat = Math.round((subtotal + deliveryFee) * VAT_RATE);
-  const grandTotal = subtotal + deliveryFee + vat;
+  const deliveryFee = mode === "delivery" && platformCharges ? platformCharges.deliveryFeeMinor : 0;
+  const serviceFee = platformCharges?.serviceFeeMinor ?? 0;
+
+  const vat = cart
+    ? cart.groups.reduce((sum, group) => {
+        const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
+        const outletVatBps = outletById.get(group.outletId)?.vatBps ?? 0;
+        const defaultVatBps = platformCharges?.defaultVatBps ?? 750;
+        const vatBps = outletVatBps > 0 ? outletVatBps : defaultVatBps;
+        return sum + Math.round((groupSubtotal * vatBps) / 10_000);
+      }, 0)
+    : 0;
+
+  const platformCommission = cart
+    ? cart.groups.reduce((sum, group) => {
+        const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
+        const commissionBps = platformCharges?.platformCommissionBps ?? 1000;
+        return sum + Math.round((groupSubtotal * commissionBps) / 10_000);
+      }, 0)
+    : 0;
+
+  const grandTotal = subtotal + deliveryFee + serviceFee + vat + platformCommission;
 
   const initiateMutation = useMutation({
-    onError: (err) => {
-      console.error("[initiatePayment error]", err);
-    },
     mutationFn: () => {
       if (onBehalf) {
         const parsedPhone = nigerianPhoneNumberSchema.safeParse(recipientPhone);
@@ -279,6 +299,12 @@ export function FulfillmentStep({
         items,
         deliveryMode: mode === "delivery" ? ("DELIVERY" as const) : ("TAKEOUT" as const),
         ...(onBehalf ? { recipientPhone: recipientPhone.trim() } : {}),
+        subtotalMinor: subtotal,
+        deliveryFeeMinor: deliveryFee,
+        serviceFeeMinor: serviceFee,
+        vatMinor: vat,
+        platformCommissionMinor: platformCommission,
+        totalMinor: grandTotal,
       };
 
       return apiClient.initiatePayment(
@@ -293,6 +319,8 @@ export function FulfillmentStep({
       );
     },
     onSuccess: (result) => {
+      void qc.invalidateQueries({ queryKey: ["orders"] });
+
       // Snapshot cart before clearing so the sidebar stays populated on later steps
       const snapshot: OrderSnapshot = {
         groups: cart.groups.map((g) => ({
@@ -344,7 +372,7 @@ export function FulfillmentStep({
               mode === m ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            <span>{m === "delivery" ? "🚴" : "🛍️"}</span>
+            <span>{m === "delivery" ? "??" : "???"}</span>
             <span className="capitalize">{m}</span>
           </button>
         ))}
@@ -570,12 +598,22 @@ export function FulfillmentStep({
           </div>
           <div className="flex justify-between text-gray-500">
             <span>Delivery Fee</span>
-            <span>{deliveryFee === 0 ? "₦0" : formatNaira(deliveryFee)}</span>
+            <span>{deliveryFee === 0 ? "?0" : formatNaira(deliveryFee)}</span>
           </div>
           <div className="flex justify-between text-gray-500">
-            <span>VAT (7.5%)</span>
+            <span>VAT</span>
             <span>{formatNaira(vat)}</span>
           </div>
+          <div className="flex justify-between text-gray-500">
+            <span>Platform Commission</span>
+            <span>{formatNaira(platformCommission)}</span>
+          </div>
+          {serviceFee > 0 && (
+            <div className="flex justify-between text-gray-500">
+              <span>Service Fee</span>
+              <span>{formatNaira(serviceFee)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200">
             <span>Grand Total</span>
             <span style={{ color: "var(--rsc-dark)" }}>{formatNaira(grandTotal)}</span>
@@ -591,7 +629,7 @@ export function FulfillmentStep({
           </p>
         )}
         {initiateMutation.isError && (
-          <p className="text-xs text-center text-red-500">
+          <p role="alert" className="text-xs text-center text-red-500">
             {getMutationErrorMessage(initiateMutation.error, {})}
           </p>
         )}
@@ -620,7 +658,7 @@ export function FulfillmentStep({
               Placing order…
             </span>
           ) : (
-            "Proceed to Payment 🚀"
+            "Proceed to Payment ??"
           )}
         </Button>
       </div>

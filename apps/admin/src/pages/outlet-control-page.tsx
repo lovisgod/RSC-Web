@@ -256,7 +256,7 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
                           <small className="outlet-card__cuisine">{outlet.cuisineType}</small>
                           <small>
                             Sub-account:{" "}
-                            {outlet.paystackSubaccountCode ?? "None (Pending Onboarding)"}
+                            {outlet.settlementSubaccountCode ?? "None (Pending Onboarding)"}
                           </small>
                         </div>
 

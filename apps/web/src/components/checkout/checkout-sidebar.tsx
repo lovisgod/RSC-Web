@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Card } from "@rsc/ui";
 
@@ -10,7 +10,8 @@ import {
 } from "@/src/lib/data/cart";
 import { type OrderSnapshot } from "@/src/lib/data/checkout";
 import { useCart } from "@/src/hooks/use-cart";
-import { usePlatformCharges, calcCharges } from "@/src/hooks/use-platform-charges";
+import { useOutlets } from "@/src/hooks/use-outlets";
+import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
 
 function FeeLine({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
   return (
@@ -24,6 +25,8 @@ function FeeLine({ label, value, muted }: { label: string; value: string; muted?
 export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }) {
   const { data: cart } = useCart();
   const { data: charges } = usePlatformCharges();
+  const { data: outlets = [] } = useOutlets();
+  const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
 
   // Decide data source: live cart until payment is initiated, then snapshot
   const hasLiveItems = (cart?.groups.flatMap((g) => g.items).length ?? 0) > 0;
@@ -35,6 +38,9 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
     // Use server-calculated totals from the initiatePayment response
     const { totals, groups } = snapshot;
     const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : "7.5";
+    const commPct = charges
+      ? (charges.platformCommissionBps / 100).toFixed(2).replace(/\.?0+$/, "")
+      : "10";
 
     return (
       <Card style={{ padding: 0 }} className="overflow-hidden">
@@ -72,6 +78,13 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
             value={totals.deliveryFeeMinor === 0 ? "Free" : formatNaira(totals.deliveryFeeMinor)}
           />
           <FeeLine label={`VAT (${vatPct}%)`} value={formatNaira(totals.vatMinor)} muted />
+          {totals.platformCommissionMinor > 0 && (
+            <FeeLine
+              label={`Platform commission (${commPct}%)`}
+              value={formatNaira(totals.platformCommissionMinor)}
+              muted
+            />
+          )}
           {totals.serviceFeeMinor > 0 && (
             <FeeLine label="Service fee" value={formatNaira(totals.serviceFeeMinor)} muted />
           )}
@@ -88,7 +101,19 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
 
   // Live cart view (step 1 only)
   const subtotal = cartSubtotalMinor(cart!);
-  const fees = charges ? calcCharges(subtotal, charges) : null;
+  const fees = charges
+    ? {
+        delivery: charges.deliveryFeeMinor,
+        service: charges.serviceFeeMinor,
+        commission: Math.round((subtotal * charges.platformCommissionBps) / 10_000),
+        vat: cart!.groups.reduce((sum, group) => {
+          const outletVatBps = outletById.get(group.outletId)?.vatBps ?? 0;
+          const vatBps = outletVatBps > 0 ? outletVatBps : charges.defaultVatBps;
+          return sum + Math.round((outletSubtotalMinor(group) * vatBps) / 10_000);
+        }, 0),
+      }
+    : null;
+  const total = fees ? subtotal + fees.delivery + fees.service + fees.commission + fees.vat : null;
   const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : null;
   const commPct = charges
     ? (charges.platformCommissionBps / 100).toFixed(2).replace(/\.?0+$/, "")
@@ -141,7 +166,7 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
             <div className="pt-2 border-t border-gray-100 flex justify-between">
               <span className="text-sm font-bold text-gray-900">Total</span>
               <span className="text-sm font-bold" style={{ color: "var(--rsc-main)" }}>
-                {formatNaira(fees.total)}
+                {formatNaira(total ?? 0)}
               </span>
             </div>
           </>

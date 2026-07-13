@@ -17,6 +17,7 @@ import { readCookie } from "../auth/cookies";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
 import { MasterOrder } from "../orders/master-order.entity";
+import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
 import {
   orderRoom,
@@ -145,7 +146,7 @@ export class RealtimeGateway {
     }
 
     if (kind === "rider") {
-      return this.canJoinRiderRoom(user, id, room);
+      return await this.canJoinRiderRoom(user, id, room);
     }
 
     return false;
@@ -201,10 +202,50 @@ export class RealtimeGateway {
     return user.role === UserRole.ADMIN && (await this.getAdminOutletId(user.id)) === outletId;
   }
 
-  private canJoinRiderRoom(user: AuthenticatedUser, riderId: string, room: string): boolean {
-    return (
-      room === riderRoom(riderId) && (user.role === UserRole.SUPER_ADMIN || user.id === riderId)
-    );
+  private async canJoinRiderRoom(
+    user: AuthenticatedUser,
+    riderId: string,
+    room: string,
+  ): Promise<boolean> {
+    if (room !== riderRoom(riderId)) {
+      return false;
+    }
+
+    if (user.role === UserRole.SUPER_ADMIN || user.id === riderId) {
+      return true;
+    }
+
+    if (user.role === UserRole.ADMIN) {
+      const outletId = await this.getAdminOutletId(user.id);
+      if (!outletId) {
+        return false;
+      }
+
+      // Check 1: Rider is linked directly to this admin's outlet
+      const rider = await this.users.findOne({
+        where: { id: riderId, role: UserRole.RIDER },
+        select: { id: true, outletId: true },
+      });
+      if (rider?.outletId === outletId) {
+        return true;
+      }
+
+      // Check 2: Rider is currently assigned to an active order containing a sub-order from this admin's outlet
+      const activeOrder = await this.masterOrders
+        .createQueryBuilder("mo")
+        .innerJoin("sub_orders", "so", "so.master_order_id = mo.id")
+        .where("mo.rider_id = :riderId", { riderId })
+        .andWhere("mo.status NOT IN (:...completedStatuses)", {
+          completedStatuses: [MasterOrderStatus.DELIVERED, MasterOrderStatus.CANCELLED],
+        })
+        .andWhere("so.outlet_id = :outletId", { outletId })
+        .select("mo.id")
+        .getOne();
+
+      return !!activeOrder;
+    }
+
+    return false;
   }
 
   private async getAdminOutletId(userId: string): Promise<string | null> {

@@ -18,6 +18,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { RealtimeModule } from "./realtime/realtime.module";
 import { RedisModule } from "./redis/redis.module";
 import { DeliveryModule } from "./delivery/delivery.module";
+import { FinanceModule } from "./finance/finance.module";
 import { RidersModule } from "./riders/riders.module";
 import { StatsModule } from "./stats/stats.module";
 import { UsersModule } from "./users/users.module";
@@ -37,6 +38,7 @@ import { UsersModule } from "./users/users.module";
     UsersModule,
     CatalogModule,
     DeliveryModule,
+    FinanceModule,
     MediaModule,
     NotificationsModule,
     RidersModule,

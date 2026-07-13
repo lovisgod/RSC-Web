@@ -105,7 +105,7 @@ export class CatalogService {
         latitude: input.latitude ?? null,
         longitude: input.longitude ?? null,
         deliveryRadiusKm: input.deliveryRadiusKm ?? 15,
-        paystackSubaccountCode: input.paystackSubaccountCode ?? null,
+        settlementSubaccountCode: input.settlementSubaccountCode ?? null,
       }),
     );
   }
@@ -118,12 +118,18 @@ export class CatalogService {
       throw new ForbiddenException("Only super admins can change outlet online status");
     }
 
+    const { settlementSubaccountCode, ...updates } = input;
+
     Object.assign(outlet, {
-      ...input,
+      ...updates,
       description: input.description === undefined ? outlet.description : input.description,
       address: input.address === undefined ? outlet.address : input.address,
       imageUrl: input.imageUrl === undefined ? outlet.imageUrl : input.imageUrl,
     });
+
+    if (settlementSubaccountCode !== undefined) {
+      outlet.settlementSubaccountCode = settlementSubaccountCode;
+    }
 
     return this.outlets.save(outlet);
   }

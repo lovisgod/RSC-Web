@@ -87,4 +87,73 @@ export class InitiatePaymentDto {
   @IsString()
   @Length(1, 1_000)
   preparationNote?: string;
+
+  @ApiProperty({ example: 450000 })
+  @IsInt()
+  @Min(0)
+  subtotalMinor!: number;
+
+  @ApiProperty({ example: 150000 })
+  @IsInt()
+  @Min(0)
+  deliveryFeeMinor!: number;
+
+  @ApiProperty({ example: 0 })
+  @IsInt()
+  @Min(0)
+  serviceFeeMinor!: number;
+
+  @ApiProperty({ example: 33750 })
+  @IsInt()
+  @Min(0)
+  vatMinor!: number;
+
+  @ApiProperty({ example: 45000 })
+  @IsInt()
+  @Min(0)
+  platformCommissionMinor!: number;
+
+  @ApiProperty({ example: 678750 })
+  @IsInt()
+  @Min(0)
+  totalMinor!: number;
+
+  @ApiPropertyOptional({
+    example: "rsc://payment/return",
+    description:
+      "Optional mobile deep link or universal link. The payment reference is appended as a reference query parameter.",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 2_000)
+  returnUrl?: string;
+}
+
+export class RetryPaymentDto {
+  @ApiPropertyOptional({
+    example: "rsc://payment/return",
+    description:
+      "Optional mobile deep link or universal link. The payment reference is appended as a reference query parameter.",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 2_000)
+  returnUrl?: string;
+}
+
+export class ProcessRefundDto {
+  @ApiPropertyOptional({
+    example: 250000,
+    description: "Minor currency unit. Omit for full refund.",
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  amountMinor?: number;
+
+  @ApiPropertyOptional({ example: "Customer requested cancellation", maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @Length(1, 500)
+  reason?: string;
 }

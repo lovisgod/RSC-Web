@@ -11,7 +11,7 @@ import { toastBus } from "../lib/toast-bus";
 
 const NEXT_STATUS: Partial<Record<SubOrderStatus, MasterOrderStatus>> = {
   PENDING: "CONFIRMED",
-  ACCEPTED: "PARTIALLY_READY",
+  ACCEPTED: "PREPARING",
   PREPARING: "READY",
   READY: "DELIVERED",
 };
@@ -158,6 +158,12 @@ function OrderDetailPanel({ order }: { order: PosSubOrder }) {
             {DELIVERY_MODE_EMOJI[order.deliveryMode] ?? "📦"}{" "}
             {DELIVERY_MODE_LABEL[order.deliveryMode] ?? order.deliveryMode}
           </span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            Total SubOrders
+          </span>
+          <span className="text-xs font-bold text-slate-800">{order.totalSubOrders}</span>
         </div>
       </div>
     </div>
