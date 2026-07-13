@@ -322,6 +322,8 @@ export function FulfillmentStep({
       );
     },
     onSuccess: (result) => {
+      void qc.invalidateQueries({ queryKey: ["orders"] });
+
       // Snapshot cart before clearing so the sidebar stays populated on later steps
       const snapshot: OrderSnapshot = {
         groups: cart.groups.map((g) => ({

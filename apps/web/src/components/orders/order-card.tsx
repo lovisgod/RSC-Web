@@ -84,6 +84,7 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const status = getStatusConfig(order.status);
+  const isPendingPayment = order.status.toUpperCase() === "PENDING_PAYMENT";
   const addItem = useCartStore((state) => state.addItem);
   const clearCart = useCartStore((state) => state.clear);
 
@@ -146,7 +147,7 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
             {formatDate(order.createdAt)}
           </p>
 
-          {variant === "active" && order.deliveryCode && (
+          {variant === "active" && !isPendingPayment && order.deliveryCode && (
             <p className="mt-2 text-xs font-semibold text-gray-600">
               Delivery code: <span className="font-mono">{order.deliveryCode}</span>
             </p>
@@ -169,7 +170,7 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
             className="!rounded-lg !px-4"
             onClick={() => router.push(`/tracking?orderId=${order.id}`)}
           >
-            Track
+            {isPendingPayment ? "Make payment" : "Track"}
           </Button>
         )}
       </div>
