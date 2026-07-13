@@ -24,6 +24,7 @@ const TrackingMap = dynamic(() => import("./tracking-map"), { ssr: false });
 
 const MASTER_STATUS_MESSAGES: Record<string, string> = {
   CONFIRMED: "Your order is confirmed and has been sent to the Outlets.",
+  PREPARING: "Your order is being prepared.",
   PARTIALLY_READY: "Some kitchens are ready while the others finish preparing.",
   READY: "All Outlets are ready. Your order is waiting for rider handoff.",
   OUT_FOR_DELIVERY: "Your rider has your order and is heading to you.",
@@ -395,6 +396,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
   const normalizedStatus = order.status.toUpperCase();
   const codeVisibleStatuses = new Set([
     "CONFIRMED",
+    "PREPARING",
     "PARTIALLY_READY",
     "READY",
     "OUT_FOR_DELIVERY",

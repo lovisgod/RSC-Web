@@ -1044,6 +1044,7 @@ export class OrdersService {
     const statusMap: Record<MasterOrderStatus, SubOrderStatus> = {
       [MasterOrderStatus.PENDING_PAYMENT]: SubOrderStatus.PENDING,
       [MasterOrderStatus.CONFIRMED]: SubOrderStatus.ACCEPTED,
+      [MasterOrderStatus.PREPARING]: SubOrderStatus.PREPARING,
       [MasterOrderStatus.PARTIALLY_READY]: SubOrderStatus.READY,
       [MasterOrderStatus.READY]: SubOrderStatus.READY,
       [MasterOrderStatus.OUT_FOR_DELIVERY]: SubOrderStatus.DISPATCHED,
@@ -1086,6 +1087,10 @@ export class OrdersService {
       )
     ) {
       return MasterOrderStatus.PARTIALLY_READY;
+    }
+
+    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.PREPARING)) {
+      return MasterOrderStatus.PREPARING;
     }
 
     return MasterOrderStatus.CONFIRMED;

@@ -298,6 +298,79 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("marks the master order as preparing when the only sub-order starts preparing", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.CONFIRMED,
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const outletSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.ACCEPTED,
+    });
+    const { service, masterOrders, statusEvents } = createService({
+      adminOutletId: outletId,
+      orders: [order],
+      subOrders: [outletSubOrder],
+    });
+
+    await service.updateStatus(adminUser, outletSubOrder.id, {
+      status: MasterOrderStatus.PREPARING,
+    });
+
+    expect(outletSubOrder.status).toBe(SubOrderStatus.PREPARING);
+    expect(order.status).toBe(MasterOrderStatus.PREPARING);
+    expect(masterOrders.save).toHaveBeenCalledWith(order);
+    expect(statusEvents.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        masterOrderId: order.id,
+        subOrderId: outletSubOrder.id,
+        masterStatus: MasterOrderStatus.PREPARING,
+        subOrderStatus: SubOrderStatus.PREPARING,
+      }),
+    );
+  });
+
+  it("marks the master order partially ready when one sub-order is ready and another is preparing", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.PREPARING,
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const outletSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.PREPARING,
+    });
+    const otherSubOrder = Object.assign(new SubOrder(), {
+      id: "6b8537f9-b0c1-4df3-8567-aa49517d7de1",
+      masterOrderId: order.id,
+      outletId: otherOutletId,
+      status: SubOrderStatus.PREPARING,
+    });
+    const { service, masterOrders } = createService({
+      adminOutletId: outletId,
+      orders: [order],
+      subOrders: [outletSubOrder, otherSubOrder],
+    });
+
+    await service.updateStatus(adminUser, outletSubOrder.id, {
+      status: MasterOrderStatus.READY,
+    });
+
+    expect(outletSubOrder.status).toBe(SubOrderStatus.READY);
+    expect(otherSubOrder.status).toBe(SubOrderStatus.PREPARING);
+    expect(order.status).toBe(MasterOrderStatus.PARTIALLY_READY);
+    expect(masterOrders.save).toHaveBeenCalledWith(order);
+  });
+
   it("returns rejectionReason when an outlet admin rejects a sub-order", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",

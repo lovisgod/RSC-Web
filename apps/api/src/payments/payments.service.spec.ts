@@ -10,9 +10,10 @@ import type { ApplicationConfig } from "../config/configuration";
 import type { DeliveryService } from "../delivery/delivery.service";
 import type { ItemModifier } from "../catalog/item-modifier.entity";
 import { MenuItem } from "../catalog/menu-item.entity";
-import type { MasterOrder } from "../orders/master-order.entity";
+import { MasterOrder } from "../orders/master-order.entity";
 import type { OrderLineItem } from "../orders/order-line-item.entity";
-import type { SubOrder } from "../orders/sub-order.entity";
+import { MasterOrderStatus } from "../orders/order-status.enum";
+import { SubOrder } from "../orders/sub-order.entity";
 import { Outlet } from "../outlets/outlet.entity";
 import type { RealtimeService } from "../realtime/realtime.service";
 import type { Payment } from "./payment.entity";
@@ -35,7 +36,15 @@ describe(PaymentsService.name, () => {
   let menuItems: { findBy: ReturnType<typeof vi.fn> };
   let modifiers: { findBy: ReturnType<typeof vi.fn> };
   let outlets: { findBy: ReturnType<typeof vi.fn> };
-  let payments: { findOneBy: ReturnType<typeof vi.fn> };
+  let masterOrders: { findOneBy: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn> };
+  let subOrders: { find: ReturnType<typeof vi.fn> };
+  let payments: {
+    find: ReturnType<typeof vi.fn>;
+    findOneBy: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+  };
   let refunds: {
     find: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
@@ -44,11 +53,16 @@ describe(PaymentsService.name, () => {
   let dataSource: { query: ReturnType<typeof vi.fn>; transaction: ReturnType<typeof vi.fn> };
   let delivery: { validateAddress: ReturnType<typeof vi.fn> };
   let paymentAdapter: PaymentAdapter;
-  let initiatePayment: (
-    input: InitiateProviderPaymentInput,
-  ) => Promise<InitiateProviderPaymentResult>;
-  let refundPayment: (input: RefundProviderPaymentInput) => Promise<RefundProviderPaymentResult>;
-  let realtime: { emitSuborderNew: ReturnType<typeof vi.fn> };
+  let initiatePayment: ReturnType<
+    typeof vi.fn<(input: InitiateProviderPaymentInput) => Promise<InitiateProviderPaymentResult>>
+  >;
+  let refundPayment: ReturnType<
+    typeof vi.fn<(input: RefundProviderPaymentInput) => Promise<RefundProviderPaymentResult>>
+  >;
+  let realtime: {
+    emitSuborderNew: ReturnType<typeof vi.fn>;
+    emitOrderStatusUpdate: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     users = {
@@ -83,7 +97,15 @@ describe(PaymentsService.name, () => {
         }),
       ]),
     };
+    masterOrders = {
+      findOneBy: vi.fn().mockResolvedValue(null),
+      save: vi.fn((value: MasterOrder) => Promise.resolve(value)),
+    };
+    subOrders = {
+      find: vi.fn().mockResolvedValue([]),
+    };
     payments = {
+      find: vi.fn().mockResolvedValue([]),
       findOneBy: vi.fn().mockResolvedValue({
         id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
         masterOrderId: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
@@ -93,6 +115,14 @@ describe(PaymentsService.name, () => {
         reference: "RSC-reference",
         status: PaymentStatus.SUCCESS,
       }),
+      update: vi.fn().mockResolvedValue({ affected: 0 }),
+      create: vi.fn((value: Partial<Payment>) => value),
+      save: vi.fn((value: Partial<Payment>) =>
+        Promise.resolve({
+          id: "a933abfc-ee1d-4267-8b1b-20b7106c1c2d",
+          ...value,
+        }),
+      ),
     };
     refunds = {
       find: vi.fn().mockResolvedValue([]),
@@ -140,15 +170,15 @@ describe(PaymentsService.name, () => {
         .mockResolvedValue({ subaccountCode: "LOCAL_ACCT_TEST", providerResponse: {} }),
       refund: refundPayment,
     };
-    realtime = { emitSuborderNew: vi.fn() };
+    realtime = { emitSuborderNew: vi.fn(), emitOrderStatusUpdate: vi.fn() };
 
     service = new PaymentsService(
       users as unknown as Repository<Customer>,
       menuItems as unknown as Repository<MenuItem>,
       modifiers as unknown as Repository<ItemModifier>,
       outlets as unknown as Repository<Outlet>,
-      {} as Repository<MasterOrder>,
-      {} as Repository<SubOrder>,
+      masterOrders as unknown as Repository<MasterOrder>,
+      subOrders as unknown as Repository<SubOrder>,
       {} as Repository<OrderLineItem>,
       payments as unknown as Repository<Payment>,
       refunds as unknown as Repository<PaymentRefund>,
@@ -292,6 +322,110 @@ describe(PaymentsService.name, () => {
       }),
     );
     expect(result).toEqual(expect.objectContaining({ status: "SUCCESS", amountMinor: 250000 }));
+  });
+
+  it("retries payment for the existing order without creating another order id", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId,
+      riderId: null,
+      status: MasterOrderStatus.CANCELLED,
+      subtotalMinor: 450000,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 0,
+      vatMinor: 33750,
+      totalMinor: 678750,
+      currency: "NGN" as const,
+      paymentReference: "RSC-old-reference",
+      updatedAt: new Date("2026-07-12T12:00:00.000Z"),
+    });
+    const subOrder = Object.assign(new SubOrder(), {
+      id: "0b8706a1-b1d9-4c05-860f-8e15f70410f2",
+      masterOrderId: order.id,
+      outletId,
+      subtotalMinor: 450000,
+      commissionMinor: 45000,
+      netMinor: 405000,
+    });
+    masterOrders.findOneBy.mockResolvedValue(order);
+    subOrders.find.mockResolvedValue([subOrder]);
+    payments.find.mockResolvedValue([
+      {
+        id: "958f43f6-75e1-4ee2-afd3-8d871832c589",
+        masterOrderId: order.id,
+        reference: "RSC-old-reference",
+        status: PaymentStatus.FAILED,
+      },
+    ]);
+    initiatePayment.mockResolvedValueOnce({
+      gateway: "moment",
+      reference: "RSC-new-reference",
+      status: "PENDING",
+      checkoutUrl: "https://momentpay.io/checkout/retry",
+      providerResponse: { id: "provider-payment" },
+    });
+
+    const result = await service.retryOrderPayment(
+      { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+      order.id,
+      { returnUrl: "rsc://payment/return" },
+    );
+
+    expect(initiatePayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amountMinor: 678750,
+        currency: "NGN",
+        email: "ada@example.com",
+        returnUrl: "rsc://payment/return",
+        splitRoutes: [
+          {
+            outletId,
+            subaccountCode: "MOMENT_LEKKI",
+            grossMinor: 450000,
+            commissionMinor: 45000,
+            netMinor: 405000,
+          },
+        ],
+      }),
+    );
+    expect(payments.update).toHaveBeenCalledWith(
+      { masterOrderId: order.id, status: PaymentStatus.PENDING },
+      { status: PaymentStatus.FAILED },
+    );
+    expect(masterOrders.save).toHaveBeenCalledWith(order);
+    expect(order.paymentReference).toBe("RSC-new-reference");
+    expect(order.status).toBe(MasterOrderStatus.PENDING_PAYMENT);
+    expect(result).toEqual(
+      expect.objectContaining({
+        masterOrderId: order.id,
+        paymentId: "a933abfc-ee1d-4267-8b1b-20b7106c1c2d",
+        reference: "RSC-new-reference",
+        checkoutUrl: "https://momentpay.io/checkout/retry",
+        status: PaymentStatus.PENDING,
+      }),
+    );
+  });
+
+  it("does not retry payment for an order that already has a successful payment", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId,
+      status: MasterOrderStatus.CONFIRMED,
+      totalMinor: 678750,
+      currency: "NGN" as const,
+    });
+    masterOrders.findOneBy.mockResolvedValue(order);
+    payments.find.mockResolvedValue([{ status: PaymentStatus.SUCCESS }]);
+
+    await expect(
+      service.retryOrderPayment(
+        { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+        order.id,
+        {},
+      ),
+    ).rejects.toThrow(/already been paid/);
+
+    expect(initiatePayment).not.toHaveBeenCalled();
   });
 
   it("stores recipient phone on the master order and preparation note on every sub-order", async () => {

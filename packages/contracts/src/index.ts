@@ -405,6 +405,12 @@ export const initiatePaymentInputSchema = z
   })
   .strict();
 
+export const retryPaymentInputSchema = z
+  .object({
+    returnUrl: z.string().trim().min(1).max(2_000).optional(),
+  })
+  .strict();
+
 export const initiatePaymentResultSchema = z.object({
   masterOrderId: z.uuid(),
   paymentId: z.uuid(),
@@ -423,7 +429,7 @@ export const initiatePaymentResultSchema = z.object({
   splitBreakdown: z.array(
     z.object({
       outletId: z.uuid(),
-      subaccountCode: z.string(),
+      subaccountCode: z.string().nullable(),
       grossMinor: z.int().nonnegative(),
       commissionMinor: z.int().nonnegative(),
       netMinor: z.int().nonnegative(),
@@ -596,6 +602,7 @@ export const rateOutletInputSchema = z.object({
 export const masterOrderStatusSchema = z.enum([
   "PENDING_PAYMENT",
   "CONFIRMED",
+  "PREPARING",
   "PARTIALLY_READY",
   "READY",
   "OUT_FOR_DELIVERY",
@@ -1097,6 +1104,7 @@ export type UpdateGeofenceZoneInput = z.infer<typeof updateGeofenceZoneInputSche
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
 export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
 export type InitiatePaymentInput = z.infer<typeof initiatePaymentInputSchema>;
+export type RetryPaymentInput = z.infer<typeof retryPaymentInputSchema>;
 export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type PaymentVerifyResult = z.infer<typeof paymentVerifyResultSchema>;
 export type ProcessRefundInput = z.infer<typeof processRefundInputSchema>;
