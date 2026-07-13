@@ -6,12 +6,11 @@ import { useMemo, useState } from "react";
 import { useOrdersFeed } from "../hooks/use-orders-feed";
 import { useOutletsLive } from "../hooks/use-outlets-live";
 import { useApproveOutletSettlement, useOutletSettlements } from "../hooks/use-outlet-settlements";
-import type { AdminOrderItem } from "../lib/api";
+import { listAdminOrders, type AdminOrderItem } from "../lib/api";
 
 const REPORT_LIMIT = 100;
 const COMPLETED_SUB_ORDER_STATUSES = new Set(["COLLECTED", "DISPATCHED"]);
-
-type ExportFormat = "csv" | "pdf";
+type ExportDateMode = "single" | "range";
 
 interface ReconciliationRow {
   outletId: string;
@@ -191,75 +190,35 @@ function buildCsv(rows: ReconciliationRow[]) {
   return [headers.map(csvEscape).join(","), ...lines].join("\n");
 }
 
-function pdfEscape(value: string) {
-  return value.replaceAll("\\", "\\\\").replaceAll("(", "\\(").replaceAll(")", "\\)");
-}
-
-function buildSimplePdf(title: string, rows: ReconciliationRow[]) {
-  const contentLines = [
-    title,
-    "",
-    "Outlet | Completed | Gross | Net | Status",
-    ...rows.map(
-      (row) =>
-        `${row.outletName} | ${row.completedSubOrders} | ${formatMinor(row.grossMinor)} | ${formatMinor(row.netMinor)} | ${statusLabel(row.status)}`,
-    ),
-  ];
-  const stream = [
-    "BT",
-    "/F1 11 Tf",
-    "40 790 Td",
-    ...contentLines.flatMap((line, index) => [
-      index === 0 ? "/F1 16 Tf" : index === 1 ? "/F1 11 Tf" : "",
-      `(${pdfEscape(line.slice(0, 105))}) Tj`,
-      "0 -18 Td",
-    ]),
-    "ET",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const objects = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
-  ];
-  let pdf = "%PDF-1.4\n";
-  const offsets = [0];
-
-  objects.forEach((object, index) => {
-    offsets.push(pdf.length);
-    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
-  });
-
-  const xrefOffset = pdf.length;
-  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-  offsets.slice(1).forEach((offset) => {
-    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
-  });
-  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-
-  return pdf;
-}
-
 function ExportSettlementsModal({
   outlets,
+  initialDate,
+  isExporting,
+  maxDate,
   onClose,
   onExport,
 }: {
   outlets: Array<{ id: string; name: string }>;
+  initialDate: string;
+  isExporting: boolean;
+  maxDate: string;
   onClose: () => void;
-  onExport: (options: { outletId: string; format: ExportFormat }) => void;
+  onExport: (options: { outletId: string; dateFrom: string; dateTo: string }) => void;
 }) {
   const [outletId, setOutletId] = useState("all");
-  const [format, setFormat] = useState<ExportFormat>("csv");
+  const [dateMode, setDateMode] = useState<ExportDateMode>("single");
+  const [singleDate, setSingleDate] = useState(initialDate);
+  const [dateFrom, setDateFrom] = useState(initialDate);
+  const [dateTo, setDateTo] = useState(initialDate);
+  const normalizedExportRange =
+    dateMode === "single"
+      ? { dateFrom: singleDate, dateTo: singleDate }
+      : normalizeDateRange(dateFrom, dateTo);
 
   return (
     <div className="modal-overlay" aria-hidden="true" onClick={onClose}>
       <div
-        className="modal"
+        className="modal modal--settlement-export"
         role="dialog"
         aria-modal="true"
         aria-labelledby="export-settlements-title"
@@ -276,36 +235,88 @@ function ExportSettlementsModal({
         </div>
 
         <div className="modal__body">
-          <label className="modal-row">
-            <span>Outlet</span>
-            <select value={outletId} onChange={(event) => setOutletId(event.target.value)}>
-              <option value="all">All outlets</option>
-              {outlets.map((outlet) => (
-                <option key={outlet.id} value={outlet.id}>
-                  {outlet.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="settlement-export-card">
+            <label className="settlement-field">
+              <span>Outlet</span>
+              <select value={outletId} onChange={(event) => setOutletId(event.target.value)}>
+                <option value="all">All outlets</option>
+                {outlets.map((outlet) => (
+                  <option key={outlet.id} value={outlet.id}>
+                    {outlet.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="modal-row">
-            <span>Format</span>
-            <select
-              value={format}
-              onChange={(event) => setFormat(event.target.value as ExportFormat)}
-            >
-              <option value="csv">CSV</option>
-              <option value="pdf">PDF</option>
-            </select>
-          </label>
+            <label className="settlement-field">
+              <span>Date selection</span>
+              <select
+                value={dateMode}
+                onChange={(event) => setDateMode(event.target.value as ExportDateMode)}
+              >
+                <option value="single">Single date</option>
+                <option value="range">Date range</option>
+              </select>
+            </label>
+          </div>
+
+          {dateMode === "single" ? (
+            <label className="settlement-field settlement-field--full">
+              <span>Report date</span>
+              <input
+                type="date"
+                value={singleDate}
+                max={maxDate}
+                onChange={(event) => setSingleDate(event.target.value)}
+              />
+            </label>
+          ) : (
+            <div className="settlement-export-card">
+              <label className="settlement-field">
+                <span>From</span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  max={maxDate}
+                  onChange={(event) => setDateFrom(event.target.value)}
+                />
+              </label>
+
+              <label className="settlement-field">
+                <span>To</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  max={maxDate}
+                  onChange={(event) => setDateTo(event.target.value)}
+                />
+              </label>
+            </div>
+          )}
+
+          <div className="settlement-export-note">
+            <strong>CSV export</strong>
+            <span>
+              Downloads settlement rows for{" "}
+              {normalizedExportRange.dateFrom === normalizedExportRange.dateTo
+                ? normalizedExportRange.dateFrom
+                : `${normalizedExportRange.dateFrom} to ${normalizedExportRange.dateTo}`}
+              .
+            </span>
+          </div>
 
           <div className="modal__actions">
-            <Button tone="quiet" type="button" onClick={onClose}>
+            <Button tone="quiet" type="button" onClick={onClose} disabled={isExporting}>
               Cancel
             </Button>
-            <Button tone="navy" type="button" onClick={() => onExport({ outletId, format })}>
+            <Button
+              tone="navy"
+              type="button"
+              onClick={() => onExport({ outletId, ...normalizedExportRange })}
+              disabled={isExporting}
+            >
               <Download aria-hidden="true" size={16} />
-              Download
+              {isExporting ? "Preparing..." : "Download CSV"}
             </Button>
           </div>
         </div>
@@ -316,10 +327,11 @@ function ExportSettlementsModal({
 
 export function FinancialReconciliationPage() {
   const today = getTodayInputDate();
-  const [dateFrom, setDateFrom] = useState(today);
-  const [dateTo, setDateTo] = useState(today);
+  const [selectedDate, setSelectedDate] = useState(today);
   const [exportOpen, setExportOpen] = useState(false);
-  const normalizedRange = normalizeDateRange(dateFrom, dateTo);
+  const [isExporting, setIsExporting] = useState(false);
+  const activeDate = selectedDate;
+  const normalizedRange = { dateFrom: activeDate, dateTo: activeDate };
   const dateRange = useMemo(
     () => getDateRange(normalizedRange.dateFrom, normalizedRange.dateTo),
     [normalizedRange.dateFrom, normalizedRange.dateTo],
@@ -349,32 +361,46 @@ export function FinancialReconciliationPage() {
   );
   const isLoading = isSettlementsLoading || isOutletsLoading || isOrdersLoading;
 
-  function handleExport(options: { outletId: string; format: ExportFormat }) {
-    const selectedRows =
-      options.outletId === "all" ? rows : rows.filter((row) => row.outletId === options.outletId);
-    const outletLabel =
-      options.outletId === "all"
-        ? "all-outlets"
-        : (outlets.find((outlet) => outlet.id === options.outletId)?.name ?? "outlet")
-            .toLowerCase()
-            .replaceAll(/\s+/g, "-");
-    const rangeLabel =
-      normalizedRange.dateFrom === normalizedRange.dateTo
-        ? normalizedRange.dateFrom
-        : `${normalizedRange.dateFrom}_to_${normalizedRange.dateTo}`;
-    const filename = `rsc-settlements-${outletLabel}-${rangeLabel}.${options.format}`;
+  async function handleExport(options: { outletId: string; dateFrom: string; dateTo: string }) {
+    setIsExporting(true);
+    try {
+      const exportRange = normalizeDateRange(options.dateFrom, options.dateTo);
+      const exportIsoRange = getDateRange(exportRange.dateFrom, exportRange.dateTo);
+      const exportOrders = await listAdminOrders({
+        dateFrom: exportIsoRange.fromIso,
+        dateTo: exportIsoRange.toIso,
+        limit: REPORT_LIMIT,
+      });
+      const exportRows = buildRows(
+        exportOrders.orders,
+        outlets,
+        (settlements ?? []).map((settlement) => ({ ...settlement })),
+      );
+      const selectedRows =
+        options.outletId === "all"
+          ? exportRows
+          : exportRows.filter((row) => row.outletId === options.outletId);
+      const outletLabel =
+        options.outletId === "all"
+          ? "all-outlets"
+          : (outlets.find((outlet) => outlet.id === options.outletId)?.name ?? "outlet")
+              .toLowerCase()
+              .replaceAll(/\s+/g, "-");
+      const rangeLabel =
+        exportRange.dateFrom === exportRange.dateTo
+          ? exportRange.dateFrom
+          : `${exportRange.dateFrom}_to_${exportRange.dateTo}`;
+      const filename = `rsc-settlements-${outletLabel}-${rangeLabel}.csv`;
 
-    if (options.format === "csv") {
       downloadBlob(
         new Blob([buildCsv(selectedRows)], { type: "text/csv;charset=utf-8" }),
         filename,
       );
-    } else {
-      const pdf = buildSimplePdf(`RSC Settlement Report - ${rangeLabel}`, selectedRows);
-      downloadBlob(new Blob([pdf], { type: "application/pdf" }), filename);
-    }
 
-    setExportOpen(false);
+      setExportOpen(false);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   return (
@@ -382,6 +408,9 @@ export function FinancialReconciliationPage() {
       {exportOpen && (
         <ExportSettlementsModal
           outlets={outlets.map((outlet) => ({ id: outlet.id, name: outlet.name }))}
+          initialDate={activeDate}
+          isExporting={isExporting}
+          maxDate={today}
           onClose={() => setExportOpen(false)}
           onExport={handleExport}
         />
@@ -389,32 +418,27 @@ export function FinancialReconciliationPage() {
 
       <div className="panel recon-panel">
         <div className="recon-panel__head">
-          <div>
+          <div className="recon-panel__title">
             <h2>Outlet Settlement Accounts Matrix</h2>
             <p className="muted-text">
-              Showing successful-payment outlet transactions for the selected date range.
+              Showing successful-payment outlet transactions for {activeDate}.
             </p>
           </div>
           <div className="recon-actions">
-            <label className="rider-date-filter">
-              <span>From</span>
+            <label className="settlement-main-filter settlement-main-filter--date">
+              <span className="sr-only">Settlement date</span>
               <input
                 type="date"
-                value={dateFrom}
-                onChange={(event) => setDateFrom(event.target.value)}
+                value={selectedDate}
+                max={today}
+                onChange={(event) => setSelectedDate(event.target.value)}
               />
             </label>
-            <label className="rider-date-filter">
-              <span>To</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(event) => setDateTo(event.target.value)}
-              />
-            </label>
+          </div>
+          <div className="recon-export-action">
             <Button tone="quiet" type="button" onClick={() => setExportOpen(true)}>
               <Download aria-hidden="true" size={16} />
-              Export
+              Export Settlement Report (CSV)
             </Button>
           </div>
         </div>
