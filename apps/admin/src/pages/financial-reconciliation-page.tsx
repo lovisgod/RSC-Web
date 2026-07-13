@@ -1,7 +1,12 @@
 import { Button } from "@rsc/ui";
 import Skeleton from "@mui/material/Skeleton";
+import { useMutation } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
 import { useApproveOutletSettlement, useOutletSettlements } from "../hooks/use-outlet-settlements";
+import { useOutletsLive } from "../hooks/use-outlets-live";
+import { exportOutletSettlements } from "../lib/api";
+import { toastBus } from "../lib/toast-bus";
 
 const moneyFormatter = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -11,6 +16,33 @@ const moneyFormatter = new Intl.NumberFormat("en-NG", {
 
 function formatMinor(amountMinor: number) {
   return moneyFormatter.format(amountMinor / 100);
+}
+
+function lagosDateInputValue(offsetDays = 0): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Lagos",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+  const date = new Date(Date.UTC(year, month - 1, day + offsetDays));
+
+  return date.toISOString().slice(0, 10);
+}
+
+function downloadFile(filename: string, content: string, contentType: string) {
+  const blob = new Blob([content], { type: contentType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function statusLabel(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
@@ -26,18 +58,87 @@ function statusClass(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
 }
 
 export function FinancialReconciliationPage() {
-  const { data: settlements, isLoading } = useOutletSettlements();
+  const [dateFrom, setDateFrom] = useState(() => lagosDateInputValue(-1));
+  const [dateTo, setDateTo] = useState(() => lagosDateInputValue(-1));
+  const [outletId, setOutletId] = useState("");
+  const settlementQuery = useMemo(
+    () => ({
+      dateFrom,
+      dateTo,
+      ...(outletId ? { outletId } : {}),
+    }),
+    [dateFrom, dateTo, outletId],
+  );
+  const { data: outlets = [] } = useOutletsLive();
+  const { data: settlements = [], isLoading } = useOutletSettlements(settlementQuery);
   const {
     mutate: approveSettlement,
     isPending: isApproving,
     variables,
   } = useApproveOutletSettlement();
+  const exportMutation = useMutation({
+    mutationFn: exportOutletSettlements,
+    onSuccess: (report) => {
+      downloadFile(report.filename, report.content, report.contentType);
+      toastBus.emit("Settlement report exported", "success");
+    },
+    onError: (err: Error) => toastBus.emit(err.message, "error"),
+  });
+  const exportDisabled = isLoading || settlements.length === 0 || !dateFrom || !dateTo;
+
+  function handleExport() {
+    exportMutation.mutate(settlementQuery);
+  }
 
   return (
     <div className="panel recon-panel">
       <div className="recon-panel__head">
-        <h2>Outlet Settlement Accounts Matrix</h2>
-        <Button tone="quiet">Export Settlements Report (CSV)</Button>
+        <div>
+          <h2>Outlet Settlement Accounts Matrix</h2>
+          <p className="recon-panel__hint">
+            Settlement approval opens the next day after the selected settlement window.
+          </p>
+        </div>
+        <Button
+          tone="quiet"
+          type="button"
+          disabled={exportDisabled || exportMutation.isPending}
+          onClick={handleExport}
+        >
+          {exportMutation.isPending ? "Exporting..." : "Export Settlements Report (CSV)"}
+        </Button>
+      </div>
+
+      <div className="settlement-filters" aria-label="Settlement filters">
+        <label className="settlement-filter">
+          <span>From</span>
+          <input
+            type="date"
+            value={dateFrom}
+            max={dateTo || undefined}
+            onChange={(event) => setDateFrom(event.target.value)}
+          />
+        </label>
+        <label className="settlement-filter">
+          <span>To</span>
+          <input
+            type="date"
+            value={dateTo}
+            min={dateFrom || undefined}
+            onChange={(event) => setDateTo(event.target.value)}
+          />
+        </label>
+        <label className="settlement-filter settlement-filter--outlet">
+          <span>Outlet</span>
+          <select value={outletId} onChange={(event) => setOutletId(event.target.value)}>
+            <option value="">All outlets</option>
+            {outlets.map((outlet) => (
+              <option key={outlet.id} value={outlet.id}>
+                {outlet.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="table-wrap">
@@ -65,12 +166,13 @@ export function FinancialReconciliationPage() {
                     ))}
                   </tr>
                 ))
-              : settlements?.map((settlement) => {
-                  const isCurrentApproval = isApproving && variables === settlement.outletId;
-                  const canApprove =
-                    settlement.status === "PENDING" &&
-                    settlement.pendingSubOrders > 0 &&
-                    !!settlement.subaccountCode;
+              : settlements.map((settlement) => {
+                  const isCurrentApproval =
+                    isApproving &&
+                    variables?.outletId === settlement.outletId &&
+                    variables.dateFrom === dateFrom &&
+                    variables.dateTo === dateTo;
+                  const canApprove = settlement.approvalAvailable;
 
                   return (
                     <tr key={settlement.outletId}>
@@ -115,7 +217,14 @@ export function FinancialReconciliationPage() {
                           tone="navy"
                           type="button"
                           disabled={!canApprove || isCurrentApproval}
-                          onClick={() => approveSettlement(settlement.outletId)}
+                          title={settlement.approvalUnavailableReason ?? undefined}
+                          onClick={() =>
+                            approveSettlement({
+                              outletId: settlement.outletId,
+                              dateFrom,
+                              dateTo,
+                            })
+                          }
                         >
                           {isCurrentApproval ? "Approving..." : "Approve Settlement"}
                         </Button>

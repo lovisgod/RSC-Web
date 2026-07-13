@@ -10,6 +10,7 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
+  outletSettlementExportSchema,
   outletSettlementSummaryListSchema,
   outletSettlementSummarySchema,
   paymentRefundSchema,
@@ -41,6 +42,7 @@ import {
   type CreateNotificationCampaignInput,
   type CreateRiderInput,
   type OutletSummary,
+  type OutletSettlementExport,
   type OutletSettlementSummary,
   type PaymentRefund,
   type RegistrationResult,
@@ -228,15 +230,46 @@ export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<Out
     parseResponse(outletSummarySchema, data),
   );
 
-export const listOutletSettlements = (): Promise<OutletSettlementSummary[]> =>
-  get<unknown>("/api/v1/finance/outlet-settlements").then((data) =>
+export interface OutletSettlementQuery {
+  dateFrom?: string;
+  dateTo?: string;
+  outletId?: string;
+}
+
+function settlementQueryString(query: OutletSettlementQuery): string {
+  const params = new URLSearchParams();
+  if (query.dateFrom) params.set("dateFrom", query.dateFrom);
+  if (query.dateTo) params.set("dateTo", query.dateTo);
+  if (query.outletId) params.set("outletId", query.outletId);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export const listOutletSettlements = (
+  query: OutletSettlementQuery = {},
+): Promise<OutletSettlementSummary[]> =>
+  get<unknown>(`/api/v1/finance/outlet-settlements${settlementQueryString(query)}`).then((data) =>
     outletSettlementSummaryListSchema.parse(data),
   );
 
-export const approveOutletSettlement = (outletId: string): Promise<OutletSettlementSummary> =>
-  post<unknown>(`/api/v1/finance/outlet-settlements/${outletId}/approve`).then((data) =>
-    outletSettlementSummarySchema.parse(data),
+export const exportOutletSettlements = (
+  query: OutletSettlementQuery = {},
+): Promise<OutletSettlementExport> =>
+  get<unknown>(`/api/v1/finance/outlet-settlements/export${settlementQueryString(query)}`).then(
+    (data) => outletSettlementExportSchema.parse(data),
   );
+
+export const approveOutletSettlement = ({
+  outletId,
+  dateFrom,
+  dateTo,
+}: OutletSettlementQuery & { outletId: string }): Promise<OutletSettlementSummary> =>
+  post<unknown>(
+    `/api/v1/finance/outlet-settlements/${outletId}/approve${settlementQueryString({
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    })}`,
+  ).then((data) => outletSettlementSummarySchema.parse(data));
 
 export const processPaymentRefund = (
   reference: string,

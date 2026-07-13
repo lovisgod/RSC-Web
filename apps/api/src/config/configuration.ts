@@ -68,6 +68,7 @@ export interface ApplicationConfig {
       secretKey: string;
       baseUrl: string;
       webhookSecret: string;
+      settlementReportPath: string;
     };
     platformCommissionBps: number;
     vatBps: number;
@@ -196,6 +197,7 @@ export default function configuration(): ApplicationConfig {
         secretKey: process.env.MOMENT_SECRET_KEY ?? "",
         baseUrl: (process.env.MOMENT_BASE_URL ?? "https://api.momentpay.net").replace(/\/$/, ""),
         webhookSecret: process.env.MOMENT_WEBHOOK_SECRET ?? "",
+        settlementReportPath: process.env.MOMENT_SETTLEMENT_REPORT_PATH ?? "/settlements/report",
       },
       platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
       vatBps: Number(process.env.VAT_BPS ?? 750),

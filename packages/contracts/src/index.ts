@@ -464,6 +464,8 @@ export const outletSettlementSummarySchema = z.object({
   outletName: z.string().min(1),
   imageUrl: z.string().nullable(),
   subaccountCode: z.string().nullable(),
+  settlementDateFrom: z.iso.date(),
+  settlementDateTo: z.iso.date(),
   completedSubOrders: z.int().nonnegative(),
   pendingSubOrders: z.int().nonnegative(),
   grossMinor: z.int().nonnegative(),
@@ -471,10 +473,18 @@ export const outletSettlementSummarySchema = z.object({
   netMinor: z.int().nonnegative(),
   currency: currencySchema,
   status: settlementStatusSchema,
+  approvalAvailable: z.boolean(),
+  approvalUnavailableReason: z.string().nullable(),
   latestApprovedAt: z.iso.datetime().nullable(),
 });
 
 export const outletSettlementSummaryListSchema = z.array(outletSettlementSummarySchema);
+
+export const outletSettlementExportSchema = z.object({
+  filename: z.string().min(1),
+  contentType: z.string().min(1),
+  content: z.string(),
+});
 
 export const menuCategorySchema = z.object({
   id: z.uuid(),
@@ -1146,6 +1156,7 @@ export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;
 export type RateOutletInput = z.infer<typeof rateOutletInputSchema>;
 export type SettlementStatus = z.infer<typeof settlementStatusSchema>;
 export type OutletSettlementSummary = z.infer<typeof outletSettlementSummarySchema>;
+export type OutletSettlementExport = z.infer<typeof outletSettlementExportSchema>;
 
 export const preparationSuggestionSchema = z.object({
   id: z.uuid(),
