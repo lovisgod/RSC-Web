@@ -15,9 +15,9 @@ const PREPARATION_STEPS: TimelineStep[] = [
     matchStatuses: ["CONFIRMED"],
   },
   {
-    key: "PARTIALLY_READY",
+    key: "PREPARING",
     label: "Kitchens preparing",
-    matchStatuses: ["PARTIALLY_READY"],
+    matchStatuses: ["PREPARING", "PARTIALLY_READY"],
   },
   { key: "READY", label: "Order ready", matchStatuses: ["READY"] },
 ];
@@ -42,7 +42,14 @@ const TAKEOUT_STEPS: TimelineStep[] = [
   { key: "DELIVERED", label: "Picked up", matchStatuses: ["DELIVERED"] },
 ];
 
-const STATUS_ORDER = ["CONFIRMED", "PARTIALLY_READY", "READY", "OUT_FOR_DELIVERY", "DELIVERED"];
+const STATUS_ORDER = [
+  "CONFIRMED",
+  "PREPARING",
+  "PARTIALLY_READY",
+  "READY",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+];
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-NG", {

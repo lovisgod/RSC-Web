@@ -28,7 +28,7 @@ import { outletAdminKeys } from "../lib/query-keys";
 import { toastBus } from "../lib/toast-bus";
 
 const DRAG_TRANSITIONS: Record<string, Partial<Record<SubOrderStatus, MasterOrderStatus>>> = {
-  preparing: { PENDING: "CONFIRMED" },
+  preparing: { PENDING: "CONFIRMED", ACCEPTED: "PREPARING" },
   ready: { ACCEPTED: "READY", PREPARING: "READY" },
 };
 
