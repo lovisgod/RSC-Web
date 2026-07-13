@@ -25,6 +25,7 @@ import { Payment, PaymentStatus } from "./payment.entity";
 import { PaymentRefund } from "./payment-refund.entity";
 import {
   PAYMENT_ADAPTER,
+  type InitiateProviderPaymentInput,
   type ParsedWebhookEvent,
   type PaymentAdapter,
   type PaymentSplitRoute,
@@ -208,7 +209,8 @@ export class PaymentsService {
       const outletSubtotalMinor = grouped
         .get(outletId)!
         .reduce((lineSum, line) => lineSum + line.lineTotalMinor, 0);
-      const vatBps = outletById.get(outletId)?.vatBps ?? platformCharges.defaultVatBps;
+      const outletVatBps = outletById.get(outletId)?.vatBps ?? 0;
+      const vatBps = outletVatBps > 0 ? outletVatBps : platformCharges.defaultVatBps;
 
       return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
     }, 0);
@@ -265,14 +267,17 @@ export class PaymentsService {
     const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
     const recipientPhone = this.normalizeRecipientPhone(input.recipientPhone);
     const preparationNote = input.preparationNote?.trim() || null;
+    const returnUrl = this.normalizeReturnUrl(input.returnUrl);
 
-    const providerPayment = await this.paymentAdapter.initiate({
+    const providerPaymentInput: InitiateProviderPaymentInput = {
       email: customerEmail,
       amountMinor: totalMinor,
       currency: "NGN",
       reference,
       splitRoutes,
-    });
+      ...(returnUrl ? { returnUrl } : {}),
+    };
+    const providerPayment = await this.paymentAdapter.initiate(providerPaymentInput);
 
     const persisted = await this.dataSource.transaction(async (manager) => {
       const masterOrder = await manager.save(
@@ -752,6 +757,19 @@ export class PaymentsService {
       return normalizeNigerianPhoneNumber(phone);
     } catch {
       throw new BadRequestException("Recipient phone must be a valid Nigerian mobile number");
+    }
+  }
+
+  private normalizeReturnUrl(returnUrl: string | undefined): string | undefined {
+    const trimmed = returnUrl?.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+
+    try {
+      return new URL(trimmed).toString();
+    } catch {
+      throw new BadRequestException("Payment return URL must be a valid absolute URL");
     }
   }
 }
