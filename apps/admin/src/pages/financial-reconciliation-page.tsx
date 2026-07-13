@@ -1,18 +1,17 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button } from "@rsc/ui";
+import { useMutation } from "@tanstack/react-query";
 import { Download, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { useOrdersFeed } from "../hooks/use-orders-feed";
 import { useOutletsLive } from "../hooks/use-outlets-live";
 import { useApproveOutletSettlement, useOutletSettlements } from "../hooks/use-outlet-settlements";
-import { listAdminOrders, type AdminOrderItem } from "../lib/api";
+import { exportOutletSettlements, type OutletSettlementQuery } from "../lib/api";
+import { toastBus } from "../lib/toast-bus";
 
-const REPORT_LIMIT = 100;
-const COMPLETED_SUB_ORDER_STATUSES = new Set(["COLLECTED", "DISPATCHED"]);
 type ExportDateMode = "single" | "range";
 
-interface ReconciliationRow {
+interface SettlementRow {
   outletId: string;
   outletName: string;
   imageUrl: string | null;
@@ -23,6 +22,8 @@ interface ReconciliationRow {
   commissionMinor: number;
   netMinor: number;
   status: "NO_ACTIVITY" | "PENDING" | "APPROVED";
+  approvalAvailable: boolean;
+  approvalUnavailableReason: string | null;
 }
 
 const moneyFormatter = new Intl.NumberFormat("en-NG", {
@@ -32,27 +33,37 @@ const moneyFormatter = new Intl.NumberFormat("en-NG", {
 });
 
 function getTodayInputDate(): string {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - offset * 60_000);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Lagos",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
 
-  return local.toISOString().slice(0, 10);
+  return `${year}-${month}-${day}`;
 }
 
-function getDateRange(dateFrom: string, dateTo: string): { fromIso: string; toIso: string } {
-  return {
-    fromIso: new Date(`${dateFrom}T00:00:00`).toISOString(),
-    toIso: new Date(`${dateTo}T23:59:59.999`).toISOString(),
-  };
-}
-
-function includesToday(dateFrom: string, dateTo: string): boolean {
-  const today = getTodayInputDate();
-  return dateFrom <= today && today <= dateTo;
+function normalizeDateRange(dateFrom: string, dateTo: string) {
+  return dateFrom <= dateTo ? { dateFrom, dateTo } : { dateFrom: dateTo, dateTo: dateFrom };
 }
 
 function formatMinor(amountMinor: number) {
   return moneyFormatter.format(amountMinor / 100);
+}
+
+function downloadFile(filename: string, content: string, contentType: string) {
+  const blob = new Blob([content], { type: contentType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function statusLabel(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
@@ -65,129 +76,6 @@ function statusClass(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
   if (status === "APPROVED") return "badge--paid";
   if (status === "PENDING") return "badge--pending";
   return "badge--neutral";
-}
-
-function normalizeDateRange(dateFrom: string, dateTo: string) {
-  return dateFrom <= dateTo ? { dateFrom, dateTo } : { dateFrom: dateTo, dateTo: dateFrom };
-}
-
-function buildRows(
-  orderItems: AdminOrderItem[],
-  outlets: NonNullable<ReturnType<typeof useOutletsLive>["data"]>,
-  settlementRows: ReconciliationRow[],
-): ReconciliationRow[] {
-  const rows = new Map<string, ReconciliationRow>();
-  const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
-  const settlementByOutlet = new Map(
-    settlementRows.map((settlement) => [settlement.outletId, settlement]),
-  );
-
-  for (const outlet of outlets) {
-    const settlement = settlementByOutlet.get(outlet.id);
-    rows.set(outlet.id, {
-      outletId: outlet.id,
-      outletName: outlet.name,
-      imageUrl: outlet.imageUrl,
-      subaccountCode: settlement?.subaccountCode ?? outlet.settlementSubaccountCode ?? null,
-      completedSubOrders: 0,
-      pendingSubOrders: 0,
-      grossMinor: 0,
-      commissionMinor: 0,
-      netMinor: 0,
-      status: settlement?.status ?? "NO_ACTIVITY",
-    });
-  }
-
-  for (const item of orderItems) {
-    if (item.order.status === "PENDING_PAYMENT") continue;
-
-    for (const subOrder of item.subOrders) {
-      const outlet = outletById.get(subOrder.outletId);
-      const settlement = settlementByOutlet.get(subOrder.outletId);
-      const existing =
-        rows.get(subOrder.outletId) ??
-        ({
-          outletId: subOrder.outletId,
-          outletName: outlet?.name ?? `Outlet ${subOrder.outletId.slice(0, 8)}`,
-          imageUrl: outlet?.imageUrl ?? null,
-          subaccountCode: settlement?.subaccountCode ?? outlet?.settlementSubaccountCode ?? null,
-          completedSubOrders: 0,
-          pendingSubOrders: 0,
-          grossMinor: 0,
-          commissionMinor: 0,
-          netMinor: 0,
-          status: settlement?.status ?? "NO_ACTIVITY",
-        } satisfies ReconciliationRow);
-
-      if (COMPLETED_SUB_ORDER_STATUSES.has(subOrder.status)) {
-        existing.completedSubOrders += 1;
-        existing.grossMinor += subOrder.subtotalMinor;
-        existing.commissionMinor += subOrder.commissionMinor;
-        existing.netMinor += subOrder.netMinor;
-      } else if (subOrder.status !== "REJECTED") {
-        existing.pendingSubOrders += 1;
-      }
-
-      if (existing.status !== "APPROVED" && existing.completedSubOrders > 0) {
-        existing.status = "PENDING";
-      }
-
-      rows.set(subOrder.outletId, existing);
-    }
-  }
-
-  return Array.from(rows.values()).sort((left, right) => {
-    if (right.completedSubOrders !== left.completedSubOrders) {
-      return right.completedSubOrders - left.completedSubOrders;
-    }
-
-    return left.outletName.localeCompare(right.outletName);
-  });
-}
-
-function csvEscape(value: string | number) {
-  const text = String(value);
-  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-function buildCsv(rows: ReconciliationRow[]) {
-  const headers = [
-    "Outlet",
-    "Settlement Subaccount",
-    "Completed Sub-Orders",
-    "Pending Sub-Orders",
-    "Gross Volume",
-    "RSC Commission",
-    "Net Payable",
-    "Payout Status",
-  ];
-  const lines = rows.map((row) =>
-    [
-      row.outletName,
-      row.subaccountCode ?? "",
-      row.completedSubOrders,
-      row.pendingSubOrders,
-      row.grossMinor / 100,
-      row.commissionMinor / 100,
-      row.netMinor / 100,
-      statusLabel(row.status),
-    ]
-      .map(csvEscape)
-      .join(","),
-  );
-
-  return [headers.map(csvEscape).join(","), ...lines].join("\n");
 }
 
 function ExportSettlementsModal({
@@ -329,78 +217,52 @@ export function FinancialReconciliationPage() {
   const today = getTodayInputDate();
   const [selectedDate, setSelectedDate] = useState(today);
   const [exportOpen, setExportOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const activeDate = selectedDate;
-  const normalizedRange = { dateFrom: activeDate, dateTo: activeDate };
-  const dateRange = useMemo(
-    () => getDateRange(normalizedRange.dateFrom, normalizedRange.dateTo),
-    [normalizedRange.dateFrom, normalizedRange.dateTo],
+  const settlementQuery = useMemo<OutletSettlementQuery>(
+    () => ({ dateFrom: selectedDate, dateTo: selectedDate }),
+    [selectedDate],
   );
-  const isCurrentDateView = includesToday(normalizedRange.dateFrom, normalizedRange.dateTo);
-  const { data: settlements, isLoading: isSettlementsLoading } = useOutletSettlements();
-  const { data: outlets = [], isLoading: isOutletsLoading } = useOutletsLive();
-  const { data: ordersData, isLoading: isOrdersLoading } = useOrdersFeed({
-    dateFrom: dateRange.fromIso,
-    dateTo: dateRange.toIso,
-    limit: REPORT_LIMIT,
-  });
+  const { data: outlets = [] } = useOutletsLive();
+  const { data: settlements = [], isLoading } = useOutletSettlements(settlementQuery);
   const {
     mutate: approveSettlement,
     isPending: isApproving,
     variables,
   } = useApproveOutletSettlement();
-
-  const rows = useMemo(
-    () =>
-      buildRows(
-        ordersData?.orders ?? [],
-        outlets,
-        (settlements ?? []).map((settlement) => ({ ...settlement })),
-      ),
-    [ordersData?.orders, outlets, settlements],
-  );
-  const isLoading = isSettlementsLoading || isOutletsLoading || isOrdersLoading;
-
-  async function handleExport(options: { outletId: string; dateFrom: string; dateTo: string }) {
-    setIsExporting(true);
-    try {
-      const exportRange = normalizeDateRange(options.dateFrom, options.dateTo);
-      const exportIsoRange = getDateRange(exportRange.dateFrom, exportRange.dateTo);
-      const exportOrders = await listAdminOrders({
-        dateFrom: exportIsoRange.fromIso,
-        dateTo: exportIsoRange.toIso,
-        limit: REPORT_LIMIT,
-      });
-      const exportRows = buildRows(
-        exportOrders.orders,
-        outlets,
-        (settlements ?? []).map((settlement) => ({ ...settlement })),
-      );
-      const selectedRows =
-        options.outletId === "all"
-          ? exportRows
-          : exportRows.filter((row) => row.outletId === options.outletId);
-      const outletLabel =
-        options.outletId === "all"
-          ? "all-outlets"
-          : (outlets.find((outlet) => outlet.id === options.outletId)?.name ?? "outlet")
-              .toLowerCase()
-              .replaceAll(/\s+/g, "-");
-      const rangeLabel =
-        exportRange.dateFrom === exportRange.dateTo
-          ? exportRange.dateFrom
-          : `${exportRange.dateFrom}_to_${exportRange.dateTo}`;
-      const filename = `rsc-settlements-${outletLabel}-${rangeLabel}.csv`;
-
-      downloadBlob(
-        new Blob([buildCsv(selectedRows)], { type: "text/csv;charset=utf-8" }),
-        filename,
-      );
-
+  const exportMutation = useMutation({
+    mutationFn: exportOutletSettlements,
+    onSuccess: (report) => {
+      downloadFile(report.filename, report.content, report.contentType);
+      toastBus.emit("Settlement report exported", "success");
       setExportOpen(false);
-    } finally {
-      setIsExporting(false);
-    }
+    },
+    onError: (err: Error) => toastBus.emit(err.message, "error"),
+  });
+
+  const rows = useMemo<SettlementRow[]>(
+    () =>
+      settlements.map((settlement) => ({
+        outletId: settlement.outletId,
+        outletName: settlement.outletName,
+        imageUrl: settlement.imageUrl,
+        subaccountCode: settlement.subaccountCode,
+        completedSubOrders: settlement.completedSubOrders,
+        pendingSubOrders: settlement.pendingSubOrders,
+        grossMinor: settlement.grossMinor,
+        commissionMinor: settlement.commissionMinor,
+        netMinor: settlement.netMinor,
+        status: settlement.status,
+        approvalAvailable: settlement.approvalAvailable,
+        approvalUnavailableReason: settlement.approvalUnavailableReason,
+      })),
+    [settlements],
+  );
+
+  function handleExport(options: { outletId: string; dateFrom: string; dateTo: string }) {
+    exportMutation.mutate({
+      dateFrom: options.dateFrom,
+      dateTo: options.dateTo,
+      ...(options.outletId !== "all" ? { outletId: options.outletId } : {}),
+    });
   }
 
   return (
@@ -408,8 +270,8 @@ export function FinancialReconciliationPage() {
       {exportOpen && (
         <ExportSettlementsModal
           outlets={outlets.map((outlet) => ({ id: outlet.id, name: outlet.name }))}
-          initialDate={activeDate}
-          isExporting={isExporting}
+          initialDate={selectedDate}
+          isExporting={exportMutation.isPending}
           maxDate={today}
           onClose={() => setExportOpen(false)}
           onExport={handleExport}
@@ -421,7 +283,7 @@ export function FinancialReconciliationPage() {
           <div className="recon-panel__title">
             <h2>Outlet Settlement Accounts Matrix</h2>
             <p className="muted-text">
-              Showing successful-payment outlet transactions for {activeDate}.
+              Showing successful-payment outlet transactions for {selectedDate}.
             </p>
           </div>
           <div className="recon-actions">
@@ -436,7 +298,12 @@ export function FinancialReconciliationPage() {
             </label>
           </div>
           <div className="recon-export-action">
-            <Button tone="quiet" type="button" onClick={() => setExportOpen(true)}>
+            <Button
+              tone="quiet"
+              type="button"
+              disabled={exportMutation.isPending}
+              onClick={() => setExportOpen(true)}
+            >
               <Download aria-hidden="true" size={16} />
               Export Settlement Report (CSV)
             </Button>
@@ -469,12 +336,11 @@ export function FinancialReconciliationPage() {
                     </tr>
                   ))
                 : rows.map((settlement) => {
-                    const isCurrentApproval = isApproving && variables === settlement.outletId;
-                    const canApprove =
-                      !isCurrentDateView &&
-                      settlement.status === "PENDING" &&
-                      settlement.completedSubOrders > 0 &&
-                      !!settlement.subaccountCode;
+                    const isCurrentApproval =
+                      isApproving &&
+                      variables?.outletId === settlement.outletId &&
+                      variables.dateFrom === selectedDate &&
+                      variables.dateTo === selectedDate;
 
                     return (
                       <tr key={settlement.outletId}>
@@ -518,13 +384,15 @@ export function FinancialReconciliationPage() {
                           <Button
                             tone="navy"
                             type="button"
-                            disabled={!canApprove || isCurrentApproval}
-                            title={
-                              isCurrentDateView
-                                ? "Current-day settlements can only be approved from the next day."
-                                : undefined
+                            disabled={!settlement.approvalAvailable || isCurrentApproval}
+                            title={settlement.approvalUnavailableReason ?? undefined}
+                            onClick={() =>
+                              approveSettlement({
+                                outletId: settlement.outletId,
+                                dateFrom: selectedDate,
+                                dateTo: selectedDate,
+                              })
                             }
-                            onClick={() => approveSettlement(settlement.outletId)}
                           >
                             {isCurrentApproval ? "Approving..." : "Approve Settlement"}
                           </Button>

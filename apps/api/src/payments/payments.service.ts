@@ -19,7 +19,7 @@ import { MasterOrder } from "../orders/master-order.entity";
 import { OrderLineItem } from "../orders/order-line-item.entity";
 import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
-import type { InitiatePaymentDto } from "./dto/payment.dto";
+import type { InitiatePaymentDto, RetryPaymentDto } from "./dto/payment.dto";
 import type { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
 import { PaymentRefund } from "./payment-refund.entity";
@@ -371,6 +371,110 @@ export class PaymentsService {
         platformCommissionMinor,
         totalMinor,
         currency: "NGN",
+      },
+      splitBreakdown: splitRoutes,
+    };
+  }
+
+  async retryOrderPayment(user: AuthenticatedUser, orderId: string, input: RetryPaymentDto = {}) {
+    const order = await this.masterOrders.findOneBy({ id: orderId });
+
+    if (!order || order.customerId !== user.id) {
+      throw new NotFoundException("Order not found");
+    }
+
+    const existingPayments = await this.payments.find({
+      where: { masterOrderId: order.id },
+      order: { createdAt: "DESC" },
+    });
+
+    if (existingPayments.some((payment) => payment.status === PaymentStatus.SUCCESS)) {
+      throw new BadRequestException("This order has already been paid");
+    }
+
+    const customer = await this.users.findOneBy({ id: user.id });
+    if (!customer) {
+      throw new BadRequestException("Customer not found");
+    }
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    if (subOrders.length === 0) {
+      throw new BadRequestException("Order has no payable sub-orders");
+    }
+
+    const outletIds = subOrders.map((subOrder) => subOrder.outletId);
+    const outlets = await this.outlets.findBy({ id: In(outletIds) });
+    const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
+    const splitRoutes: PaymentSplitRoute[] = subOrders.map((subOrder) => ({
+      outletId: subOrder.outletId,
+      subaccountCode: outletById.get(subOrder.outletId)?.settlementSubaccountCode ?? null,
+      grossMinor: subOrder.subtotalMinor,
+      commissionMinor: subOrder.commissionMinor,
+      netMinor: subOrder.netMinor,
+    }));
+    const platformCommissionMinor = splitRoutes.reduce(
+      (sum, route) => sum + route.commissionMinor,
+      0,
+    );
+    const reference = `RSC-${randomUUID()}`;
+    const returnUrl = this.normalizeReturnUrl(input.returnUrl);
+    const providerPayment = await this.paymentAdapter.initiate({
+      email: this.piiCrypto.decrypt(customer.emailEncrypted),
+      amountMinor: order.totalMinor,
+      currency: order.currency,
+      reference,
+      splitRoutes,
+      ...(returnUrl ? { returnUrl } : {}),
+    });
+
+    await this.payments.update(
+      { masterOrderId: order.id, status: PaymentStatus.PENDING },
+      { status: PaymentStatus.FAILED },
+    );
+
+    const payment = await this.payments.save(
+      this.payments.create({
+        masterOrderId: order.id,
+        amountMinor: order.totalMinor,
+        currency: order.currency,
+        gateway: providerPayment.gateway,
+        reference: providerPayment.reference,
+        status:
+          providerPayment.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
+        checkoutUrl: providerPayment.checkoutUrl,
+        splitBreakdown: splitRoutes,
+        providerResponse: providerPayment.providerResponse,
+      }),
+    );
+
+    order.paymentReference = payment.reference;
+    order.status =
+      payment.status === PaymentStatus.SUCCESS
+        ? MasterOrderStatus.CONFIRMED
+        : MasterOrderStatus.PENDING_PAYMENT;
+    await this.masterOrders.save(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return {
+      masterOrderId: order.id,
+      paymentId: payment.id,
+      reference: payment.reference,
+      checkoutUrl: payment.checkoutUrl,
+      status: payment.status,
+      totals: {
+        subtotalMinor: order.subtotalMinor,
+        deliveryFeeMinor: order.deliveryFeeMinor,
+        serviceFeeMinor: order.serviceFeeMinor,
+        vatMinor: order.vatMinor,
+        platformCommissionMinor,
+        totalMinor: order.totalMinor,
+        currency: order.currency,
       },
       splitBreakdown: splitRoutes,
     };

@@ -368,7 +368,7 @@ export const listAdminOrders = (outletId: string): Promise<PosSubOrder[]> =>
 
 // PATCH /api/v1/orders/{subOrderId}/status
 // Body accepts MasterOrderStatus values; the server maps them to sub-order status internally:
-//   CONFIRMED → ACCEPTED | PARTIALLY_READY → PREPARING | READY → READY | DELIVERED → COLLECTED
+//   CONFIRMED → ACCEPTED | PREPARING → PREPARING | READY/PARTIALLY_READY → READY | DELIVERED → COLLECTED
 export const updateSubOrderStatus = (
   subOrderId: string,
   body: { status: MasterOrderStatus; preparationTime?: number; rejectionReason?: string },

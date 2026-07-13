@@ -29,7 +29,7 @@ function order(status: string): Order {
 }
 
 describe("customer order status grouping", () => {
-  it.each(["CONFIRMED", "PARTIALLY_READY", "READY", "OUT_FOR_DELIVERY"])(
+  it.each(["CONFIRMED", "PREPARING", "PARTIALLY_READY", "READY", "OUT_FOR_DELIVERY"])(
     "treats %s as active",
     (status) => expect(isActiveOrder(order(status))).toBe(true),
   );

@@ -129,6 +129,18 @@ export class InitiatePaymentDto {
   returnUrl?: string;
 }
 
+export class RetryPaymentDto {
+  @ApiPropertyOptional({
+    example: "rsc://payment/return",
+    description:
+      "Optional mobile deep link or universal link. The payment reference is appended as a reference query parameter.",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 2_000)
+  returnUrl?: string;
+}
+
 export class ProcessRefundDto {
   @ApiPropertyOptional({
     example: 250000,
