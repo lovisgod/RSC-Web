@@ -398,6 +398,86 @@ select {
   margin-top: 1rem;
 }
 
+.outlet-performance-panel__copy {
+  margin: 0.35rem 0 0;
+  color: var(--rsc-muted);
+  font-size: 0.92rem;
+}
+
+.outlet-performance-skeleton {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.outlet-performance-table-wrap {
+  overflow-x: auto;
+}
+
+.outlet-performance-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.outlet-performance-table th {
+  padding: 0.85rem 1rem;
+  color: var(--rsc-muted);
+  background: var(--rsc-surface);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.outlet-performance-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--rsc-line);
+  color: var(--rsc-navy-dark);
+  font-weight: 800;
+}
+
+.outlet-performance-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.outlet-performance-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.outlet-performance-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: #cbd5e1;
+  box-shadow: 0 0 0 4px rgb(203 213 225 / 24%);
+}
+
+.outlet-performance-dot--online {
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgb(16 185 129 / 16%);
+}
+
+.outlet-performance-rejected {
+  display: inline-flex;
+  min-width: 2rem;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  color: #b42318;
+  background: #fee2e2;
+}
+
+.data-placeholder--compact {
+  padding: 1rem;
+  border: 1px dashed var(--rsc-line);
+  border-radius: 18px;
+  background: var(--rsc-surface);
+}
+
 .panel {
   min-width: 0;
   padding: clamp(1.25rem, 3vw, 1.7rem);
@@ -1363,6 +1443,42 @@ th {
   color: var(--rsc-navy-dark);
   background: transparent;
   font-weight: 800;
+}
+
+.recon-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.recon-actions .rider-date-filter {
+  min-height: 44px;
+  box-shadow: none;
+}
+
+.recon-actions .rider-date-filter span {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rsc-muted);
+}
+
+.muted-text {
+  margin: 0.35rem 0 0;
+  color: var(--rsc-muted);
+  font-size: 0.92rem;
+}
+
+.modal-kicker {
+  display: inline-block;
+  color: var(--rsc-muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .rider-report-metrics {
