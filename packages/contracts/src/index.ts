@@ -401,6 +401,7 @@ export const initiatePaymentInputSchema = z
     vatMinor: z.int().nonnegative(),
     platformCommissionMinor: z.int().nonnegative(),
     totalMinor: z.int().nonnegative(),
+    returnUrl: z.string().trim().min(1).max(2_000).optional(),
   })
   .strict();
 

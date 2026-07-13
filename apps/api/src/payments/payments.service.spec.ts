@@ -202,26 +202,26 @@ describe(PaymentsService.name, () => {
     expect(dataSource.transaction).not.toHaveBeenCalled();
   });
 
-  it("sends VAT and platform commission in the provider payment amount", async () => {
+  it("uses platform default VAT when outlet VAT is unset for the provider payment amount", async () => {
     menuItems.findBy.mockResolvedValue([
       Object.assign(new MenuItem(), {
         id: "45ef3252-b96f-4308-b40e-391623b25ac9",
         outletId,
-        name: "Garlic Bread",
-        priceMinor: 180000,
+        name: "Fried Rice Combo",
+        priceMinor: 660000,
         isAvailable: true,
       }),
     ]);
     outlets.findBy.mockResolvedValue([
       Object.assign(new Outlet(), {
         id: outletId,
-        name: "Farfallino Kitchen",
+        name: "Salmas Grill",
         latitude: 6.4474,
         longitude: 3.4542,
         deliveryRadiusKm: 15,
         isOnline: true,
-        vatBps: 750,
-        settlementSubaccountCode: "fafallino_423fsdz432",
+        vatBps: 0,
+        settlementSubaccountCode: "salmas_423fsdz432",
       }),
     ]);
     dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
@@ -246,18 +246,20 @@ describe(PaymentsService.name, () => {
         deliveryLatitude: 6.4474,
         deliveryLongitude: 3.4542,
         items: [{ menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9", quantity: 1 }],
-        subtotalMinor: 180000,
+        subtotalMinor: 660000,
         deliveryFeeMinor: 150000,
         serviceFeeMinor: 0,
-        vatMinor: 13500,
-        platformCommissionMinor: 18000,
-        totalMinor: 361500,
+        vatMinor: 49500,
+        platformCommissionMinor: 66000,
+        totalMinor: 925500,
+        returnUrl: "rsc://payment/return",
       },
     );
 
     expect(initiatePayment).toHaveBeenCalledWith(
       expect.objectContaining({
-        amountMinor: 361500,
+        amountMinor: 925500,
+        returnUrl: "rsc://payment/return",
       }),
     );
   });
@@ -344,9 +346,9 @@ describe(PaymentsService.name, () => {
         subtotalMinor: 450000,
         deliveryFeeMinor: 150000,
         serviceFeeMinor: 0,
-        vatMinor: 0,
+        vatMinor: 33750,
         platformCommissionMinor: 45000,
-        totalMinor: 645000,
+        totalMinor: 678750,
       },
     );
 
@@ -375,9 +377,9 @@ describe(PaymentsService.name, () => {
       subtotalMinor: 450000,
       deliveryFeeMinor: 150000,
       serviceFeeMinor: 0,
-      vatMinor: 0,
+      vatMinor: 33750,
       platformCommissionMinor: 45000,
-      totalMinor: 645000,
+      totalMinor: 678750,
     };
 
     it("throws BadRequestException on subtotalMinor mismatch", async () => {
@@ -432,6 +434,17 @@ describe(PaymentsService.name, () => {
           { ...validPayload, totalMinor: 600000 },
         ),
       ).rejects.toThrow(/Total mismatch/);
+    });
+
+    it("throws BadRequestException on invalid return URL", async () => {
+      await expect(
+        service.initiate(
+          { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+          { ...validPayload, returnUrl: "not-a-url" },
+        ),
+      ).rejects.toThrow(/Payment return URL/);
+
+      expect(initiatePayment).not.toHaveBeenCalled();
     });
   });
 });

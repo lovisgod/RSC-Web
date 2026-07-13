@@ -78,7 +78,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       options: {
         checkout_options: {
           presentation_mode: { mode: "redirect" },
-          return_url: this.buildReturnUrl(input.reference),
+          return_url: this.buildReturnUrl(input.reference, input.returnUrl),
         },
       },
     };
@@ -135,8 +135,8 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
   }
 
-  private buildReturnUrl(reference: string): string {
-    const url = new URL("/tracking", this.customerWebUrl);
+  private buildReturnUrl(reference: string, returnUrl?: string): string {
+    const url = returnUrl ? new URL(returnUrl) : new URL("/tracking", this.customerWebUrl);
     url.searchParams.set("reference", reference);
 
     return url.toString();

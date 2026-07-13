@@ -117,6 +117,16 @@ export class InitiatePaymentDto {
   @IsInt()
   @Min(0)
   totalMinor!: number;
+
+  @ApiPropertyOptional({
+    example: "rsc://payment/return",
+    description:
+      "Optional mobile deep link or universal link. The payment reference is appended as a reference query parameter.",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 2_000)
+  returnUrl?: string;
 }
 
 export class ProcessRefundDto {
