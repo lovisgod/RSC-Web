@@ -20,7 +20,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
-import { InitiatePaymentDto, ProcessRefundDto } from "./dto/payment.dto";
+import { InitiatePaymentDto, ProcessRefundDto, RetryPaymentDto } from "./dto/payment.dto";
 import { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { PaymentsService } from "./payments.service";
 import { PAYMENT_ADAPTER, type PaymentAdapter } from "./payment-adapter";
@@ -133,6 +133,23 @@ export class PaymentsController {
   @ApiMessage("Payment status retrieved")
   verify(@Req() request: AuthenticatedRequest, @Param("reference") reference: string) {
     return this.payments.verifyPayment(request.user!, reference);
+  }
+
+  @Post("orders/:orderId/retry")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @ApiMessage("Payment retry initiated successfully")
+  @ApiOperation({
+    summary: "Retry payment for an existing order",
+    description:
+      "Creates a fresh provider checkout for a failed or incomplete payment without creating a new order.",
+  })
+  retry(
+    @Req() request: AuthenticatedRequest,
+    @Param("orderId") orderId: string,
+    @Body() input: RetryPaymentDto,
+  ) {
+    return this.payments.retryOrderPayment(request.user!, orderId, input);
   }
 
   @Post(":reference/refund")

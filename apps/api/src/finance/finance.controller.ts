@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseUUIDPipe, Post, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, ParseUUIDPipe, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
@@ -24,8 +24,29 @@ export class FinanceController {
     description:
       "Aggregates completed, successfully paid outlet sub-orders with persisted approval status.",
   })
-  outletSettlements() {
-    return this.finance.outletSettlements();
+  outletSettlements(
+    @Query("dateFrom") dateFrom?: string,
+    @Query("dateTo") dateTo?: string,
+    @Query("outletId") outletId?: string,
+  ) {
+    return this.finance.outletSettlements(toOutletSettlementQuery({ dateFrom, dateTo, outletId }));
+  }
+
+  @Get("outlet-settlements/export")
+  @ApiMessage("Outlet settlement export retrieved")
+  @ApiOperation({
+    summary: "Export outlet settlement report from Moment",
+    description:
+      "Fetches the provider settlement report for the selected date window and optional outlet.",
+  })
+  exportOutletSettlements(
+    @Query("dateFrom") dateFrom?: string,
+    @Query("dateTo") dateTo?: string,
+    @Query("outletId") outletId?: string,
+  ) {
+    return this.finance.exportOutletSettlements(
+      toOutletSettlementQuery({ dateFrom, dateTo, outletId }),
+    );
   }
 
   @Post("outlet-settlements/:outletId/approve")
@@ -37,8 +58,26 @@ export class FinanceController {
   })
   approveOutletSettlement(
     @Param("outletId", ParseUUIDPipe) outletId: string,
+    @Query("dateFrom") dateFrom: string | undefined,
+    @Query("dateTo") dateTo: string | undefined,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.finance.approveOutletSettlement(outletId, request.user!);
+    return this.finance.approveOutletSettlement(
+      outletId,
+      request.user!,
+      toOutletSettlementQuery({ dateFrom, dateTo }),
+    );
   }
+}
+
+function toOutletSettlementQuery(input: {
+  dateFrom?: string | undefined;
+  dateTo?: string | undefined;
+  outletId?: string | undefined;
+}) {
+  return {
+    ...(input.dateFrom ? { dateFrom: input.dateFrom } : {}),
+    ...(input.dateTo ? { dateTo: input.dateTo } : {}),
+    ...(input.outletId ? { outletId: input.outletId } : {}),
+  };
 }

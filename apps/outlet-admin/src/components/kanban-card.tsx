@@ -11,7 +11,7 @@ import { toastBus } from "../lib/toast-bus";
 
 const NEXT_STATUS: Partial<Record<SubOrderStatus, MasterOrderStatus>> = {
   PENDING: "CONFIRMED",
-  ACCEPTED: "PARTIALLY_READY",
+  ACCEPTED: "PREPARING",
   PREPARING: "READY",
   READY: "DELIVERED",
 };

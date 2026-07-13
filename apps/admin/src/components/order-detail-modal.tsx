@@ -42,6 +42,7 @@ const fmt = (minor: number) => `₦${(minor / 100).toLocaleString("en-NG")}`;
 const STATUS_LABELS: Record<string, string> = {
   PENDING_PAYMENT: "Awaiting Payment",
   CONFIRMED: "Confirmed",
+  PREPARING: "Preparing",
   PARTIALLY_READY: "Part Ready",
   READY: "Ready",
   OUT_FOR_DELIVERY: "On Delivery",

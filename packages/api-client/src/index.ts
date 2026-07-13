@@ -42,6 +42,7 @@ import {
   menuCategorySchema,
   resetPasswordInputSchema,
   resetPasswordResultSchema,
+  retryPaymentInputSchema,
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
@@ -108,6 +109,7 @@ import {
   type MenuItemSummary,
   type ResetPasswordInput,
   type ResetPasswordResult,
+  type RetryPaymentInput,
   type LoginInput,
   type LoginResult,
   type LogoutResult,
@@ -609,6 +611,18 @@ export function createApiClient(options: ApiClientOptions) {
         method: "POST",
         body: JSON.stringify(body),
       });
+    },
+    retryPayment(orderId: string, input: RetryPaymentInput = {}): Promise<InitiatePaymentResult> {
+      const body = retryPaymentInputSchema.parse(input);
+
+      return request(
+        `/api/v1/payments/orders/${encodeURIComponent(orderId)}/retry`,
+        initiatePaymentResultSchema,
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        },
+      );
     },
     verifyPayment(reference: string): Promise<PaymentVerifyResult> {
       return request(
