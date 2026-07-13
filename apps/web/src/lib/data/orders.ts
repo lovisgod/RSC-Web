@@ -16,6 +16,10 @@ export function isActiveOrder(order: Order): boolean {
   return ACTIVE_ORDER_STATUSES.has(order.status.toUpperCase());
 }
 
+export function isProfileActiveOrder(order: Order): boolean {
+  return order.status.toUpperCase() === "PENDING_PAYMENT" || isActiveOrder(order);
+}
+
 export function isCompletedOrder(order: Order): boolean {
   return COMPLETED_ORDER_STATUSES.has(order.status.toUpperCase());
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import {
+  type CustomerOrder,
   masterOrderStatusSchema,
   riderLocationSchema,
   type OrderDetail,
@@ -83,8 +84,23 @@ export function useOrderDetail(orderId: string | null) {
             }
           : current,
       );
+      queryClient.setQueriesData<CustomerOrder[]>({ queryKey: ["orders"] }, (orders) =>
+        orders?.map((order) =>
+          order.id === orderId
+            ? {
+                ...order,
+                riderId: parsed.data.riderId ?? order.riderId,
+                status: parsed.data.status,
+                updatedAt: parsed.data.updatedAt,
+              }
+            : order,
+        ),
+      );
 
       void queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      if (parsed.data.status !== "DELIVERED" && parsed.data.status !== "CANCELLED") {
+        void queryClient.invalidateQueries({ queryKey: ["orders"] });
+      }
     });
 
     socket.on("rider:location_update", (payload: unknown) => {

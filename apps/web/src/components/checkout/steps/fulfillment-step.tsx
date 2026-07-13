@@ -274,9 +274,6 @@ export function FulfillmentStep({
   const grandTotal = subtotal + deliveryFee + serviceFee + vat + platformCommission;
 
   const initiateMutation = useMutation({
-    onError: (err) => {
-      console.error("[initiatePayment error]", err);
-    },
     mutationFn: () => {
       if (onBehalf) {
         const parsedPhone = nigerianPhoneNumberSchema.safeParse(recipientPhone);
@@ -322,6 +319,8 @@ export function FulfillmentStep({
       );
     },
     onSuccess: (result) => {
+      void qc.invalidateQueries({ queryKey: ["orders"] });
+
       // Snapshot cart before clearing so the sidebar stays populated on later steps
       const snapshot: OrderSnapshot = {
         groups: cart.groups.map((g) => ({
@@ -630,7 +629,7 @@ export function FulfillmentStep({
           </p>
         )}
         {initiateMutation.isError && (
-          <p className="text-xs text-center text-red-500">
+          <p role="alert" className="text-xs text-center text-red-500">
             {getMutationErrorMessage(initiateMutation.error, {})}
           </p>
         )}

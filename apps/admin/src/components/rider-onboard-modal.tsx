@@ -227,12 +227,16 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
             <div className="modal-row">
               <label className="field-label">
                 Vehicle Type
-                <input
+                <select
                   className="field-input"
-                  type="text"
-                  placeholder="e.g. Bike"
-                  {...field("vehicleType")}
-                />
+                  value={form.vehicleType}
+                  onChange={(event) =>
+                    setForm((previous) => ({ ...previous, vehicleType: event.target.value }))
+                  }
+                >
+                  <option value="">Select vehicle type</option>
+                  <option value="Bike">Bike</option>
+                </select>
               </label>
 
               <label className="field-label">
