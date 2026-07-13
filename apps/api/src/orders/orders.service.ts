@@ -43,10 +43,11 @@ export interface LatestLocation {
 export interface AdminOrderListResult {
   orders: Array<{
     order: MasterOrder;
-    subOrders: SubOrder[];
+    subOrders: SerializedSubOrder[];
     lineItems: OrderLineItem[];
   }>;
   total: number;
+  totalSubOrders: number;
   limit: number;
   offset: number;
 }
@@ -70,6 +71,7 @@ export interface RiderDispatch {
     pickupCode: string;
     status: SubOrderStatus;
     preparationNote: string | null;
+    rejectionReason: string | null;
     items: Array<{
       id: string;
       name: string;
@@ -83,6 +85,8 @@ interface FairAvailableRiderRow {
   id: string;
   assignmentCount: number;
 }
+
+type SerializedSubOrder = SubOrder & { rejectionReason: string | null };
 
 @Injectable()
 export class OrdersService {
@@ -179,7 +183,7 @@ export class OrdersService {
     const orderIds = orders.map((order) => order.id);
 
     if (orderIds.length === 0) {
-      return { orders: [], total, limit, offset };
+      return { orders: [], total, totalSubOrders: 0, limit, offset };
     }
 
     const subOrderWhere = {
@@ -207,10 +211,13 @@ export class OrdersService {
     return {
       orders: orders.map((order) => ({
         order,
-        subOrders: subOrders.filter((subOrder) => subOrder.masterOrderId === order.id),
+        subOrders: subOrders
+          .filter((subOrder) => subOrder.masterOrderId === order.id)
+          .map((subOrder) => this.serializeSubOrder(subOrder)),
         lineItems: lineItems.filter((lineItem) => lineItem.masterOrderId === order.id),
       })),
       total,
+      totalSubOrders: subOrders.length,
       limit,
       offset,
     };
@@ -225,6 +232,9 @@ export class OrdersService {
   async reorder(user: AuthenticatedUser, id: string) {
     const order = await this.requireCustomerOrder(user, id);
     const lines = await this.lineItems.find({ where: { masterOrderId: order.id } });
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const platformCommissionMinor = subOrders.reduce((sum, so) => sum + so.commissionMinor, 0);
+
     const input: InitiatePaymentDto = {
       deliveryMode: order.deliveryMode,
       items: lines
@@ -237,6 +247,12 @@ export class OrdersService {
           })),
           ...(line.customerNote ? { customerNote: line.customerNote } : {}),
         })),
+      subtotalMinor: order.subtotalMinor,
+      deliveryFeeMinor: order.deliveryFeeMinor,
+      serviceFeeMinor: order.serviceFeeMinor,
+      vatMinor: order.vatMinor,
+      platformCommissionMinor,
+      totalMinor: order.totalMinor,
     };
     if (order.deliveryAddress) {
       input.deliveryAddress = order.deliveryAddress;
@@ -734,7 +750,14 @@ export class OrdersService {
       }
     }
 
-    return { order, subOrders, lineItems, events, latestRiderLocation, rider };
+    return {
+      order,
+      subOrders: subOrders.map((subOrder) => this.serializeSubOrder(subOrder)),
+      lineItems,
+      events,
+      latestRiderLocation,
+      rider,
+    };
   }
 
   private async buildRiderDispatch(order: MasterOrder): Promise<RiderDispatch> {
@@ -769,6 +792,7 @@ export class OrdersService {
           pickupCode: subOrder.pickupCode,
           status: subOrder.status,
           preparationNote: subOrder.preparationNote,
+          rejectionReason: this.rejectionReasonFor(subOrder),
           items: lineItems
             .filter((lineItem) => lineItem.subOrderId === subOrder.id)
             .map((lineItem) => ({
@@ -780,6 +804,21 @@ export class OrdersService {
         };
       }),
     };
+  }
+
+  private serializeSubOrder(subOrder: SubOrder): SerializedSubOrder {
+    return Object.assign(subOrder, {
+      rejectionReason: this.rejectionReasonFor(subOrder),
+    });
+  }
+
+  private rejectionReasonFor(subOrder: SubOrder): string | null {
+    if (subOrder.status !== SubOrderStatus.REJECTED) {
+      return null;
+    }
+
+    const reason = subOrder.preparationNote?.trim();
+    return reason ? reason : null;
   }
 
   private formatDispatchNotificationBody(dispatch: RiderDispatch): string {
@@ -1005,6 +1044,7 @@ export class OrdersService {
     const statusMap: Record<MasterOrderStatus, SubOrderStatus> = {
       [MasterOrderStatus.PENDING_PAYMENT]: SubOrderStatus.PENDING,
       [MasterOrderStatus.CONFIRMED]: SubOrderStatus.ACCEPTED,
+      [MasterOrderStatus.PREPARING]: SubOrderStatus.PREPARING,
       [MasterOrderStatus.PARTIALLY_READY]: SubOrderStatus.READY,
       [MasterOrderStatus.READY]: SubOrderStatus.READY,
       [MasterOrderStatus.OUT_FOR_DELIVERY]: SubOrderStatus.DISPATCHED,
@@ -1047,6 +1087,10 @@ export class OrdersService {
       )
     ) {
       return MasterOrderStatus.PARTIALLY_READY;
+    }
+
+    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.PREPARING)) {
+      return MasterOrderStatus.PREPARING;
     }
 
     return MasterOrderStatus.CONFIRMED;

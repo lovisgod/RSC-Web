@@ -11,6 +11,8 @@ import type {
   PaymentAdapter,
   ProvisionSubaccountInput,
   ProvisionSubaccountResult,
+  RefundProviderPaymentInput,
+  RefundProviderPaymentResult,
   VerifyProviderPaymentResult,
 } from "./payment-adapter";
 
@@ -51,6 +53,16 @@ interface PaystackCreateSubaccountResponse {
   message?: string;
   data?: {
     subaccount_code?: string;
+  };
+}
+
+interface PaystackRefundResponse {
+  status?: boolean;
+  message?: string;
+  data?: {
+    id?: number;
+    refund_reference?: string;
+    status?: string;
   };
 }
 
@@ -98,6 +110,7 @@ export class PaystackPaymentAdapter implements PaymentAdapter {
       currency: input.currency,
       reference: input.reference,
       ...(splitCode ? { split_code: splitCode } : {}),
+      ...(input.returnUrl ? { callback_url: input.returnUrl } : {}),
     };
 
     try {
@@ -259,6 +272,45 @@ export class PaystackPaymentAdapter implements PaymentAdapter {
     }
   }
 
+  async refund(input: RefundProviderPaymentInput): Promise<RefundProviderPaymentResult> {
+    const body = {
+      transaction: input.reference,
+      amount: input.amountMinor,
+      currency: input.currency,
+      ...(input.reason ? { merchant_note: input.reason } : {}),
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/refund`, {
+        method: "POST",
+        headers: this.authHeaders(),
+        body: JSON.stringify(body),
+      });
+      const payload = (await response.json().catch(() => ({}))) as PaystackRefundResponse;
+
+      if (!response.ok || !payload.status) {
+        this.logger.error(
+          `Paystack rejected refund: ${JSON.stringify({
+            status: response.status,
+            message: payload.message ?? null,
+          })}`,
+        );
+        throw new BadGatewayException("Unable to process refund");
+      }
+
+      return {
+        providerRefundId:
+          payload.data?.refund_reference ?? (payload.data?.id ? String(payload.data.id) : null),
+        status: mapPaystackRefundStatus(payload.data?.status),
+        providerResponse: payload,
+      };
+    } catch (error) {
+      if (error instanceof BadGatewayException) throw error;
+      this.logger.error("Paystack refund request failed", error);
+      throw new BadGatewayException("Unable to process refund");
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Private helpers
   // -------------------------------------------------------------------------
@@ -337,6 +389,20 @@ function isPaystackSubaccountCode(value: string | null): value is string {
 function mapPaystackStatus(paystackStatus: string): "PENDING" | "SUCCESS" | "FAILED" {
   if (paystackStatus === "success") return "SUCCESS";
   if (paystackStatus === "failed" || paystackStatus === "abandoned") return "FAILED";
+
+  return "PENDING";
+}
+
+function mapPaystackRefundStatus(status: string | undefined): "PENDING" | "SUCCESS" | "FAILED" {
+  if (!status) return "PENDING";
+
+  const normalized = status.toLowerCase();
+  if (normalized === "processed" || normalized === "success" || normalized === "successful") {
+    return "SUCCESS";
+  }
+  if (normalized === "failed") {
+    return "FAILED";
+  }
 
   return "PENDING";
 }

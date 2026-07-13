@@ -7,6 +7,8 @@ import type {
   PaymentAdapter,
   ProvisionSubaccountInput,
   ProvisionSubaccountResult,
+  RefundProviderPaymentInput,
+  RefundProviderPaymentResult,
   VerifyProviderPaymentResult,
 } from "./payment-adapter";
 
@@ -45,6 +47,14 @@ export class LocalPaymentAdapter implements PaymentAdapter {
     return Promise.resolve({
       subaccountCode: `LOCAL_ACCT_${input.accountNumber}`,
       providerResponse: { message: "Local adapter: subaccount provisioned (dev only)" },
+    });
+  }
+
+  refund(input: RefundProviderPaymentInput): Promise<RefundProviderPaymentResult> {
+    return Promise.resolve({
+      providerRefundId: `local_refund_${input.reference}`,
+      status: "SUCCESS",
+      providerResponse: { message: "Local adapter: refund recorded", input },
     });
   }
 }

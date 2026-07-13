@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -34,7 +35,7 @@ import { ApiMessage } from "../common/http/api-message.decorator";
 import type { UploadedImageFile } from "../media/media.service";
 import { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
 import { OutletAdminQueryDto } from "./dto/outlet-admin-query.dto";
-import { CreateRiderDto } from "./dto/rider.dto";
+import { CreateRiderDto, UpdateRiderDto } from "./dto/rider.dto";
 import { UsersService } from "./users.service";
 
 @ApiTags("Users")
@@ -119,6 +120,62 @@ export class UsersController {
   })
   createRider(@Req() request: AuthenticatedRequest, @Body() input: CreateRiderDto) {
     return this.users.createRider(request.user!, input);
+  }
+
+  @Get("riders")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Riders retrieved successfully")
+  @ApiOperation({
+    summary: "List delivery riders",
+    description:
+      "Returns a list of riders. Super admins can retrieve all riders or filter by outletId. Outlet admins can only retrieve riders for their own outlet.",
+  })
+  listRiders(@Req() request: AuthenticatedRequest, @Query("outletId") outletId?: string) {
+    return this.users.listRiders(request.user!, outletId);
+  }
+
+  @Get("riders/:id")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Rider retrieved successfully")
+  @ApiOperation({
+    summary: "Get a rider's details",
+    description:
+      "Returns details of a specific rider. Super admins can retrieve any rider. Outlet admins can only retrieve riders linked to their own outlet.",
+  })
+  getRider(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
+    return this.users.getRider(request.user!, id);
+  }
+
+  @Patch("riders/:id")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Rider updated successfully")
+  @ApiOperation({
+    summary: "Update a rider's details",
+    description:
+      "Updates details of a specific rider. Super admins can update any rider. Outlet admins can only update riders linked to their own outlet.",
+  })
+  updateRider(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() input: UpdateRiderDto,
+  ) {
+    return this.users.updateRider(request.user!, id, input);
+  }
+
+  @Delete("riders/:id")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Rider deleted successfully")
+  @ApiOperation({
+    summary: "Soft-delete a rider",
+    description:
+      "Soft-deletes a rider account. Super admins can delete any rider. Outlet admins can only delete riders linked to their own outlet.",
+  })
+  deleteRider(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
+    return this.users.deleteRider(request.user!, id);
   }
 
   @Get("outlet-admins")

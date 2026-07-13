@@ -4,6 +4,7 @@ export type Order = CustomerOrder;
 
 export const ACTIVE_ORDER_STATUSES = new Set([
   "CONFIRMED",
+  "PREPARING",
   "PARTIALLY_READY",
   "READY",
   "OUT_FOR_DELIVERY",
@@ -15,6 +16,10 @@ export function isActiveOrder(order: Order): boolean {
   return ACTIVE_ORDER_STATUSES.has(order.status.toUpperCase());
 }
 
+export function isProfileActiveOrder(order: Order): boolean {
+  return order.status.toUpperCase() === "PENDING_PAYMENT" || isActiveOrder(order);
+}
+
 export function isCompletedOrder(order: Order): boolean {
   return COMPLETED_ORDER_STATUSES.has(order.status.toUpperCase());
 }
@@ -22,6 +27,7 @@ export function isCompletedOrder(order: Order): boolean {
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   PENDING_PAYMENT: { label: "Pending payment", color: "#fff", bg: "var(--rsc-danger)" },
   CONFIRMED: { label: "Confirmed", color: "#fff", bg: "var(--rsc-navy-light)" },
+  PREPARING: { label: "Preparing", color: "#fff", bg: "var(--rsc-navy-light)" },
   PARTIALLY_READY: { label: "Partially ready", color: "#fff", bg: "var(--rsc-dark)" },
   READY: { label: "Ready for pickup", color: "#fff", bg: "var(--rsc-main)" },
   OUT_FOR_DELIVERY: { label: "Out for delivery", color: "#fff", bg: "var(--rsc-dark)" },

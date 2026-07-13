@@ -12,6 +12,7 @@ export interface InitiateProviderPaymentInput {
   currency: "NGN";
   reference: string;
   splitRoutes: PaymentSplitRoute[];
+  returnUrl?: string;
 }
 
 export interface InitiateProviderPaymentResult {
@@ -26,6 +27,19 @@ export interface VerifyProviderPaymentResult {
   status: "PENDING" | "SUCCESS" | "FAILED";
   amountMinor: number;
   reference: string;
+  providerResponse: unknown;
+}
+
+export interface RefundProviderPaymentInput {
+  reference: string;
+  amountMinor: number;
+  currency: "NGN";
+  reason?: string;
+}
+
+export interface RefundProviderPaymentResult {
+  providerRefundId: string | null;
+  status: "PENDING" | "SUCCESS" | "FAILED";
   providerResponse: unknown;
 }
 
@@ -80,6 +94,9 @@ export interface PaymentAdapter {
    * Returns the provider-issued subaccount code to be stored on the outlet.
    */
   provisionSubaccount(input: ProvisionSubaccountInput): Promise<ProvisionSubaccountResult>;
+
+  /** Initiate a full or partial refund for a successful provider payment. */
+  refund(input: RefundProviderPaymentInput): Promise<RefundProviderPaymentResult>;
 }
 
 export const PAYMENT_ADAPTER = Symbol("PAYMENT_ADAPTER");

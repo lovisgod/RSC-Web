@@ -1,21 +1,38 @@
 import Skeleton from "@mui/material/Skeleton";
 import type { OrderPulseRange } from "@rsc/contracts";
 import { Button, MetricCard } from "@rsc/ui";
-import { AlertTriangle, ArrowRight, BarChart3, PauseCircle } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, ArrowRight, PauseCircle } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { OperationsQueue, type QueueItem } from "../components/operations-queue";
 import { PageHeading } from "../components/page-heading";
 import { ServiceVolumeChart } from "../components/service-volume-chart";
+import { useOrdersFeed } from "../hooks/use-orders-feed";
 import {
   useOperationsQueue,
   useOperationsSummary,
   useOrderPulse,
 } from "../hooks/use-operations-stats";
+import { useOutletsLive } from "../hooks/use-outlets-live";
 import { useLiveClock } from "../hooks/use-live-clock";
+import type { AdminOrderItem } from "../lib/api";
 
 const CARD_RADIUS = "var(--rsc-radius)";
+const PERFORMANCE_LIMIT = 100;
+const COMPLETED_SUB_ORDER_STATUSES = new Set(["COLLECTED", "DISPATCHED"]);
+const IN_PROGRESS_SUB_ORDER_STATUSES = new Set(["ACCEPTED", "PREPARING", "READY"]);
+
+interface OutletPerformanceRow {
+  outletId: string;
+  outletName: string;
+  isOnline: boolean;
+  volume: number;
+  completed: number;
+  inProgress: number;
+  pendingApproval: number;
+  rejected: number;
+}
 
 function MetricSkeleton() {
   return (
@@ -27,11 +44,167 @@ function MetricSkeleton() {
   );
 }
 
+function buildOutletPerformanceRows(
+  orders: AdminOrderItem[],
+  outlets: Array<{ id: string; name: string; isOnline: boolean }>,
+): OutletPerformanceRow[] {
+  const rows = new Map<string, OutletPerformanceRow>();
+
+  outlets.forEach((outlet) => {
+    rows.set(outlet.id, {
+      outletId: outlet.id,
+      outletName: outlet.name,
+      isOnline: outlet.isOnline,
+      volume: 0,
+      completed: 0,
+      inProgress: 0,
+      pendingApproval: 0,
+      rejected: 0,
+    });
+  });
+
+  orders.forEach(({ order, subOrders }) => {
+    if (order.status === "PENDING_PAYMENT") return;
+
+    subOrders.forEach((subOrder) => {
+      const row =
+        rows.get(subOrder.outletId) ??
+        ({
+          outletId: subOrder.outletId,
+          outletName: `Outlet ${subOrder.outletId.slice(0, 8)}`,
+          isOnline: false,
+          volume: 0,
+          completed: 0,
+          inProgress: 0,
+          pendingApproval: 0,
+          rejected: 0,
+        } satisfies OutletPerformanceRow);
+
+      row.volume += 1;
+
+      if (COMPLETED_SUB_ORDER_STATUSES.has(subOrder.status)) {
+        row.completed += 1;
+      } else if (IN_PROGRESS_SUB_ORDER_STATUSES.has(subOrder.status)) {
+        row.inProgress += 1;
+      } else if (subOrder.status === "PENDING") {
+        row.pendingApproval += 1;
+      } else if (subOrder.status === "REJECTED") {
+        row.rejected += 1;
+      }
+
+      rows.set(subOrder.outletId, row);
+    });
+  });
+
+  return Array.from(rows.values())
+    .filter((row) => row.volume > 0 || row.isOnline)
+    .sort((left, right) => {
+      if (right.volume !== left.volume) return right.volume - left.volume;
+      if (right.inProgress !== left.inProgress) return right.inProgress - left.inProgress;
+      return left.outletName.localeCompare(right.outletName);
+    });
+}
+
+function OutletPerformanceTable({
+  rows,
+  isLoading,
+  isError,
+  onRetry,
+}: {
+  rows: OutletPerformanceRow[];
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <article className="panel panel--full outlet-performance-panel">
+      <div className="panel__heading">
+        <div>
+          <p className="kicker">Outlet performance</p>
+          <h2>Order handling by outlet</h2>
+          <p className="outlet-performance-panel__copy">
+            Operational volume only: completed, active, pending approval, and rejected outlet work.
+          </p>
+        </div>
+        {isError && (
+          <Button tone="quiet" onClick={onRetry}>
+            Retry
+          </Button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="outlet-performance-skeleton">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton
+              key={index}
+              variant="rectangular"
+              height={58}
+              sx={{ borderRadius: "14px", transform: "none" }}
+            />
+          ))}
+        </div>
+      ) : rows.length > 0 ? (
+        <div className="outlet-performance-table-wrap">
+          <table className="outlet-performance-table">
+            <thead>
+              <tr>
+                <th>Outlet</th>
+                <th>Volume</th>
+                <th>Completed</th>
+                <th>In progress</th>
+                <th>Pending approval</th>
+                <th>Rejected</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.outletId}>
+                  <td>
+                    <div className="outlet-performance-name">
+                      <span
+                        className={`outlet-performance-dot${
+                          row.isOnline ? " outlet-performance-dot--online" : ""
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <strong>{row.outletName}</strong>
+                    </div>
+                  </td>
+                  <td>{row.volume}</td>
+                  <td>{row.completed}</td>
+                  <td>{row.inProgress}</td>
+                  <td>{row.pendingApproval}</td>
+                  <td>
+                    <span className={row.rejected > 0 ? "outlet-performance-rejected" : ""}>
+                      {row.rejected}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="data-placeholder data-placeholder--compact">
+          <div>
+            <p className="kicker">Outlet performance</p>
+            <h2>No outlet activity yet</h2>
+            <p>Paid outlet order activity will appear here as outlets start handling orders.</p>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
 export function DashboardPage() {
   const [pulseRange, setPulseRange] = useState<OrderPulseRange>("TODAY");
   const summary = useOperationsSummary();
   const pulse = useOrderPulse(pulseRange);
   const queue = useOperationsQueue();
+  const outletOrders = useOrdersFeed({ limit: PERFORMANCE_LIMIT });
+  const outlets = useOutletsLive();
   const clock = useLiveClock();
 
   const [weekday, datePart] = clock.split(",");
@@ -61,6 +234,10 @@ export function DashboardPage() {
       detail: "Currently unavailable to customers",
     });
   }
+  const outletPerformanceRows = useMemo(
+    () => buildOutletPerformanceRows(outletOrders.data?.orders ?? [], outlets.data ?? []),
+    [outletOrders.data?.orders, outlets.data],
+  );
 
   return (
     <>
@@ -142,20 +319,15 @@ export function DashboardPage() {
           onRetry={() => void queue.refetch()}
         />
 
-        <article className="panel panel--full data-placeholder">
-          <span className="data-placeholder__icon">
-            <BarChart3 aria-hidden="true" size={24} />
-          </span>
-          <div>
-            <p className="kicker">Outlet performance</p>
-            <h2>Performance reporting is coming soon</h2>
-            <p>
-              Orders, revenue, preparation time, and outlet trends will appear here when the
-              reporting endpoint is available.
-            </p>
-          </div>
-          <span className="data-placeholder__badge">Awaiting endpoint</span>
-        </article>
+        <OutletPerformanceTable
+          rows={outletPerformanceRows}
+          isLoading={outletOrders.isPending || outlets.isPending}
+          isError={outletOrders.isError || outlets.isError}
+          onRetry={() => {
+            void outletOrders.refetch();
+            void outlets.refetch();
+          }}
+        />
       </section>
     </>
   );

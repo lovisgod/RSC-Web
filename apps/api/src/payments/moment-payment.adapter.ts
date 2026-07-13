@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import {
   BadGatewayException,
   Injectable,
@@ -17,6 +17,7 @@ import type {
   PaymentAdapter,
   ProvisionSubaccountInput,
   ProvisionSubaccountResult,
+  RefundProviderPaymentResult,
   VerifyProviderPaymentResult,
 } from "./payment-adapter";
 import { Payment } from "./payment.entity";
@@ -47,6 +48,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
   private readonly secretKey: string;
   private readonly baseUrl: string;
   private readonly webhookSecret: string;
+  private readonly customerWebUrl: string;
 
   constructor(
     configService: ConfigService<ApplicationConfig, true>,
@@ -56,13 +58,14 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     this.secretKey = config.secretKey;
     this.baseUrl = config.baseUrl;
     this.webhookSecret = config.webhookSecret;
+    this.customerWebUrl = configService.get("app.customerWebUrl", { infer: true });
   }
 
   async initiate(input: InitiateProviderPaymentInput): Promise<InitiateProviderPaymentResult> {
-    const metadata: Record<string, number> = {};
+    const metadata: Record<string, string> = {};
     for (const route of input.splitRoutes) {
       if (route.subaccountCode) {
-        metadata[route.subaccountCode] = route.netMinor;
+        metadata[route.subaccountCode] = String(route.netMinor);
       }
     }
 
@@ -72,7 +75,14 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       type: "one_time",
       external_reference: input.reference,
       metadata,
+      options: {
+        checkout_options: {
+          presentation_mode: { mode: "redirect" },
+          return_url: this.buildReturnUrl(input.reference, input.returnUrl),
+        },
+      },
     };
+    const idempotencyKey = this.createIdempotencyKey(input.reference);
 
     try {
       const response = await fetch(`${this.baseUrl}/collect/payment_sessions`, {
@@ -80,6 +90,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
         headers: {
           "content-type": "application/json",
           authorization: `Bearer ${this.secretKey}`,
+          "Idempotency-Key": idempotencyKey,
         },
         body: JSON.stringify(body),
       });
@@ -109,6 +120,26 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       this.logger.error(`Moment initiate request failed for reference ${input.reference}`, error);
       throw new BadGatewayException("Unable to initiate payment");
     }
+  }
+
+  private createIdempotencyKey(reference: string): string {
+    const uuid = reference.match(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    )?.[0];
+
+    if (uuid) {
+      return uuid.toLowerCase();
+    }
+
+    const hash = createHash("sha256").update(reference).digest("hex").slice(0, 32);
+    return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+  }
+
+  private buildReturnUrl(reference: string, returnUrl?: string): string {
+    const url = returnUrl ? new URL(returnUrl) : new URL("/tracking", this.customerWebUrl);
+    url.searchParams.set("reference", reference);
+
+    return url.toString();
   }
 
   async verify(reference: string): Promise<VerifyProviderPaymentResult> {
@@ -241,6 +272,11 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       subaccountCode: mockCode,
       providerResponse: { info: "Provisioned via dashboard UI mock fallback", input },
     };
+  }
+
+  async refund(): Promise<RefundProviderPaymentResult> {
+    await Promise.resolve();
+    throw new BadGatewayException("Refunds are not supported by the Moment adapter yet");
   }
 
   private verifyMomentSignature(signedContent: string, signatureHeader: string): boolean {

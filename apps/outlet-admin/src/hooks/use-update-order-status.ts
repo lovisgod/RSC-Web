@@ -7,7 +7,8 @@ import { toastBus } from "../lib/toast-bus";
 // Server maps master status → sub-order status. Mirror it for optimistic updates.
 const MASTER_TO_SUB: Partial<Record<MasterOrderStatus, SubOrderStatus>> = {
   CONFIRMED: "ACCEPTED",
-  PARTIALLY_READY: "PREPARING",
+  PREPARING: "PREPARING",
+  PARTIALLY_READY: "READY",
   READY: "READY",
   DELIVERED: "COLLECTED",
 };
@@ -29,7 +30,7 @@ export function useUpdateOrderStatus(outletId: string) {
     }) =>
       updateSubOrderStatus(subOrderId, {
         status,
-        ...(rejectionReason !== undefined ? { note: rejectionReason } : {}),
+        ...(rejectionReason !== undefined ? { rejectionReason } : {}),
         ...(preparationTimeMinutes !== undefined
           ? { preparationTime: preparationTimeMinutes }
           : {}),

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@rsc/ui";
+import { useQuery } from "@tanstack/react-query";
 
+import { apiClient } from "@/src/lib/api";
 import { formatNaira } from "@/src/lib/data/cart";
 import type { DisplayModifierGroup, MenuItem } from "@/src/lib/data/outlet-menu";
 import { useCartStore } from "@/src/stores/cart-store";
@@ -82,6 +84,15 @@ function ModifierGroupSection({
 export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
   const [preparationNote, setPreparationNote] = useState("");
+  const { data: preparationSuggestions = [] } = useQuery({
+    queryKey: ["preparation-suggestions", item.outletId, item.id],
+    queryFn: () =>
+      apiClient.listPreparationSuggestions({
+        outletId: item.outletId,
+        menuItemId: item.id,
+      }),
+    staleTime: 5 * 60_000,
+  });
   // groupId → Set of selected modifierIds
   const [selections, setSelections] = useState<Map<string, Set<string>>>(() => new Map());
   const addItem = useCartStore((s) => s.addItem);
@@ -121,6 +132,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
     (g) => (selections.get(g.id)?.size ?? 0) < g.minSelections,
   );
   const allRequiredMet = unmetGroups.length === 0;
+  const visiblePreparationSuggestions = preparationSuggestions.slice(0, 6);
 
   function handleAddToCart() {
     const selectedModifiers = item.modifierGroups.flatMap((g) =>
@@ -141,6 +153,15 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
       },
     });
     onClose();
+  }
+
+  function applyPreparationSuggestion(text: string) {
+    setPreparationNote((current) => {
+      const trimmed = current.trim();
+      if (!trimmed) return text;
+      if (trimmed.toLowerCase().includes(text.toLowerCase())) return trimmed;
+      return `${trimmed}, ${text}`;
+    });
   }
 
   return (
@@ -200,6 +221,23 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
               placeholder="e.g. Extra spicy, no onions"
               className="mt-3 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:bg-white focus:outline-none"
             />
+            {visiblePreparationSuggestions.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-semibold text-gray-500">Ideas you can tap</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {visiblePreparationSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.id}
+                      type="button"
+                      onClick={() => applyPreparationSuggestion(suggestion.text)}
+                      className="rounded-full border border-orange-100 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 transition hover:border-orange-200 hover:bg-orange-100"
+                    >
+                      {suggestion.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

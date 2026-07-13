@@ -6,6 +6,7 @@ import {
   adminOrdersResultSchema,
   createAdminInputSchema,
   customerOrderSchema,
+  initiatePaymentInputSchema,
   loginInputSchema,
   menuItemsPageSchema,
   loginResultSchema,
@@ -16,8 +17,11 @@ import {
   operationsQueueSchema,
   operationsSummarySchema,
   orderPulseSchema,
+  outletSettlementExportSchema,
+  outletSettlementSummarySchema,
   platformChargesSchema,
   profileUpdateResultSchema,
+  rateMenuItemInputSchema,
   registrationResponseSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -77,6 +81,52 @@ describe("platform charges contracts", () => {
   });
 });
 
+describe("payment contracts", () => {
+  it("accepts an optional mobile return URL on payment initiation", () => {
+    expect(
+      initiatePaymentInputSchema.parse({
+        items: [
+          {
+            menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            quantity: 1,
+            modifiers: [],
+          },
+        ],
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "12 Admiralty Way",
+        deliveryLatitude: 6.4474,
+        deliveryLongitude: 3.4542,
+        subtotalMinor: 660000,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 0,
+        vatMinor: 49500,
+        platformCommissionMinor: 66000,
+        totalMinor: 925500,
+        returnUrl: "rsc://payment/return",
+      }),
+    ).toEqual({
+      items: [
+        {
+          menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+          quantity: 1,
+          modifiers: [],
+        },
+      ],
+      deliveryMode: "DELIVERY",
+      deliveryAddress: "12 Admiralty Way",
+      deliveryLatitude: 6.4474,
+      deliveryLongitude: 3.4542,
+      subtotalMinor: 660000,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 0,
+      vatMinor: 49500,
+      platformCommissionMinor: 66000,
+      totalMinor: 925500,
+      returnUrl: "rsc://payment/return",
+    });
+  });
+});
+
 describe("media contracts", () => {
   it("documents uploaded image responses", () => {
     expect(
@@ -130,6 +180,17 @@ describe("media contracts", () => {
       code: "482901",
     });
     expect(() => verifyProfileChangeInputSchema.parse({ code: "12345" })).toThrow();
+  });
+});
+
+describe("menu item rating contracts", () => {
+  it("accepts one-to-five stars with an optional comment", () => {
+    expect(rateMenuItemInputSchema.parse({ rating: 5, comment: "Loved it" })).toEqual({
+      rating: 5,
+      comment: "Loved it",
+    });
+    expect(() => rateMenuItemInputSchema.parse({ rating: 0 })).toThrow();
+    expect(() => rateMenuItemInputSchema.parse({ rating: 6 })).toThrow();
   });
 });
 
@@ -438,7 +499,7 @@ describe("customer registration contracts", () => {
     ).toBeTruthy();
   });
 
-  it("normalizes outlet subaccount response field names", () => {
+  it("normalizes outlet settlement subaccount response field", () => {
     const baseOutlet = {
       id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
       name: "Salmas Grill",
@@ -458,21 +519,65 @@ describe("customer registration contracts", () => {
     expect(
       outletSummarySchema.parse({
         ...baseOutlet,
-        paystackSubaccountCode: "PAYSTACK_SALMAS",
+        settlementSubaccountCode: "SETTLEMENT_SALMAS",
       }),
     ).toMatchObject({
-      momentSubaccountCode: "PAYSTACK_SALMAS",
-      paystackSubaccountCode: "PAYSTACK_SALMAS",
+      settlementSubaccountCode: "SETTLEMENT_SALMAS",
     });
 
+    expect(outletSummarySchema.parse(baseOutlet)).toMatchObject({
+      settlementSubaccountCode: null,
+    });
+  });
+
+  it("documents outlet settlement summary and Moment export contracts", () => {
+    expect(
+      outletSettlementSummarySchema.parse({
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        outletName: "Salmas Grill",
+        imageUrl: null,
+        subaccountCode: "LOCAL_ACCT_SALMAS",
+        settlementDateFrom: "2026-07-11",
+        settlementDateTo: "2026-07-11",
+        completedSubOrders: 3,
+        pendingSubOrders: 3,
+        grossMinor: 5029600,
+        commissionMinor: 251500,
+        netMinor: 4778100,
+        currency: "NGN",
+        status: "PENDING",
+        approvalAvailable: true,
+        approvalUnavailableReason: null,
+        latestApprovedAt: null,
+      }),
+    ).toBeTruthy();
+
+    expect(
+      outletSettlementExportSchema.parse({
+        filename: "20260712_Moment_RSC_Settlement_batch_20260711.csv",
+        contentType: "text/csv",
+        content: "transaction_type,merchant_reference_id\nPayment,RSC-123",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("defaults outlet relation arrays when create responses omit them", () => {
     expect(
       outletSummarySchema.parse({
-        ...baseOutlet,
-        momentSubaccountCode: "MOMENT_SALMAS",
+        id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        name: "Manjaro",
+        cuisineType: "Nigerian Locals",
+        description: "For the foodies",
+        imageUrl: null,
+        isOnline: true,
+        settlementSubaccountCode: "Manjaro_123ert",
       }),
     ).toMatchObject({
-      momentSubaccountCode: "MOMENT_SALMAS",
-      paystackSubaccountCode: "MOMENT_SALMAS",
+      menuCategories: [],
+      menuItems: [],
+      itemModifierGroups: [],
+      itemModifiers: [],
+      menuItemModifierGroups: [],
     });
   });
 
@@ -552,6 +657,7 @@ describe("customer registration contracts", () => {
           },
         ],
         total: 1,
+        totalSubOrders: 1,
         limit: 50,
         offset: 0,
       }),

@@ -3,15 +3,30 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 
 import type { OrderLineItem, SubOrderDetail } from "@rsc/contracts";
 import { Card, EmptyState } from "@rsc/ui";
-import { Bike, ChevronDown, MapPin, RefreshCw, Store, Wifi, WifiOff } from "lucide-react";
+import {
+  Bike,
+  CheckCircle2,
+  ChevronDown,
+  MapPin,
+  RefreshCw,
+  Store,
+  Wifi,
+  WifiOff,
+  XCircle,
+} from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { useOrderDetail, useRiderTracking } from "@/src/hooks/use-order-tracking";
+import { useCartStore } from "@/src/stores/cart-store";
 import { useActiveOrders } from "@/src/hooks/use-orders";
 import { useOutlets } from "@/src/hooks/use-outlets";
+import { apiClient } from "@/src/lib/api";
 import { formatNaira } from "@/src/lib/data/cart";
 import { getStatusConfig, type Order } from "@/src/lib/data/orders";
 import { OrderTimeline } from "./order-timeline";
@@ -20,6 +35,7 @@ const TrackingMap = dynamic(() => import("./tracking-map"), { ssr: false });
 
 const MASTER_STATUS_MESSAGES: Record<string, string> = {
   CONFIRMED: "Your order is confirmed and has been sent to the Outlets.",
+  PREPARING: "Your order is being prepared.",
   PARTIALLY_READY: "Some kitchens are ready while the others finish preparing.",
   READY: "All Outlets are ready. Your order is waiting for rider handoff.",
   OUT_FOR_DELIVERY: "Your rider has your order and is heading to you.",
@@ -60,6 +76,43 @@ function NoActiveOrder() {
         </Link>
       }
     />
+  );
+}
+
+function PaymentResultModal({ status }: { status: "SUCCESS" | "FAILED" }) {
+  const isSuccess = status === "SUCCESS";
+  const Icon = isSuccess ? CheckCircle2 : XCircle;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl">
+        <div
+          className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
+            isSuccess
+              ? "bg-[color-mix(in_srgb,var(--rsc-brand)_14%,white)] text-[var(--rsc-brand)]"
+              : "bg-red-50 text-red-600"
+          }`}
+        >
+          <Icon className="h-9 w-9" aria-hidden="true" />
+        </div>
+        <h2 className="mt-5 text-xl font-bold text-gray-950">
+          {isSuccess ? "Payment successful" : "Payment failed"}
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-gray-500">
+          {isSuccess
+            ? "Your order has been confirmed. Taking you to live tracking in 5 seconds."
+            : "Your cart is still intact. Taking you back to cart in 5 seconds so you can try again."}
+        </p>
+        <div
+          className={`mx-auto mt-5 h-1.5 w-28 rounded-full ${
+            isSuccess ? "bg-[var(--rsc-brand)]" : "bg-red-500"
+          }`}
+          aria-hidden="true"
+        >
+          <span className="sr-only">Redirecting in 5 seconds</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -391,6 +444,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
   const normalizedStatus = order.status.toUpperCase();
   const codeVisibleStatuses = new Set([
     "CONFIRMED",
+    "PREPARING",
     "PARTIALLY_READY",
     "READY",
     "OUT_FOR_DELIVERY",
@@ -469,9 +523,67 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
   );
 }
 
-export function TrackingView({ orderId }: { orderId: string | null }) {
+export function TrackingView({
+  orderId,
+  paymentReference,
+}: {
+  orderId: string | null;
+  paymentReference: string | null;
+}) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const clearCart = useCartStore((state) => state.clear);
   const { data: activeOrders, isPending, isError, refetch } = useActiveOrders();
   const [expandedId, setExpandedId] = useState<string | null | undefined>(orderId ?? undefined);
+  const paymentResultHandledRef = useRef(false);
+  const paymentVerification = useQuery({
+    queryKey: ["payment", "verify", paymentReference],
+    queryFn: async () => {
+      const result = await apiClient.verifyPayment(paymentReference!);
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      return result;
+    },
+    enabled: !!paymentReference,
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+  const paymentResultStatus =
+    paymentVerification.data?.status === "SUCCESS" || paymentVerification.data?.status === "FAILED"
+      ? paymentVerification.data.status
+      : null;
+
+  useEffect(() => {
+    const status = paymentVerification.data?.status;
+
+    if (
+      !paymentReference ||
+      paymentResultHandledRef.current ||
+      (status !== "SUCCESS" && status !== "FAILED")
+    ) {
+      return;
+    }
+
+    paymentResultHandledRef.current = true;
+
+    if (status === "SUCCESS") {
+      clearCart();
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (status === "SUCCESS") {
+        router.replace("/tracking");
+        return;
+      }
+
+      router.replace("/cart");
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [clearCart, paymentReference, paymentVerification.data?.status, router]);
+
+  if (paymentResultStatus) {
+    return <PaymentResultModal status={paymentResultStatus} />;
+  }
 
   if (isPending) {
     return <p className="py-8 text-center text-sm text-gray-400">Checking for active orders…</p>;
@@ -505,6 +617,19 @@ export function TrackingView({ orderId }: { orderId: string | null }) {
 
   return (
     <div className="space-y-3">
+      {paymentReference && (
+        <Card className="border-[color:color-mix(in_srgb,var(--rsc-main)_16%,white)] bg-[color-mix(in_srgb,var(--rsc-main)_4%,white)]">
+          <p className="text-sm font-semibold text-gray-900">
+            {paymentVerification.isPending
+              ? "Confirming your payment..."
+              : paymentVerification.isError
+                ? "Payment received. We are still syncing your order status."
+                : paymentVerification.data.status === "SUCCESS"
+                  ? "Payment confirmed. Your order is now being tracked."
+                  : "Payment status updated. Your order will refresh shortly."}
+          </p>
+        </Card>
+      )}
       {activeOrders.length > 1 && (
         <p className="text-sm text-gray-500">
           You have {activeOrders.length} active orders. Open one to see its live progress.

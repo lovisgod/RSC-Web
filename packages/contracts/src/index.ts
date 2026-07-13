@@ -168,6 +168,33 @@ export const riderResultSchema = z.object({
   temporaryPassword: z.string().min(8),
 });
 
+export const riderAdminSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().min(1),
+  role: z.literal("RIDER"),
+  outletId: z.uuid().nullable(),
+  vehicleType: z.string().nullable(),
+  plateNumber: z.string().nullable(),
+  riderStatus: z.string().nullable(),
+  status: customerStatusSchema,
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const updateRiderInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120).optional(),
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)).optional(),
+    phone: nigerianPhoneNumberSchema.optional(),
+    vehicleType: z.string().trim().min(2).max(40).nullable().optional(),
+    plateNumber: z.string().trim().min(2).max(40).nullable().optional(),
+    riderStatus: z.string().trim().min(2).max(40).nullable().optional(),
+    status: customerStatusSchema.optional(),
+  })
+  .strict();
+
 export const outletAdminSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1),
@@ -368,6 +395,19 @@ export const initiatePaymentInputSchema = z
     deliveryLongitude: z.number().optional(),
     recipientPhone: nigerianPhoneNumberSchema.optional(),
     preparationNote: z.string().max(1000).optional(),
+    subtotalMinor: z.int().nonnegative(),
+    deliveryFeeMinor: z.int().nonnegative(),
+    serviceFeeMinor: z.int().nonnegative(),
+    vatMinor: z.int().nonnegative(),
+    platformCommissionMinor: z.int().nonnegative(),
+    totalMinor: z.int().nonnegative(),
+    returnUrl: z.string().trim().min(1).max(2_000).optional(),
+  })
+  .strict();
+
+export const retryPaymentInputSchema = z
+  .object({
+    returnUrl: z.string().trim().min(1).max(2_000).optional(),
   })
   .strict();
 
@@ -382,13 +422,14 @@ export const initiatePaymentResultSchema = z.object({
     deliveryFeeMinor: z.int().nonnegative(),
     serviceFeeMinor: z.int().nonnegative(),
     vatMinor: z.int().nonnegative(),
+    platformCommissionMinor: z.int().nonnegative(),
     totalMinor: z.int().nonnegative(),
     currency: currencySchema,
   }),
   splitBreakdown: z.array(
     z.object({
       outletId: z.uuid(),
-      subaccountCode: z.string(),
+      subaccountCode: z.string().nullable(),
       grossMinor: z.int().nonnegative(),
       commissionMinor: z.int().nonnegative(),
       netMinor: z.int().nonnegative(),
@@ -399,6 +440,56 @@ export const initiatePaymentResultSchema = z.object({
 export const paymentVerifyResultSchema = z.object({
   status: z.enum(["PENDING", "SUCCESS", "FAILED"]),
   orderStatus: z.string().min(1),
+});
+
+export const processRefundInputSchema = z
+  .object({
+    amountMinor: z.int().positive().optional(),
+    reason: z.string().trim().min(1).max(500).optional(),
+  })
+  .strict();
+
+export const paymentRefundSchema = z.object({
+  id: z.uuid(),
+  paymentId: z.uuid(),
+  reference: z.string().min(1),
+  amountMinor: z.int().positive(),
+  currency: currencySchema,
+  status: z.enum(["PENDING", "SUCCESS", "FAILED"]),
+  reason: z.string().nullable(),
+  provider: z.string().min(1),
+  providerRefundId: z.string().nullable(),
+  requestedBy: z.uuid(),
+  createdAt: z.iso.datetime(),
+});
+
+export const settlementStatusSchema = z.enum(["NO_ACTIVITY", "PENDING", "APPROVED"]);
+
+export const outletSettlementSummarySchema = z.object({
+  outletId: z.uuid(),
+  outletName: z.string().min(1),
+  imageUrl: z.string().nullable(),
+  subaccountCode: z.string().nullable(),
+  settlementDateFrom: z.iso.date(),
+  settlementDateTo: z.iso.date(),
+  completedSubOrders: z.int().nonnegative(),
+  pendingSubOrders: z.int().nonnegative(),
+  grossMinor: z.int().nonnegative(),
+  commissionMinor: z.int().nonnegative(),
+  netMinor: z.int().nonnegative(),
+  currency: currencySchema,
+  status: settlementStatusSchema,
+  approvalAvailable: z.boolean(),
+  approvalUnavailableReason: z.string().nullable(),
+  latestApprovedAt: z.iso.datetime().nullable(),
+});
+
+export const outletSettlementSummaryListSchema = z.array(outletSettlementSummarySchema);
+
+export const outletSettlementExportSchema = z.object({
+  filename: z.string().min(1),
+  contentType: z.string().min(1),
+  content: z.string(),
 });
 
 export const menuCategorySchema = z.object({
@@ -442,6 +533,13 @@ export const updateMenuItemAvailabilityInputSchema = z
   })
   .strict();
 
+export const rateMenuItemInputSchema = z
+  .object({
+    rating: z.int().min(1).max(5),
+    comment: z.string().trim().max(1_000).optional(),
+  })
+  .strict();
+
 export const itemModifierGroupSchema = z.object({
   id: z.uuid(),
   outletId: z.uuid(),
@@ -478,24 +576,21 @@ export const outletSummarySchema = z
     description: z.string().nullable(),
     imageUrl: z.string().nullable(),
     isOnline: z.boolean(),
-    momentSubaccountCode: z.string().optional(),
-    paystackSubaccountCode: z.string().optional(),
+    settlementSubaccountCode: z.string().nullable().optional(),
     ratingAverage: z.coerce.number().min(0).max(5).default(0),
     ratingCount: z.int().nonnegative().default(0),
-    menuCategories: z.array(menuCategorySchema),
-    menuItems: z.array(menuItemSchema),
-    itemModifierGroups: z.array(itemModifierGroupSchema),
-    itemModifiers: z.array(itemModifierSchema),
-    menuItemModifierGroups: z.array(menuItemModifierGroupSchema),
+    vatBps: z.int().min(0).max(10_000).default(0),
+    menuCategories: z.array(menuCategorySchema).default([]),
+    menuItems: z.array(menuItemSchema).default([]),
+    itemModifierGroups: z.array(itemModifierGroupSchema).default([]),
+    itemModifiers: z.array(itemModifierSchema).default([]),
+    menuItemModifierGroups: z.array(menuItemModifierGroupSchema).default([]),
   })
   .passthrough()
   .transform((outlet) => {
-    const subaccountCode = outlet.paystackSubaccountCode ?? outlet.momentSubaccountCode ?? "";
-
     return {
       ...outlet,
-      momentSubaccountCode: outlet.momentSubaccountCode ?? subaccountCode,
-      paystackSubaccountCode: outlet.paystackSubaccountCode ?? subaccountCode,
+      settlementSubaccountCode: outlet.settlementSubaccountCode ?? null,
     };
   });
 
@@ -507,6 +602,7 @@ export const rateOutletInputSchema = z.object({
 export const masterOrderStatusSchema = z.enum([
   "PENDING_PAYMENT",
   "CONFIRMED",
+  "PREPARING",
   "PARTIALLY_READY",
   "READY",
   "OUT_FOR_DELIVERY",
@@ -577,6 +673,7 @@ export const adminOrderSubOrderSchema = z.object({
   currency: currencySchema,
   preparationTime: z.number().int().nullable().optional(),
   preparationNote: z.string().nullable().optional(),
+  rejectionReason: z.string().nullable().optional(),
   preparationTimeMinutes: z.int().nonnegative().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -621,6 +718,7 @@ export const adminOrderSummarySchema = z.object({
 export const adminOrdersResultSchema = z.object({
   orders: z.array(adminOrderSummarySchema),
   total: z.int().nonnegative(),
+  totalSubOrders: z.int().nonnegative(),
   limit: z.int().min(1).max(100),
   offset: z.int().min(0),
 });
@@ -697,6 +795,7 @@ export const subOrderDetailSchema = z
     currency: currencySchema.default("NGN"),
     preparationTime: z.coerce.number().int().nullable().optional(),
     preparationNote: z.string().nullable().optional(),
+    rejectionReason: z.string().nullable().optional(),
     createdAt: z.string().min(1),
   })
   .passthrough();
@@ -779,6 +878,7 @@ export const riderDispatchSchema = z.object({
       pickupCode: z.string().min(1),
       status: subOrderStatusSchema,
       preparationNote: z.string().nullable().optional(),
+      rejectionReason: z.string().nullable().optional(),
       items: z.array(
         z.object({
           id: z.uuid(),
@@ -955,6 +1055,9 @@ export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
 export type CreateRiderInput = z.infer<typeof createRiderInputSchema>;
 export type RiderResult = z.infer<typeof riderResultSchema>;
+export type RiderAdmin = z.infer<typeof riderAdminSchema>;
+export type UpdateRiderInput = z.infer<typeof updateRiderInputSchema>;
+
 export type OutletAdmin = z.infer<typeof outletAdminSchema>;
 export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
 export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
@@ -965,6 +1068,7 @@ export type MenuItemModifierGroup = z.infer<typeof menuItemModifierGroupSchema>;
 export type MenuItem = z.infer<typeof menuItemSchema>;
 export type MenuItemsPage = z.infer<typeof menuItemsPageSchema>;
 export type UpdateMenuItemAvailabilityInput = z.infer<typeof updateMenuItemAvailabilityInputSchema>;
+export type RateMenuItemInput = z.infer<typeof rateMenuItemInputSchema>;
 export type MasterOrderStatus = z.infer<typeof masterOrderStatusSchema>;
 export type SubOrderStatus = z.infer<typeof subOrderStatusSchema>;
 export type DeliveryMode = z.infer<typeof deliveryModeSchema>;
@@ -1000,7 +1104,11 @@ export type UpdateGeofenceZoneInput = z.infer<typeof updateGeofenceZoneInputSche
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
 export type ChangePasswordResult = z.infer<typeof changePasswordResultSchema>;
 export type InitiatePaymentInput = z.infer<typeof initiatePaymentInputSchema>;
+export type RetryPaymentInput = z.infer<typeof retryPaymentInputSchema>;
 export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
+export type PaymentVerifyResult = z.infer<typeof paymentVerifyResultSchema>;
+export type ProcessRefundInput = z.infer<typeof processRefundInputSchema>;
+export type PaymentRefund = z.infer<typeof paymentRefundSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
@@ -1054,6 +1162,9 @@ export type PlatformCharges = z.infer<typeof platformChargesSchema>;
 export type UpdatePlatformChargesInput = z.infer<typeof updatePlatformChargesInputSchema>;
 export type PickupSubOrderInput = z.infer<typeof pickupSubOrderInputSchema>;
 export type RateOutletInput = z.infer<typeof rateOutletInputSchema>;
+export type SettlementStatus = z.infer<typeof settlementStatusSchema>;
+export type OutletSettlementSummary = z.infer<typeof outletSettlementSummarySchema>;
+export type OutletSettlementExport = z.infer<typeof outletSettlementExportSchema>;
 
 export const preparationSuggestionSchema = z.object({
   id: z.uuid(),

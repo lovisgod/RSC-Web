@@ -16,6 +16,7 @@ const STATUS_OPTIONS: { value: MasterOrderStatus | ""; label: string }[] = [
   { value: "", label: "All Statuses" },
   { value: "PENDING_PAYMENT", label: "Awaiting Payment" },
   { value: "CONFIRMED", label: "Confirmed" },
+  { value: "PREPARING", label: "Preparing" },
   { value: "PARTIALLY_READY", label: "Part Ready" },
   { value: "READY", label: "Ready" },
   { value: "OUT_FOR_DELIVERY", label: "On Delivery" },
@@ -177,8 +178,8 @@ export function OrdersFeedPage() {
                     name: outletById[subOrder.outletId]?.name ?? subOrder.outletId.slice(0, 8),
                     status: subOrder.status,
                     rejectionReason:
-                      subOrder.status === "REJECTED" && typeof subOrder.preparationNote === "string"
-                        ? subOrder.preparationNote.trim()
+                      subOrder.status === "REJECTED" && typeof subOrder.rejectionReason === "string"
+                        ? subOrder.rejectionReason.trim()
                         : "",
                   }));
 

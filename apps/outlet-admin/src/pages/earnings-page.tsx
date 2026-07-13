@@ -3,6 +3,8 @@ import { OutletPageHeader } from "../components/outlet-page-header";
 import { useAuth } from "../hooks/use-auth";
 import { useOrdersQueue } from "../hooks/use-orders-queue";
 
+const COMPLETED_STATUSES = ["COLLECTED", "DISPATCHED"] as const;
+
 function formatNaira(minor: number) {
   if (minor === 0) return "₦0";
   return `₦${(minor / 100).toLocaleString("en-NG")}`;
@@ -11,50 +13,92 @@ function formatNaira(minor: number) {
 function MetricCard({
   label,
   value,
+  helper,
   valueClass = "text-slate-900",
 }: {
   label: string;
   value: string | number;
+  helper: string;
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
+    <div className="min-w-0 rounded-2xl bg-white px-5 py-4 shadow-sm ring-1 ring-slate-100">
       <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{label}</p>
-      <p className={`mt-3 text-3xl font-black tabular-nums ${valueClass}`}>{value}</p>
+      <p className={`mt-3 text-2xl font-black tabular-nums lg:text-3xl ${valueClass}`}>{value}</p>
+      <p className="mt-2 text-sm leading-5 text-slate-500">{helper}</p>
     </div>
   );
 }
-
-const RSC_COMMISSION_RATE = 0.15;
 
 export function EarningsPage() {
   const { user } = useAuth();
   const outletId = user?.outletId ?? "";
   const { data: orders = [] } = useOrdersQueue(outletId);
 
-  const completed = orders.filter((o) => o.status === "COLLECTED" || o.status === "DISPATCHED");
-  const grossMinor = completed.reduce((sum, o) => sum + o.totalAmountMinor, 0);
-  const commissionMinor = Math.round(grossMinor * RSC_COMMISSION_RATE);
-  const netMinor = grossMinor - commissionMinor;
+  const paidOrders = orders.filter((order) => order.masterOrderStatus !== "PENDING_PAYMENT");
+  const completed = paidOrders.filter((order) =>
+    COMPLETED_STATUSES.some((status) => status === order.status),
+  );
+  const grossMinor = completed.reduce((sum, order) => sum + order.totalAmountMinor, 0);
+  const totalRevenueMinor = paidOrders.reduce((sum, order) => sum + order.totalAmountMinor, 0);
+  const transactions = [...paidOrders]
+    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+    .map((order) => ({
+      id: order.id,
+      code: order.pickupCode ?? order.deliveryCode,
+      status: order.status,
+      amountMinor: order.totalAmountMinor,
+      items: order.items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+      })),
+      createdAt: order.createdAt,
+    }));
 
   return (
     <div>
       <OutletPageHeader />
 
-      <div className="px-6 pb-6">
-        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <MetricCard label="Completed Orders" value={completed.length} />
-          <MetricCard label="Gross Revenue" value={formatNaira(grossMinor)} />
-          <MetricCard label="RSC Commission (15%)" value={formatNaira(commissionMinor)} />
+      <main className="px-6 pb-6">
+        <div className="mb-6">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+            Finance desk
+          </p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
+            Earnings & Payouts
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            A clean view of today&apos;s outlet value, order movement, and what is ready for payout.
+          </p>
+        </div>
+
+        <div className="mb-6 grid gap-3 rounded-3xl border border-slate-100 bg-slate-50/70 p-2 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
-            label="Net Payout Amount"
-            value={formatNaira(netMinor)}
-            valueClass="text-emerald-600"
+            label="Completed orders"
+            value={completed.length.toLocaleString("en-NG")}
+            helper="Fulfilled outlet orders."
+          />
+          <MetricCard
+            label="Total orders"
+            value={paidOrders.length.toLocaleString("en-NG")}
+            helper="Orders with successful payment."
+            valueClass="text-[var(--rsc-main)]"
+          />
+          <MetricCard
+            label="Completed revenue"
+            value={formatNaira(grossMinor)}
+            helper="Value ready from completed orders."
+          />
+          <MetricCard
+            label="Total revenue"
+            value={formatNaira(totalRevenueMinor)}
+            helper="Tracks all revenue from paid outlet orders."
+            valueClass="text-[var(--rsc-main)]"
           />
         </div>
 
-        <EarningsChart />
-      </div>
+        <EarningsChart dateLabel="Successful payments" transactions={transactions} />
+      </main>
     </div>
   );
 }

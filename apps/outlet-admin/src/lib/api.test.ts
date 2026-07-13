@@ -11,6 +11,7 @@ const readyOrder: PosSubOrder = {
   deliveryCode: "123456",
   items: [],
   totalAmountMinor: 100_000,
+  totalSubOrders: 1,
   createdAt: "2026-07-05T12:00:00.000Z",
   updatedAt: "2026-07-05T12:00:00.000Z",
 };
@@ -31,6 +32,15 @@ describe("isActiveQueueOrder", () => {
       isActiveQueueOrder({
         ...readyOrder,
         masterOrderStatus: "CANCELLED",
+      }),
+    ).toBe(false);
+  });
+
+  it("filters out orders that are pending payment", () => {
+    expect(
+      isActiveQueueOrder({
+        ...readyOrder,
+        masterOrderStatus: "PENDING_PAYMENT",
       }),
     ).toBe(false);
   });

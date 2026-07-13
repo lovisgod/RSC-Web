@@ -19,11 +19,13 @@ import { MasterOrder } from "../orders/master-order.entity";
 import { OrderLineItem } from "../orders/order-line-item.entity";
 import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
-import type { InitiatePaymentDto } from "./dto/payment.dto";
+import type { InitiatePaymentDto, RetryPaymentDto } from "./dto/payment.dto";
 import type { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
+import { PaymentRefund } from "./payment-refund.entity";
 import {
   PAYMENT_ADAPTER,
+  type InitiateProviderPaymentInput,
   type ParsedWebhookEvent,
   type PaymentAdapter,
   type PaymentSplitRoute,
@@ -72,6 +74,7 @@ export class PaymentsService {
     @InjectRepository(SubOrder) private readonly subOrders: Repository<SubOrder>,
     @InjectRepository(OrderLineItem) private readonly lineItems: Repository<OrderLineItem>,
     @InjectRepository(Payment) private readonly payments: Repository<Payment>,
+    @InjectRepository(PaymentRefund) private readonly refunds: Repository<PaymentRefund>,
     private readonly dataSource: DataSource,
     private readonly delivery: DeliveryService,
     private readonly piiCrypto: PiiCryptoService,
@@ -206,11 +209,12 @@ export class PaymentsService {
       const outletSubtotalMinor = grouped
         .get(outletId)!
         .reduce((lineSum, line) => lineSum + line.lineTotalMinor, 0);
-      const vatBps = outletById.get(outletId)?.vatBps ?? platformCharges.defaultVatBps;
+      const outletVatBps = outletById.get(outletId)?.vatBps ?? 0;
+      const vatBps = outletVatBps > 0 ? outletVatBps : platformCharges.defaultVatBps;
 
       return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
     }, 0);
-    const totalMinor = subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor;
+
     const splitRoutes: PaymentSplitRoute[] = outletIds.map((outletId) => {
       const grossMinor = grouped.get(outletId)!.reduce((sum, line) => sum + line.lineTotalMinor, 0);
       const commissionMinor = Math.round(
@@ -219,24 +223,61 @@ export class PaymentsService {
 
       return {
         outletId,
-        subaccountCode: outletById.get(outletId)?.paystackSubaccountCode ?? null,
+        subaccountCode: outletById.get(outletId)?.settlementSubaccountCode ?? null,
         grossMinor,
         commissionMinor,
         netMinor: grossMinor - commissionMinor,
       };
     });
+
+    const platformCommissionMinor = splitRoutes.reduce((sum, r) => sum + r.commissionMinor, 0);
+    const totalMinor =
+      subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor + platformCommissionMinor;
+
+    // Validate client-provided totals to prevent cheating/manipulation
+    if (input.subtotalMinor !== subtotalMinor) {
+      throw new BadRequestException(
+        `Subtotal mismatch: expected ${subtotalMinor}, got ${input.subtotalMinor}`,
+      );
+    }
+    if (input.deliveryFeeMinor !== deliveryFeeMinor) {
+      throw new BadRequestException(
+        `Delivery fee mismatch: expected ${deliveryFeeMinor}, got ${input.deliveryFeeMinor}`,
+      );
+    }
+    if (input.serviceFeeMinor !== serviceFeeMinor) {
+      throw new BadRequestException(
+        `Service fee mismatch: expected ${serviceFeeMinor}, got ${input.serviceFeeMinor}`,
+      );
+    }
+    if (input.vatMinor !== vatMinor) {
+      throw new BadRequestException(`VAT mismatch: expected ${vatMinor}, got ${input.vatMinor}`);
+    }
+    if (input.platformCommissionMinor !== platformCommissionMinor) {
+      throw new BadRequestException(
+        `Platform commission mismatch: expected ${platformCommissionMinor}, got ${input.platformCommissionMinor}`,
+      );
+    }
+    if (input.totalMinor !== totalMinor) {
+      throw new BadRequestException(
+        `Total mismatch: expected ${totalMinor}, got ${input.totalMinor}`,
+      );
+    }
     const reference = `RSC-${randomUUID()}`;
     const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
     const recipientPhone = this.normalizeRecipientPhone(input.recipientPhone);
     const preparationNote = input.preparationNote?.trim() || null;
+    const returnUrl = this.normalizeReturnUrl(input.returnUrl);
 
-    const providerPayment = await this.paymentAdapter.initiate({
+    const providerPaymentInput: InitiateProviderPaymentInput = {
       email: customerEmail,
       amountMinor: totalMinor,
       currency: "NGN",
       reference,
       splitRoutes,
-    });
+      ...(returnUrl ? { returnUrl } : {}),
+    };
+    const providerPayment = await this.paymentAdapter.initiate(providerPaymentInput);
 
     const persisted = await this.dataSource.transaction(async (manager) => {
       const masterOrder = await manager.save(
@@ -327,8 +368,113 @@ export class PaymentsService {
         deliveryFeeMinor,
         serviceFeeMinor,
         vatMinor,
+        platformCommissionMinor,
         totalMinor,
         currency: "NGN",
+      },
+      splitBreakdown: splitRoutes,
+    };
+  }
+
+  async retryOrderPayment(user: AuthenticatedUser, orderId: string, input: RetryPaymentDto = {}) {
+    const order = await this.masterOrders.findOneBy({ id: orderId });
+
+    if (!order || order.customerId !== user.id) {
+      throw new NotFoundException("Order not found");
+    }
+
+    const existingPayments = await this.payments.find({
+      where: { masterOrderId: order.id },
+      order: { createdAt: "DESC" },
+    });
+
+    if (existingPayments.some((payment) => payment.status === PaymentStatus.SUCCESS)) {
+      throw new BadRequestException("This order has already been paid");
+    }
+
+    const customer = await this.users.findOneBy({ id: user.id });
+    if (!customer) {
+      throw new BadRequestException("Customer not found");
+    }
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    if (subOrders.length === 0) {
+      throw new BadRequestException("Order has no payable sub-orders");
+    }
+
+    const outletIds = subOrders.map((subOrder) => subOrder.outletId);
+    const outlets = await this.outlets.findBy({ id: In(outletIds) });
+    const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
+    const splitRoutes: PaymentSplitRoute[] = subOrders.map((subOrder) => ({
+      outletId: subOrder.outletId,
+      subaccountCode: outletById.get(subOrder.outletId)?.settlementSubaccountCode ?? null,
+      grossMinor: subOrder.subtotalMinor,
+      commissionMinor: subOrder.commissionMinor,
+      netMinor: subOrder.netMinor,
+    }));
+    const platformCommissionMinor = splitRoutes.reduce(
+      (sum, route) => sum + route.commissionMinor,
+      0,
+    );
+    const reference = `RSC-${randomUUID()}`;
+    const returnUrl = this.normalizeReturnUrl(input.returnUrl);
+    const providerPayment = await this.paymentAdapter.initiate({
+      email: this.piiCrypto.decrypt(customer.emailEncrypted),
+      amountMinor: order.totalMinor,
+      currency: order.currency,
+      reference,
+      splitRoutes,
+      ...(returnUrl ? { returnUrl } : {}),
+    });
+
+    await this.payments.update(
+      { masterOrderId: order.id, status: PaymentStatus.PENDING },
+      { status: PaymentStatus.FAILED },
+    );
+
+    const payment = await this.payments.save(
+      this.payments.create({
+        masterOrderId: order.id,
+        amountMinor: order.totalMinor,
+        currency: order.currency,
+        gateway: providerPayment.gateway,
+        reference: providerPayment.reference,
+        status:
+          providerPayment.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
+        checkoutUrl: providerPayment.checkoutUrl,
+        splitBreakdown: splitRoutes,
+        providerResponse: providerPayment.providerResponse,
+      }),
+    );
+
+    order.paymentReference = payment.reference;
+    order.status =
+      payment.status === PaymentStatus.SUCCESS
+        ? MasterOrderStatus.CONFIRMED
+        : MasterOrderStatus.PENDING_PAYMENT;
+    await this.masterOrders.save(order);
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return {
+      masterOrderId: order.id,
+      paymentId: payment.id,
+      reference: payment.reference,
+      checkoutUrl: payment.checkoutUrl,
+      status: payment.status,
+      totals: {
+        subtotalMinor: order.subtotalMinor,
+        deliveryFeeMinor: order.deliveryFeeMinor,
+        serviceFeeMinor: order.serviceFeeMinor,
+        vatMinor: order.vatMinor,
+        platformCommissionMinor,
+        totalMinor: order.totalMinor,
+        currency: order.currency,
       },
       splitBreakdown: splitRoutes,
     };
@@ -448,6 +594,60 @@ export class PaymentsService {
     }
 
     return { status: payment.status, orderStatus: order.status };
+  }
+
+  async processRefund(
+    user: AuthenticatedUser,
+    reference: string,
+    input: { amountMinor?: number; reason?: string },
+  ): Promise<PaymentRefund> {
+    const payment = await this.payments.findOneBy({ reference });
+
+    if (!payment) {
+      throw new NotFoundException("Payment not found");
+    }
+    if (payment.status !== PaymentStatus.SUCCESS) {
+      throw new BadRequestException("Only successful payments can be refunded");
+    }
+
+    const requestedAmountMinor = input.amountMinor ?? payment.amountMinor;
+    if (requestedAmountMinor <= 0 || requestedAmountMinor > payment.amountMinor) {
+      throw new BadRequestException(
+        "Refund amount must be greater than 0 and not exceed payment amount",
+      );
+    }
+
+    const existingRefunds = await this.refunds.find({ where: { paymentId: payment.id } });
+    const alreadyRefundedMinor = existingRefunds
+      .filter((refund) => refund.status !== "FAILED")
+      .reduce((sum, refund) => sum + refund.amountMinor, 0);
+
+    if (alreadyRefundedMinor + requestedAmountMinor > payment.amountMinor) {
+      throw new BadRequestException("Refund amount exceeds remaining refundable balance");
+    }
+
+    const reason = input.reason?.trim() || null;
+    const providerRefund = await this.paymentAdapter.refund({
+      reference: payment.reference,
+      amountMinor: requestedAmountMinor,
+      currency: payment.currency,
+      ...(reason ? { reason } : {}),
+    });
+
+    return this.refunds.save(
+      this.refunds.create({
+        paymentId: payment.id,
+        reference: payment.reference,
+        amountMinor: requestedAmountMinor,
+        currency: payment.currency,
+        status: providerRefund.status,
+        reason,
+        provider: payment.gateway,
+        providerRefundId: providerRefund.providerRefundId,
+        requestedBy: user.id,
+        providerResponse: providerRefund.providerResponse,
+      }),
+    );
   }
 
   private async priceCart(input: InitiatePaymentDto): Promise<PricedLine[]> {
@@ -661,6 +861,19 @@ export class PaymentsService {
       return normalizeNigerianPhoneNumber(phone);
     } catch {
       throw new BadRequestException("Recipient phone must be a valid Nigerian mobile number");
+    }
+  }
+
+  private normalizeReturnUrl(returnUrl: string | undefined): string | undefined {
+    const trimmed = returnUrl?.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+
+    try {
+      return new URL(trimmed).toString();
+    } catch {
+      throw new BadRequestException("Payment return URL must be a valid absolute URL");
     }
   }
 }

@@ -1,4 +1,5 @@
 import axios, { type AxiosError } from "axios";
+import { z } from "zod";
 import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import {
   adminOrdersQuerySchema,
@@ -9,9 +10,16 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
+  outletSettlementExportSchema,
+  outletSettlementSummaryListSchema,
+  outletSettlementSummarySchema,
+  paymentRefundSchema,
   platformChargesSchema,
+  processRefundInputSchema,
   createRiderInputSchema,
   riderResultSchema,
+  riderAdminSchema,
+  updateRiderInputSchema,
   updatePlatformChargesInputSchema,
   type ItemModifier,
   type ItemModifierGroup,
@@ -34,12 +42,24 @@ import {
   type CreateNotificationCampaignInput,
   type CreateRiderInput,
   type OutletSummary,
+  type OutletSettlementExport,
+  type OutletSettlementSummary,
+  type PaymentRefund,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
   type RiderResult,
+  type RiderAdmin,
+  type UpdateRiderInput,
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
+  type ProcessRefundInput,
+  preparationSuggestionSchema,
+  createPreparationSuggestionInputSchema,
+  queryPreparationSuggestionsInputSchema,
+  type PreparationSuggestion,
+  type CreatePreparationSuggestionInput,
+  type QueryPreparationSuggestionsInput,
 } from "@rsc/contracts";
 
 import { authStore } from "../stores/auth-store";
@@ -126,6 +146,17 @@ const post = <T>(path: string, body?: unknown): Promise<T> =>
 const patchReq = <T>(path: string, body?: unknown): Promise<T> =>
   http.patch<Envelope<T>>(path, body).then((r) => r.data.data);
 
+function parseResponse<T>(schema: z.ZodType<T>, data: unknown): T {
+  const parsed = schema.safeParse(data);
+
+  if (!parsed.success) {
+    console.error("API response validation failed", parsed.error);
+    throw new Error("The server response was incomplete. Please refresh and try again.");
+  }
+
+  return parsed.data;
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export const login = (body: { identifier: string; password: string }): Promise<LoginResult> =>
@@ -181,21 +212,73 @@ export interface OutletBody {
   description?: string;
   cuisineType: string;
   isOnline?: boolean;
-  paystackSubaccountCode?: string | null;
+  settlementSubaccountCode?: string | null;
   imageUrl?: string;
 }
 
 export const listOutlets = (): Promise<OutletSummary[]> =>
-  get<unknown>("/api/v1/outlets").then((data) => outletSummarySchema.array().parse(data));
+  get<unknown>("/api/v1/outlets").then((data) => parseResponse(outletSummarySchema.array(), data));
 
 export const getOutlet = (id: string): Promise<OutletSummary> =>
-  get<unknown>(`/api/v1/outlets/${id}`).then((data) => outletSummarySchema.parse(data));
+  get<unknown>(`/api/v1/outlets/${id}`).then((data) => parseResponse(outletSummarySchema, data));
 
 export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
-  post<unknown>("/api/v1/outlets", body).then((data) => outletSummarySchema.parse(data));
+  post<unknown>("/api/v1/outlets", body).then((data) => parseResponse(outletSummarySchema, data));
 
 export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<OutletSummary> =>
-  patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) => outletSummarySchema.parse(data));
+  patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) =>
+    parseResponse(outletSummarySchema, data),
+  );
+
+export interface OutletSettlementQuery {
+  dateFrom?: string;
+  dateTo?: string;
+  outletId?: string;
+}
+
+function settlementQueryString(query: OutletSettlementQuery): string {
+  const params = new URLSearchParams();
+  if (query.dateFrom) params.set("dateFrom", query.dateFrom);
+  if (query.dateTo) params.set("dateTo", query.dateTo);
+  if (query.outletId) params.set("outletId", query.outletId);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export const listOutletSettlements = (
+  query: OutletSettlementQuery = {},
+): Promise<OutletSettlementSummary[]> =>
+  get<unknown>(`/api/v1/finance/outlet-settlements${settlementQueryString(query)}`).then((data) =>
+    outletSettlementSummaryListSchema.parse(data),
+  );
+
+export const exportOutletSettlements = (
+  query: OutletSettlementQuery = {},
+): Promise<OutletSettlementExport> =>
+  get<unknown>(`/api/v1/finance/outlet-settlements/export${settlementQueryString(query)}`).then(
+    (data) => outletSettlementExportSchema.parse(data),
+  );
+
+export const approveOutletSettlement = ({
+  outletId,
+  dateFrom,
+  dateTo,
+}: OutletSettlementQuery & { outletId: string }): Promise<OutletSettlementSummary> =>
+  post<unknown>(
+    `/api/v1/finance/outlet-settlements/${outletId}/approve${settlementQueryString({
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    })}`,
+  ).then((data) => outletSettlementSummarySchema.parse(data));
+
+export const processPaymentRefund = (
+  reference: string,
+  body: ProcessRefundInput = {},
+): Promise<PaymentRefund> =>
+  post<unknown>(
+    `/api/v1/payments/${encodeURIComponent(reference)}/refund`,
+    processRefundInputSchema.parse(body),
+  ).then((data) => parseResponse(paymentRefundSchema, data));
 
 /** PATCH — dedicated endpoint for toggling online status only */
 export const toggleOutletOnlineStatus = (
@@ -366,6 +449,23 @@ export const createRider = (body: CreateRiderInput): Promise<RiderResult> =>
     riderResultSchema.parse(data),
   );
 
+export const listRiders = (outletId?: string): Promise<RiderAdmin[]> => {
+  const qs = outletId ? `?outletId=${encodeURIComponent(outletId)}` : "";
+  return get<unknown>(`/api/v1/users/riders${qs}`).then((data) =>
+    z.array(riderAdminSchema).parse(data),
+  );
+};
+
+export const updateRider = (id: string, body: UpdateRiderInput): Promise<RiderAdmin> => {
+  const input = updateRiderInputSchema.parse(body);
+  return patchReq<unknown>(`/api/v1/users/riders/${id}`, input).then((data) =>
+    riderAdminSchema.parse(data),
+  );
+};
+
+export const deleteRider = (id: string): Promise<void> =>
+  http.delete(`/api/v1/users/riders/${id}`).then(() => undefined);
+
 export interface OutletAdminUser {
   id: string;
   name: string;
@@ -408,6 +508,35 @@ function statsQuery(input: OperationsStatsQuery | OrderPulseQuery): string {
   const query = params.toString();
   return query ? `?${query}` : "";
 }
+
+// ─── Preparation Suggestions ─────────────────────────────────────────────────
+
+export const listPreparationSuggestions = (
+  input: QueryPreparationSuggestionsInput = {},
+): Promise<PreparationSuggestion[]> => {
+  const query = queryPreparationSuggestionsInputSchema.parse(input);
+  const sp = new URLSearchParams();
+  if (query.outletId) sp.set("outletId", query.outletId);
+  if (query.menuItemId) sp.set("menuItemId", query.menuItemId);
+  if (query.q) sp.set("q", query.q);
+  const qs = sp.toString();
+  return get<unknown>(`/api/v1/preparation-suggestions${qs ? `?${qs}` : ""}`).then((data) =>
+    preparationSuggestionSchema.array().parse(data),
+  );
+};
+
+export const createPreparationSuggestion = (
+  input: CreatePreparationSuggestionInput,
+): Promise<PreparationSuggestion> =>
+  post<unknown>(
+    "/api/v1/preparation-suggestions/admin",
+    createPreparationSuggestionInputSchema.parse(input),
+  ).then((data) => preparationSuggestionSchema.parse(data));
+
+export const deletePreparationSuggestion = (id: string): Promise<{ deleted: true }> =>
+  http.delete(`/api/v1/preparation-suggestions/admin/${encodeURIComponent(id)}`).then(() => ({
+    deleted: true as const,
+  }));
 
 export const getOperationsSummary = async (
   input: OperationsStatsQuery = {},

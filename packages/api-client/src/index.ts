@@ -16,7 +16,10 @@ import {
   paginatedMenuItemsSchema,
   pickupSubOrderInputSchema,
   platformChargesSchema,
+  preparationSuggestionSchema,
+  queryPreparationSuggestionsInputSchema,
   profileUpdateResultSchema,
+  rateMenuItemInputSchema,
   orderDetailSchema,
   orderSummarySchema,
   outletAdminSchema,
@@ -39,6 +42,7 @@ import {
   menuCategorySchema,
   resetPasswordInputSchema,
   resetPasswordResultSchema,
+  retryPaymentInputSchema,
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
@@ -50,6 +54,7 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
+  paymentVerifyResultSchema,
   riderLocationSchema,
   registerCustomerInputSchema,
   registrationResultSchema,
@@ -77,7 +82,10 @@ import {
   type PaginatedMenuItems,
   type PickupSubOrderInput,
   type PlatformCharges,
+  type PreparationSuggestion,
+  type QueryPreparationSuggestionsInput,
   type ProfileUpdateResult,
+  type RateMenuItemInput,
   type OrderDetail,
   type OrderSummary,
   type OutletAdmin,
@@ -101,6 +109,7 @@ import {
   type MenuItemSummary,
   type ResetPasswordInput,
   type ResetPasswordResult,
+  type RetryPaymentInput,
   type LoginInput,
   type LoginResult,
   type LogoutResult,
@@ -112,6 +121,7 @@ import {
   type OrderPulse,
   type OrderPulseQuery,
   type OutletSummary,
+  type PaymentVerifyResult,
   type RiderLocation,
   type RegisterCustomerInput,
   type RegistrationResult,
@@ -472,6 +482,21 @@ export function createApiClient(options: ApiClientOptions) {
       if (params.offset != null) sp.set("offset", String(params.offset));
       return request(`/api/v1/menu-items?${sp.toString()}`, paginatedMenuItemsSchema);
     },
+    listPreparationSuggestions(
+      input: QueryPreparationSuggestionsInput = {},
+    ): Promise<PreparationSuggestion[]> {
+      const query = queryPreparationSuggestionsInputSchema.parse(input);
+      const sp = new URLSearchParams();
+      if (query.outletId) sp.set("outletId", query.outletId);
+      if (query.menuItemId) sp.set("menuItemId", query.menuItemId);
+      if (query.q) sp.set("q", query.q);
+
+      const qs = sp.toString();
+      return request(
+        `/api/v1/preparation-suggestions${qs ? `?${qs}` : ""}`,
+        z.array(preparationSuggestionSchema),
+      );
+    },
     updateMenuItemAvailability(
       id: string,
       input: UpdateMenuItemAvailabilityInput,
@@ -480,6 +505,14 @@ export function createApiClient(options: ApiClientOptions) {
 
       return request(`/api/v1/menu-items/${encodeURIComponent(id)}/availability`, menuItemSchema, {
         method: "PATCH",
+        body: JSON.stringify(body),
+      });
+    },
+    rateMenuItem(id: string, input: RateMenuItemInput): Promise<MenuItem> {
+      const body = rateMenuItemInputSchema.parse(input);
+
+      return request(`/api/v1/menu-items/${encodeURIComponent(id)}/rating`, menuItemSchema, {
+        method: "POST",
         body: JSON.stringify(body),
       });
     },
@@ -578,6 +611,24 @@ export function createApiClient(options: ApiClientOptions) {
         method: "POST",
         body: JSON.stringify(body),
       });
+    },
+    retryPayment(orderId: string, input: RetryPaymentInput = {}): Promise<InitiatePaymentResult> {
+      const body = retryPaymentInputSchema.parse(input);
+
+      return request(
+        `/api/v1/payments/orders/${encodeURIComponent(orderId)}/retry`,
+        initiatePaymentResultSchema,
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        },
+      );
+    },
+    verifyPayment(reference: string): Promise<PaymentVerifyResult> {
+      return request(
+        `/api/v1/payments/verify/${encodeURIComponent(reference)}`,
+        paymentVerifyResultSchema,
+      );
     },
     pickupSubOrder(
       id: string,

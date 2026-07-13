@@ -7,9 +7,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { ApiError } from "@rsc/api-client";
+import type { InitiatePaymentInput, OutletSummary } from "@rsc/contracts";
+import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
 import { apiClient } from "@/src/lib/api";
 import { formatNaira } from "@/src/lib/data/cart";
 import { getStatusConfig, type Order } from "@/src/lib/data/orders";
+import { useCartStore } from "@/src/stores/cart-store";
 
 interface OrderCardProps {
   order: Order;
@@ -24,24 +27,89 @@ function formatDate(iso: string): string {
   });
 }
 
+function hydrateCartFromReorder(config: InitiatePaymentInput, outlets: OutletSummary[]) {
+  const rows: Array<{
+    outletId: string;
+    outletName: string;
+    item: {
+      id: string;
+      name: string;
+      notes: string;
+      quantity: number;
+      unitPriceMinor: number;
+      modifiers: { modifierId: string }[];
+    };
+  }> = [];
+  const missingItems: string[] = [];
+
+  for (const reorderItem of config.items) {
+    const outlet = outlets.find((candidate) =>
+      candidate.menuItems.some((item) => item.id === reorderItem.menuItemId),
+    );
+    const menuItem = outlet?.menuItems.find((item) => item.id === reorderItem.menuItemId);
+
+    if (!outlet || !menuItem) {
+      missingItems.push(reorderItem.menuItemId);
+      continue;
+    }
+
+    const selectedModifiers = reorderItem.modifiers.filter((modifier) =>
+      outlet.itemModifiers.some((candidate) => candidate.id === modifier.modifierId),
+    );
+    const modifierTotal = selectedModifiers.reduce((sum, modifier) => {
+      const currentModifier = outlet.itemModifiers.find(
+        (candidate) => candidate.id === modifier.modifierId,
+      );
+      return sum + (currentModifier?.priceDeltaMinor ?? 0);
+    }, 0);
+
+    rows.push({
+      outletId: outlet.id,
+      outletName: outlet.name,
+      item: {
+        id: menuItem.id,
+        name: menuItem.name,
+        notes: reorderItem.customerNote ?? "",
+        quantity: reorderItem.quantity,
+        unitPriceMinor: menuItem.priceMinor + modifierTotal,
+        modifiers: selectedModifiers,
+      },
+    });
+  }
+
+  return { rows, missingItems };
+}
+
 export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const status = getStatusConfig(order.status);
+  const isPendingPayment = order.status.toUpperCase() === "PENDING_PAYMENT";
+  const addItem = useCartStore((state) => state.addItem);
+  const clearCart = useCartStore((state) => state.clear);
 
   const reorderMutation = useMutation({
     mutationFn: async () => {
       const config = await apiClient.reorder(order.id);
-      return apiClient.initiatePayment(config);
+      const outlets = await queryClient.ensureQueryData(OUTLETS_QUERY);
+      return hydrateCartFromReorder(config, outlets);
     },
-    onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey: ["orders"] });
-      if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
-      } else {
-        toast.success("Reorder placed!");
-        router.push("/orders");
+    onSuccess: ({ rows, missingItems }) => {
+      if (rows.length === 0) {
+        toast.error("Those items are no longer available for reorder.");
+        return;
       }
+
+      clearCart();
+      rows.forEach((row) => addItem(row));
+
+      if (missingItems.length > 0) {
+        toast.warning("Some previous items are no longer available and were skipped.");
+      } else {
+        toast.success("Previous order loaded into your cart.");
+      }
+
+      router.push("/cart");
     },
     onError: (err) => {
       toast.error(
@@ -79,7 +147,7 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
             {formatDate(order.createdAt)}
           </p>
 
-          {variant === "active" && order.deliveryCode && (
+          {variant === "active" && !isPendingPayment && order.deliveryCode && (
             <p className="mt-2 text-xs font-semibold text-gray-600">
               Delivery code: <span className="font-mono">{order.deliveryCode}</span>
             </p>
@@ -102,7 +170,7 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
             className="!rounded-lg !px-4"
             onClick={() => router.push(`/tracking?orderId=${order.id}`)}
           >
-            Track
+            {isPendingPayment ? "Make payment" : "Track"}
           </Button>
         )}
       </div>

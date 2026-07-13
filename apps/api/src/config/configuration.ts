@@ -4,6 +4,7 @@ export interface ApplicationConfig {
     port: number;
     version: string;
     corsOrigins: string[];
+    customerWebUrl: string;
     swaggerEnabled: boolean;
   };
   database: {
@@ -67,6 +68,7 @@ export interface ApplicationConfig {
       secretKey: string;
       baseUrl: string;
       webhookSecret: string;
+      settlementReportPath: string;
     };
     platformCommissionBps: number;
     vatBps: number;
@@ -112,15 +114,21 @@ function resolveFirebasePrivateKey(): string {
 }
 
 export default function configuration(): ApplicationConfig {
+  const corsOrigins = parseOrigins(
+    process.env.CORS_ORIGINS ?? "http://localhost:3000,http://localhost:5173,http://localhost:5175",
+  );
+
   return {
     app: {
       environment: process.env.NODE_ENV ?? "development",
       port: Number(process.env.PORT ?? 4000),
       version: process.env.APP_VERSION ?? "development",
-      corsOrigins: parseOrigins(
-        process.env.CORS_ORIGINS ??
-          "http://localhost:3000,http://localhost:5173,http://localhost:5175",
-      ),
+      corsOrigins,
+      customerWebUrl: (
+        process.env.CUSTOMER_WEB_URL ??
+        corsOrigins[0] ??
+        "http://localhost:3000"
+      ).replace(/\/$/, ""),
       swaggerEnabled: process.env.SWAGGER_ENABLED !== "false",
     },
     database: {
@@ -189,6 +197,7 @@ export default function configuration(): ApplicationConfig {
         secretKey: process.env.MOMENT_SECRET_KEY ?? "",
         baseUrl: (process.env.MOMENT_BASE_URL ?? "https://api.momentpay.net").replace(/\/$/, ""),
         webhookSecret: process.env.MOMENT_WEBHOOK_SECRET ?? "",
+        settlementReportPath: process.env.MOMENT_SETTLEMENT_REPORT_PATH ?? "/settlements/report",
       },
       platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
       vatBps: Number(process.env.VAT_BPS ?? 750),

@@ -2,6 +2,14 @@ import type { OutletSummary } from "@rsc/contracts";
 
 import { computeOutletMetrics } from "@/src/lib/data/outlet-menu";
 
+export const DEFAULT_OUTLET_RATING = 4.0;
+
+export function formatOutletRating(rating: number | null | undefined): string {
+  const value = typeof rating === "number" && rating > 0 ? rating : DEFAULT_OUTLET_RATING;
+
+  return value.toFixed(1);
+}
+
 export interface Outlet {
   id: string;
   name: string;
@@ -9,6 +17,7 @@ export interface Outlet {
   headerColor: string;
   image: string;
   isOnline?: boolean;
+  vatBps: number;
   // Optional — not yet returned by the API
   rating?: number;
   deliveryTime?: string;
@@ -35,6 +44,7 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     headerColor: palette.headerColor,
     image: summary.imageUrl ?? palette.image,
     isOnline: summary.isOnline,
+    vatBps: summary.vatBps,
     ...(!summary.isOnline ? { tag: "Offline" } : {}),
     ...metrics,
   };
