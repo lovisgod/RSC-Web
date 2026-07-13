@@ -17,6 +17,8 @@ import {
   operationsQueueSchema,
   operationsSummarySchema,
   orderPulseSchema,
+  outletSettlementExportSchema,
+  outletSettlementSummarySchema,
   platformChargesSchema,
   profileUpdateResultSchema,
   rateMenuItemInputSchema,
@@ -526,6 +528,37 @@ describe("customer registration contracts", () => {
     expect(outletSummarySchema.parse(baseOutlet)).toMatchObject({
       settlementSubaccountCode: null,
     });
+  });
+
+  it("documents outlet settlement summary and Moment export contracts", () => {
+    expect(
+      outletSettlementSummarySchema.parse({
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        outletName: "Salmas Grill",
+        imageUrl: null,
+        subaccountCode: "LOCAL_ACCT_SALMAS",
+        settlementDateFrom: "2026-07-11",
+        settlementDateTo: "2026-07-11",
+        completedSubOrders: 3,
+        pendingSubOrders: 3,
+        grossMinor: 5029600,
+        commissionMinor: 251500,
+        netMinor: 4778100,
+        currency: "NGN",
+        status: "PENDING",
+        approvalAvailable: true,
+        approvalUnavailableReason: null,
+        latestApprovedAt: null,
+      }),
+    ).toBeTruthy();
+
+    expect(
+      outletSettlementExportSchema.parse({
+        filename: "20260712_Moment_RSC_Settlement_batch_20260711.csv",
+        contentType: "text/csv",
+        content: "transaction_type,merchant_reference_id\nPayment,RSC-123",
+      }),
+    ).toBeTruthy();
   });
 
   it("defaults outlet relation arrays when create responses omit them", () => {
