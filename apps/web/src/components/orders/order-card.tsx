@@ -88,6 +88,28 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const clearCart = useCartStore((state) => state.clear);
 
+  const retryPaymentMutation = useMutation({
+    mutationFn: () =>
+      apiClient.retryPayment(order.id, {
+        returnUrl: `${window.location.origin}/tracking`,
+      }),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      if (!result.checkoutUrl) {
+        toast.error("Payment provider currently unavailable. Please try again later.");
+        return;
+      }
+
+      window.location.assign(result.checkoutUrl);
+    },
+    onError: (err) => {
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not restart payment. Please try again.",
+      );
+    },
+  });
+
   const reorderMutation = useMutation({
     mutationFn: async () => {
       const config = await apiClient.reorder(order.id);
@@ -167,10 +189,24 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
           <Button
             tone="primary"
             type="button"
-            className="!rounded-lg !px-4"
-            onClick={() => router.push(`/tracking?orderId=${order.id}`)}
+            className="!rounded-lg !px-2 !py-2"
+            onClick={() => {
+              if (isPendingPayment) {
+                retryPaymentMutation.mutate();
+                return;
+              }
+
+              router.push(`/tracking?orderId=${order.id}`);
+            }}
+            disabled={retryPaymentMutation.isPending}
           >
-            {isPendingPayment ? "Make payment" : "Track"}
+            {retryPaymentMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isPendingPayment ? (
+              "Make payment"
+            ) : (
+              "Track"
+            )}
           </Button>
         )}
       </div>
