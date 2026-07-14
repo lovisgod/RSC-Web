@@ -68,4 +68,5 @@ export interface OrderSnapshot {
     platformCommissionMinor: number;
     totalMinor: number;
   };
+  promoCode?: string;
 }
