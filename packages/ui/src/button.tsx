@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type ButtonTone = "primary" | "navy" | "danger" | "quiet";
+type ButtonTone = "primary" | "navy" | "danger" | "success" | "quiet";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;

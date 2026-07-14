@@ -22,6 +22,7 @@ import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
 import { useOutlets } from "@/src/hooks/use-outlets";
 import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
+import { useCartStore } from "@/src/stores/cart-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -59,6 +60,7 @@ export function FulfillmentStep({
   const { data: outlets = [] } = useOutlets();
   const outletById = new Map(outlets.map((o) => [o.id, o]));
   const qc = useQueryClient();
+  const clearCart = useCartStore((state) => state.clear);
 
   const { data: savedAddresses = [] } = useDeliveryAddresses();
   const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? null;
@@ -336,6 +338,7 @@ export function FulfillmentStep({
         })),
         totals: result.totals,
       };
+      clearCart();
       onComplete(
         {
           mode,
