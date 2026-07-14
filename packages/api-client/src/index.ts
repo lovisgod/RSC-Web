@@ -561,6 +561,9 @@ export function createApiClient(options: ApiClientOptions) {
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
     },
+    listPromoNotifications(): Promise<Notification[]> {
+      return request("/api/v1/notifications/promos", z.array(notificationSchema));
+    },
     getNotificationPreferences(): Promise<NotificationPreferences> {
       return request("/api/v1/notifications/preferences", notificationPreferencesSchema);
     },

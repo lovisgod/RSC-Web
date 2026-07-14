@@ -415,6 +415,12 @@ describe(AuthService.name, () => {
       outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
     });
     expect(result.temporaryPassword).toHaveLength(19);
+    expect(emailSender.sendTemporaryPassword).toHaveBeenCalledWith({
+      email: "manager@example.com",
+      name: "Outlet Manager",
+      role: "outlet admin",
+      temporaryPassword: result.temporaryPassword,
+    });
   });
 
   it("resends verification for the same unverified customer", async () => {

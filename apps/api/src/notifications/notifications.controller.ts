@@ -96,6 +96,19 @@ export class NotificationsController {
     return this.notifications.broadcastPromo(request.user!, input);
   }
 
+  @Get("promos")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Promo notifications retrieved")
+  @ApiOperation({
+    summary: "List recent promo notifications",
+    description:
+      "Admin reporting endpoint for immediate promo broadcasts created through /notifications/promos.",
+  })
+  listPromos(@Req() request: AuthenticatedRequest) {
+    return this.notifications.listPromos(request.user!);
+  }
+
   @Post("campaigns")
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
