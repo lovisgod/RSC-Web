@@ -1,12 +1,12 @@
 "use client";
 
-import type { Notification } from "@rsc/contracts";
+import type { PromoNotification } from "@rsc/contracts";
 import { Bell, CalendarDays, RotateCw, Tag, X } from "lucide-react";
 import { useState } from "react";
 import { Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
-import { useNotifications } from "@/src/hooks/use-notifications";
+import { usePromoNotifications } from "@/src/hooks/use-notifications";
 
 function getOfferAppearance(type: string) {
   switch (type.trim().toUpperCase()) {
@@ -19,30 +19,8 @@ function getOfferAppearance(type: string) {
   }
 }
 
-function isOfferNotification(notification: Notification) {
-  const type = notification.type.trim().toUpperCase();
-  const promoCode =
-    typeof notification.data.promoCode === "string" &&
-    notification.data.promoCode.trim().length > 0;
-  const deepLink =
-    typeof notification.data.deepLink === "string" ? notification.data.deepLink.toLowerCase() : "";
-
-  return (
-    ["PROMO", "SPECIAL_PERIOD", "DISCOUNT", "SEASONAL_OFFER"].includes(type) ||
-    promoCode ||
-    deepLink.includes("promo") ||
-    deepLink.includes("offer")
-  );
-}
-
-function OfferCard({
-  notification,
-  onDismiss,
-}: {
-  notification: Notification;
-  onDismiss: () => void;
-}) {
-  const { bg, Icon } = getOfferAppearance(notification.type);
+function OfferCard({ promo, onDismiss }: { promo: PromoNotification; onDismiss: () => void }) {
+  const { bg, Icon } = getOfferAppearance(promo.type);
 
   return (
     <article
@@ -52,15 +30,20 @@ function OfferCard({
       <button
         type="button"
         onClick={onDismiss}
-        aria-label={`Dismiss ${notification.title}`}
+        aria-label={`Dismiss ${promo.title}`}
         className="absolute right-2.5 top-2.5 text-white/50 transition-colors hover:text-white"
       >
         <X className="h-4 w-4" aria-hidden="true" />
       </button>
 
       <div className="min-w-0 flex-1 pr-6">
-        <p className="text-base font-bold leading-tight text-white">{notification.title}</p>
-        <p className="mt-0.5 text-sm text-white/80">{notification.body}</p>
+        <p className="text-base font-bold leading-tight text-white">{promo.title}</p>
+        <p className="mt-0.5 text-sm text-white/80">{promo.body}</p>
+        {promo.promoCode && (
+          <p className="mt-2 inline-flex rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
+            Code: {promo.promoCode}
+          </p>
+        )}
       </div>
 
       <span
@@ -85,7 +68,7 @@ function OffersSkeleton() {
 
 export function OffersSection() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const { data: notifications = [], isPending, isError, refetch } = useNotifications();
+  const { data: promos = [], isPending, isError, refetch } = usePromoNotifications();
 
   if (isPending) return <OffersSkeleton />;
 
@@ -106,9 +89,7 @@ export function OffersSection() {
     );
   }
 
-  const visible = notifications.filter(
-    (notification) => isOfferNotification(notification) && !dismissed.has(notification.id),
-  );
+  const visible = promos.filter((promo) => !dismissed.has(promo.id));
   if (visible.length === 0) return null;
 
   function dismiss(id: string) {
@@ -128,9 +109,9 @@ export function OffersSection() {
           pagination={{ clickable: true }}
           className="!pb-8"
         >
-          {visible.map((notification) => (
-            <SwiperSlide key={notification.id}>
-              <OfferCard notification={notification} onDismiss={() => dismiss(notification.id)} />
+          {visible.map((promo) => (
+            <SwiperSlide key={promo.id}>
+              <OfferCard promo={promo} onDismiss={() => dismiss(promo.id)} />
             </SwiperSlide>
           ))}
         </Swiper>
@@ -146,20 +127,16 @@ export function OffersSection() {
             pagination={{ clickable: true }}
             className="!pb-8"
           >
-            {visible.map((notification) => (
-              <SwiperSlide key={notification.id} className="!h-auto">
-                <OfferCard notification={notification} onDismiss={() => dismiss(notification.id)} />
+            {visible.map((promo) => (
+              <SwiperSlide key={promo.id} className="!h-auto">
+                <OfferCard promo={promo} onDismiss={() => dismiss(promo.id)} />
               </SwiperSlide>
             ))}
           </Swiper>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {visible.map((notification) => (
-              <OfferCard
-                key={notification.id}
-                notification={notification}
-                onDismiss={() => dismiss(notification.id)}
-              />
+            {visible.map((promo) => (
+              <OfferCard key={promo.id} promo={promo} onDismiss={() => dismiss(promo.id)} />
             ))}
           </div>
         )}

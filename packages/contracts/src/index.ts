@@ -922,6 +922,32 @@ export const notificationSchema = z.object({
   createdAt: z.iso.datetime(),
 });
 
+export const promoNotificationSchema = notificationSchema
+  .extend({
+    promoCode: z.string().trim().min(1).nullable().optional(),
+    deepLink: z.string().trim().min(1).nullable().optional(),
+  })
+  .transform((notification) => {
+    const dataPromoCode = notification.data.promoCode;
+    const dataDeepLink = notification.data.deepLink;
+    const promoCode =
+      notification.promoCode ??
+      (typeof dataPromoCode === "string" && dataPromoCode.trim().length > 0
+        ? dataPromoCode.trim()
+        : null);
+    const deepLink =
+      notification.deepLink ??
+      (typeof dataDeepLink === "string" && dataDeepLink.trim().length > 0
+        ? dataDeepLink.trim()
+        : null);
+
+    return {
+      ...notification,
+      promoCode,
+      deepLink,
+    };
+  });
+
 export const notificationPreferencesSchema = z.object({
   promotions: z.boolean(),
   discounts: z.boolean(),
@@ -1112,6 +1138,7 @@ export type PaymentRefund = z.infer<typeof paymentRefundSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
+export type PromoNotification = z.infer<typeof promoNotificationSchema>;
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
 export type UpdateNotificationPreferencesInput = z.infer<
   typeof updateNotificationPreferencesInputSchema

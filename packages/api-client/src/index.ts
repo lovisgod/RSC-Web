@@ -13,6 +13,7 @@ import {
   initiatePaymentResultSchema,
   notificationCampaignSchema,
   notificationPreferencesSchema,
+  promoNotificationSchema,
   paginatedMenuItemsSchema,
   pickupSubOrderInputSchema,
   platformChargesSchema,
@@ -85,6 +86,7 @@ import {
   type PreparationSuggestion,
   type QueryPreparationSuggestionsInput,
   type ProfileUpdateResult,
+  type PromoNotification,
   type RateMenuItemInput,
   type OrderDetail,
   type OrderSummary,
@@ -560,6 +562,9 @@ export function createApiClient(options: ApiClientOptions) {
     },
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
+    },
+    listPromoNotifications(): Promise<PromoNotification[]> {
+      return request("/api/v1/notifications/promos", z.array(promoNotificationSchema));
     },
     getNotificationPreferences(): Promise<NotificationPreferences> {
       return request("/api/v1/notifications/preferences", notificationPreferencesSchema);

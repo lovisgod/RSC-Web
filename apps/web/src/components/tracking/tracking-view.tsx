@@ -450,6 +450,19 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
     "OUT_FOR_DELIVERY",
   ]);
   const showHandoffCode = !!order.deliveryCode && codeVisibleStatuses.has(normalizedStatus);
+  const isReadyForPickup = normalizedStatus === "READY";
+  const headerToneClass = isReadyForPickup
+    ? isOpen
+      ? "border-l-[var(--rsc-success)] bg-[color-mix(in_srgb,var(--rsc-success)_14%,white)]"
+      : "border-l-[var(--rsc-success)] bg-[color-mix(in_srgb,var(--rsc-success)_8%,white)] hover:bg-[color-mix(in_srgb,var(--rsc-success)_12%,white)]"
+    : isOpen
+      ? "border-l-[var(--rsc-brand)] bg-[color-mix(in_srgb,var(--rsc-main)_4%,white)]"
+      : "border-l-transparent hover:bg-gray-50";
+  const toggleToneClass = isReadyForPickup
+    ? "bg-[var(--rsc-success)] text-white"
+    : isOpen
+      ? "bg-[var(--rsc-main)] text-white"
+      : "bg-gray-100 text-gray-500";
 
   return (
     <div
@@ -464,11 +477,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-controls={contentId}
-        className={`flex w-full items-center gap-3 border-l-4 px-4 py-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rsc-main)] ${
-          isOpen
-            ? "border-l-[var(--rsc-brand)] bg-[color-mix(in_srgb,var(--rsc-main)_4%,white)]"
-            : "border-l-transparent hover:bg-gray-50"
-        }`}
+        className={`flex w-full items-center gap-3 border-l-4 px-4 py-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rsc-main)] ${headerToneClass}`}
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -499,9 +508,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
           )}
         </div>
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
-            isOpen ? "bg-[var(--rsc-main)] text-white" : "bg-gray-100 text-gray-500"
-          }`}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${toggleToneClass}`}
         >
           <ChevronDown
             className="h-4 w-4 transition-transform duration-200"
