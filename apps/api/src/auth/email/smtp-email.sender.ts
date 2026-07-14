@@ -11,6 +11,7 @@ import type {
   SendTemporaryPasswordEmailInput,
   SendWelcomeVerificationEmailInput,
 } from "./email-sender";
+import { renderEmailTemplate } from "./email-template";
 
 @Injectable()
 export class SmtpEmailSender implements EmailSender {
@@ -33,12 +34,15 @@ export class SmtpEmailSender implements EmailSender {
 
   async sendWelcomeVerification(input: SendWelcomeVerificationEmailInput): Promise<void> {
     const subject = "Welcome to RSC - verify your email";
-    const html = `
-      <p>Hi ${this.escapeHtml(input.name)},</p>
-      <p>Welcome to RSC.</p>
-      <p>Your email verification code is <strong>${input.code}</strong>.</p>
-      <p>It expires in ${input.expiresInMinutes} minutes.</p>
-    `;
+    const html = renderEmailTemplate({
+      preheader: `Your verification code expires in ${input.expiresInMinutes} minutes.`,
+      heading: "Verify your email",
+      greetingName: input.name,
+      intro: "Welcome to RSC. Use the verification code below to finish setting up your account.",
+      codeLabel: "Verification code",
+      code: input.code,
+      body: `This code expires in ${input.expiresInMinutes} minutes.`,
+    });
 
     this.logger.log(
       `Sending SMTP welcome email: ${JSON.stringify({
@@ -71,11 +75,15 @@ export class SmtpEmailSender implements EmailSender {
 
   async sendPasswordReset(input: SendPasswordResetEmailInput): Promise<void> {
     const subject = "Reset your RSC password";
-    const html = `
-      <p>Hi ${this.escapeHtml(input.name)},</p>
-      <p>Your RSC password reset code is <strong>${input.code}</strong>.</p>
-      <p>It expires in ${input.expiresInMinutes} minutes.</p>
-    `;
+    const html = renderEmailTemplate({
+      preheader: `Your password reset code expires in ${input.expiresInMinutes} minutes.`,
+      heading: "Reset your password",
+      greetingName: input.name,
+      intro: "Use the code below to reset your RSC password.",
+      codeLabel: "Password reset code",
+      code: input.code,
+      body: `This code expires in ${input.expiresInMinutes} minutes.`,
+    });
 
     this.logger.log(
       `Sending SMTP password reset email: ${JSON.stringify({
@@ -108,12 +116,15 @@ export class SmtpEmailSender implements EmailSender {
 
   async sendTemporaryPassword(input: SendTemporaryPasswordEmailInput): Promise<void> {
     const subject = `Your RSC ${input.role} account`;
-    const html = `
-      <p>Hi ${this.escapeHtml(input.name)},</p>
-      <p>Your RSC ${this.escapeHtml(input.role)} account has been created.</p>
-      <p>Your temporary password is <strong>${this.escapeHtml(input.temporaryPassword)}</strong>.</p>
-      <p>Please sign in and change it.</p>
-    `;
+    const html = renderEmailTemplate({
+      preheader: `Your RSC ${input.role} account is ready.`,
+      heading: "Your account is ready",
+      greetingName: input.name,
+      intro: `Your RSC ${input.role} account has been created. Use this temporary password to sign in.`,
+      codeLabel: "Temporary password",
+      code: input.temporaryPassword,
+      body: "Please change this password after your first sign in.",
+    });
 
     this.logger.log(
       `Sending SMTP temporary password email: ${JSON.stringify({
@@ -142,14 +153,5 @@ export class SmtpEmailSender implements EmailSender {
       );
       throw new BadGatewayException("Unable to send temporary password email");
     }
-  }
-
-  private escapeHtml(value: string): string {
-    return value
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
   }
 }

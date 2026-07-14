@@ -229,6 +229,12 @@ export class AuthService {
 
     try {
       const savedAdmin = await this.customers.save(admin);
+      await this.emailSender.sendTemporaryPassword({
+        email,
+        name: savedAdmin.name,
+        role: "outlet admin",
+        temporaryPassword,
+      });
 
       return {
         id: savedAdmin.id,
