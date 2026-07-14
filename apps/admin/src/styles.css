@@ -452,8 +452,8 @@ select {
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 999px;
-  background: #cbd5e1;
-  box-shadow: 0 0 0 4px rgb(203 213 225 / 24%);
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgb(239 68 68 / 16%);
 }
 
 .outlet-performance-dot--online {
@@ -1647,6 +1647,50 @@ th {
 .rider-delete-btn:disabled {
   cursor: not-allowed;
   opacity: 0.48;
+}
+
+.modal--delete-rider {
+  width: min(440px, 100%);
+}
+
+.delete-confirmation-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, #dc2626 18%, white);
+  border-radius: 18px;
+  background: color-mix(in srgb, #dc2626 7%, white);
+}
+
+.delete-confirmation-card__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 16px;
+  color: #b91c1c;
+  background: white;
+  box-shadow: 0 10px 24px rgb(185 28 28 / 12%);
+}
+
+.delete-confirmation-card strong {
+  display: block;
+  color: var(--rsc-navy-dark);
+  font-size: 1rem;
+}
+
+.delete-confirmation-card p {
+  margin: 0.35rem 0;
+  color: var(--rsc-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.delete-confirmation-card small {
+  color: var(--rsc-muted);
+  font-size: 0.72rem;
+  word-break: break-all;
 }
 
 .rider-report-panel {
