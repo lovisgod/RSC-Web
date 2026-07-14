@@ -16,7 +16,7 @@ import { useCartStore } from "@/src/stores/cart-store";
 
 interface OrderCardProps {
   order: Order;
-  variant?: "active" | "completed";
+  variant?: "active" | "completed" | "cancelled";
 }
 
 function formatDate(iso: string): string {
@@ -185,11 +185,19 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
           >
             {reorderMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reorder"}
           </Button>
+        ) : variant === "cancelled" ? (
+          <Button
+            tone="danger"
+            type="button"
+            onClick={() => toast.info("Refund support is coming soon.")}
+          >
+            Refund
+          </Button>
         ) : (
           <Button
             tone="primary"
             type="button"
-            className="!rounded-lg !px-2 !py-2"
+            className={`!rounded-lg ${isPendingPayment ? "!px-2 !py-2" : "!px-4 !py-1.5"}`}
             onClick={() => {
               if (isPendingPayment) {
                 retryPaymentMutation.mutate();

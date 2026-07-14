@@ -10,8 +10,6 @@ export const ACTIVE_ORDER_STATUSES = new Set([
   "OUT_FOR_DELIVERY",
 ]);
 
-const COMPLETED_ORDER_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
-
 export function isActiveOrder(order: Order): boolean {
   return ACTIVE_ORDER_STATUSES.has(order.status.toUpperCase());
 }
@@ -21,7 +19,11 @@ export function isProfileActiveOrder(order: Order): boolean {
 }
 
 export function isCompletedOrder(order: Order): boolean {
-  return COMPLETED_ORDER_STATUSES.has(order.status.toUpperCase());
+  return order.status.toUpperCase() === "DELIVERED";
+}
+
+export function isCancelledOrder(order: Order): boolean {
+  return order.status.toUpperCase() === "CANCELLED";
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {

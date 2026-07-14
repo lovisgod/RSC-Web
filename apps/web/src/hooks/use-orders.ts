@@ -3,11 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/api";
 import {
   isActiveOrder,
+  isCancelledOrder,
   isCompletedOrder,
   isProfileActiveOrder,
   type Order,
 } from "@/src/lib/data/orders";
 import { useAuthStore } from "@/src/stores/auth-store";
+
+function sortNewestFirst(orders: Order[]): Order[] {
+  return [...orders].sort(
+    (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+  );
+}
 
 export function useActiveOrders() {
   const userId = useAuthStore((state) => state.userId);
@@ -16,12 +23,7 @@ export function useActiveOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] =>
-      orders
-        .filter(isActiveOrder)
-        .sort(
-          (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
-        ),
+    select: (orders): Order[] => sortNewestFirst(orders.filter(isActiveOrder)),
   });
 }
 
@@ -32,12 +34,7 @@ export function useProfileActiveOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] =>
-      orders
-        .filter(isProfileActiveOrder)
-        .sort(
-          (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
-        ),
+    select: (orders): Order[] => sortNewestFirst(orders.filter(isProfileActiveOrder)),
   });
 }
 
@@ -48,6 +45,17 @@ export function useCompletedOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] => orders.filter(isCompletedOrder),
+    select: (orders): Order[] => sortNewestFirst(orders.filter(isCompletedOrder)),
+  });
+}
+
+export function useCancelledOrders() {
+  const userId = useAuthStore((state) => state.userId);
+
+  return useQuery({
+    queryKey: ["orders", userId] as const,
+    queryFn: () => apiClient.listCustomerOrders(),
+    enabled: Boolean(userId),
+    select: (orders): Order[] => sortNewestFirst(orders.filter(isCancelledOrder)),
   });
 }
