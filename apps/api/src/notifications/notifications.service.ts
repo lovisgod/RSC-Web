@@ -10,7 +10,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Queue, Worker, type ConnectionOptions } from "bullmq";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
@@ -40,6 +40,8 @@ const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   seasonalOffers: true,
   orderStatus: true,
 };
+
+const PROMO_NOTIFICATION_TYPES = ["PROMO", "SPECIAL_PERIOD", "DISCOUNT", "SEASONAL_OFFER"];
 
 @Injectable()
 export class NotificationsService implements OnModuleInit, OnModuleDestroy {
@@ -161,6 +163,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         title: input.title,
         body: input.body,
         data: {
+          promo: true,
           ...(input.promoCode ? { promoCode: input.promoCode } : {}),
           ...(input.deepLink ? { deepLink: input.deepLink } : {}),
         },
@@ -168,6 +171,18 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     }
 
     return { sent: recipients.length };
+  }
+
+  async listPromos(user: AuthenticatedUser): Promise<Notification[]> {
+    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Only admins can list promo notifications");
+    }
+
+    return this.notifications.find({
+      where: { type: In(PROMO_NOTIFICATION_TYPES) },
+      order: { createdAt: "DESC" },
+      take: 100,
+    });
   }
 
   async scheduleCampaign(

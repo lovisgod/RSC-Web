@@ -13,6 +13,7 @@ import {
   outletSettlementExportSchema,
   outletSettlementSummaryListSchema,
   outletSettlementSummarySchema,
+  notificationSchema,
   paymentRefundSchema,
   platformChargesSchema,
   processRefundInputSchema,
@@ -39,6 +40,7 @@ import {
   type LogoutResult,
   type MenuItem,
   type NotificationCampaign,
+  type Notification,
   type CreateNotificationCampaignInput,
   type CreateRiderInput,
   type OutletSummary,
@@ -431,6 +433,11 @@ export interface SendPromoBody {
 
 export const sendPromoNotification = (body: SendPromoBody): Promise<{ sent: number }> =>
   post("/api/v1/notifications/promos", body);
+
+export const listPromoNotifications = (): Promise<Notification[]> =>
+  get<unknown>("/api/v1/notifications/promos").then((data) =>
+    parseResponse(notificationSchema.array(), data),
+  );
 
 export const listNotificationCampaigns = (): Promise<NotificationCampaign[]> =>
   get("/api/v1/notifications/campaigns");
