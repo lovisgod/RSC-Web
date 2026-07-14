@@ -225,7 +225,7 @@ const environmentSchema = Joi.object<Environment>({
     .default("pollinations"),
   POLLINATIONS_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
-    .default("https://gen.pollinations.ai"),
+    .default("https://text.pollinations.ai"),
   POLLINATIONS_TEXT_MODEL: Joi.string().min(1).default("openai"),
   POLLINATIONS_API_KEY: Joi.string().optional().allow(""),
   PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: Joi.number().integer().min(500).max(10_000).default(4_000),

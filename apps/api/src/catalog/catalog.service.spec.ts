@@ -368,7 +368,7 @@ describe(CatalogService.name, () => {
       "Pack sauce separately",
     ]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://gen.pollinations.ai/v1/chat/completions",
+      "https://text.pollinations.ai/openai",
       expect.objectContaining({ method: "POST" }),
     );
 
