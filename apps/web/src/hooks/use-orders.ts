@@ -16,8 +16,8 @@ export function useActiveOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] =>
-      orders
+    select: (result): Order[] =>
+      result.orders
         .filter(isActiveOrder)
         .sort(
           (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
@@ -32,8 +32,8 @@ export function useProfileActiveOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] =>
-      orders
+    select: (result): Order[] =>
+      result.orders
         .filter(isProfileActiveOrder)
         .sort(
           (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
@@ -48,6 +48,6 @@ export function useCompletedOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] => orders.filter(isCompletedOrder),
+    select: (result): Order[] => result.orders.filter(isCompletedOrder),
   });
 }

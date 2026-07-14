@@ -1,9 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import type { TransformFnParams } from "class-transformer";
 import {
   IsDateString,
   IsBoolean,
+  IsInt,
   IsEnum,
   IsIn,
   IsOptional,
@@ -11,7 +12,9 @@ import {
   IsString,
   IsUUID,
   Length,
+  Max,
   MaxLength,
+  Min,
 } from "class-validator";
 
 import { UserRole } from "../../auth/user-role.enum";
@@ -109,16 +112,110 @@ export class CreatePromoNotificationDto {
   recipientRole!: UserRole;
 
   @ApiProperty({ example: "WEEKEND", required: false })
-  @IsOptional()
+  @Transform(trim)
   @IsString()
-  @MaxLength(80)
-  promoCode?: string;
+  @Length(2, 80)
+  promoCode!: string;
+
+  @ApiProperty({ enum: ["DELIVERY", "ORDER"], example: "DELIVERY" })
+  @IsIn(["DELIVERY", "ORDER"])
+  discountTarget!: "DELIVERY" | "ORDER";
+
+  @ApiProperty({ example: 100, minimum: 1, maximum: 100 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  discountPercent!: number;
+
+  @ApiProperty({ enum: ["ALL_OUTLETS", "OUTLET"], example: "ALL_OUTLETS" })
+  @IsIn(["ALL_OUTLETS", "OUTLET"])
+  scope!: "ALL_OUTLETS" | "OUTLET";
+
+  @ApiProperty({ format: "uuid", required: false })
+  @IsOptional()
+  @IsUUID()
+  outletId?: string;
+
+  @ApiProperty({ example: "2026-07-14T00:00:00.000Z" })
+  @IsDateString()
+  startsAt!: string;
+
+  @ApiProperty({ example: "2026-07-31T23:59:59.000Z" })
+  @IsDateString()
+  endsAt!: string;
 
   @ApiProperty({ example: "rsc://outlets/outlet-id", required: false })
   @IsOptional()
   @IsString()
   @MaxLength(512)
   deepLink?: string;
+}
+
+export class UpdatePromoDto {
+  @ApiProperty({ example: "Weekend discount", required: false })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @Length(2, 160)
+  title?: string;
+
+  @ApiProperty({ example: "Use code WEEKEND for a discount this weekend.", required: false })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @Length(2, 2_000)
+  body?: string;
+
+  @ApiProperty({ enum: ["DELIVERY", "ORDER"], required: false })
+  @IsOptional()
+  @IsIn(["DELIVERY", "ORDER"])
+  discountTarget?: "DELIVERY" | "ORDER";
+
+  @ApiProperty({ example: 20, minimum: 1, maximum: 100, required: false })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  discountPercent?: number;
+
+  @ApiProperty({ enum: ["ALL_OUTLETS", "OUTLET"], required: false })
+  @IsOptional()
+  @IsIn(["ALL_OUTLETS", "OUTLET"])
+  scope?: "ALL_OUTLETS" | "OUTLET";
+
+  @ApiProperty({ format: "uuid", required: false, nullable: true })
+  @IsOptional()
+  @IsUUID()
+  outletId?: string | null;
+
+  @ApiProperty({ example: "2026-07-14T00:00:00.000Z", required: false })
+  @IsOptional()
+  @IsDateString()
+  startsAt?: string;
+
+  @ApiProperty({ example: "2026-07-31T23:59:59.000Z", required: false })
+  @IsOptional()
+  @IsDateString()
+  endsAt?: string;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiProperty({ example: "rsc://outlets/outlet-id", required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  deepLink?: string | null;
+}
+
+export class TogglePromoActiveDto {
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isActive!: boolean;
 }
 
 export class CreateNotificationCampaignDto {

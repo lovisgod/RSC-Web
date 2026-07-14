@@ -395,10 +395,12 @@ export const initiatePaymentInputSchema = z
     deliveryLongitude: z.number().optional(),
     recipientPhone: nigerianPhoneNumberSchema.optional(),
     preparationNote: z.string().max(1000).optional(),
+    promoCode: z.string().trim().min(2).max(80).optional(),
     subtotalMinor: z.int().nonnegative(),
     deliveryFeeMinor: z.int().nonnegative(),
     serviceFeeMinor: z.int().nonnegative(),
     vatMinor: z.int().nonnegative(),
+    discountMinor: z.int().nonnegative().optional(),
     platformCommissionMinor: z.int().nonnegative(),
     totalMinor: z.int().nonnegative(),
     returnUrl: z.string().trim().min(1).max(2_000).optional(),
@@ -422,6 +424,7 @@ export const initiatePaymentResultSchema = z.object({
     deliveryFeeMinor: z.int().nonnegative(),
     serviceFeeMinor: z.int().nonnegative(),
     vatMinor: z.int().nonnegative(),
+    discountMinor: z.int().nonnegative(),
     platformCommissionMinor: z.int().nonnegative(),
     totalMinor: z.int().nonnegative(),
     currency: currencySchema,
@@ -722,6 +725,10 @@ export const adminOrdersResultSchema = z.object({
   totalSubOrders: z.int().nonnegative(),
   limit: z.int().min(1).max(100),
   offset: z.int().min(0),
+  next: z.int().min(0).nullable(),
+  previous: z.int().min(0).nullable(),
+  hasNext: z.boolean(),
+  hasPrevious: z.boolean(),
 });
 
 export const orderSummarySchema = z.object({
@@ -763,6 +770,17 @@ export const customerOrderSchema = z
     deletedAt: z.iso.datetime().nullable(),
   })
   .passthrough();
+
+export const paginatedCustomerOrdersSchema = z.object({
+  orders: z.array(customerOrderSchema),
+  total: z.int().nonnegative(),
+  limit: z.int().min(1).max(100),
+  offset: z.int().min(0),
+  next: z.int().min(0).nullable(),
+  previous: z.int().min(0).nullable(),
+  hasNext: z.boolean(),
+  hasPrevious: z.boolean(),
+});
 
 export const riderLocationSchema = z
   .object({
@@ -922,6 +940,48 @@ export const notificationSchema = z.object({
   isRead: z.boolean(),
   createdAt: z.iso.datetime(),
 });
+
+export const promoSchema = z.object({
+  id: z.uuid(),
+  code: z.string().min(1),
+  title: z.string().min(1),
+  body: z.string().min(1),
+  discountTarget: z.enum(["DELIVERY", "ORDER"]),
+  discountPercent: z.int().min(1).max(100),
+  scope: z.enum(["ALL_OUTLETS", "OUTLET"]),
+  outletId: z.uuid().nullable(),
+  startsAt: z.iso.datetime(),
+  endsAt: z.iso.datetime(),
+  isActive: z.boolean(),
+  deepLink: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const createPromoInputSchema = z
+  .object({
+    type: z.string().trim().min(2).max(80).default("PROMO"),
+    title: z.string().trim().min(2).max(160),
+    body: z.string().trim().min(2).max(2_000),
+    recipientRole: z.enum(["CUSTOMER", "ADMIN", "RIDER"]).default("CUSTOMER"),
+    promoCode: z.string().trim().min(2).max(80),
+    discountTarget: z.enum(["DELIVERY", "ORDER"]),
+    discountPercent: z.int().min(1).max(100),
+    scope: z.enum(["ALL_OUTLETS", "OUTLET"]),
+    outletId: z.uuid().optional(),
+    startsAt: z.iso.datetime(),
+    endsAt: z.iso.datetime(),
+    deepLink: z.string().trim().max(512).optional(),
+  })
+  .strict();
+
+export const updatePromoInputSchema = createPromoInputSchema
+  .omit({ type: true, recipientRole: true, promoCode: true })
+  .partial()
+  .extend({ isActive: z.boolean().optional(), outletId: z.uuid().nullable().optional() })
+  .strict();
+
+export const togglePromoActiveInputSchema = z.object({ isActive: z.boolean() }).strict();
 
 export const notificationPreferencesSchema = z.object({
   promotions: z.boolean(),
@@ -1112,7 +1172,12 @@ export type ProcessRefundInput = z.infer<typeof processRefundInputSchema>;
 export type PaymentRefund = z.infer<typeof paymentRefundSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
+export type PaginatedCustomerOrders = z.infer<typeof paginatedCustomerOrdersSchema>;
 export type Notification = z.infer<typeof notificationSchema>;
+export type Promo = z.infer<typeof promoSchema>;
+export type CreatePromoInput = z.infer<typeof createPromoInputSchema>;
+export type UpdatePromoInput = z.infer<typeof updatePromoInputSchema>;
+export type TogglePromoActiveInput = z.infer<typeof togglePromoActiveInputSchema>;
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
 export type UpdateNotificationPreferencesInput = z.infer<
   typeof updateNotificationPreferencesInputSchema
