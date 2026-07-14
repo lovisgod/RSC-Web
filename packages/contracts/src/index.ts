@@ -604,6 +604,7 @@ export const masterOrderStatusSchema = z.enum([
   "CONFIRMED",
   "PREPARING",
   "PARTIALLY_READY",
+  "PARTIALLY_FULFILLED",
   "READY",
   "OUT_FOR_DELIVERY",
   "DELIVERED",

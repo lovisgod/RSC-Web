@@ -83,19 +83,6 @@ export class NotificationsController {
     return this.notifications.updatePreferences(request.user!, input);
   }
 
-  @Post("promos")
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiMessage("Promo notifications queued")
-  @ApiOperation({
-    summary: "Broadcast an immediate promo notification by role",
-    description:
-      "Creates notification rows immediately for every user with the selected recipientRole and attempts push delivery for recipients with device tokens.",
-  })
-  broadcastPromo(@Req() request: AuthenticatedRequest, @Body() input: CreatePromoNotificationDto) {
-    return this.notifications.broadcastPromo(request.user!, input);
-  }
-
   @Get("promos")
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
@@ -107,6 +94,19 @@ export class NotificationsController {
   })
   listPromos(@Req() request: AuthenticatedRequest) {
     return this.notifications.listPromos(request.user!);
+  }
+
+  @Post("promos")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Promo notifications queued")
+  @ApiOperation({
+    summary: "Broadcast an immediate promo notification by role",
+    description:
+      "Creates notification rows immediately for every user with the selected recipientRole and attempts push delivery for recipients with device tokens.",
+  })
+  broadcastPromo(@Req() request: AuthenticatedRequest, @Body() input: CreatePromoNotificationDto) {
+    return this.notifications.broadcastPromo(request.user!, input);
   }
 
   @Post("campaigns")

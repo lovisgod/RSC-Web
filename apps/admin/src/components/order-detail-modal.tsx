@@ -44,6 +44,7 @@ const STATUS_LABELS: Record<string, string> = {
   CONFIRMED: "Confirmed",
   PREPARING: "Preparing",
   PARTIALLY_READY: "Part Ready",
+  PARTIALLY_FULFILLED: "Part Fulfilled",
   READY: "Ready",
   OUT_FOR_DELIVERY: "On Delivery",
   DELIVERED: "Delivered",
