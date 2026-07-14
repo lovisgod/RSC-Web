@@ -347,6 +347,54 @@ describe(PaymentsService.name, () => {
     expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 588750 }));
   });
 
+  it("accepts the pre-discount checkout total when a valid promo is applied", async () => {
+    promos.findOneBy.mockResolvedValueOnce({
+      code: "HALF",
+      title: "Half off",
+      body: "50% off",
+      discountTarget: "ORDER",
+      discountPercent: 50,
+      scope: "ALL_OUTLETS",
+      outletId: null,
+      startsAt: new Date("2026-07-01T00:00:00.000Z"),
+      endsAt: new Date("2099-07-31T23:59:59.000Z"),
+      isActive: true,
+    });
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: "https://moment.example/checkout",
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    await service.initiate(
+      { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+      {
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "12 Admiralty Way",
+        deliveryLatitude: 6.4474,
+        deliveryLongitude: 3.4542,
+        items: [{ menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9", quantity: 1 }],
+        promoCode: "half",
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 0,
+        vatMinor: 33750,
+        platformCommissionMinor: 45000,
+        totalMinor: 678750,
+      },
+    );
+
+    expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 453750 }));
+  });
+
   it("processes a super admin refund for a successful payment", async () => {
     const result = await service.processRefund(
       {

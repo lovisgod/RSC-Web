@@ -1,9 +1,11 @@
 import { ForbiddenException } from "@nestjs/common";
+import type { ConfigService } from "@nestjs/config";
 import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
+import type { ApplicationConfig } from "../config/configuration";
 import { Outlet } from "../outlets/outlet.entity";
 import { CatalogService } from "./catalog.service";
 import { ItemModifierGroup } from "./item-modifier-group.entity";
@@ -79,11 +81,20 @@ describe(CatalogService.name, () => {
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
   };
+  let preparationSuggestions: {
+    find: ReturnType<typeof vi.fn>;
+    findOneBy: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+    createQueryBuilder: ReturnType<typeof vi.fn>;
+  };
   let media: { uploadImage: ReturnType<typeof vi.fn> };
   let realtime: {
     emitOutletStatusUpdate: ReturnType<typeof vi.fn>;
     emitMenuItemAvailabilityUpdate: ReturnType<typeof vi.fn>;
   };
+  let config: { get: ReturnType<typeof vi.fn> };
   let service: CatalogService;
 
   beforeEach(() => {
@@ -183,7 +194,7 @@ describe(CatalogService.name, () => {
       emitOutletStatusUpdate: vi.fn(),
       emitMenuItemAvailabilityUpdate: vi.fn(),
     };
-    const preparationSuggestions = {
+    preparationSuggestions = {
       find: vi.fn().mockResolvedValue([]),
       findOneBy: vi.fn().mockResolvedValue(null),
       create: vi.fn((val: unknown) => val),
@@ -196,6 +207,15 @@ describe(CatalogService.name, () => {
         addOrderBy: vi.fn().mockReturnThis(),
         getMany: vi.fn().mockResolvedValue([]),
       })),
+    };
+    config = {
+      get: vi.fn().mockReturnValue({
+        provider: "noop",
+        baseUrl: "https://gen.pollinations.ai",
+        model: "openai",
+        apiKey: "",
+        timeoutMs: 500,
+      }),
     };
     service = new CatalogService(
       outlets as unknown as Repository<Outlet>,
@@ -210,6 +230,7 @@ describe(CatalogService.name, () => {
       preparationSuggestions as unknown as Repository<PreparationSuggestion>,
       media as never,
       realtime as never,
+      config as unknown as ConfigService<ApplicationConfig, true>,
     );
   });
 
@@ -302,5 +323,90 @@ describe(CatalogService.name, () => {
       expect.objectContaining({ ratingAverage: "4.50", ratingCount: 2 }),
     );
     expect(result.id).toBe(outletId);
+  });
+
+  it("prepends AI preparation suggestions when the provider returns valid JSON", async () => {
+    const configuredSuggestion = Object.assign({} as PreparationSuggestion, {
+      id: "c37fbf84-2e98-4e8a-b2d0-752ec86f1927",
+      text: "Pack sauce separately",
+      outletId: null,
+      menuItemId: null,
+      isActive: true,
+      sortOrder: 0,
+      createdAt: new Date("2026-07-14T10:00:00.000Z"),
+      updatedAt: new Date("2026-07-14T10:00:00.000Z"),
+      deletedAt: null,
+    });
+    preparationSuggestions.createQueryBuilder.mockReturnValueOnce({
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      addOrderBy: vi.fn().mockReturnThis(),
+      getMany: vi.fn().mockResolvedValue([configuredSuggestion]),
+    });
+    config.get.mockReturnValueOnce({
+      provider: "pollinations",
+      baseUrl: "https://gen.pollinations.ai",
+      model: "openai",
+      apiKey: "",
+      timeoutMs: 500,
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: '["Make it spicy","No onions"]' } }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const result = await service.listPreparationSuggestions({ outletId });
+
+    expect(result.map((suggestion) => suggestion.text)).toEqual([
+      "Make it spicy",
+      "No onions",
+      "Pack sauce separately",
+    ]);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://gen.pollinations.ai/v1/chat/completions",
+      expect.objectContaining({ method: "POST" }),
+    );
+
+    fetchSpy.mockRestore();
+  });
+
+  it("falls back to configured preparation suggestions when AI is unavailable", async () => {
+    const configuredSuggestion = Object.assign({} as PreparationSuggestion, {
+      id: "c37fbf84-2e98-4e8a-b2d0-752ec86f1927",
+      text: "Cut into small pieces",
+      outletId: null,
+      menuItemId: null,
+      isActive: true,
+      sortOrder: 0,
+      createdAt: new Date("2026-07-14T10:00:00.000Z"),
+      updatedAt: new Date("2026-07-14T10:00:00.000Z"),
+      deletedAt: null,
+    });
+    preparationSuggestions.createQueryBuilder.mockReturnValueOnce({
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      addOrderBy: vi.fn().mockReturnThis(),
+      getMany: vi.fn().mockResolvedValue([configuredSuggestion]),
+    });
+    config.get.mockReturnValueOnce({
+      provider: "pollinations",
+      baseUrl: "https://gen.pollinations.ai",
+      model: "openai",
+      apiKey: "",
+      timeoutMs: 500,
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("offline"));
+
+    await expect(service.listPreparationSuggestions({ outletId })).resolves.toEqual([
+      configuredSuggestion,
+    ]);
+
+    fetchSpy.mockRestore();
   });
 });

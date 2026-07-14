@@ -246,6 +246,7 @@ export class PaymentsService {
       vatMinor +
       platformCommissionMinor -
       discountMinor;
+    const undiscountedTotalMinor = totalMinor + discountMinor;
 
     // Validate client-provided totals to prevent cheating/manipulation
     if (input.subtotalMinor !== subtotalMinor) {
@@ -276,7 +277,7 @@ export class PaymentsService {
         `Platform commission mismatch: expected ${platformCommissionMinor}, got ${input.platformCommissionMinor}`,
       );
     }
-    if (input.totalMinor !== totalMinor) {
+    if (input.totalMinor !== totalMinor && input.totalMinor !== undiscountedTotalMinor) {
       throw new BadRequestException(
         `Total mismatch: expected ${totalMinor}, got ${input.totalMinor}`,
       );

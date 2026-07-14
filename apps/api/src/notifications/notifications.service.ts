@@ -220,7 +220,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     if (input.endsAt !== undefined) promo.endsAt = new Date(input.endsAt);
     if (input.isActive !== undefined) promo.isActive = input.isActive;
     if (input.deepLink !== undefined) promo.deepLink = input.deepLink;
-    this.validatePromo(promo);
+    this.validatePromo(promo, { requireFutureStart: input.startsAt !== undefined });
 
     return this.promos.save(promo);
   }
@@ -275,17 +275,20 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       isActive: true,
       deepLink: input.deepLink ?? null,
     });
-    this.validatePromo(promo);
+    this.validatePromo(promo, { requireFutureStart: true });
 
     return this.promos.save(promo);
   }
 
-  private validatePromo(promo: Promo): void {
+  private validatePromo(promo: Promo, options: { requireFutureStart?: boolean } = {}): void {
     if (promo.scope === "OUTLET" && !promo.outletId) {
       throw new BadRequestException("Outlet scoped promos require outletId");
     }
     if (promo.scope === "ALL_OUTLETS") {
       promo.outletId = null;
+    }
+    if (options.requireFutureStart && promo.startsAt < new Date()) {
+      throw new BadRequestException("Promo startsAt must not be in the past");
     }
     if (promo.endsAt <= promo.startsAt) {
       throw new BadRequestException("Promo endsAt must be after startsAt");
