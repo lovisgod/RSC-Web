@@ -96,13 +96,11 @@ function buildOutletPerformanceRows(
     });
   });
 
-  return Array.from(rows.values())
-    .filter((row) => row.volume > 0 || row.isOnline)
-    .sort((left, right) => {
-      if (right.volume !== left.volume) return right.volume - left.volume;
-      if (right.inProgress !== left.inProgress) return right.inProgress - left.inProgress;
-      return left.outletName.localeCompare(right.outletName);
-    });
+  return Array.from(rows.values()).sort((left, right) => {
+    if (right.volume !== left.volume) return right.volume - left.volume;
+    if (right.inProgress !== left.inProgress) return right.inProgress - left.inProgress;
+    return left.outletName.localeCompare(right.outletName);
+  });
 }
 
 function OutletPerformanceTable({
