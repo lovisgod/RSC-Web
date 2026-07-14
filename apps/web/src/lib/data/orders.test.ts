@@ -29,18 +29,28 @@ function order(status: string): Order {
 }
 
 describe("customer order status grouping", () => {
-  it.each(["CONFIRMED", "PREPARING", "PARTIALLY_READY", "READY", "OUT_FOR_DELIVERY"])(
-    "treats %s as active",
-    (status) => expect(isActiveOrder(order(status))).toBe(true),
-  );
+  it.each([
+    "CONFIRMED",
+    "PREPARING",
+    "PARTIALLY_READY",
+    "PARTIALLY_FULFILLED",
+    "READY",
+    "OUT_FOR_DELIVERY",
+  ])("treats %s as active", (status) => expect(isActiveOrder(order(status))).toBe(true));
 
   it.each(["PENDING_PAYMENT", "DELIVERED", "CANCELLED"])("does not treat %s as active", (status) =>
     expect(isActiveOrder(order(status))).toBe(false),
   );
 
-  it.each(["PENDING_PAYMENT", "CONFIRMED", "PARTIALLY_READY", "READY", "OUT_FOR_DELIVERY"])(
-    "shows %s in profile active orders",
-    (status) => expect(isProfileActiveOrder(order(status))).toBe(true),
+  it.each([
+    "PENDING_PAYMENT",
+    "CONFIRMED",
+    "PARTIALLY_READY",
+    "PARTIALLY_FULFILLED",
+    "READY",
+    "OUT_FOR_DELIVERY",
+  ])("shows %s in profile active orders", (status) =>
+    expect(isProfileActiveOrder(order(status))).toBe(true),
   );
 
   it.each(["DELIVERED", "CANCELLED"])("treats %s as completed", (status) =>

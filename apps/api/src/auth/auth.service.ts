@@ -203,8 +203,8 @@ export class AuthService {
     const emailHash = this.piiCrypto.searchHash(email);
 
     const [phoneCustomer, emailCustomer] = await Promise.all([
-      this.customers.findOneBy({ phoneHash }),
-      this.customers.findOneBy({ emailHash }),
+      this.customers.findOne({ where: { phoneHash }, withDeleted: true }),
+      this.customers.findOne({ where: { emailHash }, withDeleted: true }),
     ]);
 
     if (phoneCustomer || emailCustomer) {

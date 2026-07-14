@@ -13,6 +13,7 @@
   --rsc-status-pending-payment: var(--rsc-brand-strong);
   --rsc-status-confirmed: var(--rsc-main);
   --rsc-status-partially-ready: var(--rsc-brand);
+  --rsc-status-partially-fulfilled: var(--rsc-danger);
   --rsc-status-ready: #13795b;
   --rsc-status-out-for-delivery: var(--rsc-navy-light);
   --rsc-status-delivered: #176038;
@@ -1968,6 +1969,10 @@ th {
 
 .order-status--partially-ready {
   --order-status-color: var(--rsc-status-partially-ready);
+}
+
+.order-status--partially-fulfilled {
+  --order-status-color: var(--rsc-status-partially-fulfilled);
 }
 
 .order-status--ready {

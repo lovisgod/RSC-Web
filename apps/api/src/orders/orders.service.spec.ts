@@ -371,6 +371,43 @@ describe(OrdersService.name, () => {
     expect(masterOrders.save).toHaveBeenCalledWith(order);
   });
 
+  it("marks the master order partially fulfilled when one sub-order is accepted and another is rejected", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.CONFIRMED,
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const acceptedSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.ACCEPTED,
+    });
+    const rejectedSubOrder = Object.assign(new SubOrder(), {
+      id: "6b8537f9-b0c1-4df3-8567-aa49517d7de1",
+      masterOrderId: order.id,
+      outletId: otherOutletId,
+      status: SubOrderStatus.ACCEPTED,
+    });
+    const { service, masterOrders } = createService({
+      adminOutletId: otherOutletId,
+      orders: [order],
+      subOrders: [acceptedSubOrder, rejectedSubOrder],
+    });
+
+    await service.updateStatus(adminUser, rejectedSubOrder.id, {
+      status: MasterOrderStatus.CANCELLED,
+      rejectionReason: "Item unavailable",
+    });
+
+    expect(acceptedSubOrder.status).toBe(SubOrderStatus.ACCEPTED);
+    expect(rejectedSubOrder.status).toBe(SubOrderStatus.REJECTED);
+    expect(order.status).toBe(MasterOrderStatus.PARTIALLY_FULFILLED);
+    expect(masterOrders.save).toHaveBeenCalledWith(order);
+  });
+
   it("returns rejectionReason when an outlet admin rejects a sub-order", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
@@ -635,5 +672,45 @@ describe(OrdersService.name, () => {
       expect.stringContaining("u.id <> ALL"),
       expect.arrayContaining([expect.arrayContaining([riderUser.id])]),
     );
+  });
+
+  it("reconciles a stale master status when order detail is fetched", async () => {
+    const customerUser: AuthenticatedUser = {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      role: UserRole.CUSTOMER,
+      sessionId: "session-id",
+      accessTokenId: "access-token-id",
+    };
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: customerUser.id,
+      riderId: null,
+      status: MasterOrderStatus.CONFIRMED,
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const acceptedSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.ACCEPTED,
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const rejectedSubOrder = Object.assign(new SubOrder(), {
+      id: "6b8537f9-b0c1-4df3-8567-aa49517d7de1",
+      masterOrderId: order.id,
+      outletId: otherOutletId,
+      status: SubOrderStatus.REJECTED,
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const { service, masterOrders } = createService({
+      orders: [order],
+      subOrders: [acceptedSubOrder, rejectedSubOrder],
+    });
+
+    const result = await service.getMine(customerUser, order.id);
+
+    expect(result.order.status).toBe(MasterOrderStatus.PARTIALLY_FULFILLED);
+    expect(masterOrders.save).toHaveBeenCalledWith(order);
   });
 });

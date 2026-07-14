@@ -18,6 +18,7 @@ const STATUS_OPTIONS: { value: MasterOrderStatus | ""; label: string }[] = [
   { value: "CONFIRMED", label: "Confirmed" },
   { value: "PREPARING", label: "Preparing" },
   { value: "PARTIALLY_READY", label: "Part Ready" },
+  { value: "PARTIALLY_FULFILLED", label: "Part Fulfilled" },
   { value: "READY", label: "Ready" },
   { value: "OUT_FOR_DELIVERY", label: "On Delivery" },
   { value: "DELIVERED", label: "Delivered" },

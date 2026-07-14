@@ -17,7 +17,7 @@ const PREPARATION_STEPS: TimelineStep[] = [
   {
     key: "PREPARING",
     label: "Kitchens preparing",
-    matchStatuses: ["PREPARING", "PARTIALLY_READY"],
+    matchStatuses: ["PREPARING", "PARTIALLY_READY", "PARTIALLY_FULFILLED"],
   },
   { key: "READY", label: "Order ready", matchStatuses: ["READY"] },
 ];
@@ -46,6 +46,7 @@ const STATUS_ORDER = [
   "CONFIRMED",
   "PREPARING",
   "PARTIALLY_READY",
+  "PARTIALLY_FULFILLED",
   "READY",
   "OUT_FOR_DELIVERY",
   "DELIVERED",

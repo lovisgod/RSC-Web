@@ -65,7 +65,8 @@ export class RealtimeController {
             masterOrderId: "uuid",
             customerId: "uuid",
             riderId: "uuid|null",
-            status: "PENDING|CONFIRMED|PREPARING|READY|OUT_FOR_DELIVERY|DELIVERED|CANCELLED",
+            status:
+              "PENDING|CONFIRMED|PREPARING|PARTIALLY_READY|PARTIALLY_FULFILLED|READY|OUT_FOR_DELIVERY|DELIVERED|CANCELLED",
             updatedAt: "ISO-8601 timestamp",
           },
         },

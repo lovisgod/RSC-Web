@@ -343,6 +343,7 @@ export class OrdersService {
         riderId: user.id,
         status: In([
           MasterOrderStatus.CONFIRMED,
+          MasterOrderStatus.PARTIALLY_FULFILLED,
           MasterOrderStatus.PARTIALLY_READY,
           MasterOrderStatus.READY,
           MasterOrderStatus.OUT_FOR_DELIVERY,
@@ -733,6 +734,16 @@ export class OrdersService {
       }),
       this.getLatestRiderLocation(order.id),
     ]);
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+    if (
+      derivedStatus !== order.status &&
+      order.status !== MasterOrderStatus.PENDING_PAYMENT &&
+      (order.status !== MasterOrderStatus.CANCELLED ||
+        derivedStatus === MasterOrderStatus.CANCELLED)
+    ) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
 
     let rider = null;
     if (order.riderId) {
@@ -1046,6 +1057,7 @@ export class OrdersService {
       [MasterOrderStatus.CONFIRMED]: SubOrderStatus.ACCEPTED,
       [MasterOrderStatus.PREPARING]: SubOrderStatus.PREPARING,
       [MasterOrderStatus.PARTIALLY_READY]: SubOrderStatus.READY,
+      [MasterOrderStatus.PARTIALLY_FULFILLED]: SubOrderStatus.REJECTED,
       [MasterOrderStatus.READY]: SubOrderStatus.READY,
       [MasterOrderStatus.OUT_FOR_DELIVERY]: SubOrderStatus.DISPATCHED,
       [MasterOrderStatus.DELIVERED]: SubOrderStatus.COLLECTED,
@@ -1062,6 +1074,10 @@ export class OrdersService {
 
     if (subOrders.every((subOrder) => subOrder.status === SubOrderStatus.REJECTED)) {
       return MasterOrderStatus.CANCELLED;
+    }
+
+    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.REJECTED)) {
+      return MasterOrderStatus.PARTIALLY_FULFILLED;
     }
 
     if (
