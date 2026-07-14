@@ -220,6 +220,10 @@ describe(OrdersService.name, () => {
       totalSubOrders: 1,
       limit: 50,
       offset: 0,
+      next: null,
+      previous: null,
+      hasNext: false,
+      hasPrevious: false,
     });
 
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
@@ -244,7 +248,17 @@ describe(OrdersService.name, () => {
         limit: 25,
         offset: 10,
       }),
-    ).resolves.toEqual({ orders: [], total: 0, totalSubOrders: 0, limit: 25, offset: 10 });
+    ).resolves.toEqual({
+      orders: [],
+      total: 0,
+      totalSubOrders: 0,
+      limit: 25,
+      offset: 10,
+      next: null,
+      previous: 0,
+      hasNext: false,
+      hasPrevious: true,
+    });
 
     expect(queryBuilder.take).toHaveBeenCalledWith(25);
     expect(queryBuilder.skip).toHaveBeenCalledWith(10);

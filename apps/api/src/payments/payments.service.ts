@@ -15,6 +15,7 @@ import { ItemModifier } from "../catalog/item-modifier.entity";
 import { MenuItem } from "../catalog/menu-item.entity";
 import { Outlet } from "../outlets/outlet.entity";
 import { RealtimeService } from "../realtime/realtime.service";
+import { Promo } from "../notifications/promo.entity";
 import { MasterOrder } from "../orders/master-order.entity";
 import { OrderLineItem } from "../orders/order-line-item.entity";
 import { MasterOrderStatus } from "../orders/order-status.enum";
@@ -75,6 +76,7 @@ export class PaymentsService {
     @InjectRepository(OrderLineItem) private readonly lineItems: Repository<OrderLineItem>,
     @InjectRepository(Payment) private readonly payments: Repository<Payment>,
     @InjectRepository(PaymentRefund) private readonly refunds: Repository<PaymentRefund>,
+    @InjectRepository(Promo) private readonly promos: Repository<Promo>,
     private readonly dataSource: DataSource,
     private readonly delivery: DeliveryService,
     private readonly piiCrypto: PiiCryptoService,
@@ -231,8 +233,19 @@ export class PaymentsService {
     });
 
     const platformCommissionMinor = splitRoutes.reduce((sum, r) => sum + r.commissionMinor, 0);
+    const discountMinor = await this.calculatePromoDiscount(input, {
+      subtotalMinor,
+      deliveryFeeMinor,
+      outletIds,
+      grouped,
+    });
     const totalMinor =
-      subtotalMinor + deliveryFeeMinor + serviceFeeMinor + vatMinor + platformCommissionMinor;
+      subtotalMinor +
+      deliveryFeeMinor +
+      serviceFeeMinor +
+      vatMinor +
+      platformCommissionMinor -
+      discountMinor;
 
     // Validate client-provided totals to prevent cheating/manipulation
     if (input.subtotalMinor !== subtotalMinor) {
@@ -252,6 +265,11 @@ export class PaymentsService {
     }
     if (input.vatMinor !== vatMinor) {
       throw new BadRequestException(`VAT mismatch: expected ${vatMinor}, got ${input.vatMinor}`);
+    }
+    if (input.discountMinor !== undefined && input.discountMinor !== discountMinor) {
+      throw new BadRequestException(
+        `Discount mismatch: expected ${discountMinor}, got ${input.discountMinor}`,
+      );
     }
     if (input.platformCommissionMinor !== platformCommissionMinor) {
       throw new BadRequestException(
@@ -287,7 +305,7 @@ export class PaymentsService {
           deliveryFeeMinor,
           serviceFeeMinor,
           vatMinor,
-          discountMinor: 0,
+          discountMinor,
           totalMinor,
           currency: "NGN",
           deliveryMode: input.deliveryMode,
@@ -368,6 +386,7 @@ export class PaymentsService {
         deliveryFeeMinor,
         serviceFeeMinor,
         vatMinor,
+        discountMinor,
         platformCommissionMinor,
         totalMinor,
         currency: "NGN",
@@ -472,6 +491,7 @@ export class PaymentsService {
         deliveryFeeMinor: order.deliveryFeeMinor,
         serviceFeeMinor: order.serviceFeeMinor,
         vatMinor: order.vatMinor,
+        discountMinor: order.discountMinor,
         platformCommissionMinor,
         totalMinor: order.totalMinor,
         currency: order.currency,
@@ -758,6 +778,43 @@ export class PaymentsService {
         throw new BadRequestException("One or more outlets are currently offline");
       }
     }
+  }
+
+  private async calculatePromoDiscount(
+    input: InitiatePaymentDto,
+    context: {
+      subtotalMinor: number;
+      deliveryFeeMinor: number;
+      outletIds: string[];
+      grouped: Map<string, PricedLine[]>;
+    },
+  ): Promise<number> {
+    const code = input.promoCode?.trim().toUpperCase();
+    if (!code) {
+      return 0;
+    }
+
+    const promo = await this.promos.findOneBy({ code });
+    const now = new Date();
+    if (!promo || !promo.isActive || promo.startsAt > now || promo.endsAt < now) {
+      throw new BadRequestException("Promo code is invalid or expired");
+    }
+    if (promo.scope === "OUTLET") {
+      if (!promo.outletId || !context.outletIds.includes(promo.outletId)) {
+        throw new BadRequestException("Promo code is not valid for this outlet");
+      }
+    }
+
+    const basisMinor =
+      promo.discountTarget === "DELIVERY"
+        ? context.deliveryFeeMinor
+        : promo.scope === "OUTLET" && promo.outletId
+          ? (context.grouped
+              .get(promo.outletId)
+              ?.reduce((sum, line) => sum + line.lineTotalMinor, 0) ?? 0)
+          : context.subtotalMinor;
+
+    return Math.min(basisMinor, Math.round((basisMinor * promo.discountPercent) / 100));
   }
 
   // ---------------------------------------------------------------------------

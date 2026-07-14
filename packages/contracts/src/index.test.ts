@@ -660,6 +660,10 @@ describe("customer registration contracts", () => {
         totalSubOrders: 1,
         limit: 50,
         offset: 0,
+        next: null,
+        previous: null,
+        hasNext: false,
+        hasPrevious: false,
       }),
     ).toBeTruthy();
   });

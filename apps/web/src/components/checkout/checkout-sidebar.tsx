@@ -88,6 +88,9 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
           {totals.serviceFeeMinor > 0 && (
             <FeeLine label="Service fee" value={formatNaira(totals.serviceFeeMinor)} muted />
           )}
+          {totals.discountMinor > 0 && (
+            <FeeLine label="Promo discount" value={`-${formatNaira(totals.discountMinor)}`} />
+          )}
           <div className="pt-2 border-t border-gray-100 flex justify-between">
             <span className="text-sm font-bold text-gray-900">Total</span>
             <span className="text-sm font-bold" style={{ color: "var(--rsc-main)" }}>

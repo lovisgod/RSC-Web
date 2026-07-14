@@ -12,6 +12,8 @@ import {
   CreateNotificationDto,
   CreatePromoNotificationDto,
   RegisterDeviceTokenDto,
+  TogglePromoActiveDto,
+  UpdatePromoDto,
   UpdateNotificationPreferencesDto,
 } from "./dto/notification.dto";
 import { NotificationsService } from "./notifications.service";
@@ -84,13 +86,11 @@ export class NotificationsController {
   }
 
   @Get("promos")
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiMessage("Promo notifications retrieved")
+  @ApiMessage("Promos retrieved")
   @ApiOperation({
-    summary: "List recent promo notifications",
+    summary: "List promo offers",
     description:
-      "Admin reporting endpoint for immediate promo broadcasts created through /notifications/promos.",
+      "Customers see currently active promos. Admins see recent promo offers including inactive, future, and expired offers.",
   })
   listPromos(@Req() request: AuthenticatedRequest) {
     return this.notifications.listPromos(request.user!);
@@ -107,6 +107,32 @@ export class NotificationsController {
   })
   broadcastPromo(@Req() request: AuthenticatedRequest, @Body() input: CreatePromoNotificationDto) {
     return this.notifications.broadcastPromo(request.user!, input);
+  }
+
+  @Patch("promos/:id")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Promo updated")
+  @ApiOperation({ summary: "Edit a promo offer" })
+  updatePromo(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() input: UpdatePromoDto,
+  ) {
+    return this.notifications.updatePromo(request.user!, id, input);
+  }
+
+  @Patch("promos/:id/active")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiMessage("Promo active state updated")
+  @ApiOperation({ summary: "Toggle a promo active or inactive" })
+  togglePromoActive(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() input: TogglePromoActiveDto,
+  ) {
+    return this.notifications.togglePromoActive(request.user!, id, input);
   }
 
   @Post("campaigns")
