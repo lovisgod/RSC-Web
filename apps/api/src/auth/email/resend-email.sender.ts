@@ -8,6 +8,7 @@ import type {
   SendTemporaryPasswordEmailInput,
   SendWelcomeVerificationEmailInput,
 } from "./email-sender";
+import { renderEmailTemplate } from "./email-template";
 
 interface ResendSendResponse {
   id?: string;
@@ -28,12 +29,15 @@ export class ResendEmailSender implements EmailSender {
     await this.sendEmail({
       to: input.email,
       subject: "Welcome to RSC - verify your email",
-      html: `
-        <p>Hi ${this.escapeHtml(input.name)},</p>
-        <p>Welcome to RSC.</p>
-        <p>Your email verification code is <strong>${input.code}</strong>.</p>
-        <p>It expires in ${input.expiresInMinutes} minutes.</p>
-      `,
+      html: renderEmailTemplate({
+        preheader: `Your verification code expires in ${input.expiresInMinutes} minutes.`,
+        heading: "Verify your email",
+        greetingName: input.name,
+        intro: "Welcome to RSC. Use the verification code below to finish setting up your account.",
+        codeLabel: "Verification code",
+        code: input.code,
+        body: `This code expires in ${input.expiresInMinutes} minutes.`,
+      }),
     });
   }
 
@@ -41,11 +45,15 @@ export class ResendEmailSender implements EmailSender {
     await this.sendEmail({
       to: input.email,
       subject: "Reset your RSC password",
-      html: `
-        <p>Hi ${this.escapeHtml(input.name)},</p>
-        <p>Your RSC password reset code is <strong>${input.code}</strong>.</p>
-        <p>It expires in ${input.expiresInMinutes} minutes.</p>
-      `,
+      html: renderEmailTemplate({
+        preheader: `Your password reset code expires in ${input.expiresInMinutes} minutes.`,
+        heading: "Reset your password",
+        greetingName: input.name,
+        intro: "Use the code below to reset your RSC password.",
+        codeLabel: "Password reset code",
+        code: input.code,
+        body: `This code expires in ${input.expiresInMinutes} minutes.`,
+      }),
     });
   }
 
@@ -53,12 +61,15 @@ export class ResendEmailSender implements EmailSender {
     await this.sendEmail({
       to: input.email,
       subject: `Your RSC ${input.role} account`,
-      html: `
-        <p>Hi ${this.escapeHtml(input.name)},</p>
-        <p>Your RSC ${this.escapeHtml(input.role)} account has been created.</p>
-        <p>Your temporary password is <strong>${this.escapeHtml(input.temporaryPassword)}</strong>.</p>
-        <p>Please sign in and change it.</p>
-      `,
+      html: renderEmailTemplate({
+        preheader: `Your RSC ${input.role} account is ready.`,
+        heading: "Your account is ready",
+        greetingName: input.name,
+        intro: `Your RSC ${input.role} account has been created. Use this temporary password to sign in.`,
+        codeLabel: "Temporary password",
+        code: input.temporaryPassword,
+        body: "Please change this password after your first sign in.",
+      }),
     });
   }
 
@@ -108,14 +119,5 @@ export class ResendEmailSender implements EmailSender {
       this.logger.error("Resend email request failed");
       throw new BadGatewayException("Unable to send email verification code");
     }
-  }
-
-  private escapeHtml(value: string): string {
-    return value
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
   }
 }

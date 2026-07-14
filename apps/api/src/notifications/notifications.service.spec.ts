@@ -179,6 +179,39 @@ describe(NotificationsService.name, () => {
         title: "Weekend discount",
       }),
     );
+    const createdNotification = notifications.create.mock.calls[0]?.[0] as
+      | Partial<Notification>
+      | undefined;
+    expect(createdNotification?.data).toEqual(expect.objectContaining({ promo: true }));
+  });
+
+  it("lists recent promo notifications for admins", async () => {
+    const savedNotification = Object.assign(new Notification(), {
+      id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+      recipientId,
+      recipientRole: UserRole.CUSTOMER,
+      type: "SPECIAL_PERIOD",
+      title: "Weekend discount",
+      body: "Use code WEEKEND for a discount this weekend.",
+      isRead: false,
+    });
+    notifications.find.mockResolvedValueOnce([savedNotification]);
+
+    await expect(
+      service.listPromos({
+        id: "31a2df7e-7f2a-4433-9d5e-1caad0f91c4d",
+        role: UserRole.ADMIN,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      }),
+    ).resolves.toEqual([savedNotification]);
+
+    expect(notifications.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        order: { createdAt: "DESC" },
+        take: 100,
+      }),
+    );
   });
 
   it("lists notifications for the authenticated recipient only", async () => {
