@@ -1,10 +1,13 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
+import { randomUUID } from "node:crypto";
 import { In, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
+import type { ApplicationConfig } from "../config/configuration";
 import { MediaService, type UploadedImageFile } from "../media/media.service";
 import { Outlet } from "../outlets/outlet.entity";
 import { RealtimeService } from "../realtime/realtime.service";
@@ -47,6 +50,8 @@ export interface MenuItemsPage {
 
 @Injectable()
 export class CatalogService {
+  private readonly logger = new Logger(CatalogService.name);
+
   constructor(
     @InjectRepository(Outlet) private readonly outlets: Repository<Outlet>,
     @InjectRepository(Customer) private readonly users: Repository<Customer>,
@@ -62,6 +67,7 @@ export class CatalogService {
     private readonly preparationSuggestions: Repository<PreparationSuggestion>,
     private readonly media: MediaService,
     private readonly realtime: RealtimeService,
+    private readonly config: ConfigService<ApplicationConfig, true>,
   ) {}
 
   async listOutlets(user: AuthenticatedUser): Promise<Outlet[]> {
@@ -783,6 +789,15 @@ export class CatalogService {
   async listPreparationSuggestions(
     query: QueryPreparationSuggestionsDto,
   ): Promise<PreparationSuggestion[]> {
+    const fallbackSuggestions = await this.listConfiguredPreparationSuggestions(query);
+    const aiSuggestions = await this.generateAiPreparationSuggestions(query, fallbackSuggestions);
+
+    return dedupePreparationSuggestions([...aiSuggestions, ...fallbackSuggestions]).slice(0, 10);
+  }
+
+  private async listConfiguredPreparationSuggestions(
+    query: QueryPreparationSuggestionsDto,
+  ): Promise<PreparationSuggestion[]> {
     const qb = this.preparationSuggestions
       .createQueryBuilder("suggestion")
       .where("suggestion.isActive = true");
@@ -808,6 +823,75 @@ export class CatalogService {
     }
 
     return qb.orderBy("suggestion.sortOrder", "ASC").addOrderBy("suggestion.text", "ASC").getMany();
+  }
+
+  private async generateAiPreparationSuggestions(
+    query: QueryPreparationSuggestionsDto,
+    fallbackSuggestions: PreparationSuggestion[],
+  ): Promise<PreparationSuggestion[]> {
+    const aiConfig = this.config.get("preparationSuggestionsAi", { infer: true });
+    if (aiConfig.provider === "noop") {
+      return [];
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), aiConfig.timeoutMs);
+
+    try {
+      const [menuItem, outlet] = await Promise.all([
+        query.menuItemId ? this.items.findOneBy({ id: query.menuItemId }) : Promise.resolve(null),
+        query.outletId ? this.outlets.findOneBy({ id: query.outletId }) : Promise.resolve(null),
+      ]);
+      const prompt = buildPreparationSuggestionPrompt({
+        query,
+        menuItemName: menuItem?.name ?? null,
+        outletName: outlet?.name ?? null,
+        fallbackTexts: fallbackSuggestions.map((suggestion) => suggestion.text).slice(0, 8),
+      });
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      if (aiConfig.apiKey) {
+        headers.authorization = `Bearer ${aiConfig.apiKey}`;
+      }
+
+      const response = await fetch(`${aiConfig.baseUrl}/v1/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: aiConfig.model,
+          messages: [
+            {
+              role: "system",
+              content:
+                "You generate concise restaurant order preparation-note suggestions. Return only valid JSON.",
+            },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.4,
+          max_tokens: 160,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI suggestion provider responded with ${response.status}`);
+      }
+
+      const payload = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const content = payload.choices?.[0]?.message?.content;
+      const texts = parseAiSuggestionTexts(content);
+      return texts.map((text, index) => generatedPreparationSuggestion(text, query, index));
+    } catch (error) {
+      this.logger.warn(
+        `AI preparation suggestions unavailable; falling back to configured suggestions: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      );
+      return [];
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async listPreparationSuggestionsAdmin(
@@ -872,6 +956,87 @@ export class CatalogService {
     this.realtime.emitPreparationSuggestionDeleted(id);
     return { deleted: true };
   }
+}
+
+function buildPreparationSuggestionPrompt(input: {
+  query: QueryPreparationSuggestionsDto;
+  menuItemName: string | null;
+  outletName: string | null;
+  fallbackTexts: string[];
+}): string {
+  return JSON.stringify({
+    task: "Generate 3 to 5 concise preparation note suggestions for a food-ordering customer.",
+    rules: [
+      "Return a JSON array of strings only.",
+      "Each suggestion must be 80 characters or less.",
+      "No numbering, markdown, quotes around the whole response, or explanations.",
+      "Avoid duplicates of existing configured fallback suggestions.",
+      "Keep suggestions practical and safe, like spice level, sauce, cutlery, and packaging notes.",
+    ],
+    context: {
+      outletName: input.outletName,
+      menuItemName: input.menuItemName,
+      customerSearch: input.query.q ?? null,
+      existingFallbackSuggestions: input.fallbackTexts,
+    },
+  });
+}
+
+function parseAiSuggestionTexts(content: string | undefined): string[] {
+  if (!content) {
+    return [];
+  }
+
+  const trimmed = content.trim();
+  const jsonText = trimmed.startsWith("[") ? trimmed : (trimmed.match(/\[[\s\S]*\]/)?.[0] ?? "[]");
+
+  try {
+    const parsed = JSON.parse(jsonText) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim().replace(/\s+/g, " "))
+      .filter((value) => value.length > 0 && value.length <= 80)
+      .slice(0, 5);
+  } catch {
+    return [];
+  }
+}
+
+function generatedPreparationSuggestion(
+  text: string,
+  query: QueryPreparationSuggestionsDto,
+  index: number,
+): PreparationSuggestion {
+  const now = new Date();
+  return Object.assign(new PreparationSuggestion(), {
+    id: randomUUID(),
+    text,
+    outletId: query.outletId ?? null,
+    menuItemId: query.menuItemId ?? null,
+    isActive: true,
+    sortOrder: index,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  });
+}
+
+function dedupePreparationSuggestions(
+  suggestions: PreparationSuggestion[],
+): PreparationSuggestion[] {
+  const seen = new Set<string>();
+  return suggestions.filter((suggestion) => {
+    const key = suggestion.text.trim().toLowerCase();
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 export interface PublicOutletCatalog extends Outlet {
