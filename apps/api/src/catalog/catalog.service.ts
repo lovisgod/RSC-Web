@@ -853,7 +853,7 @@ export class CatalogService {
         headers.authorization = `Bearer ${aiConfig.apiKey}`;
       }
 
-      const response = await fetch(`${aiConfig.baseUrl}/v1/chat/completions`, {
+      const response = await fetch(pollinationsTextUrl(aiConfig.baseUrl), {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -980,6 +980,15 @@ function buildPreparationSuggestionPrompt(input: {
       existingFallbackSuggestions: input.fallbackTexts,
     },
   });
+}
+
+function pollinationsTextUrl(baseUrl: string): string {
+  const normalized = baseUrl.replace(/\/$/, "");
+  if (normalized.includes("gen.pollinations.ai")) {
+    return "https://text.pollinations.ai/openai";
+  }
+
+  return `${normalized}/openai`;
 }
 
 function parseAiSuggestionTexts(content: string | undefined): string[] {

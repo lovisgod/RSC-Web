@@ -233,7 +233,7 @@ export default function configuration(): ApplicationConfig {
     preparationSuggestionsAi: {
       provider:
         process.env.PREPARATION_SUGGESTIONS_AI_PROVIDER === "noop" ? "noop" : "pollinations",
-      baseUrl: (process.env.POLLINATIONS_BASE_URL ?? "https://gen.pollinations.ai").replace(
+      baseUrl: (process.env.POLLINATIONS_BASE_URL ?? "https://text.pollinations.ai").replace(
         /\/$/,
         "",
       ),
