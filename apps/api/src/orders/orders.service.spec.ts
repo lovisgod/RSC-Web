@@ -183,6 +183,87 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("marks dispatched sub-orders collected when rider completes delivery", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "4c14d989-9057-4380-a2ad-63a8a4ec7abf",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: riderUser.id,
+      status: MasterOrderStatus.OUT_FOR_DELIVERY,
+      deliveryCode: "956922",
+      createdAt: new Date("2026-07-15T20:00:00.000Z"),
+      updatedAt: new Date("2026-07-15T20:52:40.541Z"),
+    });
+    const subOrder = Object.assign(new SubOrder(), {
+      id: "01420207-6270-4b2b-9050-3d6b7c5d9751",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.DISPATCHED,
+      createdAt: new Date("2026-07-15T20:00:00.000Z"),
+    });
+    const { service, subOrders, masterOrders, realtime } = createService({
+      orders: [order],
+      subOrders: [subOrder],
+    });
+
+    const result = await service.completeDelivery(riderUser, order.id, { code: "956922" });
+
+    expect(subOrder.status).toBe(SubOrderStatus.COLLECTED);
+    expect(subOrders.save).toHaveBeenCalledWith(subOrder);
+    expect(masterOrders.save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: MasterOrderStatus.DELIVERED }),
+    );
+    expect(result.order.status).toBe(MasterOrderStatus.DELIVERED);
+    expect(result.subOrders).toEqual([
+      expect.objectContaining({ id: subOrder.id, status: SubOrderStatus.COLLECTED }),
+    ]);
+    expect(realtime.emitOrderStatusUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: MasterOrderStatus.DELIVERED }),
+    );
+  });
+
+  it("delivers the fulfillable part of a mixed rejected delivery when rider completes delivery", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "255b671b-fbc3-4986-8ff0-24757343939b",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: riderUser.id,
+      status: MasterOrderStatus.OUT_FOR_DELIVERY,
+      deliveryCode: "123456",
+      createdAt: new Date("2026-07-15T20:00:00.000Z"),
+      updatedAt: new Date("2026-07-15T20:52:40.541Z"),
+    });
+    const dispatchedSubOrder = Object.assign(new SubOrder(), {
+      id: "01420207-6270-4b2b-9050-3d6b7c5d9751",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.DISPATCHED,
+      createdAt: new Date("2026-07-15T20:00:00.000Z"),
+    });
+    const rejectedSubOrder = Object.assign(new SubOrder(), {
+      id: "2b039b0c-0e1a-4e3e-8387-4a8c60621581",
+      masterOrderId: order.id,
+      outletId: otherOutletId,
+      status: SubOrderStatus.REJECTED,
+      createdAt: new Date("2026-07-15T20:00:00.000Z"),
+    });
+    const { service, subOrders } = createService({
+      orders: [order],
+      subOrders: [dispatchedSubOrder, rejectedSubOrder],
+    });
+
+    const result = await service.completeDelivery(riderUser, order.id, { code: "123456" });
+
+    expect(dispatchedSubOrder.status).toBe(SubOrderStatus.COLLECTED);
+    expect(rejectedSubOrder.status).toBe(SubOrderStatus.REJECTED);
+    expect(subOrders.save).toHaveBeenCalledTimes(1);
+    expect(result.order.status).toBe(MasterOrderStatus.DELIVERED);
+    expect(result.subOrders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: dispatchedSubOrder.id, status: SubOrderStatus.COLLECTED }),
+        expect.objectContaining({ id: rejectedSubOrder.id, status: SubOrderStatus.REJECTED }),
+      ]),
+    );
+  });
+
   it("scopes outlet admins to their outlet and returns visible sub-orders and line items", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "50296ef7-fb39-4b42-ae55-81caec8efd21",
