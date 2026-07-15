@@ -145,6 +145,12 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
                 Share the temporary password with <strong>{result.name}</strong>. They must change
                 it on first login.
               </p>
+              {!result.temporaryPasswordEmailSent && (
+                <p className="field-error" role="status">
+                  Rider was created, but the temporary password email could not be sent. Copy and
+                  share the password manually.
+                </p>
+              )}
 
               <div className="admin-success__field">
                 <span className="admin-success__label">Temporary Password</span>

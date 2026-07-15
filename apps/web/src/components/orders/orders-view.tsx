@@ -3,12 +3,13 @@
 import { EmptyState } from "@rsc/ui";
 import { useState } from "react";
 
-import { OrderCard } from "@/src/components/orders/order-card";
+import { OrderCard, OrderDetailsModal } from "@/src/components/orders/order-card";
 import {
   useCancelledOrders,
   useCompletedOrders,
   useProfileActiveOrders,
 } from "@/src/hooks/use-orders";
+import type { Order } from "@/src/lib/data/orders";
 
 type Tab = "active" | "completed" | "cancelled";
 
@@ -36,7 +37,7 @@ function TabButton({
   );
 }
 
-function ActiveTab() {
+function ActiveTab({ onViewDetails }: { onViewDetails: (order: Order) => void }) {
   const { data: orders, isPending, isError } = useProfileActiveOrders();
 
   if (isPending) {
@@ -64,13 +65,18 @@ function ActiveTab() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="active" />
+        <OrderCard
+          key={order.customerViewId ?? order.id}
+          order={order}
+          variant="active"
+          onViewDetails={onViewDetails}
+        />
       ))}
     </div>
   );
 }
 
-function CompletedTab() {
+function CompletedTab({ onViewDetails }: { onViewDetails: (order: Order) => void }) {
   const { data: orders, isPending, isError } = useCompletedOrders();
 
   if (isPending) {
@@ -98,13 +104,18 @@ function CompletedTab() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="completed" />
+        <OrderCard
+          key={order.customerViewId ?? order.id}
+          order={order}
+          variant="completed"
+          onViewDetails={onViewDetails}
+        />
       ))}
     </div>
   );
 }
 
-function CancelledTab() {
+function CancelledTab({ onViewDetails }: { onViewDetails: (order: Order) => void }) {
   const { data: orders, isPending, isError } = useCancelledOrders();
 
   if (isPending) {
@@ -132,33 +143,60 @@ function CancelledTab() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="cancelled" />
+        <OrderCard
+          key={order.customerViewId ?? order.id}
+          order={order}
+          variant="cancelled"
+          onViewDetails={onViewDetails}
+        />
       ))}
     </div>
   );
 }
 
-export function OrdersView() {
+interface OrdersViewProps {
+  onViewDetails?: (order: Order) => void;
+}
+
+export function OrdersView({ onViewDetails }: OrdersViewProps = {}) {
   const [tab, setTab] = useState<Tab>("active");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const handleViewDetails = onViewDetails ?? setSelectedOrder;
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
       <div className="flex gap-6">
-        <TabButton label="Active" active={tab === "active"} onClick={() => setTab("active")} />
+        <TabButton
+          label="Active"
+          active={tab === "active"}
+          onClick={() => {
+            setTab("active");
+            setSelectedOrder(null);
+          }}
+        />
         <TabButton
           label="Completed"
           active={tab === "completed"}
-          onClick={() => setTab("completed")}
+          onClick={() => {
+            setTab("completed");
+            setSelectedOrder(null);
+          }}
         />
         <TabButton
           label="Cancelled"
           active={tab === "cancelled"}
-          onClick={() => setTab("cancelled")}
+          onClick={() => {
+            setTab("cancelled");
+            setSelectedOrder(null);
+          }}
         />
       </div>
-      {tab === "active" && <ActiveTab />}
-      {tab === "completed" && <CompletedTab />}
-      {tab === "cancelled" && <CancelledTab />}
+      {!onViewDetails && selectedOrder && (
+        <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+      )}
+      {tab === "active" && <ActiveTab onViewDetails={handleViewDetails} />}
+      {tab === "completed" && <CompletedTab onViewDetails={handleViewDetails} />}
+      {tab === "cancelled" && <CancelledTab onViewDetails={handleViewDetails} />}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { EmptyState } from "@rsc/ui";
 import type { MasterOrderStatus } from "@rsc/contracts";
 import Skeleton from "@mui/material/Skeleton";
-import { ShoppingBag } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 
 import { OrderDetailModal } from "../components/order-detail-modal";
@@ -11,14 +11,15 @@ import type { AdminOrderItem } from "../lib/api";
 import { orderStatusClass } from "../lib/order-status";
 
 const COLUMNS = 7;
+const ORDERS_PAGE_LIMIT = 20;
 
 const STATUS_OPTIONS: { value: MasterOrderStatus | ""; label: string }[] = [
   { value: "", label: "All Statuses" },
   { value: "PENDING_PAYMENT", label: "Awaiting Payment" },
   { value: "CONFIRMED", label: "Confirmed" },
   { value: "PREPARING", label: "Preparing" },
-  { value: "PARTIALLY_READY", label: "Part Ready" },
-  { value: "PARTIALLY_FULFILLED", label: "Part Fulfilled" },
+  { value: "PARTIALLY_READY", label: "Partially Ready" },
+  { value: "PARTIALLY_FULFILLED", label: "Partially Fulfilled" },
   { value: "READY", label: "Ready" },
   { value: "OUT_FOR_DELIVERY", label: "On Delivery" },
   { value: "DELIVERED", label: "Delivered" },
@@ -79,6 +80,7 @@ export function OrdersFeedPage() {
   const [status, setStatus] = useState<MasterOrderStatus | "">("");
   const [deliveryMode, setDeliveryMode] = useState<"" | "DELIVERY" | "TAKEOUT">("");
   const [viewingOrder, setViewingOrder] = useState<AdminOrderItem | null>(null);
+  const [offset, setOffset] = useState(0);
 
   // Resolve selected outlet name → ID for the API
   const selectedOutletId = outlets?.find((o) => o.name === outletName)?.id;
@@ -89,9 +91,13 @@ export function OrdersFeedPage() {
     ...(selectedOutletId ? { outletId: selectedOutletId } : {}),
     ...(status ? { status } : {}),
     ...(deliveryMode ? { deliveryMode } : {}),
+    limit: ORDERS_PAGE_LIMIT,
+    offset,
   });
 
   const orders = data?.orders ?? [];
+  const pageStart = data && data.total > 0 ? data.offset + 1 : 0;
+  const pageEnd = data ? Math.min(data.offset + data.orders.length, data.total) : 0;
 
   return (
     <>
@@ -110,7 +116,10 @@ export function OrdersFeedPage() {
             <select
               className="field-input orders-filter-select"
               value={outletName}
-              onChange={(e) => setOutletName(e.target.value)}
+              onChange={(e) => {
+                setOutletName(e.target.value);
+                setOffset(0);
+              }}
               aria-label="Filter by outlet"
             >
               <option value="">All Outlets</option>
@@ -124,7 +133,10 @@ export function OrdersFeedPage() {
             <select
               className="field-input orders-filter-select"
               value={status}
-              onChange={(e) => setStatus(e.target.value as MasterOrderStatus | "")}
+              onChange={(e) => {
+                setStatus(e.target.value as MasterOrderStatus | "");
+                setOffset(0);
+              }}
               aria-label="Filter by status"
             >
               {STATUS_OPTIONS.map((o) => (
@@ -137,7 +149,10 @@ export function OrdersFeedPage() {
             <select
               className="field-input orders-filter-select"
               value={deliveryMode}
-              onChange={(e) => setDeliveryMode(e.target.value as "" | "DELIVERY" | "TAKEOUT")}
+              onChange={(e) => {
+                setDeliveryMode(e.target.value as "" | "DELIVERY" | "TAKEOUT");
+                setOffset(0);
+              }}
               aria-label="Filter by delivery mode"
             >
               <option value="">All Modes</option>
@@ -217,11 +232,11 @@ export function OrdersFeedPage() {
                                   }
                                 >
                                   <span className="order-outlet-badge__name">{outlet.name}</span>
-                                  {outlet.status === "REJECTED" && outlet.rejectionReason && (
+                                  {/* {outlet.status === "REJECTED" && outlet.rejectionReason && (
                                     <span className="order-outlet-badge__reason">
                                       {outlet.rejectionReason}
                                     </span>
-                                  )}
+                                  )} */}
                                 </span>
                               ))
                             : "—"}
@@ -259,10 +274,32 @@ export function OrdersFeedPage() {
           </table>
         </div>
 
-        {data && data.total > data.limit && (
-          <p className="orders-pagination-hint">
-            Showing {data.limit} of {data.total} orders
-          </p>
+        {data && (
+          <div className="orders-pagination" aria-label="Orders pagination">
+            <button
+              type="button"
+              className="orders-pagination__button"
+              disabled={!data.hasPrevious || isLoading}
+              onClick={() => setOffset(data.previous ?? 0)}
+              aria-label="Previous orders page"
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+            </button>
+            <p className="orders-pagination-hint">
+              Showing {pageStart}-{pageEnd} of {data.total} orders
+            </p>
+            <button
+              type="button"
+              className="orders-pagination__button"
+              disabled={!data.hasNext || isLoading}
+              onClick={() => {
+                if (data.next !== null) setOffset(data.next);
+              }}
+              aria-label="Next orders page"
+            >
+              <ArrowRight size={16} aria-hidden="true" />
+            </button>
+          </div>
         )}
       </div>
     </>

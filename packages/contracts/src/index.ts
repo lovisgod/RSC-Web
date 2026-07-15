@@ -166,6 +166,8 @@ export const riderResultSchema = z.object({
   plateNumber: z.string().nullable(),
   riderStatus: z.string().nullable(),
   temporaryPassword: z.string().min(8),
+  temporaryPasswordEmailSent: z.boolean().default(true),
+  temporaryPasswordEmailError: z.string().nullable().default(null),
 });
 
 export const riderAdminSchema = z.object({
@@ -451,6 +453,10 @@ export const processRefundInputSchema = z
     reason: z.string().trim().min(1).max(500).optional(),
   })
   .strict();
+
+export const requestRefundInputSchema = processRefundInputSchema.extend({
+  subOrderId: z.uuid().optional(),
+});
 
 export const paymentRefundSchema = z.object({
   id: z.uuid(),
@@ -746,10 +752,15 @@ export const orderSummarySchema = z.object({
 
 export const customerOrderSchema = z
   .object({
-    id: z.uuid(),
+    id: z.string().min(1),
     customerId: z.uuid(),
     riderId: z.uuid().nullable(),
     status: z.string().trim().min(1),
+    customerViewId: z.string().min(1).optional(),
+    sourceMasterOrderId: z.uuid().optional(),
+    splitKind: z.enum(["FULFILLED", "FAILED"]).optional(),
+    refundSubOrderIds: z.array(z.uuid()).optional(),
+    refundableMinor: z.coerce.number().int().nonnegative().optional(),
     subtotalMinor: z.coerce.number().int().nonnegative(),
     deliveryFeeMinor: z.coerce.number().int().nonnegative().default(0),
     serviceFeeMinor: z.coerce.number().int().nonnegative().default(0),
@@ -1054,6 +1065,7 @@ export const operationsSummarySchema = z.object({
   activeOutlets: z.int().nonnegative(),
   openMasterOrders: z.int().nonnegative(),
   delayedSubOrders: z.int().nonnegative(),
+  pendingSettlements: z.int().nonnegative(),
 });
 
 export const orderPulsePointSchema = z.object({
@@ -1169,6 +1181,7 @@ export type RetryPaymentInput = z.infer<typeof retryPaymentInputSchema>;
 export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type PaymentVerifyResult = z.infer<typeof paymentVerifyResultSchema>;
 export type ProcessRefundInput = z.infer<typeof processRefundInputSchema>;
+export type RequestRefundInput = z.infer<typeof requestRefundInputSchema>;
 export type PaymentRefund = z.infer<typeof paymentRefundSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;

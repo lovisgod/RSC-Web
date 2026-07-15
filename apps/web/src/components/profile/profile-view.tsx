@@ -37,7 +37,9 @@ import { useCartStore } from "@/src/stores/cart-store";
 import { PasswordInput } from "@/src/components/shared/password-input";
 import type { GooglePlaceSuggestion } from "@/src/lib/google-places";
 
+import { OrderDetailsModal } from "@/src/components/orders/order-card";
 import { OrdersView } from "@/src/components/orders/orders-view";
+import type { Order } from "@/src/lib/data/orders";
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "U";
@@ -1237,8 +1239,14 @@ function DeleteAccountCard() {
 // ── Main view ─────────────────────────────────────────────────────────────────
 
 export function ProfileView() {
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
   return (
-    <div className="w-full space-y-6">
+    <div className="relative w-full space-y-6">
+      {selectedOrder && (
+        <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+      )}
+
       {/* 2-column grid: profile header | settings cards */}
       <div className="flex flex-col md:flex-row gap-4 items-start">
         {/* Left — blue profile header */}
@@ -1258,7 +1266,7 @@ export function ProfileView() {
       {/* Order history — full width below, with Active / Completed toggle */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-4">Order History</h2>
-        <OrdersView />
+        <OrdersView onViewDetails={setSelectedOrder} />
       </div>
     </div>
   );

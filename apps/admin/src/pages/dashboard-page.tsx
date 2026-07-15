@@ -23,6 +23,13 @@ const PERFORMANCE_LIMIT = 100;
 const COMPLETED_SUB_ORDER_STATUSES = new Set(["COLLECTED", "DISPATCHED"]);
 const IN_PROGRESS_SUB_ORDER_STATUSES = new Set(["ACCEPTED", "PREPARING", "READY"]);
 
+function formatDelayDuration(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
 interface OutletPerformanceRow {
   outletId: string;
   outletName: string;
@@ -219,7 +226,7 @@ export function DashboardPage() {
       detail:
         queue.data.oldestDelayMinutes === null
           ? "Delay age is not available"
-          : `Oldest delay is ${queue.data.oldestDelayMinutes} minutes`,
+          : `Oldest delay is ${formatDelayDuration(queue.data.oldestDelayMinutes)} mins`,
       tone: "danger",
     });
   }
@@ -276,6 +283,7 @@ export function DashboardPage() {
             <MetricSkeleton />
             <MetricSkeleton />
             <MetricSkeleton />
+            <MetricSkeleton />
           </>
         ) : summary.data ? (
           <>
@@ -295,9 +303,13 @@ export function DashboardPage() {
               detail="Kitchen tickets delayed over 15 minutes"
               tone="warning"
             />
+            <MetricCard
+              label="Pending settlements"
+              value={summary.data.pendingSettlements}
+              detail="Completed payouts awaiting approval"
+            />
           </>
         ) : null}
-        <MetricCard label="Pending settlements" value="—" detail="Finance endpoint coming soon" />
       </section>
 
       <section className="dashboard-grid">

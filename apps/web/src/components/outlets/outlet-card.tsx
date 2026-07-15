@@ -6,6 +6,7 @@ import { formatOutletRating, type Outlet } from "@/src/lib/data/outlets";
 export function OutletCard({ outlet }: { outlet: Outlet }) {
   const isOffline = outlet.isOnline === false;
   const rating = formatOutletRating(outlet.rating);
+  const deliveryTimeLabel = outlet.deliveryTime ? `${outlet.deliveryTime} mins` : "30-45 mins";
   const card = (
     <article
       data-disabled={isOffline}
@@ -61,12 +62,10 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
             {rating}
           </span>
 
-          {outlet.deliveryTime && (
-            <span className="inline-flex items-center justify-center gap-1 text-gray-500">
-              <Clock10Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span>{outlet.deliveryTime} mins</span>
-            </span>
-          )}
+          <span className="inline-flex items-center justify-center gap-1 text-gray-500">
+            <Clock10Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>{deliveryTimeLabel}</span>
+          </span>
 
           <span
             className="justify-self-end text-xs font-semibold sm:text-sm"
@@ -136,12 +135,10 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
               {rating}
             </span>
 
-            {outlet.deliveryTime && (
-              <span className="inline-flex items-center justify-center gap-1 text-gray-500">
-                <Clock10Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span>{outlet.deliveryTime} mins</span>
-              </span>
-            )}
+            <span className="inline-flex items-center justify-center gap-1 text-gray-500">
+              <Clock10Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{deliveryTimeLabel}</span>
+            </span>
 
             <span
               className="justify-self-end text-xs font-semibold sm:text-sm"

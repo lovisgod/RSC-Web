@@ -1,4 +1,4 @@
-import type { Repository } from "typeorm";
+import type { FindManyOptions, Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Customer } from "../auth/customer.entity";
@@ -271,6 +271,30 @@ describe(NotificationsService.name, () => {
         take: 100,
       }),
     );
+  });
+
+  it("lists only active current promos for anonymous callers", async () => {
+    const savedPromo = Object.assign(new Promo(), {
+      id: "9d353d54-7254-4538-9487-c21ab15b833e",
+      code: "WEEKEND",
+      title: "Weekend discount",
+      body: "Use code WEEKEND for a discount this weekend.",
+      discountTarget: "DELIVERY",
+      discountPercent: 100,
+      scope: "ALL_OUTLETS",
+      outletId: null,
+      startsAt: new Date("2026-07-14T00:00:00.000Z"),
+      endsAt: new Date("2099-07-31T23:59:59.000Z"),
+      isActive: true,
+    });
+    promos.find.mockResolvedValueOnce([savedPromo]);
+
+    await expect(service.listPromos()).resolves.toEqual([savedPromo]);
+
+    const findOptions = promos.find.mock.calls.at(-1)?.[0] as FindManyOptions<Promo>;
+    expect(findOptions.where).toEqual(expect.objectContaining({ isActive: true }));
+    expect(findOptions.order).toEqual({ endsAt: "ASC", createdAt: "DESC" });
+    expect(findOptions.take).toBe(100);
   });
 
   it("lists notifications for the authenticated recipient only", async () => {
