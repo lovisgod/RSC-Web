@@ -16,6 +16,7 @@ import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
 import { Outlet } from "../outlets/outlet.entity";
 import type { Promo } from "../notifications/promo.entity";
+import type { NotificationsService } from "../notifications/notifications.service";
 import type { RealtimeService } from "../realtime/realtime.service";
 import type { Payment } from "./payment.entity";
 import { PaymentStatus } from "./payment.entity";
@@ -33,7 +34,7 @@ describe(PaymentsService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
   const outletId = "4273e96c-2887-49a5-a6d5-269f007f04f0";
   let service: PaymentsService;
-  let users: { findOneBy: ReturnType<typeof vi.fn> };
+  let users: { find: ReturnType<typeof vi.fn>; findOneBy: ReturnType<typeof vi.fn> };
   let menuItems: { findBy: ReturnType<typeof vi.fn> };
   let modifiers: { findBy: ReturnType<typeof vi.fn> };
   let outlets: { findBy: ReturnType<typeof vi.fn> };
@@ -64,10 +65,15 @@ describe(PaymentsService.name, () => {
   let realtime: {
     emitSuborderNew: ReturnType<typeof vi.fn>;
     emitOrderStatusUpdate: ReturnType<typeof vi.fn>;
+    emitAdminNotification: ReturnType<typeof vi.fn>;
+  };
+  let notifications: {
+    createAndPush: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     users = {
+      find: vi.fn().mockResolvedValue([]),
       findOneBy: vi.fn().mockResolvedValue({
         id: customerId,
         emailEncrypted: "encrypted:ada@example.com",
@@ -173,7 +179,20 @@ describe(PaymentsService.name, () => {
         .mockResolvedValue({ subaccountCode: "LOCAL_ACCT_TEST", providerResponse: {} }),
       refund: refundPayment,
     };
-    realtime = { emitSuborderNew: vi.fn(), emitOrderStatusUpdate: vi.fn() };
+    realtime = {
+      emitSuborderNew: vi.fn(),
+      emitOrderStatusUpdate: vi.fn(),
+      emitAdminNotification: vi.fn(),
+    };
+    notifications = {
+      createAndPush: vi.fn().mockImplementation((input: Record<string, unknown>) =>
+        Promise.resolve({
+          id: "0d8f7999-22c9-42da-a3f7-87cccf971e2d",
+          createdAt: new Date("2026-07-15T12:00:00.000Z"),
+          ...input,
+        }),
+      ),
+    };
 
     service = new PaymentsService(
       users as unknown as Repository<Customer>,
@@ -200,6 +219,7 @@ describe(PaymentsService.name, () => {
       } as unknown as ConfigService<ApplicationConfig, true>,
       paymentAdapter,
       realtime as unknown as RealtimeService,
+      notifications as unknown as NotificationsService,
     );
   });
 
@@ -425,6 +445,66 @@ describe(PaymentsService.name, () => {
     expect(result).toEqual(expect.objectContaining({ status: "SUCCESS", amountMinor: 250000 }));
   });
 
+  it("records a pending customer refund request without calling the provider", async () => {
+    masterOrders.findOneBy.mockResolvedValue(
+      Object.assign(new MasterOrder(), {
+        id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+        customerId,
+      }),
+    );
+
+    const result = await service.requestRefund(
+      {
+        id: customerId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      },
+      "RSC-reference",
+      { amountMinor: 250000, reason: "Order issue" },
+    );
+
+    expect(refundPayment).not.toHaveBeenCalled();
+    expect(refunds.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paymentId: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+        amountMinor: 250000,
+        status: "PENDING",
+        reason: "Order issue",
+        provider: "local",
+        providerRefundId: null,
+        requestedBy: customerId,
+        providerResponse: null,
+      }),
+    );
+    expect(result).toEqual(expect.objectContaining({ status: "PENDING", amountMinor: 250000 }));
+  });
+
+  it("does not allow customers to request refunds for another customer's payment", async () => {
+    masterOrders.findOneBy.mockResolvedValue(
+      Object.assign(new MasterOrder(), {
+        id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+        customerId: "8b060ba5-d7f1-4b25-85ec-c0d82df4c5ef",
+      }),
+    );
+
+    await expect(
+      service.requestRefund(
+        {
+          id: customerId,
+          role: UserRole.CUSTOMER,
+          sessionId: "session-1",
+          accessTokenId: "access-token-1",
+        },
+        "RSC-reference",
+        { reason: "Order issue" },
+      ),
+    ).rejects.toThrow("Payment not found");
+
+    expect(refunds.save).not.toHaveBeenCalled();
+    expect(refundPayment).not.toHaveBeenCalled();
+  });
+
   it("retries payment for the existing order without creating another order id", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
@@ -527,6 +607,82 @@ describe(PaymentsService.name, () => {
     ).rejects.toThrow(/already been paid/);
 
     expect(initiatePayment).not.toHaveBeenCalled();
+  });
+
+  it("notifies outlet and super admins in realtime when a pending payment succeeds", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId,
+      riderId: null,
+      status: MasterOrderStatus.PENDING_PAYMENT,
+      updatedAt: new Date("2026-07-15T12:00:00.000Z"),
+    });
+    const payment = {
+      id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+      masterOrderId: order.id,
+      amountMinor: 645000,
+      currency: "NGN" as const,
+      gateway: "local",
+      reference: "RSC-reference",
+      status: PaymentStatus.PENDING,
+    };
+    const outletAdmin = {
+      id: "b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+      role: UserRole.ADMIN,
+      outletId,
+    };
+    const superAdmin = {
+      id: "31a2df7e-7f2a-4433-9d5e-1caad0f91c4d",
+      role: UserRole.SUPER_ADMIN,
+      outletId: null,
+    };
+    payments.findOneBy.mockResolvedValue(payment);
+    masterOrders.findOneBy.mockResolvedValue(order);
+    subOrders.find.mockResolvedValue([
+      Object.assign(new SubOrder(), {
+        id: "0b8706a1-b1d9-4c05-860f-8e15f70410f2",
+        masterOrderId: order.id,
+        outletId,
+      }),
+    ]);
+    users.find.mockResolvedValue([outletAdmin, superAdmin]);
+
+    await service.confirmPayment({
+      eventId: "evt-payment-success",
+      eventType: "charge.success",
+      reference: payment.reference,
+      status: "SUCCESS",
+      amountMinor: payment.amountMinor,
+      providerResponse: {},
+    });
+
+    expect(notifications.createAndPush).toHaveBeenCalledTimes(2);
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: outletAdmin.id,
+        recipientRole: UserRole.ADMIN,
+        type: "PAYMENT_SUCCESS",
+      }),
+    );
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: superAdmin.id,
+        recipientRole: UserRole.SUPER_ADMIN,
+        type: "PAYMENT_SUCCESS",
+      }),
+    );
+    expect(realtime.emitAdminNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "PAYMENT_SUCCESS",
+        data: expect.objectContaining({
+          masterOrderId: order.id,
+          paymentId: payment.id,
+          reference: payment.reference,
+          outletIds: [outletId],
+        }),
+      }),
+      [outletId],
+    );
   });
 
   it("stores recipient phone on the master order and preparation note on every sub-order", async () => {

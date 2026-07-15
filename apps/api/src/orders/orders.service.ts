@@ -376,6 +376,7 @@ export class OrdersService {
         riderId: user.id,
         status: In([
           MasterOrderStatus.CONFIRMED,
+          MasterOrderStatus.PREPARING,
           MasterOrderStatus.PARTIALLY_FULFILLED,
           MasterOrderStatus.PARTIALLY_READY,
           MasterOrderStatus.READY,

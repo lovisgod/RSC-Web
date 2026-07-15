@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
@@ -20,12 +21,12 @@ import { NotificationsService } from "./notifications.service";
 
 @ApiTags("Notifications")
 @ApiBearerAuth()
-@UseGuards(AuthGuard)
 @Controller({ path: "notifications", version: "1" })
 export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 
   @Get()
+  @UseGuards(AuthGuard)
   @ApiMessage("Notifications retrieved")
   @ApiOperation({
     summary: "List the authenticated user's notifications",
@@ -50,6 +51,7 @@ export class NotificationsController {
   }
 
   @Post("device-token")
+  @UseGuards(AuthGuard)
   @ApiMessage("Device token registered")
   @ApiOperation({
     summary: "Register the authenticated user's push device token",
@@ -61,6 +63,7 @@ export class NotificationsController {
   }
 
   @Get("preferences")
+  @UseGuards(AuthGuard)
   @ApiMessage("Notification preferences retrieved")
   @ApiOperation({
     summary: "Get notification preferences",
@@ -72,6 +75,7 @@ export class NotificationsController {
   }
 
   @Patch("preferences")
+  @UseGuards(AuthGuard)
   @ApiMessage("Notification preferences updated")
   @ApiOperation({
     summary: "Update notification preferences",
@@ -86,6 +90,7 @@ export class NotificationsController {
   }
 
   @Get("promos")
+  @UseGuards(OptionalAuthGuard)
   @ApiMessage("Promos retrieved")
   @ApiOperation({
     summary: "List promo offers",
@@ -93,7 +98,7 @@ export class NotificationsController {
       "Customers see currently active promos. Admins see recent promo offers including inactive, future, and expired offers.",
   })
   listPromos(@Req() request: AuthenticatedRequest) {
-    return this.notifications.listPromos(request.user!);
+    return this.notifications.listPromos(request.user ?? null);
   }
 
   @Post("promos")
@@ -165,6 +170,7 @@ export class NotificationsController {
   }
 
   @Patch(":id/read")
+  @UseGuards(AuthGuard)
   @ApiMessage("Notification marked as read")
   @ApiOperation({
     summary: "Mark a notification as read",

@@ -10,6 +10,7 @@ import { AuthController } from "./auth.controller";
 import { AuthSessionService } from "./auth-session.service";
 import { AuthService } from "./auth.service";
 import { Customer } from "./customer.entity";
+import { OptionalAuthGuard } from "./optional-auth.guard";
 import { EMAIL_SENDER } from "./email/email-sender";
 import { NoopEmailSender } from "./email/noop-email.sender";
 import { ResendEmailSender } from "./email/resend-email.sender";
@@ -27,6 +28,7 @@ import { RolesGuard } from "./roles.guard";
     AuthService,
     AuthSessionService,
     AuthGuard,
+    OptionalAuthGuard,
     RolesGuard,
     PhoneOtpService,
     NoopEmailSender,
@@ -66,6 +68,14 @@ import { RolesGuard } from "./roles.guard";
       ) => (configService.get("sms.provider", { infer: true }) === "termii" ? termii : noop),
     },
   ],
-  exports: [AuthGuard, RolesGuard, AuthSessionService, PhoneOtpService, EMAIL_SENDER, SMS_SENDER],
+  exports: [
+    AuthGuard,
+    OptionalAuthGuard,
+    RolesGuard,
+    AuthSessionService,
+    PhoneOtpService,
+    EMAIL_SENDER,
+    SMS_SENDER,
+  ],
 })
 export class AuthModule {}

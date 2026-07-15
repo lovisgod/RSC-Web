@@ -41,6 +41,7 @@ import {
   menuCategorySchema,
   resetPasswordInputSchema,
   resetPasswordResultSchema,
+  requestRefundInputSchema,
   retryPaymentInputSchema,
   promoSchema,
   togglePromoActiveInputSchema,
@@ -57,6 +58,7 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
+  paymentRefundSchema,
   paymentVerifyResultSchema,
   riderLocationSchema,
   registerCustomerInputSchema,
@@ -112,6 +114,7 @@ import {
   type MenuItemSummary,
   type ResetPasswordInput,
   type ResetPasswordResult,
+  type RequestRefundInput,
   type RetryPaymentInput,
   type Promo,
   type TogglePromoActiveInput,
@@ -127,6 +130,7 @@ import {
   type OrderPulse,
   type OrderPulseQuery,
   type OutletSummary,
+  type PaymentRefund,
   type PaymentVerifyResult,
   type RiderLocation,
   type RegisterCustomerInput,
@@ -674,6 +678,18 @@ export function createApiClient(options: ApiClientOptions) {
       return request(
         `/api/v1/payments/verify/${encodeURIComponent(reference)}`,
         paymentVerifyResultSchema,
+      );
+    },
+    requestRefund(reference: string, input: RequestRefundInput = {}): Promise<PaymentRefund> {
+      const body = requestRefundInputSchema.parse(input);
+
+      return request(
+        `/api/v1/payments/${encodeURIComponent(reference)}/refund-request`,
+        paymentRefundSchema,
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        },
       );
     },
     pickupSubOrder(

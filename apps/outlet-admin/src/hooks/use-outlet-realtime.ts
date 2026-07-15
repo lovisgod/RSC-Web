@@ -3,14 +3,21 @@ import { useEffect } from "react";
 import { io } from "socket.io-client";
 
 import { outletAdminKeys } from "../lib/query-keys";
+import { toastBus } from "../lib/toast-bus";
 
 const SUBORDER_NEW_EVENT = "suborder:new";
 const MENU_ITEM_AVAILABILITY_EVENT = "menu_item:availability_update";
+const NOTIFICATION_NEW_EVENT = "notification:new";
 
 interface MenuItemAvailabilityUpdateEvent {
   menuItemId: string;
   outletId: string;
   isAvailable: boolean;
+}
+
+interface NotificationEvent {
+  title?: string;
+  body?: string;
 }
 
 function getRealtimeOrigin() {
@@ -49,6 +56,10 @@ export function useOutletRealtime(outletId: string) {
     });
 
     socket.on(SUBORDER_NEW_EVENT, refreshOutletQueue);
+    socket.on(NOTIFICATION_NEW_EVENT, (event: NotificationEvent) => {
+      refreshOutletQueue();
+      toastBus.emit(event.title ?? event.body ?? "New notification", "info");
+    });
     socket.on(MENU_ITEM_AVAILABILITY_EVENT, (event: MenuItemAvailabilityUpdateEvent) => {
       if (event.outletId !== outletId) return;
 

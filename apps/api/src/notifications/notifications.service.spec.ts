@@ -273,6 +273,33 @@ describe(NotificationsService.name, () => {
     );
   });
 
+  it("lists only active current promos for anonymous callers", async () => {
+    const savedPromo = Object.assign(new Promo(), {
+      id: "9d353d54-7254-4538-9487-c21ab15b833e",
+      code: "WEEKEND",
+      title: "Weekend discount",
+      body: "Use code WEEKEND for a discount this weekend.",
+      discountTarget: "DELIVERY",
+      discountPercent: 100,
+      scope: "ALL_OUTLETS",
+      outletId: null,
+      startsAt: new Date("2026-07-14T00:00:00.000Z"),
+      endsAt: new Date("2099-07-31T23:59:59.000Z"),
+      isActive: true,
+    });
+    promos.find.mockResolvedValueOnce([savedPromo]);
+
+    await expect(service.listPromos()).resolves.toEqual([savedPromo]);
+
+    expect(promos.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ isActive: true }),
+        order: { endsAt: "ASC", createdAt: "DESC" },
+        take: 100,
+      }),
+    );
+  });
+
   it("lists notifications for the authenticated recipient only", async () => {
     const savedNotification = Object.assign(new Notification(), {
       id: "45ef3252-b96f-4308-b40e-391623b25ac9",
