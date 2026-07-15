@@ -1,4 +1,4 @@
-import type { Repository } from "typeorm";
+import type { FindManyOptions, Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Customer } from "../auth/customer.entity";
@@ -189,8 +189,8 @@ describe(NotificationsService.name, () => {
           discountTarget: "DELIVERY",
           discountPercent: 100,
           scope: "ALL_OUTLETS",
-          startsAt: "2026-07-14T00:00:00.000Z",
-          endsAt: "2026-07-31T23:59:59.000Z",
+          startsAt: "2099-07-14T00:00:00.000Z",
+          endsAt: "2099-07-31T23:59:59.000Z",
         },
       ),
     ).resolves.toEqual({ sent: 2 });
@@ -213,6 +213,33 @@ describe(NotificationsService.name, () => {
     expect(createdNotification?.data).toEqual(expect.objectContaining({ promo: true }));
   });
 
+  it("rejects promo creation when startsAt is in the past", async () => {
+    await expect(
+      service.broadcastPromo(
+        {
+          id: "31a2df7e-7f2a-4433-9d5e-1caad0f91c4d",
+          role: UserRole.ADMIN,
+          sessionId: "session-1",
+          accessTokenId: "access-token-1",
+        },
+        {
+          recipientRole: UserRole.CUSTOMER,
+          type: "PROMO",
+          title: "Expired setup",
+          body: "This should not be accepted.",
+          promoCode: "OLD50",
+          discountTarget: "ORDER",
+          discountPercent: 50,
+          scope: "ALL_OUTLETS",
+          startsAt: new Date(Date.now() - 86_400_000).toISOString(),
+          endsAt: new Date(Date.now() + 86_400_000).toISOString(),
+        },
+      ),
+    ).rejects.toThrow(/startsAt/);
+
+    expect(promos.save).not.toHaveBeenCalled();
+  });
+
   it("lists recent promo notifications for admins", async () => {
     const savedPromo = Object.assign(new Promo(), {
       id: "9d353d54-7254-4538-9487-c21ab15b833e",
@@ -223,8 +250,8 @@ describe(NotificationsService.name, () => {
       discountPercent: 100,
       scope: "ALL_OUTLETS",
       outletId: null,
-      startsAt: new Date("2026-07-14T00:00:00.000Z"),
-      endsAt: new Date("2026-07-31T23:59:59.000Z"),
+      startsAt: new Date("2099-07-14T00:00:00.000Z"),
+      endsAt: new Date("2099-07-31T23:59:59.000Z"),
       isActive: true,
     });
     promos.find.mockResolvedValueOnce([savedPromo]);
@@ -244,6 +271,30 @@ describe(NotificationsService.name, () => {
         take: 100,
       }),
     );
+  });
+
+  it("lists only active current promos for anonymous callers", async () => {
+    const savedPromo = Object.assign(new Promo(), {
+      id: "9d353d54-7254-4538-9487-c21ab15b833e",
+      code: "WEEKEND",
+      title: "Weekend discount",
+      body: "Use code WEEKEND for a discount this weekend.",
+      discountTarget: "DELIVERY",
+      discountPercent: 100,
+      scope: "ALL_OUTLETS",
+      outletId: null,
+      startsAt: new Date("2026-07-14T00:00:00.000Z"),
+      endsAt: new Date("2099-07-31T23:59:59.000Z"),
+      isActive: true,
+    });
+    promos.find.mockResolvedValueOnce([savedPromo]);
+
+    await expect(service.listPromos()).resolves.toEqual([savedPromo]);
+
+    const findOptions = promos.find.mock.calls.at(-1)?.[0] as FindManyOptions<Promo>;
+    expect(findOptions.where).toEqual(expect.objectContaining({ isActive: true }));
+    expect(findOptions.order).toEqual({ endsAt: "ASC", createdAt: "DESC" });
+    expect(findOptions.take).toBe(100);
   });
 
   it("lists notifications for the authenticated recipient only", async () => {

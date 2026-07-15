@@ -60,6 +60,11 @@ export interface Environment {
   GOOGLE_MAPS_API_KEY?: string;
   OPENCAGE_API_KEY?: string;
   OPENCAGE_BASE_URL: string;
+  PREPARATION_SUGGESTIONS_AI_PROVIDER: "noop" | "pollinations";
+  POLLINATIONS_BASE_URL: string;
+  POLLINATIONS_TEXT_MODEL: string;
+  POLLINATIONS_API_KEY?: string;
+  PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: number;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -215,6 +220,15 @@ const environmentSchema = Joi.object<Environment>({
   OPENCAGE_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
     .default("https://api.opencagedata.com/geocode/v1/json"),
+  PREPARATION_SUGGESTIONS_AI_PROVIDER: Joi.string()
+    .valid("noop", "pollinations")
+    .default("pollinations"),
+  POLLINATIONS_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://text.pollinations.ai"),
+  POLLINATIONS_TEXT_MODEL: Joi.string().min(1).default("openai"),
+  POLLINATIONS_API_KEY: Joi.string().optional().allow(""),
+  PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: Joi.number().integer().min(500).max(10_000).default(4_000),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {

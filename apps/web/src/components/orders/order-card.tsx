@@ -410,7 +410,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
         throw new Error("This order does not have a payment reference for refund.");
       }
 
-      return apiClient.processRefund(order.paymentReference, {
+      return apiClient.requestRefund(order.paymentReference, {
         reason: "Customer requested refund for cancelled order",
       });
     },

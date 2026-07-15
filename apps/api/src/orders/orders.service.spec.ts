@@ -587,12 +587,12 @@ describe(OrdersService.name, () => {
     );
   });
 
-  it("lists active dispatches assigned to the calling rider", async () => {
+  it("lists active preparing dispatches assigned to the calling rider", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
       riderId: riderUser.id,
-      status: MasterOrderStatus.READY,
+      status: MasterOrderStatus.PREPARING,
       deliveryMode: "DELIVERY",
       createdAt: new Date("2026-07-02T08:00:00.000Z"),
     });
@@ -601,7 +601,7 @@ describe(OrdersService.name, () => {
       masterOrderId: order.id,
       outletId,
       pickupCode: "123456",
-      status: SubOrderStatus.READY,
+      status: SubOrderStatus.PREPARING,
     });
     const lineItem = Object.assign(new OrderLineItem(), {
       id: "a43a459d-a9c0-4c81-a9be-f5ed41d9dfde",
@@ -624,6 +624,7 @@ describe(OrdersService.name, () => {
     expect(result[0]).toEqual(
       expect.objectContaining({
         orderId: order.id,
+        status: MasterOrderStatus.PREPARING,
         riderId: riderUser.id,
         outlets: [
           expect.objectContaining({

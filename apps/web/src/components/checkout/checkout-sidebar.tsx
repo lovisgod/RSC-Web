@@ -28,15 +28,16 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
   const { data: outlets = [] } = useOutlets();
   const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
 
-  // Decide data source: live cart until payment is initiated, then snapshot
+  // Prefer server-calculated snapshot once payment is initiated.
   const hasLiveItems = (cart?.groups.flatMap((g) => g.items).length ?? 0) > 0;
-  const useSnapshot = !hasLiveItems && !!snapshot;
+  const useSnapshot = !!snapshot;
 
   if (!hasLiveItems && !snapshot) return null;
 
   if (useSnapshot) {
     // Use server-calculated totals from the initiatePayment response
     const { totals, groups } = snapshot;
+    const originalTotalMinor = totals.totalMinor + totals.discountMinor;
     const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : "7.5";
     const commPct = charges
       ? (charges.platformCommissionBps / 100).toFixed(2).replace(/\.?0+$/, "")
@@ -89,10 +90,22 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
             <FeeLine label="Service fee" value={formatNaira(totals.serviceFeeMinor)} muted />
           )}
           {totals.discountMinor > 0 && (
-            <FeeLine label="Promo discount" value={`-${formatNaira(totals.discountMinor)}`} />
+            <>
+              <div className="pt-2 border-t border-gray-100">
+                <FeeLine label="Original total" value={formatNaira(originalTotalMinor)} muted />
+              </div>
+              <FeeLine
+                label={
+                  snapshot.promoCode ? `Promo discount (${snapshot.promoCode})` : "Promo discount"
+                }
+                value={`-${formatNaira(totals.discountMinor)}`}
+              />
+            </>
           )}
           <div className="pt-2 border-t border-gray-100 flex justify-between">
-            <span className="text-sm font-bold text-gray-900">Total</span>
+            <span className="text-sm font-bold text-gray-900">
+              {totals.discountMinor > 0 ? "You pay" : "Total"}
+            </span>
             <span className="text-sm font-bold" style={{ color: "var(--rsc-main)" }}>
               {formatNaira(totals.totalMinor)}
             </span>

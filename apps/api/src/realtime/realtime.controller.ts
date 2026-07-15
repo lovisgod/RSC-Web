@@ -77,6 +77,25 @@ export class RealtimeController {
           payload: "SubOrder entity payload.",
         },
         {
+          name: "notification:new",
+          rooms: ["outlet:{outletId}", "platform:admin"],
+          cadence:
+            "Emitted immediately when an operational admin notification is created, including successful payment confirmation.",
+          payload: {
+            type: "PAYMENT_SUCCESS",
+            title: "Payment successful",
+            body: "Payment received for order {masterOrderId}.",
+            data: {
+              masterOrderId: "uuid",
+              paymentId: "uuid",
+              reference: "payment-reference",
+              amountMinor: 645000,
+              currency: "NGN",
+              outletIds: ["uuid"],
+            },
+          },
+        },
+        {
           name: "rider:location_update",
           rooms: ["order:{masterOrderId}", "rider:{riderId}", "platform:admin"],
           cadence:
