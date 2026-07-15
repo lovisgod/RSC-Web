@@ -178,6 +178,12 @@ function paginationQuery(input: { limit?: number; offset?: number }): string {
   return query ? `?${query}` : "";
 }
 
+function describeContractIssue(issue: z.ZodIssue): string {
+  const path = issue.path.length > 0 ? issue.path.join(".") : "response";
+
+  return `${path}: ${issue.message}`;
+}
+
 export interface ApiClientOptions {
   baseUrl: string;
   fetch?: typeof globalThis.fetch;
@@ -259,13 +265,16 @@ export function createApiClient(options: ApiClientOptions) {
     const parsedEnvelope = apiResponseSchema(schema).safeParse(payload);
 
     if (!parsedEnvelope.success) {
-      console.error("API contract validation failed", {
+      console.warn("API contract validation failed", {
         path,
         issues: parsedEnvelope.error.issues,
         fieldErrors: parsedEnvelope.error.flatten().fieldErrors,
       });
+      const firstIssue = parsedEnvelope.error.issues[0];
       throw new ApiContractError(
-        "The server returned an unexpected response.",
+        firstIssue
+          ? `API contract validation failed for ${path}: ${describeContractIssue(firstIssue)}`
+          : `API contract validation failed for ${path}.`,
         parsedEnvelope.error.issues,
       );
     }
