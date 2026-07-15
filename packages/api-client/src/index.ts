@@ -7,13 +7,12 @@ import {
   createAdminInputSchema,
   createGeofenceZoneInputSchema,
   createNotificationCampaignInputSchema,
-  customerOrderSchema,
+  createPromoInputSchema,
   geofenceZoneSchema,
   initiatePaymentInputSchema,
   initiatePaymentResultSchema,
   notificationCampaignSchema,
   notificationPreferencesSchema,
-  promoNotificationSchema,
   paginatedMenuItemsSchema,
   pickupSubOrderInputSchema,
   platformChargesSchema,
@@ -22,7 +21,6 @@ import {
   profileUpdateResultSchema,
   rateMenuItemInputSchema,
   orderDetailSchema,
-  orderSummarySchema,
   outletAdminSchema,
   userProfileSchema,
   updateProfileInputSchema,
@@ -44,11 +42,15 @@ import {
   resetPasswordInputSchema,
   resetPasswordResultSchema,
   retryPaymentInputSchema,
+  promoSchema,
+  togglePromoActiveInputSchema,
+  updatePromoInputSchema,
   loginInputSchema,
   loginResultSchema,
   logoutResultSchema,
   menuItemSchema,
   notificationSchema,
+  paginatedCustomerOrdersSchema,
   operationsQueueSchema,
   operationsStatsQuerySchema,
   operationsSummarySchema,
@@ -74,7 +76,7 @@ import {
   type CreateAdminInput,
   type CreateGeofenceZoneInput,
   type CreateNotificationCampaignInput,
-  type CustomerOrder,
+  type CreatePromoInput,
   type GeofenceZone,
   type InitiatePaymentInput,
   type InitiatePaymentResult,
@@ -86,10 +88,8 @@ import {
   type PreparationSuggestion,
   type QueryPreparationSuggestionsInput,
   type ProfileUpdateResult,
-  type PromoNotification,
   type RateMenuItemInput,
   type OrderDetail,
-  type OrderSummary,
   type OutletAdmin,
   type UserProfile,
   type UpdateProfileInput,
@@ -98,6 +98,7 @@ import {
   type UpdatePlatformChargesInput,
   type UpdateMenuItemAvailabilityInput,
   type UpdateNotificationPreferencesInput,
+  type UpdatePromoInput,
   type CreateDeliveryAddressInput,
   type DeliveryAddressSummary,
   type DeliveryAddressSuggestion,
@@ -112,11 +113,14 @@ import {
   type ResetPasswordInput,
   type ResetPasswordResult,
   type RetryPaymentInput,
+  type Promo,
+  type TogglePromoActiveInput,
   type LoginInput,
   type LoginResult,
   type LogoutResult,
   type MenuItem,
   type Notification,
+  type PaginatedCustomerOrders,
   type OperationsQueue,
   type OperationsStatsQuery,
   type OperationsSummary,
@@ -161,6 +165,14 @@ export class ApiContractError extends Error {
 }
 
 export const SERVER_ERROR_MESSAGE = "Error encountered. Please try again later.";
+
+function paginationQuery(input: { limit?: number; offset?: number }): string {
+  const params = new URLSearchParams();
+  if (input.limit !== undefined) params.set("limit", String(input.limit));
+  if (input.offset !== undefined) params.set("offset", String(input.offset));
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
 
 export interface ApiClientOptions {
   baseUrl: string;
@@ -527,11 +539,13 @@ export function createApiClient(options: ApiClientOptions) {
         body,
       });
     },
-    listOrders(): Promise<OrderSummary[]> {
-      return request("/api/v1/orders", z.array(orderSummarySchema));
+    listOrders(input: { limit?: number; offset?: number } = {}): Promise<PaginatedCustomerOrders> {
+      return request(`/api/v1/orders${paginationQuery(input)}`, paginatedCustomerOrdersSchema);
     },
-    listCustomerOrders(): Promise<CustomerOrder[]> {
-      return request("/api/v1/orders", z.array(customerOrderSchema));
+    listCustomerOrders(
+      input: { limit?: number; offset?: number } = {},
+    ): Promise<PaginatedCustomerOrders> {
+      return request(`/api/v1/orders${paginationQuery(input)}`, paginatedCustomerOrdersSchema);
     },
     getOrder(id: string): Promise<OrderDetail> {
       return request(`/api/v1/orders/${encodeURIComponent(id)}`, orderDetailSchema);
@@ -563,8 +577,35 @@ export function createApiClient(options: ApiClientOptions) {
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
     },
-    listPromoNotifications(): Promise<PromoNotification[]> {
-      return request("/api/v1/notifications/promos", z.array(promoNotificationSchema));
+    listPromoNotifications(): Promise<Promo[]> {
+      return request("/api/v1/notifications/promos", z.array(promoSchema));
+    },
+    listPromos(): Promise<Promo[]> {
+      return request("/api/v1/notifications/promos", z.array(promoSchema));
+    },
+    createPromo(input: CreatePromoInput): Promise<{ sent: number }> {
+      const body = createPromoInputSchema.parse(input);
+
+      return request("/api/v1/notifications/promos", z.object({ sent: z.number().int() }), {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    updatePromo(id: string, input: UpdatePromoInput): Promise<Promo> {
+      const body = updatePromoInputSchema.parse(input);
+
+      return request(`/api/v1/notifications/promos/${encodeURIComponent(id)}`, promoSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
+    },
+    togglePromoActive(id: string, input: TogglePromoActiveInput): Promise<Promo> {
+      const body = togglePromoActiveInputSchema.parse(input);
+
+      return request(`/api/v1/notifications/promos/${encodeURIComponent(id)}/active`, promoSchema, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
     },
     getNotificationPreferences(): Promise<NotificationPreferences> {
       return request("/api/v1/notifications/preferences", notificationPreferencesSchema);

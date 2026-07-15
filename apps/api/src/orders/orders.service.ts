@@ -25,6 +25,7 @@ import type {
   AssignOrderRiderDto,
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
+  ListCustomerOrdersQueryDto,
   PickupSubOrderDto,
   RejectAssignedOrderDto,
   RiderCollectSubOrderDto,
@@ -50,6 +51,21 @@ export interface AdminOrderListResult {
   totalSubOrders: number;
   limit: number;
   offset: number;
+  next: number | null;
+  previous: number | null;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export interface CustomerOrderListResult {
+  orders: MasterOrder[];
+  total: number;
+  limit: number;
+  offset: number;
+  next: number | null;
+  previous: number | null;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 export interface RiderDispatch {
@@ -105,11 +121,20 @@ export class OrdersService {
     private readonly piiCrypto: PiiCryptoService,
   ) {}
 
-  listMine(user: AuthenticatedUser): Promise<MasterOrder[]> {
-    return this.masterOrders.find({
+  async listMine(
+    user: AuthenticatedUser,
+    query: ListCustomerOrdersQueryDto = {},
+  ): Promise<CustomerOrderListResult> {
+    const limit = query.limit ?? 50;
+    const offset = query.offset ?? 0;
+    const [orders, total] = await this.masterOrders.findAndCount({
       where: { customerId: user.id },
       order: { createdAt: "DESC" },
+      take: limit,
+      skip: offset,
     });
+
+    return { orders, total, limit, offset, ...paginationMeta(total, limit, offset) };
   }
 
   async listAdmin(
@@ -183,7 +208,14 @@ export class OrdersService {
     const orderIds = orders.map((order) => order.id);
 
     if (orderIds.length === 0) {
-      return { orders: [], total, totalSubOrders: 0, limit, offset };
+      return {
+        orders: [],
+        total,
+        totalSubOrders: 0,
+        limit,
+        offset,
+        ...paginationMeta(total, limit, offset),
+      };
     }
 
     const subOrderWhere = {
@@ -220,6 +252,7 @@ export class OrdersService {
       totalSubOrders: subOrders.length,
       limit,
       offset,
+      ...paginationMeta(total, limit, offset),
     };
   }
 
@@ -343,6 +376,7 @@ export class OrdersService {
         riderId: user.id,
         status: In([
           MasterOrderStatus.CONFIRMED,
+          MasterOrderStatus.PARTIALLY_FULFILLED,
           MasterOrderStatus.PARTIALLY_READY,
           MasterOrderStatus.READY,
           MasterOrderStatus.OUT_FOR_DELIVERY,
@@ -733,6 +767,16 @@ export class OrdersService {
       }),
       this.getLatestRiderLocation(order.id),
     ]);
+    const derivedStatus = this.deriveMasterStatus(subOrders);
+    if (
+      derivedStatus !== order.status &&
+      order.status !== MasterOrderStatus.PENDING_PAYMENT &&
+      (order.status !== MasterOrderStatus.CANCELLED ||
+        derivedStatus === MasterOrderStatus.CANCELLED)
+    ) {
+      order.status = derivedStatus;
+      await this.masterOrders.save(order);
+    }
 
     let rider = null;
     if (order.riderId) {
@@ -1046,6 +1090,7 @@ export class OrdersService {
       [MasterOrderStatus.CONFIRMED]: SubOrderStatus.ACCEPTED,
       [MasterOrderStatus.PREPARING]: SubOrderStatus.PREPARING,
       [MasterOrderStatus.PARTIALLY_READY]: SubOrderStatus.READY,
+      [MasterOrderStatus.PARTIALLY_FULFILLED]: SubOrderStatus.REJECTED,
       [MasterOrderStatus.READY]: SubOrderStatus.READY,
       [MasterOrderStatus.OUT_FOR_DELIVERY]: SubOrderStatus.DISPATCHED,
       [MasterOrderStatus.DELIVERED]: SubOrderStatus.COLLECTED,
@@ -1062,6 +1107,10 @@ export class OrdersService {
 
     if (subOrders.every((subOrder) => subOrder.status === SubOrderStatus.REJECTED)) {
       return MasterOrderStatus.CANCELLED;
+    }
+
+    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.REJECTED)) {
+      return MasterOrderStatus.PARTIALLY_FULFILLED;
     }
 
     if (
@@ -1153,4 +1202,16 @@ export class OrdersService {
       )
       .filter((id): id is string => Boolean(id));
   }
+}
+
+function paginationMeta(total: number, limit: number, offset: number) {
+  const next = offset + limit < total ? offset + limit : null;
+  const previous = offset > 0 ? Math.max(0, offset - limit) : null;
+
+  return {
+    next,
+    previous,
+    hasNext: next !== null,
+    hasPrevious: previous !== null,
+  };
 }

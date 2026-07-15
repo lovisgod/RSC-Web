@@ -1,31 +1,18 @@
 "use client";
 
-import type { PromoNotification } from "@rsc/contracts";
-import { Bell, CalendarDays, RotateCw, Tag, X } from "lucide-react";
+import type { Promo } from "@rsc/contracts";
+import { RotateCw, Tag, X } from "lucide-react";
 import { useState } from "react";
 import { Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 import { usePromoNotifications } from "@/src/hooks/use-notifications";
 
-function getOfferAppearance(type: string) {
-  switch (type.trim().toUpperCase()) {
-    case "PROMO":
-      return { bg: "var(--rsc-main)", Icon: Tag };
-    case "SPECIAL_PERIOD":
-      return { bg: "var(--rsc-dark)", Icon: CalendarDays };
-    default:
-      return { bg: "var(--rsc-navy-light)", Icon: Bell };
-  }
-}
-
-function OfferCard({ promo, onDismiss }: { promo: PromoNotification; onDismiss: () => void }) {
-  const { bg, Icon } = getOfferAppearance(promo.type);
-
+function OfferCard({ promo, onDismiss }: { promo: Promo; onDismiss: () => void }) {
   return (
     <article
       className="relative flex h-full w-full items-center justify-between gap-4 rounded-2xl px-5 py-4"
-      style={{ backgroundColor: bg }}
+      style={{ backgroundColor: "var(--rsc-main)" }}
     >
       <button
         type="button"
@@ -39,18 +26,16 @@ function OfferCard({ promo, onDismiss }: { promo: PromoNotification; onDismiss: 
       <div className="min-w-0 flex-1 pr-6">
         <p className="text-base font-bold leading-tight text-white">{promo.title}</p>
         <p className="mt-0.5 text-sm text-white/80">{promo.body}</p>
-        {promo.promoCode && (
-          <p className="mt-2 inline-flex rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
-            Code: {promo.promoCode}
-          </p>
-        )}
+        <p className="mt-2 inline-flex rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
+          Code: {promo.code}
+        </p>
       </div>
 
       <span
         className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white/15 text-white"
         aria-hidden="true"
       >
-        <Icon className="h-6 w-6" />
+        <Tag className="h-6 w-6" />
       </span>
     </article>
   );

@@ -13,6 +13,7 @@ export function createDataSourceOptions(): PostgresConnectionOptions {
     ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : false,
     synchronize: false,
     migrationsRun: false,
+    migrationsTransactionMode: "each",
     logging: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     entities: [`${__dirname}/../**/*.entity{.ts,.js}`],
     migrations: [`${__dirname}/migrations/*{.ts,.js}`],

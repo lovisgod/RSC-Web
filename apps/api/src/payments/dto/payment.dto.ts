@@ -88,6 +88,12 @@ export class InitiatePaymentDto {
   @Length(1, 1_000)
   preparationNote?: string;
 
+  @ApiPropertyOptional({ example: "WEEKEND20" })
+  @IsOptional()
+  @IsString()
+  @Length(2, 80)
+  promoCode?: string;
+
   @ApiProperty({ example: 450000 })
   @IsInt()
   @Min(0)
@@ -107,6 +113,12 @@ export class InitiatePaymentDto {
   @IsInt()
   @Min(0)
   vatMinor!: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  discountMinor?: number;
 
   @ApiProperty({ example: 45000 })
   @IsInt()

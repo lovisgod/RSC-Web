@@ -88,6 +88,23 @@ export class ListAdminOrdersQueryDto {
   offset?: number;
 }
 
+export class ListCustomerOrdersQueryDto {
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @ApiPropertyOptional({ minimum: 0, default: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
+}
+
 export class UpdateOrderStatusDto {
   @ApiProperty({ enum: MasterOrderStatus, example: MasterOrderStatus.OUT_FOR_DELIVERY })
   @IsEnum(MasterOrderStatus)

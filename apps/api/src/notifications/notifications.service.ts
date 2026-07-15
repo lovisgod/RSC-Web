@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -10,7 +11,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Queue, Worker, type ConnectionOptions } from "bullmq";
-import { In, Repository } from "typeorm";
+import { LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
@@ -21,10 +22,13 @@ import type {
   CreateNotificationCampaignDto,
   CreateNotificationDto,
   CreatePromoNotificationDto,
+  TogglePromoActiveDto,
+  UpdatePromoDto,
   UpdateNotificationPreferencesDto,
 } from "./dto/notification.dto";
 import { NotificationCampaign } from "./notification-campaign.entity";
 import { Notification } from "./notification.entity";
+import { Promo } from "./promo.entity";
 import { PUSH_SENDER, type PushSender } from "./push-sender";
 
 export interface NotificationPreferences {
@@ -41,8 +45,6 @@ const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   orderStatus: true,
 };
 
-const PROMO_NOTIFICATION_TYPES = ["PROMO", "SPECIAL_PERIOD", "DISCOUNT", "SEASONAL_OFFER"];
-
 @Injectable()
 export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(NotificationsService.name);
@@ -54,6 +56,8 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     private readonly notifications: Repository<Notification>,
     @InjectRepository(NotificationCampaign)
     private readonly campaigns: Repository<NotificationCampaign>,
+    @InjectRepository(Promo)
+    private readonly promos: Repository<Promo>,
     @InjectRepository(Customer)
     private readonly users: Repository<Customer>,
     @Inject(PUSH_SENDER) private readonly pushSender: PushSender,
@@ -154,6 +158,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       where: { role: input.recipientRole },
       select: { id: true, role: true },
     });
+    const promo = await this.savePromoFromInput(input);
 
     for (const recipient of recipients) {
       await this.createAndPush({
@@ -164,7 +169,12 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         body: input.body,
         data: {
           promo: true,
-          ...(input.promoCode ? { promoCode: input.promoCode } : {}),
+          promoId: promo.id,
+          promoCode: promo.code,
+          discountTarget: promo.discountTarget,
+          discountPercent: promo.discountPercent,
+          scope: promo.scope,
+          ...(promo.outletId ? { outletId: promo.outletId } : {}),
           ...(input.deepLink ? { deepLink: input.deepLink } : {}),
         },
       });
@@ -173,16 +183,54 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     return { sent: recipients.length };
   }
 
-  async listPromos(user: AuthenticatedUser): Promise<Notification[]> {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException("Only admins can list promo notifications");
+  async listPromos(user: AuthenticatedUser): Promise<Promo[]> {
+    if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN) {
+      return this.promos.find({ order: { createdAt: "DESC" }, take: 100 });
     }
 
-    return this.notifications.find({
-      where: { type: In(PROMO_NOTIFICATION_TYPES) },
-      order: { createdAt: "DESC" },
+    const now = new Date();
+    return this.promos.find({
+      where: {
+        isActive: true,
+        startsAt: LessThanOrEqual(now),
+        endsAt: MoreThanOrEqual(now),
+      },
+      order: { endsAt: "ASC", createdAt: "DESC" },
       take: 100,
     });
+  }
+
+  async updatePromo(user: AuthenticatedUser, id: string, input: UpdatePromoDto): Promise<Promo> {
+    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException("Only admins can update promos");
+    }
+
+    const promo = await this.promos.findOneBy({ id });
+    if (!promo) {
+      throw new NotFoundException("Promo not found");
+    }
+
+    if (input.title !== undefined) promo.title = input.title;
+    if (input.body !== undefined) promo.body = input.body;
+    if (input.discountTarget !== undefined) promo.discountTarget = input.discountTarget;
+    if (input.discountPercent !== undefined) promo.discountPercent = input.discountPercent;
+    if (input.scope !== undefined) promo.scope = input.scope;
+    if (input.outletId !== undefined) promo.outletId = input.outletId;
+    if (input.startsAt !== undefined) promo.startsAt = new Date(input.startsAt);
+    if (input.endsAt !== undefined) promo.endsAt = new Date(input.endsAt);
+    if (input.isActive !== undefined) promo.isActive = input.isActive;
+    if (input.deepLink !== undefined) promo.deepLink = input.deepLink;
+    this.validatePromo(promo);
+
+    return this.promos.save(promo);
+  }
+
+  togglePromoActive(
+    user: AuthenticatedUser,
+    id: string,
+    input: TogglePromoActiveDto,
+  ): Promise<Promo> {
+    return this.updatePromo(user, id, { isActive: input.isActive });
   }
 
   async scheduleCampaign(
@@ -211,6 +259,37 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
 
   listCampaigns(): Promise<NotificationCampaign[]> {
     return this.campaigns.find({ order: { scheduledAt: "DESC", createdAt: "DESC" }, take: 100 });
+  }
+
+  private async savePromoFromInput(input: CreatePromoNotificationDto): Promise<Promo> {
+    const promo = this.promos.create({
+      code: input.promoCode.trim().toUpperCase(),
+      title: input.title,
+      body: input.body,
+      discountTarget: input.discountTarget,
+      discountPercent: input.discountPercent,
+      scope: input.scope,
+      outletId: input.scope === "OUTLET" ? (input.outletId ?? null) : null,
+      startsAt: new Date(input.startsAt),
+      endsAt: new Date(input.endsAt),
+      isActive: true,
+      deepLink: input.deepLink ?? null,
+    });
+    this.validatePromo(promo);
+
+    return this.promos.save(promo);
+  }
+
+  private validatePromo(promo: Promo): void {
+    if (promo.scope === "OUTLET" && !promo.outletId) {
+      throw new BadRequestException("Outlet scoped promos require outletId");
+    }
+    if (promo.scope === "ALL_OUTLETS") {
+      promo.outletId = null;
+    }
+    if (promo.endsAt <= promo.startsAt) {
+      throw new BadRequestException("Promo endsAt must be after startsAt");
+    }
   }
 
   async registerDeviceToken(user: AuthenticatedUser, token: string): Promise<{ registered: true }> {

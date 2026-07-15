@@ -12,13 +12,14 @@ import { NotificationCampaign } from "./notification-campaign.entity";
 import { Notification } from "./notification.entity";
 import { NotificationsController } from "./notifications.controller";
 import { NotificationsService } from "./notifications.service";
+import { Promo } from "./promo.entity";
 import { PUSH_SENDER } from "./push-sender";
 
 @Module({
   imports: [
     AuthModule,
     RedisModule,
-    TypeOrmModule.forFeature([Notification, NotificationCampaign, Customer]),
+    TypeOrmModule.forFeature([Notification, NotificationCampaign, Promo, Customer]),
   ],
   controllers: [NotificationsController],
   providers: [

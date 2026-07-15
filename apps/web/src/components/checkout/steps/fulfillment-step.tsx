@@ -70,6 +70,7 @@ export function FulfillmentStep({
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
   const [recipientPhoneError, setRecipientPhoneError] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState("");
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     initial.latitude != null && initial.longitude != null
       ? { latitude: initial.latitude, longitude: initial.longitude }
@@ -307,6 +308,7 @@ export function FulfillmentStep({
         vatMinor: vat,
         platformCommissionMinor: platformCommission,
         totalMinor: grandTotal,
+        ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}),
       };
 
       return apiClient.initiatePayment(
@@ -626,6 +628,14 @@ export function FulfillmentStep({
 
       {/* CTA */}
       <div className="space-y-2">
+        <label className="block text-xs font-semibold text-gray-500">Promo code</label>
+        <input
+          type="text"
+          value={promoCode}
+          onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+          placeholder="Enter promo code"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+        />
         {mode === "delivery" && !isValidated && !initiateMutation.isPending && (
           <p className="text-xs text-center text-gray-400">
             Validate your delivery location to continue

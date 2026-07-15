@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   type CustomerOrder,
   masterOrderStatusSchema,
+  type PaginatedCustomerOrders,
   riderLocationSchema,
   type OrderDetail,
   type RiderLocation,
@@ -84,17 +85,22 @@ export function useOrderDetail(orderId: string | null) {
             }
           : current,
       );
-      queryClient.setQueriesData<CustomerOrder[]>({ queryKey: ["orders"] }, (orders) =>
-        orders?.map((order) =>
-          order.id === orderId
-            ? {
-                ...order,
-                riderId: parsed.data.riderId ?? order.riderId,
-                status: parsed.data.status,
-                updatedAt: parsed.data.updatedAt,
-              }
-            : order,
-        ),
+      queryClient.setQueriesData<PaginatedCustomerOrders>({ queryKey: ["orders"] }, (current) =>
+        current
+          ? {
+              ...current,
+              orders: current.orders.map((order: CustomerOrder) =>
+                order.id === orderId
+                  ? {
+                      ...order,
+                      riderId: parsed.data.riderId ?? order.riderId,
+                      status: parsed.data.status,
+                      updatedAt: parsed.data.updatedAt,
+                    }
+                  : order,
+              ),
+            }
+          : current,
       );
 
       void queryClient.invalidateQueries({ queryKey: ["order", orderId] });

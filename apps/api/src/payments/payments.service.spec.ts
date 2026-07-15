@@ -15,6 +15,7 @@ import type { OrderLineItem } from "../orders/order-line-item.entity";
 import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
 import { Outlet } from "../outlets/outlet.entity";
+import type { Promo } from "../notifications/promo.entity";
 import type { RealtimeService } from "../realtime/realtime.service";
 import type { Payment } from "./payment.entity";
 import { PaymentStatus } from "./payment.entity";
@@ -50,6 +51,7 @@ describe(PaymentsService.name, () => {
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
   };
+  let promos: { findOneBy: ReturnType<typeof vi.fn> };
   let dataSource: { query: ReturnType<typeof vi.fn>; transaction: ReturnType<typeof vi.fn> };
   let delivery: { validateAddress: ReturnType<typeof vi.fn> };
   let paymentAdapter: PaymentAdapter;
@@ -135,6 +137,7 @@ describe(PaymentsService.name, () => {
         }),
       ),
     };
+    promos = { findOneBy: vi.fn().mockResolvedValue(null) };
     dataSource = { query: vi.fn().mockResolvedValue([]), transaction: vi.fn() };
     delivery = {
       validateAddress: vi.fn().mockResolvedValue({
@@ -182,6 +185,7 @@ describe(PaymentsService.name, () => {
       {} as Repository<OrderLineItem>,
       payments as unknown as Repository<Payment>,
       refunds as unknown as Repository<PaymentRefund>,
+      promos as unknown as Repository<Promo>,
       dataSource as unknown as DataSource,
       delivery as unknown as DeliveryService,
       {
@@ -292,6 +296,55 @@ describe(PaymentsService.name, () => {
         returnUrl: "rsc://payment/return",
       }),
     );
+  });
+
+  it("applies an active order promo before initiating provider payment", async () => {
+    promos.findOneBy.mockResolvedValueOnce({
+      code: "SAVE20",
+      title: "Save 20",
+      body: "20% off",
+      discountTarget: "ORDER",
+      discountPercent: 20,
+      scope: "ALL_OUTLETS",
+      outletId: null,
+      startsAt: new Date("2026-07-01T00:00:00.000Z"),
+      endsAt: new Date("2099-07-31T23:59:59.000Z"),
+      isActive: true,
+    });
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: "https://moment.example/checkout",
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    await service.initiate(
+      { id: customerId, role: UserRole.CUSTOMER, sessionId: "s1", accessTokenId: "a1" },
+      {
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "12 Admiralty Way",
+        deliveryLatitude: 6.4474,
+        deliveryLongitude: 3.4542,
+        items: [{ menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9", quantity: 1 }],
+        promoCode: "save20",
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 0,
+        vatMinor: 33750,
+        discountMinor: 90000,
+        platformCommissionMinor: 45000,
+        totalMinor: 588750,
+      },
+    );
+
+    expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 588750 }));
   });
 
   it("processes a super admin refund for a successful payment", async () => {

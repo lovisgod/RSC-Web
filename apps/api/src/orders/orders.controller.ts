@@ -24,6 +24,7 @@ import {
   AssignOrderRiderDto,
   CompleteDeliveryDto,
   ListAdminOrdersQueryDto,
+  ListCustomerOrdersQueryDto,
   PickupSubOrderDto,
   RiderCollectSubOrderDto,
   UpdateOrderStatusDto,
@@ -45,8 +46,8 @@ export class OrdersController {
     description:
       "Customer-facing endpoint that returns only the authenticated end user's orders, newest first.",
   })
-  listMine(@Req() request: AuthenticatedRequest) {
-    return this.orders.listMine(request.user!);
+  listMine(@Req() request: AuthenticatedRequest, @Query() query: ListCustomerOrdersQueryDto) {
+    return this.orders.listMine(request.user!, query);
   }
 
   @Get("admin")

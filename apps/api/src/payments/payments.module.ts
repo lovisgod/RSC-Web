@@ -12,6 +12,7 @@ import { OrderLineItem } from "../orders/order-line-item.entity";
 import { SubOrder } from "../orders/sub-order.entity";
 import { Outlet } from "../outlets/outlet.entity";
 import { RealtimeModule } from "../realtime/realtime.module";
+import { Promo } from "../notifications/promo.entity";
 import type { ApplicationConfig } from "../config/configuration";
 import { LocalPaymentAdapter } from "./local-payment.adapter";
 import { PAYMENT_ADAPTER } from "./payment-adapter";
@@ -37,6 +38,7 @@ import { MomentPaymentAdapter } from "./moment-payment.adapter";
       OrderLineItem,
       Payment,
       PaymentRefund,
+      Promo,
     ]),
   ],
   controllers: [PaymentsController],
