@@ -88,7 +88,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
   const [isPreparationFocused, setIsPreparationFocused] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedPreparationNote(preparationNote.trim()), 300);
+    const timer = setTimeout(() => setDebouncedPreparationNote(preparationNote.trim()), 700);
     return () => clearTimeout(timer);
   }, [preparationNote]);
 
@@ -100,8 +100,8 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
         menuItemId: item.id,
         q: debouncedPreparationNote,
       }),
-    enabled: isPreparationFocused && debouncedPreparationNote.length >= 2,
-    staleTime: 60_000,
+    enabled: isPreparationFocused && debouncedPreparationNote.length >= 3,
+    staleTime: 5 * 60_000,
   });
   // groupId → Set of selected modifierIds
   const [selections, setSelections] = useState<Map<string, Set<string>>>(() => new Map());
@@ -219,7 +219,11 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
             <p className="mt-1 text-xs text-gray-400">
               Add item-specific notes like extra spicy, no onions, or sauce on the side.
             </p>
-            <div className="relative mt-3">
+            <div
+              className={`mt-3 overflow-hidden rounded-xl border bg-gray-50 transition-colors ${
+                isPreparationFocused ? "border-[var(--rsc-main)] bg-white" : "border-gray-200"
+              }`}
+            >
               <textarea
                 id={`prep-note-${item.id}`}
                 value={preparationNote}
@@ -229,18 +233,18 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
                 rows={3}
                 maxLength={240}
                 placeholder="e.g. Extra spicy, no onions"
-                className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:bg-white focus:outline-none"
+                className="w-full resize-none border-0 bg-transparent px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
               />
 
               {isPreparationFocused && visiblePreparationSuggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-orange-100 bg-white shadow-lg">
+                <div className="border-t border-orange-100 bg-white">
                   {visiblePreparationSuggestions.map((suggestion) => (
                     <button
                       key={suggestion.id}
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => applyPreparationSuggestion(suggestion.text)}
-                      className="block w-full px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-orange-50 hover:text-orange-700"
+                      className="block w-full border-t border-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700 first:border-t-0 hover:bg-orange-50 hover:text-orange-700"
                     >
                       {suggestion.text}
                     </button>

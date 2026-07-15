@@ -183,8 +183,8 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     return { sent: recipients.length };
   }
 
-  async listPromos(user: AuthenticatedUser): Promise<Promo[]> {
-    if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN) {
+  async listPromos(user?: AuthenticatedUser | null): Promise<Promo[]> {
+    if (user?.role === UserRole.SUPER_ADMIN || user?.role === UserRole.ADMIN) {
       return this.promos.find({ order: { createdAt: "DESC" }, take: 100 });
     }
 
@@ -496,7 +496,11 @@ function shouldDeliverByPreference(
   const preferences = normalizePreferences(recipient.notificationPreferences);
   const normalizedType = type.toUpperCase();
 
-  if (normalizedType === "ORDER_STATUS" || normalizedType === "ORDER_ASSIGNMENT") {
+  if (
+    normalizedType === "ORDER_STATUS" ||
+    normalizedType === "ORDER_ASSIGNMENT" ||
+    normalizedType === "PAYMENT_SUCCESS"
+  ) {
     return true;
   }
 

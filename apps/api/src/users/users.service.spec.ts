@@ -31,20 +31,42 @@ describe(UsersService.name, () => {
     updatedAt: new Date("2026-07-02T09:00:00.000Z"),
   });
   let users: {
+    create: ReturnType<typeof vi.fn>;
     find: ReturnType<typeof vi.fn>;
+    findOne: ReturnType<typeof vi.fn>;
     findOneBy: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
     softRemove: ReturnType<typeof vi.fn>;
+  };
+  let emailSender: {
+    sendTemporaryPassword: ReturnType<typeof vi.fn>;
   };
   let service: UsersService;
 
   beforeEach(() => {
     users = {
+      create: vi.fn((value: Partial<Customer>) => Object.assign(new Customer(), value)),
       find: vi.fn().mockResolvedValue([admin]),
+      findOne: vi.fn().mockResolvedValue(admin),
       findOneBy: vi.fn().mockResolvedValue(admin),
+      save: vi.fn((user: Customer) =>
+        Promise.resolve(
+          Object.assign(user, {
+            id: user.id ?? "721da55a-e320-410e-a22a-f88fb66d6d45",
+            createdAt: user.createdAt ?? new Date("2026-07-02T08:00:00.000Z"),
+            updatedAt: user.updatedAt ?? new Date("2026-07-02T09:00:00.000Z"),
+          }),
+        ),
+      ),
       softRemove: vi.fn().mockResolvedValue(admin),
     };
     const piiCrypto = {
       decrypt: vi.fn((value: string) => value.replace(/^encrypted:/, "")),
+      encrypt: vi.fn((value: string) => `encrypted:${value}`),
+      searchHash: vi.fn((value: string) => `hash:${value}`),
+    };
+    emailSender = {
+      sendTemporaryPassword: vi.fn().mockResolvedValue(undefined),
     };
 
     service = new UsersService(
@@ -52,7 +74,7 @@ describe(UsersService.name, () => {
       piiCrypto as unknown as PiiCryptoService,
       {} as PhoneOtpService,
       {} as SmsSender,
-      {} as EmailSender,
+      emailSender as unknown as EmailSender,
       {} as MediaService,
     );
   });
@@ -144,6 +166,31 @@ describe(UsersService.name, () => {
 
       expect(users.findOneBy).toHaveBeenCalledWith({ id: rider.id, role: UserRole.RIDER });
       expect(users.softRemove).toHaveBeenCalledWith(rider);
+    });
+
+    it("returns the created rider when temporary password email delivery fails", async () => {
+      users.findOneBy.mockResolvedValue(null);
+      emailSender.sendTemporaryPassword.mockRejectedValue(new Error("SMTP unavailable"));
+
+      await expect(
+        service.createRider(superAdmin, {
+          name: "Rider Joe",
+          email: "joe@example.com",
+          phone: "08033333333",
+          vehicleType: "Bike",
+          plateNumber: "ABC-123XY",
+        }),
+      ).resolves.toEqual(
+        expect.objectContaining({
+          id: "721da55a-e320-410e-a22a-f88fb66d6d45",
+          name: "Rider Joe",
+          role: UserRole.RIDER,
+          riderStatus: "AVAILABLE",
+          temporaryPasswordEmailSent: false,
+          temporaryPasswordEmailError: "SMTP unavailable",
+        }),
+      );
+      expect(users.save).toHaveBeenCalledWith(expect.objectContaining({ role: UserRole.RIDER }));
     });
   });
 });

@@ -3,6 +3,8 @@ import type { Server } from "socket.io";
 
 import type { MasterOrderStatus } from "../orders/order-status.enum";
 import type { LatestLocation } from "../orders/orders.service";
+import type { MasterOrder } from "../orders/master-order.entity";
+import type { OrderLineItem } from "../orders/order-line-item.entity";
 import type { SubOrder } from "../orders/sub-order.entity";
 import type { PreparationSuggestion } from "../catalog/preparation-suggestion.entity";
 
@@ -30,6 +32,27 @@ export interface MenuItemAvailabilityUpdateEvent {
   updatedAt: Date;
 }
 
+export interface RealtimeNotificationEvent {
+  id?: string;
+  recipientId?: string;
+  recipientRole?: string;
+  type: string;
+  title: string;
+  body: string;
+  data?: Record<string, unknown>;
+  createdAt?: Date | string;
+}
+
+export interface ConfirmedSubOrderEvent {
+  masterOrderId: string;
+  subOrderId: string;
+  outletId: string;
+  status: MasterOrderStatus;
+  order: MasterOrder;
+  subOrder: SubOrder;
+  lineItems: OrderLineItem[];
+}
+
 @Injectable()
 export class RealtimeService {
   private server: Server | null = null;
@@ -49,6 +72,19 @@ export class RealtimeService {
   emitSuborderNew(subOrder: SubOrder): void {
     this.server?.to(outletRoom(subOrder.outletId)).emit("suborder:new", subOrder);
     this.server?.to(platformAdminRoom()).emit("suborder:new", subOrder);
+  }
+
+  emitSuborderConfirmed(event: ConfirmedSubOrderEvent): void {
+    this.server?.to(outletRoom(event.outletId)).emit("suborder:confirmed", event);
+    this.server?.to(platformAdminRoom()).emit("suborder:confirmed", event);
+  }
+
+  emitAdminNotification(event: RealtimeNotificationEvent, outletIds: string[] = []): void {
+    this.server?.to(platformAdminRoom()).emit("notification:new", event);
+
+    for (const outletId of outletIds) {
+      this.server?.to(outletRoom(outletId)).emit("notification:new", event);
+    }
   }
 
   emitRiderLocationUpdate(event: RiderLocationUpdateEvent): void {

@@ -51,6 +51,11 @@ export interface MenuItemsPage {
 @Injectable()
 export class CatalogService {
   private readonly logger = new Logger(CatalogService.name);
+  private readonly aiPreparationSuggestionCache = new Map<
+    string,
+    { expiresAt: number; suggestions: PreparationSuggestion[] }
+  >();
+  private aiPreparationSuggestionsPausedUntil = 0;
 
   constructor(
     @InjectRepository(Outlet) private readonly outlets: Repository<Outlet>,
@@ -833,6 +838,16 @@ export class CatalogService {
     if (aiConfig.provider === "noop") {
       return [];
     }
+    const nowMs = Date.now();
+    if (this.aiPreparationSuggestionsPausedUntil > nowMs) {
+      return [];
+    }
+
+    const cacheKey = preparationSuggestionCacheKey(query);
+    const cached = this.aiPreparationSuggestionCache.get(cacheKey);
+    if (cached && cached.expiresAt > nowMs) {
+      return cached.suggestions;
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), aiConfig.timeoutMs);
@@ -853,7 +868,7 @@ export class CatalogService {
         headers.authorization = `Bearer ${aiConfig.apiKey}`;
       }
 
-      const response = await fetch(`${aiConfig.baseUrl}/v1/chat/completions`, {
+      const response = await fetch(pollinationsTextUrl(aiConfig.baseUrl), {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -873,6 +888,9 @@ export class CatalogService {
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          this.aiPreparationSuggestionsPausedUntil = Date.now() + 2 * 60_000;
+        }
         throw new Error(`AI suggestion provider responded with ${response.status}`);
       }
 
@@ -881,13 +899,25 @@ export class CatalogService {
       };
       const content = payload.choices?.[0]?.message?.content;
       const texts = parseAiSuggestionTexts(content);
-      return texts.map((text, index) => generatedPreparationSuggestion(text, query, index));
-    } catch (error) {
-      this.logger.warn(
-        `AI preparation suggestions unavailable; falling back to configured suggestions: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
+      const suggestions = texts.map((text, index) =>
+        generatedPreparationSuggestion(text, query, index),
       );
+      this.aiPreparationSuggestionCache.set(cacheKey, {
+        expiresAt: Date.now() + 10 * 60_000,
+        suggestions,
+      });
+      return suggestions;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      if (message.includes("429") || message.includes("aborted")) {
+        this.logger.log(
+          `AI preparation suggestions temporarily unavailable; using configured suggestions: ${message}`,
+        );
+      } else {
+        this.logger.warn(
+          `AI preparation suggestions unavailable; falling back to configured suggestions: ${message}`,
+        );
+      }
       return [];
     } finally {
       clearTimeout(timeout);
@@ -979,6 +1009,23 @@ function buildPreparationSuggestionPrompt(input: {
       customerSearch: input.query.q ?? null,
       existingFallbackSuggestions: input.fallbackTexts,
     },
+  });
+}
+
+function pollinationsTextUrl(baseUrl: string): string {
+  const normalized = baseUrl.replace(/\/$/, "");
+  if (normalized.includes("gen.pollinations.ai")) {
+    return "https://text.pollinations.ai/openai";
+  }
+
+  return `${normalized}/openai`;
+}
+
+function preparationSuggestionCacheKey(query: QueryPreparationSuggestionsDto): string {
+  return JSON.stringify({
+    outletId: query.outletId ?? null,
+    menuItemId: query.menuItemId ?? null,
+    q: query.q?.trim().toLowerCase() ?? "",
   });
 }
 

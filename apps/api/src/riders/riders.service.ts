@@ -1,8 +1,10 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
+import { Customer } from "../auth/customer.entity";
+import { CustomerStatus } from "../auth/customer-status.enum";
 import { UserRole } from "../auth/user-role.enum";
 import { MasterOrderStatus } from "../orders/order-status.enum";
 import { RealtimeService } from "../realtime/realtime.service";
@@ -12,6 +14,8 @@ import { RiderLocation } from "./rider-location.entity";
 @Injectable()
 export class RidersService {
   constructor(
+    @InjectRepository(Customer)
+    private readonly users: Repository<Customer>,
     @InjectRepository(RiderLocation)
     private readonly locations: Repository<RiderLocation>,
     private readonly dataSource: DataSource,
@@ -25,6 +29,8 @@ export class RidersService {
     if (user.role !== UserRole.RIDER) {
       throw new ForbiddenException("Only riders can record rider locations");
     }
+
+    await this.ensureActiveRider(user.id);
 
     if (input.masterOrderId) {
       await this.ensureCanRecordOrderLocation(user.id, input.masterOrderId);
@@ -50,6 +56,17 @@ export class RidersService {
     });
 
     return location;
+  }
+
+  private async ensureActiveRider(riderId: string): Promise<void> {
+    const rider = await this.users.findOne({
+      where: { id: riderId, role: UserRole.RIDER },
+      select: { id: true, status: true },
+    });
+
+    if (!rider || rider.status !== CustomerStatus.ACTIVE) {
+      throw new UnauthorizedException("Rider account is no longer active");
+    }
   }
 
   private async ensureCanRecordOrderLocation(

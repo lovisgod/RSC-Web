@@ -477,7 +477,12 @@ describe("registration API client", () => {
   it("requests all operations stats endpoints", async () => {
     const responses = [
       {
-        data: { activeOutlets: 4, openMasterOrders: 17, delayedSubOrders: 2 },
+        data: {
+          activeOutlets: 4,
+          openMasterOrders: 17,
+          delayedSubOrders: 2,
+          pendingSettlements: 5,
+        },
         message: "Operations summary retrieved",
         status: 200,
       },

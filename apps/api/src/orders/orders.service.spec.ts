@@ -74,6 +74,7 @@ function createService(input: {
   };
   const masterOrders = {
     createQueryBuilder: vi.fn(() => queryBuilder),
+    findAndCount: vi.fn().mockResolvedValue([input.orders ?? [], input.total ?? 0]),
     find: vi.fn(({ where }: { where: Partial<MasterOrder> }) =>
       Promise.resolve(
         (input.orders ?? []).filter((order) =>
@@ -587,12 +588,12 @@ describe(OrdersService.name, () => {
     );
   });
 
-  it("lists active dispatches assigned to the calling rider", async () => {
+  it("lists active preparing dispatches assigned to the calling rider", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
       riderId: riderUser.id,
-      status: MasterOrderStatus.READY,
+      status: MasterOrderStatus.PREPARING,
       deliveryMode: "DELIVERY",
       createdAt: new Date("2026-07-02T08:00:00.000Z"),
     });
@@ -601,7 +602,7 @@ describe(OrdersService.name, () => {
       masterOrderId: order.id,
       outletId,
       pickupCode: "123456",
-      status: SubOrderStatus.READY,
+      status: SubOrderStatus.PREPARING,
     });
     const lineItem = Object.assign(new OrderLineItem(), {
       id: "a43a459d-a9c0-4c81-a9be-f5ed41d9dfde",
@@ -624,6 +625,7 @@ describe(OrdersService.name, () => {
     expect(result[0]).toEqual(
       expect.objectContaining({
         orderId: order.id,
+        status: MasterOrderStatus.PREPARING,
         riderId: riderUser.id,
         outlets: [
           expect.objectContaining({
@@ -685,6 +687,85 @@ describe(OrdersService.name, () => {
     expect(dataSource.query).toHaveBeenCalledWith(
       expect.stringContaining("u.id <> ALL"),
       expect.arrayContaining([expect.arrayContaining([riderUser.id])]),
+    );
+  });
+
+  it("splits delivered customer order history into fulfilled and failed customer views", async () => {
+    const customerUser: AuthenticatedUser = {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      role: UserRole.CUSTOMER,
+      sessionId: "session-id",
+      accessTokenId: "access-token-id",
+    };
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: customerUser.id,
+      riderId: null,
+      status: MasterOrderStatus.DELIVERED,
+      subtotalMinor: 100000,
+      deliveryFeeMinor: 15000,
+      serviceFeeMinor: 0,
+      vatMinor: 7500,
+      discountMinor: 0,
+      totalMinor: 132500,
+      currency: "NGN" as const,
+      deliveryMode: "DELIVERY" as const,
+      deliveryAddress: "12 Admiralty Way",
+      deliveryLatitude: 6.4474,
+      deliveryLongitude: 3.4542,
+      recipientPhone: null,
+      paymentReference: "RSC-reference",
+      deliveryCode: "123456",
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+      deletedAt: null,
+    });
+    const fulfilledSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.DISPATCHED,
+      subtotalMinor: 60000,
+      commissionMinor: 6000,
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const rejectedSubOrder = Object.assign(new SubOrder(), {
+      id: "6b8537f9-b0c1-4df3-8567-aa49517d7de1",
+      masterOrderId: order.id,
+      outletId: otherOutletId,
+      status: SubOrderStatus.REJECTED,
+      subtotalMinor: 40000,
+      commissionMinor: 4000,
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const { service } = createService({
+      orders: [order],
+      total: 1,
+      subOrders: [fulfilledSubOrder, rejectedSubOrder],
+    });
+
+    const result = await service.listMine(customerUser);
+
+    expect(result.orders).toHaveLength(2);
+    expect(result.orders[0]).toEqual(
+      expect.objectContaining({
+        id: `${order.id}:fulfilled`,
+        sourceMasterOrderId: order.id,
+        splitKind: "FULFILLED",
+        status: MasterOrderStatus.DELIVERED,
+        totalMinor: 85500,
+      }),
+    );
+    expect(result.orders[1]).toEqual(
+      expect.objectContaining({
+        id: `${order.id}:failed`,
+        sourceMasterOrderId: order.id,
+        splitKind: "FAILED",
+        status: MasterOrderStatus.CANCELLED,
+        refundSubOrderIds: [rejectedSubOrder.id],
+        refundableMinor: 47000,
+        totalMinor: 47000,
+      }),
     );
   });
 

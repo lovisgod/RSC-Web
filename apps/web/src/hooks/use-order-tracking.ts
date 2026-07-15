@@ -40,6 +40,7 @@ function getRealtimeOrigin() {
 
 export function useOrderDetail(orderId: string | null) {
   const queryClient = useQueryClient();
+  const sourceOrderId = orderId?.split(":")[0] ?? null;
   const query = useQuery({
     queryKey: ["order", orderId],
     queryFn: () => apiClient.getOrder(orderId!),
@@ -48,9 +49,9 @@ export function useOrderDetail(orderId: string | null) {
   });
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !sourceOrderId) return;
 
-    const room = `order:${orderId}`;
+    const room = `order:${sourceOrderId}`;
     const socket = io(`${getRealtimeOrigin()}/realtime`, {
       path: "/socket.io",
       withCredentials: true,
@@ -70,7 +71,7 @@ export function useOrderDetail(orderId: string | null) {
 
     socket.on("order:status_update", (payload: unknown) => {
       const parsed = orderStatusUpdateSchema.safeParse(payload);
-      if (!parsed.success || parsed.data.masterOrderId !== orderId) return;
+      if (!parsed.success || parsed.data.masterOrderId !== sourceOrderId) return;
 
       queryClient.setQueryData<OrderDetail>(["order", orderId], (current) =>
         current
@@ -90,7 +91,7 @@ export function useOrderDetail(orderId: string | null) {
           ? {
               ...current,
               orders: current.orders.map((order: CustomerOrder) =>
-                order.id === orderId
+                (order.sourceMasterOrderId ?? order.id) === sourceOrderId
                   ? {
                       ...order,
                       riderId: parsed.data.riderId ?? order.riderId,
@@ -111,7 +112,7 @@ export function useOrderDetail(orderId: string | null) {
 
     socket.on("rider:location_update", (payload: unknown) => {
       const parsed = riderLocationSchema.safeParse(payload);
-      if (!parsed.success || parsed.data.masterOrderId !== orderId) return;
+      if (!parsed.success || parsed.data.masterOrderId !== sourceOrderId) return;
 
       queryClient.setQueryData<RiderLocation>(["order", orderId, "rider-location"], parsed.data);
     });
@@ -120,7 +121,7 @@ export function useOrderDetail(orderId: string | null) {
       socket.emit("room:unsubscribe", { room });
       socket.disconnect();
     };
-  }, [orderId, queryClient]);
+  }, [orderId, queryClient, sourceOrderId]);
 
   return query;
 }

@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -52,6 +53,8 @@ export interface RiderResult {
   plateNumber: string | null;
   riderStatus: string | null;
   temporaryPassword: string;
+  temporaryPasswordEmailSent: boolean;
+  temporaryPasswordEmailError: string | null;
 }
 
 export interface RiderAdminResult {
@@ -83,6 +86,8 @@ export interface OutletAdminResult {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(Customer)
     private readonly users: Repository<Customer>,
@@ -260,12 +265,28 @@ export class UsersService {
 
     const saved = await this.saveUser(rider);
 
-    await this.emailSender.sendTemporaryPassword({
-      email,
-      name: saved.name,
-      role: "rider",
-      temporaryPassword,
-    });
+    let temporaryPasswordEmailSent = true;
+    let temporaryPasswordEmailError: string | null = null;
+
+    try {
+      await this.emailSender.sendTemporaryPassword({
+        email,
+        name: saved.name,
+        role: "rider",
+        temporaryPassword,
+      });
+    } catch (error) {
+      temporaryPasswordEmailSent = false;
+      temporaryPasswordEmailError =
+        error instanceof Error ? error.message : "Unable to send temporary password email";
+      this.logger.warn(
+        `Rider account created but temporary password email failed: ${JSON.stringify({
+          riderId: saved.id,
+          email,
+          error: temporaryPasswordEmailError,
+        })}`,
+      );
+    }
 
     return {
       id: saved.id,
@@ -276,6 +297,8 @@ export class UsersService {
       plateNumber: saved.plateNumber,
       riderStatus: saved.riderStatus,
       temporaryPassword,
+      temporaryPasswordEmailSent,
+      temporaryPasswordEmailError,
     };
   }
 

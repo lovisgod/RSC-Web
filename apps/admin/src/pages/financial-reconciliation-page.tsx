@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 
 import { useOutletsLive } from "../hooks/use-outlets-live";
 import { useApproveOutletSettlement, useOutletSettlements } from "../hooks/use-outlet-settlements";
-import { exportOutletSettlements, type OutletSettlementQuery } from "../lib/api";
+import type { OutletSettlementQuery } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
 type ExportDateMode = "single" | "range";
@@ -52,18 +52,6 @@ function normalizeDateRange(dateFrom: string, dateTo: string) {
 
 function formatMinor(amountMinor: number) {
   return moneyFormatter.format(amountMinor / 100);
-}
-
-function downloadFile(filename: string, content: string, contentType: string) {
-  const blob = new Blob([content], { type: contentType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
 }
 
 function statusLabel(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
@@ -229,11 +217,11 @@ export function FinancialReconciliationPage() {
     variables,
   } = useApproveOutletSettlement();
   const exportMutation = useMutation({
-    mutationFn: exportOutletSettlements,
-    onSuccess: (report) => {
-      downloadFile(report.filename, report.content, report.contentType);
-      toastBus.emit("Settlement report exported", "success");
-      setExportOpen(false);
+    mutationFn: async (query: OutletSettlementQuery) => {
+      // TODO: Re-enable when the real CSV export endpoint is available.
+      // return exportOutletSettlements(query);
+      void query;
+      throw new Error("Settlement CSV export is not available yet.");
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),
   });

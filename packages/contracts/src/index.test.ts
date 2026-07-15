@@ -201,11 +201,13 @@ describe("operations stats contracts", () => {
         activeOutlets: 4,
         openMasterOrders: 17,
         delayedSubOrders: 2,
+        pendingSettlements: 5,
       }),
     ).toEqual({
       activeOutlets: 4,
       openMasterOrders: 17,
       delayedSubOrders: 2,
+      pendingSettlements: 5,
     });
   });
 
