@@ -273,7 +273,10 @@ export class OrdersService {
 
     return {
       orders: orders.map((order) => ({
-        order,
+        order: this.withTakeoutPickupCode(
+          order,
+          subOrders.filter((subOrder) => subOrder.masterOrderId === order.id),
+        ),
         subOrders: subOrders
           .filter((subOrder) => subOrder.masterOrderId === order.id)
           .map((subOrder) => this.serializeSubOrder(subOrder)),
@@ -852,6 +855,7 @@ export class OrdersService {
     const visibleSubOrders = splitKind
       ? this.filterSubOrdersForCustomerSplit(subOrders, splitKind)
       : subOrders;
+    const customerOrder = this.withTakeoutPickupCode(projectedOrder, visibleSubOrders);
     const visibleSubOrderIds = new Set(visibleSubOrders.map((subOrder) => subOrder.id));
     const visibleLineItems = splitKind
       ? lineItems.filter((lineItem) => visibleSubOrderIds.has(lineItem.subOrderId))
@@ -863,7 +867,7 @@ export class OrdersService {
       : events;
 
     return {
-      order: projectedOrder,
+      order: customerOrder,
       subOrders: visibleSubOrders.map((subOrder) => this.serializeSubOrder(subOrder)),
       lineItems: visibleLineItems,
       events: visibleEvents,
@@ -933,16 +937,35 @@ export class OrdersService {
   }
 
   private withCustomerViewMetadata(order: MasterOrder, subOrders: SubOrder[]): CustomerOrderView {
-    return {
-      ...order,
-      customerViewId: order.id,
-      sourceMasterOrderId: order.id,
-      refundSubOrderIds:
-        order.status === MasterOrderStatus.CANCELLED
-          ? subOrders.map((subOrder) => subOrder.id)
-          : [],
-      refundableMinor: order.status === MasterOrderStatus.CANCELLED ? order.totalMinor : 0,
-    };
+    return this.withTakeoutPickupCode(
+      {
+        ...order,
+        customerViewId: order.id,
+        sourceMasterOrderId: order.id,
+        refundSubOrderIds:
+          order.status === MasterOrderStatus.CANCELLED
+            ? subOrders.map((subOrder) => subOrder.id)
+            : [],
+        refundableMinor: order.status === MasterOrderStatus.CANCELLED ? order.totalMinor : 0,
+      },
+      subOrders,
+    );
+  }
+
+  private withTakeoutPickupCode<T extends MasterOrder>(order: T, subOrders: SubOrder[]): T {
+    if (order.deliveryMode !== "TAKEOUT" || order.deliveryCode === null) {
+      return order;
+    }
+
+    const pickupCode =
+      subOrders.find((subOrder) => subOrder.status !== SubOrderStatus.REJECTED)?.pickupCode ??
+      subOrders[0]?.pickupCode;
+
+    if (!pickupCode) {
+      return order;
+    }
+
+    return { ...order, deliveryCode: pickupCode };
   }
 
   private shouldSplitForCustomer(order: MasterOrder, subOrders: SubOrder[]): boolean {

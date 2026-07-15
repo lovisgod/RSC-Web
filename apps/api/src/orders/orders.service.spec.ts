@@ -314,6 +314,36 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("uses the outlet pickup code as the displayed code for takeout orders in admin lists", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "50296ef7-fb39-4b42-ae55-81caec8efd21",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      status: MasterOrderStatus.READY,
+      deliveryMode: "TAKEOUT" as const,
+      deliveryCode: "999999",
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const subOrder = Object.assign(new SubOrder(), {
+      id: "8f36ee26-6f25-47cf-aed7-26afcb6278fe",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.READY,
+      pickupCode: "123456",
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const { service } = createService({
+      adminOutletId: outletId,
+      orders: [order],
+      total: 1,
+      subOrders: [subOrder],
+    });
+
+    const result = await service.listAdmin(adminUser, {});
+
+    expect(result.orders[0]?.order.deliveryCode).toBe("123456");
+    expect(result.orders[0]?.subOrders[0]?.pickupCode).toBe("123456");
+  });
+
   it("allows super admins to filter by outlet and sub-order status", async () => {
     const { service, queryBuilder } = createService({ orders: [], total: 0 });
     const superAdmin: AuthenticatedUser = {
@@ -848,6 +878,58 @@ describe(OrdersService.name, () => {
         totalMinor: 47000,
       }),
     );
+  });
+
+  it("uses the outlet pickup code as the displayed code for takeout customer order detail", async () => {
+    const customerUser: AuthenticatedUser = {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      role: UserRole.CUSTOMER,
+      sessionId: "session-id",
+      accessTokenId: "access-token-id",
+    };
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: customerUser.id,
+      riderId: null,
+      status: MasterOrderStatus.READY,
+      subtotalMinor: 100000,
+      deliveryFeeMinor: 0,
+      serviceFeeMinor: 0,
+      vatMinor: 7500,
+      discountMinor: 0,
+      totalMinor: 107500,
+      currency: "NGN" as const,
+      deliveryMode: "TAKEOUT" as const,
+      deliveryAddress: null,
+      deliveryLatitude: null,
+      deliveryLongitude: null,
+      recipientPhone: null,
+      paymentReference: "RSC-reference",
+      deliveryCode: "999999",
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+      deletedAt: null,
+    });
+    const subOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      status: SubOrderStatus.READY,
+      pickupCode: "123456",
+      subtotalMinor: 100000,
+      commissionMinor: 10000,
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const { service } = createService({
+      orders: [order],
+      total: 1,
+      subOrders: [subOrder],
+    });
+
+    const result = await service.getMine(customerUser, order.id);
+
+    expect(result.order.deliveryCode).toBe("123456");
+    expect(result.subOrders[0]?.pickupCode).toBe("123456");
   });
 
   it("reconciles a stale master status when order detail is fetched", async () => {
