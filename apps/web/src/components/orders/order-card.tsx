@@ -16,7 +16,7 @@ import { useCartStore } from "@/src/stores/cart-store";
 
 interface OrderCardProps {
   order: Order;
-  variant?: "active" | "completed";
+  variant?: "active" | "completed" | "cancelled";
 }
 
 function formatDate(iso: string): string {
@@ -87,6 +87,28 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
   const isPendingPayment = order.status.toUpperCase() === "PENDING_PAYMENT";
   const addItem = useCartStore((state) => state.addItem);
   const clearCart = useCartStore((state) => state.clear);
+
+  const retryPaymentMutation = useMutation({
+    mutationFn: () =>
+      apiClient.retryPayment(order.id, {
+        returnUrl: `${window.location.origin}/payment/return`,
+      }),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      if (!result.checkoutUrl) {
+        toast.error("Payment provider currently unavailable. Please try again later.");
+        return;
+      }
+
+      window.location.assign(result.checkoutUrl);
+    },
+    onError: (err) => {
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not restart payment. Please try again.",
+      );
+    },
+  });
 
   const reorderMutation = useMutation({
     mutationFn: async () => {
@@ -163,14 +185,36 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
           >
             {reorderMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reorder"}
           </Button>
+        ) : variant === "cancelled" ? (
+          <Button
+            tone="danger"
+            type="button"
+            onClick={() => toast.info("Refund support is coming soon.")}
+          >
+            Refund
+          </Button>
         ) : (
           <Button
             tone="primary"
             type="button"
-            className="!rounded-lg !px-4"
-            onClick={() => router.push(`/tracking?orderId=${order.id}`)}
+            className={`!rounded-lg ${isPendingPayment ? "!px-2 !py-2" : "!px-4 !py-1.5"}`}
+            onClick={() => {
+              if (isPendingPayment) {
+                retryPaymentMutation.mutate();
+                return;
+              }
+
+              router.push(`/tracking?orderId=${order.id}`);
+            }}
+            disabled={retryPaymentMutation.isPending}
           >
-            {isPendingPayment ? "Make payment" : "Track"}
+            {retryPaymentMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isPendingPayment ? (
+              "Make payment"
+            ) : (
+              "Track"
+            )}
           </Button>
         )}
       </div>
