@@ -283,6 +283,7 @@ export function DashboardPage() {
             <MetricSkeleton />
             <MetricSkeleton />
             <MetricSkeleton />
+            <MetricSkeleton />
           </>
         ) : summary.data ? (
           <>
@@ -302,9 +303,13 @@ export function DashboardPage() {
               detail="Kitchen tickets delayed over 15 minutes"
               tone="warning"
             />
+            <MetricCard
+              label="Pending settlements"
+              value={summary.data.pendingSettlements}
+              detail="Completed payouts awaiting approval"
+            />
           </>
         ) : null}
-        <MetricCard label="Pending settlements" value="—" detail="Finance endpoint coming soon" />
       </section>
 
       <section className="dashboard-grid">

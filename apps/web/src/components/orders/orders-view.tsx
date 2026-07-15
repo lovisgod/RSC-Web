@@ -65,7 +65,12 @@ function ActiveTab({ onViewDetails }: { onViewDetails: (order: Order) => void })
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="active" onViewDetails={onViewDetails} />
+        <OrderCard
+          key={order.customerViewId ?? order.id}
+          order={order}
+          variant="active"
+          onViewDetails={onViewDetails}
+        />
       ))}
     </div>
   );
@@ -99,7 +104,12 @@ function CompletedTab({ onViewDetails }: { onViewDetails: (order: Order) => void
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="completed" onViewDetails={onViewDetails} />
+        <OrderCard
+          key={order.customerViewId ?? order.id}
+          order={order}
+          variant="completed"
+          onViewDetails={onViewDetails}
+        />
       ))}
     </div>
   );
@@ -133,7 +143,12 @@ function CancelledTab({ onViewDetails }: { onViewDetails: (order: Order) => void
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="cancelled" onViewDetails={onViewDetails} />
+        <OrderCard
+          key={order.customerViewId ?? order.id}
+          order={order}
+          variant="cancelled"
+          onViewDetails={onViewDetails}
+        />
       ))}
     </div>
   );

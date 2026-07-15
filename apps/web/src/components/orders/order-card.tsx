@@ -349,12 +349,14 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const status = getStatusConfig(order.status);
   const isPendingPayment = order.status.toUpperCase() === "PENDING_PAYMENT";
+  const operationalOrderId = order.sourceMasterOrderId ?? order.id;
+  const customerViewId = order.customerViewId ?? order.id;
   const addItem = useCartStore((state) => state.addItem);
   const clearCart = useCartStore((state) => state.clear);
 
   const retryPaymentMutation = useMutation({
     mutationFn: () =>
-      apiClient.retryPayment(order.id, {
+      apiClient.retryPayment(operationalOrderId, {
         returnUrl: `${window.location.origin}/payment/return`,
       }),
     onSuccess: (result) => {
@@ -376,7 +378,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
 
   const reorderMutation = useMutation({
     mutationFn: async () => {
-      const config = await apiClient.reorder(order.id);
+      const config = await apiClient.reorder(operationalOrderId);
       const outlets = await queryClient.ensureQueryData(OUTLETS_QUERY);
       return hydrateCartFromReorder(config, outlets);
     },
@@ -407,20 +409,18 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
   const refundMutation = useMutation({
     mutationFn: () => {
       if (!order.paymentReference) {
-        throw new Error("This order does not have a payment reference for refund.");
+        throw new Error("Payment reference is not available for this order.");
       }
 
       return apiClient.requestRefund(order.paymentReference, {
-        reason: "Customer requested refund for cancelled order",
+        ...(order.refundSubOrderIds?.[0] ? { subOrderId: order.refundSubOrderIds[0] } : {}),
+        ...(order.refundableMinor ? { amountMinor: order.refundableMinor } : {}),
+        reason: "Customer requested refund for failed order",
       });
     },
-    onSuccess: (refund) => {
+    onSuccess: () => {
+      toast.success("Refund request submitted.");
       void queryClient.invalidateQueries({ queryKey: ["orders"] });
-      toast.success(
-        refund.status === "SUCCESS"
-          ? "Refund processed successfully."
-          : "Refund request has been submitted.",
-      );
     },
     onError: (err) => {
       if (err instanceof ApiError && err.status === 403) {
@@ -428,7 +428,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
         return;
       }
 
-      toast.error(err instanceof ApiError ? err.message : "Could not process refund right now.");
+      toast.error(err instanceof ApiError ? err.message : "Could not request refund.");
     },
   });
 
@@ -533,7 +533,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
                   return;
                 }
 
-                router.push(`/tracking?orderId=${order.id}`);
+                router.push(`/tracking?orderId=${customerViewId}`);
               }}
               disabled={retryPaymentMutation.isPending}
             >

@@ -58,7 +58,7 @@ export interface AdminOrderListResult {
 }
 
 export interface CustomerOrderListResult {
-  orders: MasterOrder[];
+  orders: CustomerOrderView[];
   total: number;
   limit: number;
   offset: number;
@@ -67,6 +67,16 @@ export interface CustomerOrderListResult {
   hasNext: boolean;
   hasPrevious: boolean;
 }
+
+type CustomerSplitKind = "FULFILLED" | "FAILED";
+
+type CustomerOrderView = MasterOrder & {
+  customerViewId?: string;
+  sourceMasterOrderId?: string;
+  splitKind?: CustomerSplitKind;
+  refundSubOrderIds?: string[];
+  refundableMinor?: number;
+};
 
 export interface RiderDispatch {
   orderId: string;
@@ -134,7 +144,28 @@ export class OrdersService {
       skip: offset,
     });
 
-    return { orders, total, limit, offset, ...paginationMeta(total, limit, offset) };
+    const subOrders =
+      orders.length > 0
+        ? await this.subOrders.find({
+            where: { masterOrderId: In(orders.map((order) => order.id)) },
+            order: { createdAt: "ASC" },
+          })
+        : [];
+    const projectedOrders = orders.flatMap((order) =>
+      this.projectCustomerOrderListItem(
+        order,
+        subOrders.filter((subOrder) => subOrder.masterOrderId === order.id),
+      ),
+    );
+    const projectedTotal = total + projectedOrders.length - orders.length;
+
+    return {
+      orders: projectedOrders,
+      total: projectedTotal,
+      limit,
+      offset,
+      ...paginationMeta(projectedTotal, limit, offset),
+    };
   }
 
   async listAdmin(
@@ -257,9 +288,10 @@ export class OrdersService {
   }
 
   async getMine(user: AuthenticatedUser, id: string) {
-    const order = await this.requireCustomerOrder(user, id);
+    const customerView = this.parseCustomerViewId(id);
+    const order = await this.requireCustomerOrder(user, customerView.sourceMasterOrderId);
 
-    return this.buildOrderDetail(order);
+    return this.buildOrderDetail(order, customerView.splitKind);
   }
 
   async reorder(user: AuthenticatedUser, id: string) {
@@ -758,7 +790,7 @@ export class OrdersService {
     return this.getLatestRiderLocation(id);
   }
 
-  private async buildOrderDetail(order: MasterOrder) {
+  private async buildOrderDetail(order: MasterOrder, splitKind?: CustomerSplitKind) {
     const [subOrders, lineItems, events, latestRiderLocation] = await Promise.all([
       this.subOrders.find({ where: { masterOrderId: order.id }, order: { createdAt: "ASC" } }),
       this.lineItems.find({ where: { masterOrderId: order.id }, order: { createdAt: "ASC" } }),
@@ -795,14 +827,167 @@ export class OrdersService {
       }
     }
 
+    const projectedOrder = splitKind
+      ? this.projectCustomerOrderDetail(order, subOrders, splitKind)
+      : order;
+    const visibleSubOrders = splitKind
+      ? this.filterSubOrdersForCustomerSplit(subOrders, splitKind)
+      : subOrders;
+    const visibleSubOrderIds = new Set(visibleSubOrders.map((subOrder) => subOrder.id));
+    const visibleLineItems = splitKind
+      ? lineItems.filter((lineItem) => visibleSubOrderIds.has(lineItem.subOrderId))
+      : lineItems;
+    const visibleEvents = splitKind
+      ? events.filter(
+          (event) => event.subOrderId === null || visibleSubOrderIds.has(event.subOrderId),
+        )
+      : events;
+
     return {
-      order,
-      subOrders: subOrders.map((subOrder) => this.serializeSubOrder(subOrder)),
-      lineItems,
-      events,
+      order: projectedOrder,
+      subOrders: visibleSubOrders.map((subOrder) => this.serializeSubOrder(subOrder)),
+      lineItems: visibleLineItems,
+      events: visibleEvents,
       latestRiderLocation,
       rider,
     };
+  }
+
+  private parseCustomerViewId(id: string): {
+    sourceMasterOrderId: string;
+    splitKind?: CustomerSplitKind;
+  } {
+    const [sourceMasterOrderId, rawSplitKind] = id.split(":");
+    const parsedSourceMasterOrderId = sourceMasterOrderId || id;
+
+    if (rawSplitKind === "fulfilled") {
+      return { sourceMasterOrderId: parsedSourceMasterOrderId, splitKind: "FULFILLED" };
+    }
+
+    if (rawSplitKind === "failed") {
+      return { sourceMasterOrderId: parsedSourceMasterOrderId, splitKind: "FAILED" };
+    }
+
+    return { sourceMasterOrderId: id };
+  }
+
+  private projectCustomerOrderListItem(
+    order: MasterOrder,
+    subOrders: SubOrder[],
+  ): CustomerOrderView[] {
+    if (!this.shouldSplitForCustomer(order, subOrders)) {
+      return [this.withCustomerViewMetadata(order, subOrders)];
+    }
+
+    return [
+      this.projectCustomerOrderDetail(order, subOrders, "FULFILLED"),
+      this.projectCustomerOrderDetail(order, subOrders, "FAILED"),
+    ];
+  }
+
+  private projectCustomerOrderDetail(
+    order: MasterOrder,
+    subOrders: SubOrder[],
+    splitKind: CustomerSplitKind,
+  ): CustomerOrderView {
+    const visibleSubOrders = this.filterSubOrdersForCustomerSplit(subOrders, splitKind);
+    const totals = this.customerSplitTotals(order, visibleSubOrders, splitKind);
+
+    return {
+      ...order,
+      id: `${order.id}:${splitKind === "FULFILLED" ? "fulfilled" : "failed"}`,
+      sourceMasterOrderId: order.id,
+      customerViewId: `${order.id}:${splitKind === "FULFILLED" ? "fulfilled" : "failed"}`,
+      splitKind,
+      status: splitKind === "FULFILLED" ? MasterOrderStatus.DELIVERED : MasterOrderStatus.CANCELLED,
+      subtotalMinor: totals.subtotalMinor,
+      deliveryFeeMinor: totals.deliveryFeeMinor,
+      serviceFeeMinor: totals.serviceFeeMinor,
+      vatMinor: totals.vatMinor,
+      discountMinor: totals.discountMinor,
+      totalMinor: totals.totalMinor,
+      deliveryCode: splitKind === "FAILED" ? null : order.deliveryCode,
+      refundSubOrderIds:
+        splitKind === "FAILED" ? visibleSubOrders.map((subOrder) => subOrder.id) : [],
+      refundableMinor: splitKind === "FAILED" ? totals.totalMinor : 0,
+    };
+  }
+
+  private withCustomerViewMetadata(order: MasterOrder, subOrders: SubOrder[]): CustomerOrderView {
+    return {
+      ...order,
+      customerViewId: order.id,
+      sourceMasterOrderId: order.id,
+      refundSubOrderIds:
+        order.status === MasterOrderStatus.CANCELLED
+          ? subOrders.map((subOrder) => subOrder.id)
+          : [],
+      refundableMinor: order.status === MasterOrderStatus.CANCELLED ? order.totalMinor : 0,
+    };
+  }
+
+  private shouldSplitForCustomer(order: MasterOrder, subOrders: SubOrder[]): boolean {
+    return (
+      order.status === MasterOrderStatus.DELIVERED &&
+      subOrders.some((subOrder) => subOrder.status === SubOrderStatus.REJECTED) &&
+      subOrders.some((subOrder) => subOrder.status !== SubOrderStatus.REJECTED)
+    );
+  }
+
+  private filterSubOrdersForCustomerSplit(
+    subOrders: SubOrder[],
+    splitKind: CustomerSplitKind,
+  ): SubOrder[] {
+    return subOrders.filter((subOrder) =>
+      splitKind === "FAILED"
+        ? subOrder.status === SubOrderStatus.REJECTED
+        : subOrder.status !== SubOrderStatus.REJECTED,
+    );
+  }
+
+  private customerSplitTotals(
+    order: MasterOrder,
+    subOrders: SubOrder[],
+    splitKind: CustomerSplitKind,
+  ) {
+    const subtotalMinor = subOrders.reduce((sum, subOrder) => sum + subOrder.subtotalMinor, 0);
+    const commissionMinor = subOrders.reduce((sum, subOrder) => sum + subOrder.commissionMinor, 0);
+    const vatMinor = this.allocateBySubtotal(order.vatMinor, subtotalMinor, order.subtotalMinor);
+    const discountMinor = this.allocateBySubtotal(
+      order.discountMinor,
+      subtotalMinor,
+      order.subtotalMinor,
+    );
+    const deliveryFeeMinor = splitKind === "FULFILLED" ? order.deliveryFeeMinor : 0;
+    const serviceFeeMinor = splitKind === "FULFILLED" ? order.serviceFeeMinor : 0;
+    const totalMinor =
+      subtotalMinor +
+      commissionMinor +
+      vatMinor +
+      deliveryFeeMinor +
+      serviceFeeMinor -
+      discountMinor;
+
+    return {
+      subtotalMinor,
+      deliveryFeeMinor,
+      serviceFeeMinor,
+      vatMinor,
+      discountMinor,
+      totalMinor: Math.max(0, totalMinor),
+    };
+  }
+
+  private allocateBySubtotal(
+    amountMinor: number,
+    subtotalMinor: number,
+    totalSubtotalMinor: number,
+  ) {
+    if (amountMinor <= 0 || subtotalMinor <= 0 || totalSubtotalMinor <= 0) {
+      return 0;
+    }
+
+    return Math.round((amountMinor * subtotalMinor) / totalSubtotalMinor);
   }
 
   private async buildRiderDispatch(order: MasterOrder): Promise<RiderDispatch> {

@@ -574,10 +574,12 @@ export function TrackingView({
     return <NoActiveOrder />;
   }
 
-  const requestedOrderExists = activeOrders.some((order) => order.id === expandedId);
+  const requestedOrderExists = activeOrders.some(
+    (order) => (order.customerViewId ?? order.id) === expandedId,
+  );
   const visibleExpandedId =
     expandedId === undefined || (expandedId !== null && !requestedOrderExists)
-      ? activeOrders[0]!.id
+      ? (activeOrders[0]!.customerViewId ?? activeOrders[0]!.id)
       : expandedId;
 
   return (
@@ -602,12 +604,15 @@ export function TrackingView({
       )}
       {activeOrders.map((order) => (
         <AccordionOrderItem
-          key={order.id}
+          key={order.customerViewId ?? order.id}
           order={order}
-          isOpen={visibleExpandedId === order.id}
+          isOpen={visibleExpandedId === (order.customerViewId ?? order.id)}
           onToggle={() =>
             setExpandedId((previous) =>
-              previous === order.id || visibleExpandedId === order.id ? null : order.id,
+              previous === (order.customerViewId ?? order.id) ||
+              visibleExpandedId === (order.customerViewId ?? order.id)
+                ? null
+                : (order.customerViewId ?? order.id),
             )
           }
         />
