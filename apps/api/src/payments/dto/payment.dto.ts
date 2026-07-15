@@ -3,6 +3,7 @@ import { Type } from "class-transformer";
 import {
   ArrayMinSize,
   IsArray,
+  IsDateString,
   IsIn,
   IsInt,
   IsLatitude,
@@ -12,6 +13,7 @@ import {
   IsString,
   IsUUID,
   Length,
+  Max,
   Min,
   ValidateNested,
 } from "class-validator";
@@ -170,4 +172,73 @@ export class ProcessRefundDto {
   reason?: string;
 }
 
-export class RequestRefundDto extends ProcessRefundDto {}
+export class RequestRefundDto extends ProcessRefundDto {
+  @ApiPropertyOptional({
+    format: "uuid",
+    description:
+      "Rejected sub-order to refund. When supplied, the API calculates the refundable amount for that failed sub-order.",
+  })
+  @IsOptional()
+  @IsUUID()
+  subOrderId?: string;
+}
+
+export class ListRefundRequestsQueryDto {
+  @ApiPropertyOptional({ enum: ["PENDING", "SUCCESS", "FAILED"] })
+  @IsOptional()
+  @IsIn(["PENDING", "SUCCESS", "FAILED"])
+  status?: "PENDING" | "SUCCESS" | "FAILED";
+
+  @ApiPropertyOptional({
+    example: "RSC-reference",
+    description: "Search by refund reference or payment reference.",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(2, 120)
+  reference?: string;
+
+  @ApiPropertyOptional({ format: "uuid", description: "Filter by the order customer." })
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @ApiPropertyOptional({
+    format: "uuid",
+    description: "Filter by the user who submitted or processed the refund.",
+  })
+  @IsOptional()
+  @IsUUID()
+  requestedBy?: string;
+
+  @ApiPropertyOptional({
+    format: "date-time",
+    description: "Return refund requests created at or after this ISO timestamp.",
+  })
+  @IsOptional()
+  @IsDateString()
+  dateFrom?: string;
+
+  @ApiPropertyOptional({
+    format: "date-time",
+    description: "Return refund requests created at or before this ISO timestamp.",
+  })
+  @IsOptional()
+  @IsDateString()
+  dateTo?: string;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @ApiPropertyOptional({ minimum: 0, default: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
+}

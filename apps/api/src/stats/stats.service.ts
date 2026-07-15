@@ -24,6 +24,8 @@ interface PulseRow {
 
 const OPEN_MASTER_STATUSES = ["DELIVERED", "CANCELLED"];
 const DELAYED_SUB_ORDER_STATUSES = ["PENDING", "ACCEPTED", "PREPARING"];
+const COMPLETED_SETTLEMENT_SUB_ORDER_STATUSES = ["COLLECTED", "DISPATCHED"];
+const SUCCESSFUL_PAYMENT_STATUS = "SUCCESS";
 
 @Injectable()
 export class StatsService {
@@ -35,16 +37,19 @@ export class StatsService {
 
   async operationsSummary(user: AuthenticatedUser, query: OperationsStatsQueryDto) {
     const outletId = await this.resolveOutletScope(user, query.outletId);
-    const [activeOutlets, openMasterOrders, delayedSubOrders] = await Promise.all([
-      this.countActiveOutlets(outletId),
-      this.countOpenMasterOrders(outletId),
-      this.countDelayedSubOrders(outletId),
-    ]);
+    const [activeOutlets, openMasterOrders, delayedSubOrders, pendingSettlements] =
+      await Promise.all([
+        this.countActiveOutlets(outletId),
+        this.countOpenMasterOrders(outletId),
+        this.countDelayedSubOrders(outletId),
+        this.countPendingSettlements(outletId),
+      ]);
 
     return {
       activeOutlets,
       openMasterOrders,
       delayedSubOrders,
+      pendingSettlements,
     };
   }
 
@@ -213,6 +218,32 @@ export class StatsService {
         WHERE deleted_at IS NULL
           AND status = ANY($1::sub_order_status[])
           AND updated_at <= now() - INTERVAL '15 minutes'
+          ${outletFilter}
+      `,
+      params,
+    );
+
+    return Number(row?.count ?? 0);
+  }
+
+  private async countPendingSettlements(outletId: string | null): Promise<number> {
+    const params: unknown[] = [COMPLETED_SETTLEMENT_SUB_ORDER_STATUSES, SUCCESSFUL_PAYMENT_STATUS];
+    const outletFilter = outletId ? `AND sub_orders.outlet_id = $${params.push(outletId)}` : "";
+    const [row] = await this.dataSource.query<CountRow[]>(
+      `
+        SELECT COUNT(*)::integer AS count
+        FROM sub_orders
+        LEFT JOIN outlet_settlement_approvals
+          ON outlet_settlement_approvals.sub_order_id = sub_orders.id
+        WHERE sub_orders.deleted_at IS NULL
+          AND sub_orders.status = ANY($1::sub_order_status[])
+          AND outlet_settlement_approvals.id IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM payments
+            WHERE payments.master_order_id = sub_orders.master_order_id
+              AND payments.status = $2::payment_status
+          )
           ${outletFilter}
       `,
       params,
