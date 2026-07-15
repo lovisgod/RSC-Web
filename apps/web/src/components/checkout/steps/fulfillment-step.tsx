@@ -3,7 +3,7 @@
 import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Star, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, Star, Tag, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { apiClient } from "@/src/lib/api";
@@ -22,6 +22,7 @@ import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
 import { useOutlets } from "@/src/hooks/use-outlets";
 import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
+import { useCartStore } from "@/src/stores/cart-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
@@ -59,6 +60,7 @@ export function FulfillmentStep({
   const { data: outlets = [] } = useOutlets();
   const outletById = new Map(outlets.map((o) => [o.id, o]));
   const qc = useQueryClient();
+  const clearCart = useCartStore((state) => state.clear);
 
   const { data: savedAddresses = [] } = useDeliveryAddresses();
   const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? null;
@@ -306,6 +308,10 @@ export function FulfillmentStep({
         vatMinor: vat,
         platformCommissionMinor: platformCommission,
         totalMinor: grandTotal,
+        returnUrl:
+          typeof window !== "undefined"
+            ? `${window.location.origin}/payment/return`
+            : "/payment/return",
         ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}),
       };
 
@@ -339,6 +345,7 @@ export function FulfillmentStep({
         totals: result.totals,
         ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}),
       };
+      clearCart();
       onComplete(
         {
           mode,
@@ -626,14 +633,30 @@ export function FulfillmentStep({
 
       {/* CTA */}
       <div className="space-y-2">
-        <label className="block text-xs font-semibold text-gray-500">Promo code</label>
-        <input
-          type="text"
-          value={promoCode}
-          onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
-          placeholder="Enter promo code"
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
-        />
+        <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-3">
+          <label htmlFor="promo-code" className="flex items-center gap-2 text-xs font-bold">
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-[var(--rsc-main)]">
+              <Tag className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span className="uppercase tracking-[0.18em] text-gray-500">Promo code</span>
+          </label>
+          <div className="mt-2 flex overflow-hidden rounded-xl border border-orange-100 bg-white shadow-sm focus-within:border-[var(--rsc-main)]">
+            <span className="flex items-center border-r border-orange-100 bg-orange-50 px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
+              Code
+            </span>
+            <input
+              id="promo-code"
+              type="text"
+              value={promoCode}
+              onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+              placeholder="WEEKEND20"
+              className="min-w-0 flex-1 px-3 py-3 text-sm font-bold uppercase tracking-[0.14em] text-gray-800 placeholder:font-semibold placeholder:text-gray-300 focus:outline-none"
+            />
+          </div>
+          <p className="mt-2 text-xs text-gray-400">
+            Have an offer? Enter the code before continuing to payment.
+          </p>
+        </div>
         {mode === "delivery" && !isValidated && !initiateMutation.isPending && (
           <p className="text-xs text-center text-gray-400">
             Validate your delivery location to continue
