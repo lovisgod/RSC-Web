@@ -7,7 +7,7 @@ export function PaymentResultModal({ status }: { status: "SUCCESS" | "FAILED" })
   const Icon = isSuccess ? CheckCircle2 : XCircle;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+    <div className="flex min-h-[60vh] w-full items-center justify-center px-4">
       <div className="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl">
         <div
           className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
