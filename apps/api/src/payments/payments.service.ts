@@ -19,10 +19,14 @@ import { Promo } from "../notifications/promo.entity";
 import { NotificationsService } from "../notifications/notifications.service";
 import { MasterOrder } from "../orders/master-order.entity";
 import { OrderLineItem } from "../orders/order-line-item.entity";
-import { MasterOrderStatus } from "../orders/order-status.enum";
+import { MasterOrderStatus, SubOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
 import { UserRole } from "../auth/user-role.enum";
-import type { InitiatePaymentDto, RetryPaymentDto } from "./dto/payment.dto";
+import type {
+  InitiatePaymentDto,
+  ListRefundRequestsQueryDto,
+  RetryPaymentDto,
+} from "./dto/payment.dto";
 import type { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
 import { PaymentRefund } from "./payment-refund.entity";
@@ -59,6 +63,61 @@ interface PlatformChargesRow {
   deliveryFeeMinor: number;
   serviceFeeMinor: number;
   currency: "NGN";
+}
+
+interface RefundRequestRaw {
+  payment_id: string | null;
+  payment_master_order_id: string | null;
+  payment_amount_minor: number | null;
+  payment_currency: "NGN" | null;
+  payment_gateway: string | null;
+  payment_reference: string | null;
+  payment_status: PaymentStatus | null;
+  payment_created_at: Date | null;
+  order_id: string | null;
+  order_customer_id: string | null;
+  order_status: MasterOrderStatus | null;
+  order_total_minor: number | null;
+  order_currency: "NGN" | null;
+  order_created_at: Date | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  requester_id: string | null;
+  requester_name: string | null;
+  requester_role: UserRole | null;
+}
+
+export interface RefundRequestListResult {
+  refundRequests: Array<{
+    refund: PaymentRefund;
+    payment: {
+      id: string;
+      masterOrderId: string;
+      amountMinor: number;
+      currency: "NGN";
+      gateway: string;
+      reference: string;
+      status: PaymentStatus;
+      createdAt: Date;
+    } | null;
+    order: {
+      id: string;
+      customerId: string;
+      status: MasterOrderStatus;
+      totalMinor: number;
+      currency: "NGN";
+      createdAt: Date;
+    } | null;
+    customer: { id: string; name: string } | null;
+    requestedBy: { id: string; name: string; role: UserRole } | null;
+  }>;
+  total: number;
+  limit: number;
+  offset: number;
+  next: number | null;
+  previous: number | null;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 @Injectable()
@@ -340,7 +399,6 @@ export class PaymentsService {
           }),
         );
         subOrders.push(subOrder);
-        this.realtime.emitSuborderNew(subOrder);
 
         for (const line of grouped.get(route.outletId)!) {
           await manager.save(
@@ -378,6 +436,11 @@ export class PaymentsService {
 
       return { masterOrder, subOrders, payment };
     });
+
+    if (persisted.payment.status === PaymentStatus.SUCCESS) {
+      await this.emitConfirmedSubOrders(persisted.masterOrder);
+      await this.notifyAdminsOfSuccessfulPayment(persisted.masterOrder, persisted.payment);
+    }
 
     return {
       masterOrderId: persisted.masterOrder.id,
@@ -483,6 +546,10 @@ export class PaymentsService {
       status: order.status,
       updatedAt: order.updatedAt,
     });
+    if (payment.status === PaymentStatus.SUCCESS) {
+      await this.emitConfirmedSubOrders(order);
+      await this.notifyAdminsOfSuccessfulPayment(order, payment);
+    }
 
     return {
       masterOrderId: order.id,
@@ -559,6 +626,7 @@ export class PaymentsService {
       });
 
       if (nextPaymentStatus === PaymentStatus.SUCCESS) {
+        await this.emitConfirmedSubOrders(order);
         await this.notifyAdminsOfSuccessfulPayment(order, payment);
       }
     }
@@ -568,6 +636,25 @@ export class PaymentsService {
     );
 
     return { already: false };
+  }
+
+  private async emitConfirmedSubOrders(order: MasterOrder) {
+    const [subOrders, lineItems] = await Promise.all([
+      this.subOrders.find({ where: { masterOrderId: order.id }, order: { createdAt: "ASC" } }),
+      this.lineItems.find({ where: { masterOrderId: order.id }, order: { createdAt: "ASC" } }),
+    ]);
+
+    for (const subOrder of subOrders) {
+      this.realtime.emitSuborderConfirmed({
+        masterOrderId: order.id,
+        subOrderId: subOrder.id,
+        outletId: subOrder.outletId,
+        status: order.status,
+        order,
+        subOrder,
+        lineItems: lineItems.filter((lineItem) => lineItem.subOrderId === subOrder.id),
+      });
+    }
   }
 
   private async notifyAdminsOfSuccessfulPayment(order: MasterOrder, payment: Payment) {
@@ -670,6 +757,130 @@ export class PaymentsService {
     return { status: payment.status, orderStatus: order.status };
   }
 
+  async listRefundRequests(
+    query: ListRefundRequestsQueryDto = {},
+  ): Promise<RefundRequestListResult> {
+    const limit = query.limit ?? 50;
+    const offset = query.offset ?? 0;
+    const refundQuery = this.refunds
+      .createQueryBuilder("refund")
+      .leftJoin(Payment, "payment", "payment.id = refund.payment_id")
+      .leftJoin(MasterOrder, "masterOrder", "masterOrder.id = payment.master_order_id")
+      .leftJoin(Customer, "customer", "customer.id = masterOrder.customer_id")
+      .leftJoin(Customer, "requester", "requester.id = refund.requested_by")
+      .addSelect("payment.id", "payment_id")
+      .addSelect("payment.masterOrderId", "payment_master_order_id")
+      .addSelect("payment.amountMinor", "payment_amount_minor")
+      .addSelect("payment.currency", "payment_currency")
+      .addSelect("payment.gateway", "payment_gateway")
+      .addSelect("payment.reference", "payment_reference")
+      .addSelect("payment.status", "payment_status")
+      .addSelect("payment.createdAt", "payment_created_at")
+      .addSelect("masterOrder.id", "order_id")
+      .addSelect("masterOrder.customerId", "order_customer_id")
+      .addSelect("masterOrder.status", "order_status")
+      .addSelect("masterOrder.totalMinor", "order_total_minor")
+      .addSelect("masterOrder.currency", "order_currency")
+      .addSelect("masterOrder.createdAt", "order_created_at")
+      .addSelect("customer.id", "customer_id")
+      .addSelect("customer.name", "customer_name")
+      .addSelect("requester.id", "requester_id")
+      .addSelect("requester.name", "requester_name")
+      .addSelect("requester.role", "requester_role")
+      .orderBy("refund.createdAt", "DESC");
+
+    if (query.status) {
+      refundQuery.andWhere("refund.status = :status", { status: query.status });
+    }
+
+    const reference = query.reference?.trim();
+    if (reference) {
+      refundQuery.andWhere(
+        "(refund.reference ILIKE :reference OR payment.reference ILIKE :reference)",
+        {
+          reference: `%${reference}%`,
+        },
+      );
+    }
+
+    if (query.customerId) {
+      refundQuery.andWhere("masterOrder.customerId = :customerId", {
+        customerId: query.customerId,
+      });
+    }
+
+    if (query.requestedBy) {
+      refundQuery.andWhere("refund.requestedBy = :requestedBy", { requestedBy: query.requestedBy });
+    }
+
+    if (query.dateFrom) {
+      refundQuery.andWhere("refund.createdAt >= :dateFrom", { dateFrom: new Date(query.dateFrom) });
+    }
+
+    if (query.dateTo) {
+      refundQuery.andWhere("refund.createdAt <= :dateTo", { dateTo: new Date(query.dateTo) });
+    }
+
+    const total = await refundQuery.getCount();
+    const { entities, raw }: { entities: PaymentRefund[]; raw: RefundRequestRaw[] } =
+      await refundQuery.take(limit).skip(offset).getRawAndEntities<RefundRequestRaw>();
+
+    return {
+      refundRequests: entities.map((refund, index) =>
+        this.serializeRefundRequest(refund, raw[index] ?? null),
+      ),
+      total,
+      limit,
+      offset,
+      ...paginationMeta(total, limit, offset),
+    };
+  }
+
+  private serializeRefundRequest(refund: PaymentRefund, row: RefundRequestRaw | null) {
+    return {
+      refund,
+      payment:
+        row?.payment_id && row.payment_master_order_id && row.payment_reference
+          ? {
+              id: row.payment_id,
+              masterOrderId: row.payment_master_order_id,
+              amountMinor: row.payment_amount_minor ?? 0,
+              currency: row.payment_currency ?? "NGN",
+              gateway: row.payment_gateway ?? refund.provider,
+              reference: row.payment_reference,
+              status: row.payment_status ?? PaymentStatus.PENDING,
+              createdAt: row.payment_created_at ?? refund.createdAt,
+            }
+          : null,
+      order:
+        row?.order_id && row.order_customer_id
+          ? {
+              id: row.order_id,
+              customerId: row.order_customer_id,
+              status: row.order_status ?? MasterOrderStatus.PENDING_PAYMENT,
+              totalMinor: row.order_total_minor ?? 0,
+              currency: row.order_currency ?? "NGN",
+              createdAt: row.order_created_at ?? refund.createdAt,
+            }
+          : null,
+      customer:
+        row?.customer_id && row.customer_name
+          ? {
+              id: row.customer_id,
+              name: row.customer_name,
+            }
+          : null,
+      requestedBy:
+        row?.requester_id && row.requester_name && row.requester_role
+          ? {
+              id: row.requester_id,
+              name: row.requester_name,
+              role: row.requester_role,
+            }
+          : null,
+    };
+  }
+
   async processRefund(
     user: AuthenticatedUser,
     reference: string,
@@ -711,7 +922,7 @@ export class PaymentsService {
   async requestRefund(
     user: AuthenticatedUser,
     reference: string,
-    input: { amountMinor?: number; reason?: string },
+    input: { amountMinor?: number; reason?: string; subOrderId?: string },
   ): Promise<PaymentRefund> {
     const payment = await this.payments.findOneBy({ reference });
 
@@ -725,9 +936,24 @@ export class PaymentsService {
       throw new NotFoundException("Payment not found");
     }
 
-    const requestedAmountMinor = await this.validateRefundRequest(payment, input.amountMinor, {
-      includePending: true,
-    });
+    const calculatedSubOrderAmountMinor = input.subOrderId
+      ? await this.calculateRejectedSubOrderRefundAmount(order, input.subOrderId)
+      : null;
+    const requestedAmountMinor = await this.validateRefundRequest(
+      payment,
+      input.amountMinor ?? calculatedSubOrderAmountMinor ?? undefined,
+      {
+        includePending: true,
+      },
+    );
+
+    if (
+      calculatedSubOrderAmountMinor !== null &&
+      requestedAmountMinor > calculatedSubOrderAmountMinor
+    ) {
+      throw new BadRequestException("Refund amount exceeds rejected sub-order refundable balance");
+    }
+
     const reason = input.reason?.trim() || null;
 
     return this.refunds.save(
@@ -741,9 +967,35 @@ export class PaymentsService {
         provider: payment.gateway,
         providerRefundId: null,
         requestedBy: user.id,
-        providerResponse: null,
+        providerResponse: input.subOrderId ? { requestedSubOrderId: input.subOrderId } : null,
       }),
     );
+  }
+
+  private async calculateRejectedSubOrderRefundAmount(
+    order: MasterOrder,
+    subOrderId: string,
+  ): Promise<number> {
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const target = subOrders.find((subOrder) => subOrder.id === subOrderId);
+
+    if (!target) {
+      throw new NotFoundException("Sub-order not found");
+    }
+
+    if (target.status !== SubOrderStatus.REJECTED) {
+      throw new BadRequestException("Only rejected sub-orders can be refunded this way");
+    }
+
+    const subtotalMinor = target.subtotalMinor;
+    const vatMinor = this.allocateBySubtotal(order.vatMinor, subtotalMinor, order.subtotalMinor);
+    const discountMinor = this.allocateBySubtotal(
+      order.discountMinor,
+      subtotalMinor,
+      order.subtotalMinor,
+    );
+
+    return Math.max(0, subtotalMinor + target.commissionMinor + vatMinor - discountMinor);
   }
 
   private async validateRefundRequest(
@@ -774,6 +1026,18 @@ export class PaymentsService {
     }
 
     return requestedAmountMinor;
+  }
+
+  private allocateBySubtotal(
+    amountMinor: number,
+    subtotalMinor: number,
+    totalSubtotalMinor: number,
+  ) {
+    if (amountMinor <= 0 || subtotalMinor <= 0 || totalSubtotalMinor <= 0) {
+      return 0;
+    }
+
+    return Math.round((amountMinor * subtotalMinor) / totalSubtotalMinor);
   }
 
   private async priceCart(input: InitiatePaymentDto): Promise<PricedLine[]> {
@@ -1066,4 +1330,16 @@ function distanceBetweenKm(
 
 function toRadians(value: number): number {
   return (value * Math.PI) / 180;
+}
+
+function paginationMeta(total: number, limit: number, offset: number) {
+  const next = offset + limit < total ? offset + limit : null;
+  const previous = offset > 0 ? Math.max(0, offset - limit) : null;
+
+  return {
+    next,
+    previous,
+    hasNext: next !== null,
+    hasPrevious: previous !== null,
+  };
 }

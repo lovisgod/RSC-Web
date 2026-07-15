@@ -73,8 +73,24 @@ export class RealtimeController {
         {
           name: "suborder:new",
           rooms: ["outlet:{outletId}", "platform:admin"],
-          cadence: "Emitted once for each suborder created during checkout/payment initiation.",
+          cadence:
+            "Deprecated pre-payment suborder event retained for backwards compatibility. Paid order queues should use suborder:confirmed.",
           payload: "SubOrder entity payload.",
+        },
+        {
+          name: "suborder:confirmed",
+          rooms: ["outlet:{outletId}", "platform:admin"],
+          cadence:
+            "Emitted once for each affected suborder after payment is confirmed successful, including retry-payment success.",
+          payload: {
+            masterOrderId: "uuid",
+            subOrderId: "uuid",
+            outletId: "uuid",
+            status: "CONFIRMED",
+            order: "MasterOrder entity payload",
+            subOrder: "SubOrder entity payload",
+            lineItems: ["OrderLineItem entity payload for this suborder"],
+          },
         },
         {
           name: "notification:new",

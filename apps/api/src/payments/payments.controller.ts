@@ -22,6 +22,7 @@ import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import {
   InitiatePaymentDto,
+  ListRefundRequestsQueryDto,
   ProcessRefundDto,
   RequestRefundDto,
   RetryPaymentDto,
@@ -155,6 +156,20 @@ export class PaymentsController {
     @Body() input: RetryPaymentDto,
   ) {
     return this.payments.retryOrderPayment(request.user!, orderId, input);
+  }
+
+  @Get("refund-requests")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("Refund requests retrieved")
+  @ApiOperation({
+    summary: "List refund requests",
+    description:
+      "Super-admin endpoint for reviewing customer refund requests and processed refunds, with optional status, reference, customer, requester, and date filters.",
+  })
+  listRefundRequests(@Query() query: ListRefundRequestsQueryDto) {
+    return this.payments.listRefundRequests(query);
   }
 
   @Post(":reference/refund-request")

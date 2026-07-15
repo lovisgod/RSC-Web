@@ -64,7 +64,7 @@ function ActiveTab() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="active" />
+        <OrderCard key={order.customerViewId ?? order.id} order={order} variant="active" />
       ))}
     </div>
   );
@@ -98,7 +98,7 @@ function CompletedTab() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="completed" />
+        <OrderCard key={order.customerViewId ?? order.id} order={order} variant="completed" />
       ))}
     </div>
   );
@@ -132,7 +132,7 @@ function CancelledTab() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} variant="cancelled" />
+        <OrderCard key={order.customerViewId ?? order.id} order={order} variant="cancelled" />
       ))}
     </div>
   );
