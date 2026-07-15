@@ -23,7 +23,7 @@ export class StatsController {
   @ApiOperation({
     summary: "Get operations dashboard summary",
     description:
-      "Returns active outlets, open master orders, and delayed kitchen sub-orders. Payment and settlement stats are intentionally excluded.",
+      "Returns active outlets, open master orders, delayed kitchen sub-orders, and pending settlement count.",
   })
   summary(@Req() request: AuthenticatedRequest, @Query() query: OperationsStatsQueryDto) {
     return this.stats.operationsSummary(request.user!, query);

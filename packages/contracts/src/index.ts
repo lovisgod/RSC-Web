@@ -454,7 +454,9 @@ export const processRefundInputSchema = z
   })
   .strict();
 
-export const requestRefundInputSchema = processRefundInputSchema;
+export const requestRefundInputSchema = processRefundInputSchema.extend({
+  subOrderId: z.uuid().optional(),
+});
 
 export const paymentRefundSchema = z.object({
   id: z.uuid(),
@@ -750,10 +752,15 @@ export const orderSummarySchema = z.object({
 
 export const customerOrderSchema = z
   .object({
-    id: z.uuid(),
+    id: z.string().min(1),
     customerId: z.uuid(),
     riderId: z.uuid().nullable(),
     status: z.string().trim().min(1),
+    customerViewId: z.string().min(1).optional(),
+    sourceMasterOrderId: z.uuid().optional(),
+    splitKind: z.enum(["FULFILLED", "FAILED"]).optional(),
+    refundSubOrderIds: z.array(z.uuid()).optional(),
+    refundableMinor: z.coerce.number().int().nonnegative().optional(),
     subtotalMinor: z.coerce.number().int().nonnegative(),
     deliveryFeeMinor: z.coerce.number().int().nonnegative().default(0),
     serviceFeeMinor: z.coerce.number().int().nonnegative().default(0),
@@ -1058,6 +1065,7 @@ export const operationsSummarySchema = z.object({
   activeOutlets: z.int().nonnegative(),
   openMasterOrders: z.int().nonnegative(),
   delayedSubOrders: z.int().nonnegative(),
+  pendingSettlements: z.int().nonnegative(),
 });
 
 export const orderPulsePointSchema = z.object({

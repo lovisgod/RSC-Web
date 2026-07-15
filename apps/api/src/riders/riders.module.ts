@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AuthModule } from "../auth/auth.module";
+import { Customer } from "../auth/customer.entity";
 import { MasterOrder } from "../orders/master-order.entity";
 import { OrdersModule } from "../orders/orders.module";
 import { SubOrder } from "../orders/sub-order.entity";
@@ -15,7 +16,7 @@ import { RidersService } from "./riders.service";
     AuthModule,
     OrdersModule,
     RealtimeModule,
-    TypeOrmModule.forFeature([RiderLocation, MasterOrder, SubOrder]),
+    TypeOrmModule.forFeature([Customer, RiderLocation, MasterOrder, SubOrder]),
   ],
   controllers: [RidersController],
   providers: [RidersService],
