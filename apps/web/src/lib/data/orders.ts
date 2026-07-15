@@ -6,6 +6,7 @@ export const ACTIVE_ORDER_STATUSES = new Set([
   "CONFIRMED",
   "PREPARING",
   "PARTIALLY_READY",
+  "PARTIALLY_FULFILLED",
   "READY",
   "OUT_FOR_DELIVERY",
 ]);
@@ -31,6 +32,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   CONFIRMED: { label: "Confirmed", color: "#fff", bg: "var(--rsc-navy-light)" },
   PREPARING: { label: "Preparing", color: "#fff", bg: "var(--rsc-navy-light)" },
   PARTIALLY_READY: { label: "Partially ready", color: "#fff", bg: "var(--rsc-dark)" },
+  PARTIALLY_FULFILLED: { label: "Partially fulfilled", color: "#fff", bg: "var(--rsc-danger)" },
   READY: { label: "Ready for pickup", color: "#fff", bg: "var(--rsc-success)" },
   OUT_FOR_DELIVERY: { label: "Out for delivery", color: "#fff", bg: "var(--rsc-dark)" },
   DELIVERED: { label: "Delivered", color: "#fff", bg: "var(--rsc-main)" },

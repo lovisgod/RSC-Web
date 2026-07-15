@@ -23,7 +23,7 @@ export function useActiveOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] => sortNewestFirst(orders.filter(isActiveOrder)),
+    select: (result): Order[] => sortNewestFirst(result.orders.filter(isActiveOrder)),
   });
 }
 
@@ -34,7 +34,7 @@ export function useProfileActiveOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] => sortNewestFirst(orders.filter(isProfileActiveOrder)),
+    select: (result): Order[] => sortNewestFirst(result.orders.filter(isProfileActiveOrder)),
   });
 }
 
@@ -45,7 +45,7 @@ export function useCompletedOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] => sortNewestFirst(orders.filter(isCompletedOrder)),
+    select: (result): Order[] => sortNewestFirst(result.orders.filter(isCompletedOrder)),
   });
 }
 
@@ -56,6 +56,6 @@ export function useCancelledOrders() {
     queryKey: ["orders", userId] as const,
     queryFn: () => apiClient.listCustomerOrders(),
     enabled: Boolean(userId),
-    select: (orders): Order[] => sortNewestFirst(orders.filter(isCancelledOrder)),
+    select: (result): Order[] => sortNewestFirst(result.orders.filter(isCancelledOrder)),
   });
 }

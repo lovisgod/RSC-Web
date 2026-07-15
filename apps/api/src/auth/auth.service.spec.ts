@@ -22,6 +22,7 @@ function hashPasswordForTest(password: string): Promise<string> {
 describe(AuthService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
   let customers: {
+    findOne: ReturnType<typeof vi.fn>;
     findOneBy: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
@@ -68,6 +69,7 @@ describe(AuthService.name, () => {
 
   beforeEach(() => {
     customers = {
+      findOne: vi.fn().mockResolvedValue(null),
       findOneBy: vi.fn().mockResolvedValue(null),
       create: vi.fn((value: Partial<Customer>) => Object.assign(new Customer(), value)),
       save: vi.fn((customer: Customer) => {
@@ -397,6 +399,10 @@ describe(AuthService.name, () => {
 
     expect(outlets.findOneBy).toHaveBeenCalledWith({
       id: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+    expect(customers.findOne).toHaveBeenCalledWith({
+      where: { emailHash: "hash:manager@example.com" },
+      withDeleted: true,
     });
     expect(saved).toMatchObject({
       name: "Outlet Manager",

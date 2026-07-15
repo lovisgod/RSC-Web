@@ -37,6 +37,8 @@ const MASTER_STATUS_MESSAGES: Record<string, string> = {
   CONFIRMED: "Your order is confirmed and has been sent to the Outlets.",
   PREPARING: "Your order is being prepared.",
   PARTIALLY_READY: "Some kitchens are ready while the others finish preparing.",
+  PARTIALLY_FULFILLED:
+    "Part of your order cannot be fulfilled. The remaining outlets are still active.",
   READY: "All Outlets are ready. Your order is waiting for rider handoff.",
   OUT_FOR_DELIVERY: "Your rider has your order and is heading to you.",
   DELIVERED: "Your order has been delivered.",
@@ -47,6 +49,7 @@ const SUB_ORDER_LABELS: Record<string, string> = {
   CONFIRMED: "Confirmed",
   PREPARING: "Preparing",
   PARTIALLY_READY: "Partially ready",
+  PARTIALLY_FULFILLED: "Partially fulfilled",
   READY: "Ready",
   REJECTED: "Unable to fulfil",
   CANCELLED: "Cancelled",
@@ -446,6 +449,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
     "CONFIRMED",
     "PREPARING",
     "PARTIALLY_READY",
+    "PARTIALLY_FULFILLED",
     "READY",
     "OUT_FOR_DELIVERY",
   ]);

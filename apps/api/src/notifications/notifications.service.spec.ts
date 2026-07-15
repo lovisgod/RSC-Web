@@ -6,6 +6,7 @@ import { UserRole } from "../auth/user-role.enum";
 import { NotificationCampaign } from "./notification-campaign.entity";
 import { Notification } from "./notification.entity";
 import { NotificationsService } from "./notifications.service";
+import { Promo } from "./promo.entity";
 import type { PushSender } from "./push-sender";
 
 vi.mock("bullmq", () => ({
@@ -32,6 +33,12 @@ describe(NotificationsService.name, () => {
     findOneBy: ReturnType<typeof vi.fn>;
   };
   let campaigns: {
+    create: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+    find: ReturnType<typeof vi.fn>;
+    findOneBy: ReturnType<typeof vi.fn>;
+  };
+  let promos: {
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
     find: ReturnType<typeof vi.fn>;
@@ -69,6 +76,17 @@ describe(NotificationsService.name, () => {
       find: vi.fn().mockResolvedValue([]),
       findOneBy: vi.fn().mockResolvedValue(null),
     };
+    promos = {
+      create: vi.fn((input: Partial<Promo>) =>
+        Object.assign(new Promo(), {
+          id: "9d353d54-7254-4538-9487-c21ab15b833e",
+          ...input,
+        }),
+      ),
+      save: vi.fn((promo: Promo) => Promise.resolve(promo)),
+      find: vi.fn().mockResolvedValue([]),
+      findOneBy: vi.fn().mockResolvedValue(null),
+    };
     users = {
       findOne: vi.fn().mockResolvedValue(
         Object.assign(new Customer(), {
@@ -85,6 +103,7 @@ describe(NotificationsService.name, () => {
     service = new NotificationsService(
       notifications as unknown as Repository<Notification>,
       campaigns as unknown as Repository<NotificationCampaign>,
+      promos as unknown as Repository<Promo>,
       users as unknown as Repository<Customer>,
       pushSender,
       { get: vi.fn().mockReturnValue("redis://localhost:6379") } as never,
@@ -166,10 +185,19 @@ describe(NotificationsService.name, () => {
           type: "PROMO",
           title: "Weekend discount",
           body: "Use code WEEKEND for a discount this weekend.",
+          promoCode: "WEEKEND",
+          discountTarget: "DELIVERY",
+          discountPercent: 100,
+          scope: "ALL_OUTLETS",
+          startsAt: "2026-07-14T00:00:00.000Z",
+          endsAt: "2026-07-31T23:59:59.000Z",
         },
       ),
     ).resolves.toEqual({ sent: 2 });
 
+    expect(promos.save).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "WEEKEND", discountTarget: "DELIVERY" }),
+    );
     expect(notifications.save).toHaveBeenCalledTimes(2);
     expect(notifications.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -186,16 +214,20 @@ describe(NotificationsService.name, () => {
   });
 
   it("lists recent promo notifications for admins", async () => {
-    const savedNotification = Object.assign(new Notification(), {
-      id: "45ef3252-b96f-4308-b40e-391623b25ac9",
-      recipientId,
-      recipientRole: UserRole.CUSTOMER,
-      type: "SPECIAL_PERIOD",
+    const savedPromo = Object.assign(new Promo(), {
+      id: "9d353d54-7254-4538-9487-c21ab15b833e",
+      code: "WEEKEND",
       title: "Weekend discount",
       body: "Use code WEEKEND for a discount this weekend.",
-      isRead: false,
+      discountTarget: "DELIVERY",
+      discountPercent: 100,
+      scope: "ALL_OUTLETS",
+      outletId: null,
+      startsAt: new Date("2026-07-14T00:00:00.000Z"),
+      endsAt: new Date("2026-07-31T23:59:59.000Z"),
+      isActive: true,
     });
-    notifications.find.mockResolvedValueOnce([savedNotification]);
+    promos.find.mockResolvedValueOnce([savedPromo]);
 
     await expect(
       service.listPromos({
@@ -204,9 +236,9 @@ describe(NotificationsService.name, () => {
         sessionId: "session-1",
         accessTokenId: "access-token-1",
       }),
-    ).resolves.toEqual([savedNotification]);
+    ).resolves.toEqual([savedPromo]);
 
-    expect(notifications.find).toHaveBeenCalledWith(
+    expect(promos.find).toHaveBeenCalledWith(
       expect.objectContaining({
         order: { createdAt: "DESC" },
         take: 100,

@@ -1,23 +1,32 @@
 import { Button } from "@rsc/ui";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { useSendPromo } from "../hooks/use-send-promo";
-import { scheduleNotificationCampaign } from "../lib/api";
+import { listOutlets, scheduleNotificationCampaign } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
+type NotificationType = "PROMO" | "CAMPAIGN";
+
 const EMPTY_FORM = {
-  notificationType: "PROMOS",
+  notificationType: "PROMO" as NotificationType,
   title: "",
   body: "",
   recipientRole: "CUSTOMER",
   promoCode: "",
+  discountTarget: "DELIVERY",
+  discountPercent: "100",
+  scope: "ALL_OUTLETS",
+  outletId: "",
+  startsAt: "",
+  endsAt: "",
   scheduledAt: "",
 };
 
 export function PromotionsPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const { mutate: sendPromo, isPending } = useSendPromo();
+  const { data: outlets = [] } = useQuery({ queryKey: ["outlets"], queryFn: listOutlets });
   const scheduleCampaign = useMutation({
     mutationFn: scheduleNotificationCampaign,
     onSuccess: () => {
@@ -28,6 +37,7 @@ export function PromotionsPage() {
   });
 
   const isCampaign = form.notificationType === "CAMPAIGN";
+  const isPromo = form.notificationType === "PROMO";
   const isSubmitting = isPending || scheduleCampaign.isPending;
 
   function field(key: keyof typeof EMPTY_FORM) {
@@ -37,6 +47,26 @@ export function PromotionsPage() {
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
       ) => setForm((previous) => ({ ...previous, [key]: event.target.value })),
     };
+  }
+
+  function selectNotificationType(notificationType: NotificationType) {
+    setForm((previous) => ({
+      ...previous,
+      notificationType,
+      ...(notificationType === "CAMPAIGN"
+        ? {
+            promoCode: "",
+            discountTarget: EMPTY_FORM.discountTarget,
+            discountPercent: EMPTY_FORM.discountPercent,
+            scope: EMPTY_FORM.scope,
+            outletId: "",
+            startsAt: "",
+            endsAt: "",
+          }
+        : {
+            scheduledAt: "",
+          }),
+    }));
   }
 
   function handleBroadcast() {
@@ -54,15 +84,30 @@ export function PromotionsPage() {
       return;
     }
 
-    if (!form.promoCode.trim()) return;
+    if (!isPromo) return;
+
+    if (
+      !form.promoCode.trim() ||
+      !form.startsAt ||
+      !form.endsAt ||
+      (form.scope === "OUTLET" && !form.outletId)
+    ) {
+      return;
+    }
 
     sendPromo(
       {
         type: "PROMO",
         title: form.title.trim(),
         body: form.body.trim(),
-        recipientRole: form.recipientRole,
+        recipientRole: form.recipientRole as "CUSTOMER" | "ADMIN" | "RIDER",
         promoCode: form.promoCode.trim(),
+        discountTarget: form.discountTarget as "DELIVERY" | "ORDER",
+        discountPercent: Number(form.discountPercent),
+        scope: form.scope as "ALL_OUTLETS" | "OUTLET",
+        ...(form.scope === "OUTLET" ? { outletId: form.outletId } : {}),
+        startsAt: new Date(form.startsAt).toISOString(),
+        endsAt: new Date(form.endsAt).toISOString(),
       },
       { onSuccess: () => setForm(EMPTY_FORM) },
     );
@@ -71,7 +116,12 @@ export function PromotionsPage() {
   const canBroadcast =
     form.title.trim() &&
     form.body.trim() &&
-    (isCampaign ? form.scheduledAt : form.promoCode.trim());
+    (isCampaign
+      ? form.scheduledAt
+      : form.promoCode.trim() &&
+        form.startsAt &&
+        form.endsAt &&
+        (form.scope !== "OUTLET" || form.outletId));
 
   return (
     <div className="promo-wrap">
@@ -81,10 +131,26 @@ export function PromotionsPage() {
         <div className="promo-form">
           <label className="field-label">
             Notification Type
-            <select className="field-input" {...field("notificationType")}>
-              <option value="PROMOS">Promos</option>
-              <option value="CAMPAIGN">Campaign</option>
-            </select>
+            <div className="notification-type-selector" role="group" aria-label="Notification type">
+              <button
+                type="button"
+                className={`notification-type-selector__option ${
+                  isPromo ? "notification-type-selector__option--active" : ""
+                }`}
+                onClick={() => selectNotificationType("PROMO")}
+              >
+                Promos
+              </button>
+              <button
+                type="button"
+                className={`notification-type-selector__option ${
+                  isCampaign ? "notification-type-selector__option--active" : ""
+                }`}
+                onClick={() => selectNotificationType("CAMPAIGN")}
+              >
+                Campaign
+              </button>
+            </div>
           </label>
 
           {isCampaign && (
@@ -114,24 +180,83 @@ export function PromotionsPage() {
           </label>
 
           {!isCampaign && (
-            <div className="modal-row">
-              <label className="field-label">
-                Recipient Role
-                <select className="field-input" {...field("recipientRole")}>
-                  <option value="CUSTOMER">Customers</option>
-                </select>
-              </label>
+            <>
+              <div className="modal-row">
+                <label className="field-label">
+                  Recipient Role
+                  <select className="field-input" {...field("recipientRole")}>
+                    <option value="CUSTOMER">Customers</option>
+                  </select>
+                </label>
 
-              <label className="field-label">
-                Promo Code
-                <input
-                  className="field-input"
-                  type="text"
-                  placeholder="e.g. WEEKEND"
-                  {...field("promoCode")}
-                />
-              </label>
-            </div>
+                <label className="field-label">
+                  Promo Code
+                  <input
+                    className="field-input"
+                    type="text"
+                    placeholder="e.g. WEEKEND"
+                    {...field("promoCode")}
+                  />
+                </label>
+              </div>
+
+              <div className="modal-row">
+                <label className="field-label">
+                  Discount Applies To
+                  <select className="field-input" {...field("discountTarget")}>
+                    <option value="DELIVERY">Delivery fee</option>
+                    <option value="ORDER">Order subtotal</option>
+                  </select>
+                </label>
+
+                <label className="field-label">
+                  Discount %
+                  <input
+                    className="field-input"
+                    type="number"
+                    min={1}
+                    max={100}
+                    {...field("discountPercent")}
+                  />
+                </label>
+              </div>
+
+              <div className="modal-row">
+                <label className="field-label">
+                  Promo Scope
+                  <select className="field-input" {...field("scope")}>
+                    <option value="ALL_OUTLETS">All outlets</option>
+                    <option value="OUTLET">Specific outlet</option>
+                  </select>
+                </label>
+
+                {form.scope === "OUTLET" && (
+                  <label className="field-label">
+                    Outlet
+                    <select className="field-input" {...field("outletId")}>
+                      <option value="">Select outlet</option>
+                      {outlets.map((outlet) => (
+                        <option key={outlet.id} value={outlet.id}>
+                          {outlet.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+
+              <div className="modal-row">
+                <label className="field-label">
+                  Starts
+                  <input className="field-input" type="datetime-local" {...field("startsAt")} />
+                </label>
+
+                <label className="field-label">
+                  Ends
+                  <input className="field-input" type="datetime-local" {...field("endsAt")} />
+                </label>
+              </div>
+            </>
           )}
 
           <div className="promo-actions">

@@ -13,7 +13,7 @@ import {
   outletSettlementExportSchema,
   outletSettlementSummaryListSchema,
   outletSettlementSummarySchema,
-  notificationSchema,
+  promoSchema,
   paymentRefundSchema,
   platformChargesSchema,
   processRefundInputSchema,
@@ -40,7 +40,10 @@ import {
   type LogoutResult,
   type MenuItem,
   type NotificationCampaign,
-  type Notification,
+  type Promo,
+  type CreatePromoInput,
+  type UpdatePromoInput,
+  type TogglePromoActiveInput,
   type CreateNotificationCampaignInput,
   type CreateRiderInput,
   type OutletSummary,
@@ -423,20 +426,24 @@ export const listAdminOrders = (params?: AdminOrdersQuery): Promise<AdminOrdersR
 
 // ─── Notifications ────────────────────────────────────────────────────────────
 
-export interface SendPromoBody {
-  type: string;
-  title: string;
-  body: string;
-  recipientRole: string;
-  promoCode: string;
-}
+export type SendPromoBody = CreatePromoInput;
 
 export const sendPromoNotification = (body: SendPromoBody): Promise<{ sent: number }> =>
   post("/api/v1/notifications/promos", body);
 
-export const listPromoNotifications = (): Promise<Notification[]> =>
+export const listPromoNotifications = (): Promise<Promo[]> =>
   get<unknown>("/api/v1/notifications/promos").then((data) =>
-    parseResponse(notificationSchema.array(), data),
+    parseResponse(promoSchema.array(), data),
+  );
+
+export const updatePromo = (id: string, body: UpdatePromoInput): Promise<Promo> =>
+  patchReq<unknown>(`/api/v1/notifications/promos/${id}`, body).then((data) =>
+    parseResponse(promoSchema, data),
+  );
+
+export const togglePromoActive = (id: string, body: TogglePromoActiveInput): Promise<Promo> =>
+  patchReq<unknown>(`/api/v1/notifications/promos/${id}/active`, body).then((data) =>
+    parseResponse(promoSchema, data),
   );
 
 export const listNotificationCampaigns = (): Promise<NotificationCampaign[]> =>
