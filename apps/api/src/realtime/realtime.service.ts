@@ -30,6 +30,17 @@ export interface MenuItemAvailabilityUpdateEvent {
   updatedAt: Date;
 }
 
+export interface RealtimeNotificationEvent {
+  id?: string;
+  recipientId?: string;
+  recipientRole?: string;
+  type: string;
+  title: string;
+  body: string;
+  data?: Record<string, unknown>;
+  createdAt?: Date | string;
+}
+
 @Injectable()
 export class RealtimeService {
   private server: Server | null = null;
@@ -49,6 +60,14 @@ export class RealtimeService {
   emitSuborderNew(subOrder: SubOrder): void {
     this.server?.to(outletRoom(subOrder.outletId)).emit("suborder:new", subOrder);
     this.server?.to(platformAdminRoom()).emit("suborder:new", subOrder);
+  }
+
+  emitAdminNotification(event: RealtimeNotificationEvent, outletIds: string[] = []): void {
+    this.server?.to(platformAdminRoom()).emit("notification:new", event);
+
+    for (const outletId of outletIds) {
+      this.server?.to(outletRoom(outletId)).emit("notification:new", event);
+    }
   }
 
   emitRiderLocationUpdate(event: RiderLocationUpdateEvent): void {

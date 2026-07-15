@@ -20,7 +20,12 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
-import { InitiatePaymentDto, ProcessRefundDto, RetryPaymentDto } from "./dto/payment.dto";
+import {
+  InitiatePaymentDto,
+  ProcessRefundDto,
+  RequestRefundDto,
+  RetryPaymentDto,
+} from "./dto/payment.dto";
 import { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { PaymentsService } from "./payments.service";
 import { PAYMENT_ADAPTER, type PaymentAdapter } from "./payment-adapter";
@@ -150,6 +155,23 @@ export class PaymentsController {
     @Body() input: RetryPaymentDto,
   ) {
     return this.payments.retryOrderPayment(request.user!, orderId, input);
+  }
+
+  @Post(":reference/refund-request")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @ApiMessage("Refund request submitted")
+  @ApiOperation({
+    summary: "Request a refund for a successful payment",
+    description:
+      "Customer endpoint for requesting a full or partial refund. This records a pending refund request for super-admin review; it does not move money immediately.",
+  })
+  requestRefund(
+    @Req() request: AuthenticatedRequest,
+    @Param("reference") reference: string,
+    @Body() input: RequestRefundDto,
+  ) {
+    return this.payments.requestRefund(request.user!, reference, input);
   }
 
   @Post(":reference/refund")
