@@ -91,7 +91,7 @@ export function OrderCard({ order, variant = "completed" }: OrderCardProps) {
   const retryPaymentMutation = useMutation({
     mutationFn: () =>
       apiClient.retryPayment(order.id, {
-        returnUrl: `${window.location.origin}/tracking`,
+        returnUrl: `${window.location.origin}/payment/return`,
       }),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["orders"] });
