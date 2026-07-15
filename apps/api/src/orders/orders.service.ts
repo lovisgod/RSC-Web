@@ -645,6 +645,25 @@ export class OrdersService {
       throw new ForbiddenException("Invalid delivery completion code");
     }
 
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const deliverableSubOrders = subOrders.filter(
+      (subOrder) => subOrder.status !== SubOrderStatus.REJECTED,
+    );
+    const incompleteSubOrders = deliverableSubOrders.filter(
+      (subOrder) => subOrder.status !== SubOrderStatus.COLLECTED,
+    );
+
+    for (const subOrder of incompleteSubOrders) {
+      if (subOrder.status !== SubOrderStatus.DISPATCHED) {
+        throw new BadRequestException(
+          `Sub-order is not out for delivery (current status: ${subOrder.status})`,
+        );
+      }
+
+      subOrder.status = SubOrderStatus.COLLECTED;
+      await this.subOrders.save(subOrder);
+    }
+
     order.riderId = order.riderId ?? user.id;
     order.status = MasterOrderStatus.DELIVERED;
     await this.masterOrders.save(order);
@@ -1295,18 +1314,26 @@ export class OrdersService {
       return MasterOrderStatus.CANCELLED;
     }
 
-    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.REJECTED)) {
-      return MasterOrderStatus.PARTIALLY_FULFILLED;
+    const fulfillableSubOrders = subOrders.filter(
+      (subOrder) => subOrder.status !== SubOrderStatus.REJECTED,
+    );
+
+    if (fulfillableSubOrders.every((subOrder) => subOrder.status === SubOrderStatus.COLLECTED)) {
+      return MasterOrderStatus.DELIVERED;
     }
 
     if (
-      subOrders.every(
+      fulfillableSubOrders.every(
         (subOrder) =>
           subOrder.status === SubOrderStatus.DISPATCHED ||
           subOrder.status === SubOrderStatus.COLLECTED,
       )
     ) {
       return MasterOrderStatus.OUT_FOR_DELIVERY;
+    }
+
+    if (subOrders.some((subOrder) => subOrder.status === SubOrderStatus.REJECTED)) {
+      return MasterOrderStatus.PARTIALLY_FULFILLED;
     }
 
     if (subOrders.every((subOrder) => subOrder.status === SubOrderStatus.READY)) {
