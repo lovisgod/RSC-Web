@@ -404,6 +404,34 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
     },
   });
 
+  const refundMutation = useMutation({
+    mutationFn: () => {
+      if (!order.paymentReference) {
+        throw new Error("This order does not have a payment reference for refund.");
+      }
+
+      return apiClient.processRefund(order.paymentReference, {
+        reason: "Customer requested refund for cancelled order",
+      });
+    },
+    onSuccess: (refund) => {
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast.success(
+        refund.status === "SUCCESS"
+          ? "Refund processed successfully."
+          : "Refund request has been submitted.",
+      );
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 403) {
+        toast.error("Refunds must be processed by an RSC admin. Please contact support.");
+        return;
+      }
+
+      toast.error(err instanceof ApiError ? err.message : "Could not process refund right now.");
+    },
+  });
+
   function stopCardOpen(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
   }
@@ -487,10 +515,11 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
               type="button"
               onClick={(event) => {
                 stopCardOpen(event);
-                toast.info("Refund support is coming soon.");
+                refundMutation.mutate();
               }}
+              disabled={refundMutation.isPending}
             >
-              Refund
+              {refundMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refund"}
             </Button>
           ) : (
             <Button
