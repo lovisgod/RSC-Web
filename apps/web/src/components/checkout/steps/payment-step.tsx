@@ -46,8 +46,8 @@ export function PaymentStep({
                   Payment provider currently unavailable.
                 </p>
                 <p className="mt-1 text-sm leading-relaxed text-amber-800">
-                  Please try again later. Your cart is still available, so you can return when the
-                  payment gateway is ready.
+                  Your order has been created. Please use Make payment under Active orders to
+                  continue when the payment gateway is ready.
                 </p>
               </div>
             </div>

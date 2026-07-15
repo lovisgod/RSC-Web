@@ -11,8 +11,6 @@ export const ACTIVE_ORDER_STATUSES = new Set([
   "OUT_FOR_DELIVERY",
 ]);
 
-const COMPLETED_ORDER_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
-
 export function isActiveOrder(order: Order): boolean {
   return ACTIVE_ORDER_STATUSES.has(order.status.toUpperCase());
 }
@@ -22,7 +20,11 @@ export function isProfileActiveOrder(order: Order): boolean {
 }
 
 export function isCompletedOrder(order: Order): boolean {
-  return COMPLETED_ORDER_STATUSES.has(order.status.toUpperCase());
+  return order.status.toUpperCase() === "DELIVERED";
+}
+
+export function isCancelledOrder(order: Order): boolean {
+  return order.status.toUpperCase() === "CANCELLED";
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -31,7 +33,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   PREPARING: { label: "Preparing", color: "#fff", bg: "var(--rsc-navy-light)" },
   PARTIALLY_READY: { label: "Partially ready", color: "#fff", bg: "var(--rsc-dark)" },
   PARTIALLY_FULFILLED: { label: "Partially fulfilled", color: "#fff", bg: "var(--rsc-danger)" },
-  READY: { label: "Ready for pickup", color: "#fff", bg: "var(--rsc-main)" },
+  READY: { label: "Ready for pickup", color: "#fff", bg: "var(--rsc-success)" },
   OUT_FOR_DELIVERY: { label: "Out for delivery", color: "#fff", bg: "var(--rsc-dark)" },
   DELIVERED: { label: "Delivered", color: "#fff", bg: "var(--rsc-main)" },
   CANCELLED: { label: "Cancelled", color: "#fff", bg: "#6b7280" },

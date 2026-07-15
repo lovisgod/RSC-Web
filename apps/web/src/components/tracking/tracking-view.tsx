@@ -8,17 +8,7 @@ import { useRef, useState } from "react";
 
 import type { OrderLineItem, SubOrderDetail } from "@rsc/contracts";
 import { Card, EmptyState } from "@rsc/ui";
-import {
-  Bike,
-  CheckCircle2,
-  ChevronDown,
-  MapPin,
-  RefreshCw,
-  Store,
-  Wifi,
-  WifiOff,
-  XCircle,
-} from "lucide-react";
+import { Bike, ChevronDown, MapPin, RefreshCw, Store, Wifi, WifiOff } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -29,6 +19,7 @@ import { useOutlets } from "@/src/hooks/use-outlets";
 import { apiClient } from "@/src/lib/api";
 import { formatNaira } from "@/src/lib/data/cart";
 import { getStatusConfig, type Order } from "@/src/lib/data/orders";
+import { PaymentResultModal } from "@/src/components/payment/payment-result-modal";
 import { OrderTimeline } from "./order-timeline";
 
 const TrackingMap = dynamic(() => import("./tracking-map"), { ssr: false });
@@ -79,43 +70,6 @@ function NoActiveOrder() {
         </Link>
       }
     />
-  );
-}
-
-function PaymentResultModal({ status }: { status: "SUCCESS" | "FAILED" }) {
-  const isSuccess = status === "SUCCESS";
-  const Icon = isSuccess ? CheckCircle2 : XCircle;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl">
-        <div
-          className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
-            isSuccess
-              ? "bg-[color-mix(in_srgb,var(--rsc-brand)_14%,white)] text-[var(--rsc-brand)]"
-              : "bg-red-50 text-red-600"
-          }`}
-        >
-          <Icon className="h-9 w-9" aria-hidden="true" />
-        </div>
-        <h2 className="mt-5 text-xl font-bold text-gray-950">
-          {isSuccess ? "Payment successful" : "Payment failed"}
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-gray-500">
-          {isSuccess
-            ? "Your order has been confirmed. Taking you to live tracking in 5 seconds."
-            : "Your cart is still intact. Taking you back to cart in 5 seconds so you can try again."}
-        </p>
-        <div
-          className={`mx-auto mt-5 h-1.5 w-28 rounded-full ${
-            isSuccess ? "bg-[var(--rsc-brand)]" : "bg-red-500"
-          }`}
-          aria-hidden="true"
-        >
-          <span className="sr-only">Redirecting in 5 seconds</span>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -454,6 +408,19 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
     "OUT_FOR_DELIVERY",
   ]);
   const showHandoffCode = !!order.deliveryCode && codeVisibleStatuses.has(normalizedStatus);
+  const isReadyForPickup = normalizedStatus === "READY";
+  const headerToneClass = isReadyForPickup
+    ? isOpen
+      ? "border-l-[var(--rsc-success)] bg-[color-mix(in_srgb,var(--rsc-success)_14%,white)]"
+      : "border-l-[var(--rsc-success)] bg-[color-mix(in_srgb,var(--rsc-success)_8%,white)] hover:bg-[color-mix(in_srgb,var(--rsc-success)_12%,white)]"
+    : isOpen
+      ? "border-l-[var(--rsc-brand)] bg-[color-mix(in_srgb,var(--rsc-main)_4%,white)]"
+      : "border-l-transparent hover:bg-gray-50";
+  const toggleToneClass = isReadyForPickup
+    ? "bg-[var(--rsc-success)] text-white"
+    : isOpen
+      ? "bg-[var(--rsc-main)] text-white"
+      : "bg-gray-100 text-gray-500";
 
   return (
     <div
@@ -468,11 +435,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-controls={contentId}
-        className={`flex w-full items-center gap-3 border-l-4 px-4 py-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rsc-main)] ${
-          isOpen
-            ? "border-l-[var(--rsc-brand)] bg-[color-mix(in_srgb,var(--rsc-main)_4%,white)]"
-            : "border-l-transparent hover:bg-gray-50"
-        }`}
+        className={`flex w-full items-center gap-3 border-l-4 px-4 py-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rsc-main)] ${headerToneClass}`}
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -503,9 +466,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
           )}
         </div>
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
-            isOpen ? "bg-[var(--rsc-main)] text-white" : "bg-gray-100 text-gray-500"
-          }`}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${toggleToneClass}`}
         >
           <ChevronDown
             className="h-4 w-4 transition-transform duration-200"
