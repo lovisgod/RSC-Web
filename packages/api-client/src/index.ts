@@ -17,6 +17,7 @@ import {
   pickupSubOrderInputSchema,
   platformChargesSchema,
   preparationSuggestionSchema,
+  paymentRefundSchema,
   queryPreparationSuggestionsInputSchema,
   profileUpdateResultSchema,
   rateMenuItemInputSchema,
@@ -58,7 +59,6 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
-  paymentRefundSchema,
   paymentVerifyResultSchema,
   riderLocationSchema,
   registerCustomerInputSchema,
@@ -88,6 +88,7 @@ import {
   type PickupSubOrderInput,
   type PlatformCharges,
   type PreparationSuggestion,
+  type PaymentRefund,
   type QueryPreparationSuggestionsInput,
   type ProfileUpdateResult,
   type RateMenuItemInput,
@@ -130,7 +131,6 @@ import {
   type OrderPulse,
   type OrderPulseQuery,
   type OutletSummary,
-  type PaymentRefund,
   type PaymentVerifyResult,
   type RiderLocation,
   type RegisterCustomerInput,
@@ -176,6 +176,12 @@ function paginationQuery(input: { limit?: number; offset?: number }): string {
   if (input.offset !== undefined) params.set("offset", String(input.offset));
   const query = params.toString();
   return query ? `?${query}` : "";
+}
+
+function describeContractIssue(issue: z.ZodIssue): string {
+  const path = issue.path.length > 0 ? issue.path.join(".") : "response";
+
+  return `${path}: ${issue.message}`;
 }
 
 export interface ApiClientOptions {
@@ -259,13 +265,16 @@ export function createApiClient(options: ApiClientOptions) {
     const parsedEnvelope = apiResponseSchema(schema).safeParse(payload);
 
     if (!parsedEnvelope.success) {
-      console.error("API contract validation failed", {
+      console.warn("API contract validation failed", {
         path,
         issues: parsedEnvelope.error.issues,
         fieldErrors: parsedEnvelope.error.flatten().fieldErrors,
       });
+      const firstIssue = parsedEnvelope.error.issues[0];
       throw new ApiContractError(
-        "The server returned an unexpected response.",
+        firstIssue
+          ? `API contract validation failed for ${path}: ${describeContractIssue(firstIssue)}`
+          : `API contract validation failed for ${path}.`,
         parsedEnvelope.error.issues,
       );
     }

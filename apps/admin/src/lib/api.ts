@@ -10,7 +10,6 @@ import {
   orderPulseQuerySchema,
   orderPulseSchema,
   outletSummarySchema,
-  outletSettlementExportSchema,
   outletSettlementSummaryListSchema,
   outletSettlementSummarySchema,
   promoSchema,
@@ -47,7 +46,6 @@ import {
   type CreateNotificationCampaignInput,
   type CreateRiderInput,
   type OutletSummary,
-  type OutletSettlementExport,
   type OutletSettlementSummary,
   type PaymentRefund,
   type RegistrationResult,
@@ -257,12 +255,13 @@ export const listOutletSettlements = (
     outletSettlementSummaryListSchema.parse(data),
   );
 
-export const exportOutletSettlements = (
-  query: OutletSettlementQuery = {},
-): Promise<OutletSettlementExport> =>
-  get<unknown>(`/api/v1/finance/outlet-settlements/export${settlementQueryString(query)}`).then(
-    (data) => outletSettlementExportSchema.parse(data),
-  );
+// TODO: Re-enable when the real CSV export endpoint is available.
+// export const exportOutletSettlements = (
+//   query: OutletSettlementQuery = {},
+// ): Promise<OutletSettlementExport> =>
+//   get<unknown>(`/api/v1/finance/outlet-settlements/export${settlementQueryString(query)}`).then(
+//     (data) => outletSettlementExportSchema.parse(data),
+//   );
 
 export const approveOutletSettlement = ({
   outletId,

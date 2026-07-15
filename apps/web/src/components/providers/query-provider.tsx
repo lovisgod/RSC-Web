@@ -7,6 +7,7 @@ import { ApiError } from "@rsc/api-client";
 
 import { useAuthStore } from "@/src/stores/auth-store";
 import { OutletRealtimeBridge } from "@/src/components/providers/outlet-realtime-bridge";
+import { isPublicWebRoute } from "@/src/lib/public-routes";
 
 function handleGlobalError(error: unknown) {
   if (
@@ -15,6 +16,7 @@ function handleGlobalError(error: unknown) {
     error.message === "Authentication required"
   ) {
     useAuthStore.getState().signOut();
+    if (isPublicWebRoute(window.location.pathname)) return;
     window.location.replace("/sign-in");
   }
 }

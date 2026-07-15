@@ -5,6 +5,7 @@ import { io } from "socket.io-client";
 import { outletAdminKeys } from "../lib/query-keys";
 import { toastBus } from "../lib/toast-bus";
 
+const PAYMENT_SUCCESS_NOTIFICATION = "PAYMENT_SUCCESS";
 const SUBORDER_NEW_EVENT = "suborder:new";
 const SUBORDER_CONFIRMED_EVENT = "suborder:confirmed";
 const MENU_ITEM_AVAILABILITY_EVENT = "menu_item:availability_update";
@@ -20,6 +21,9 @@ interface NotificationEvent {
   type?: string;
   title?: string;
   body?: string;
+  data?: {
+    outletIds?: string[];
+  };
 }
 
 interface ConfirmedSubOrderEvent {
@@ -69,8 +73,13 @@ export function useOutletRealtime(outletId: string) {
       toastBus.emit("New paid order received", "success");
     });
     socket.on(NOTIFICATION_NEW_EVENT, (event: NotificationEvent) => {
-      refreshOutletQueue();
-      if (event.type === "PAYMENT_SUCCESS") return;
+      if (event.type === PAYMENT_SUCCESS_NOTIFICATION) {
+        const outletIds = event.data?.outletIds;
+        if (!outletIds || outletIds.includes(outletId)) {
+          refreshOutletQueue();
+        }
+        return;
+      }
 
       toastBus.emit(event.title ?? event.body ?? "New notification", "info");
     });

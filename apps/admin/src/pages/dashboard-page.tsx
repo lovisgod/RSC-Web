@@ -23,6 +23,13 @@ const PERFORMANCE_LIMIT = 100;
 const COMPLETED_SUB_ORDER_STATUSES = new Set(["COLLECTED", "DISPATCHED"]);
 const IN_PROGRESS_SUB_ORDER_STATUSES = new Set(["ACCEPTED", "PREPARING", "READY"]);
 
+function formatDelayDuration(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
 interface OutletPerformanceRow {
   outletId: string;
   outletName: string;
@@ -219,7 +226,7 @@ export function DashboardPage() {
       detail:
         queue.data.oldestDelayMinutes === null
           ? "Delay age is not available"
-          : `Oldest delay is ${queue.data.oldestDelayMinutes} minutes`,
+          : `Oldest delay is ${formatDelayDuration(queue.data.oldestDelayMinutes)} mins`,
       tone: "danger",
     });
   }
