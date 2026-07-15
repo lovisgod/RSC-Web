@@ -92,6 +92,13 @@ export interface ApplicationConfig {
       baseUrl: string;
     };
   };
+  preparationSuggestionsAi: {
+    provider: "noop" | "pollinations";
+    baseUrl: string;
+    model: string;
+    apiKey: string;
+    timeoutMs: number;
+  };
 }
 
 function parseOrigins(value: string): string[] {
@@ -222,6 +229,17 @@ export default function configuration(): ApplicationConfig {
           process.env.OPENCAGE_BASE_URL ?? "https://api.opencagedata.com/geocode/v1/json"
         ).replace(/\/$/, ""),
       },
+    },
+    preparationSuggestionsAi: {
+      provider:
+        process.env.PREPARATION_SUGGESTIONS_AI_PROVIDER === "noop" ? "noop" : "pollinations",
+      baseUrl: (process.env.POLLINATIONS_BASE_URL ?? "https://text.pollinations.ai").replace(
+        /\/$/,
+        "",
+      ),
+      model: process.env.POLLINATIONS_TEXT_MODEL ?? "openai",
+      apiKey: process.env.POLLINATIONS_API_KEY ?? "",
+      timeoutMs: Number(process.env.PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS ?? 4_000),
     },
   };
 }

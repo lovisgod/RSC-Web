@@ -169,3 +169,5 @@ export class ProcessRefundDto {
   @Length(1, 500)
   reason?: string;
 }
+
+export class RequestRefundDto extends ProcessRefundDto {}

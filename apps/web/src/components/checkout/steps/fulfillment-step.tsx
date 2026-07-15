@@ -343,6 +343,7 @@ export function FulfillmentStep({
           })),
         })),
         totals: result.totals,
+        ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}),
       };
       clearCart();
       onComplete(

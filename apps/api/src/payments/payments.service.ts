@@ -16,10 +16,12 @@ import { MenuItem } from "../catalog/menu-item.entity";
 import { Outlet } from "../outlets/outlet.entity";
 import { RealtimeService } from "../realtime/realtime.service";
 import { Promo } from "../notifications/promo.entity";
+import { NotificationsService } from "../notifications/notifications.service";
 import { MasterOrder } from "../orders/master-order.entity";
 import { OrderLineItem } from "../orders/order-line-item.entity";
 import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
+import { UserRole } from "../auth/user-role.enum";
 import type { InitiatePaymentDto, RetryPaymentDto } from "./dto/payment.dto";
 import type { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { Payment, PaymentStatus } from "./payment.entity";
@@ -83,6 +85,7 @@ export class PaymentsService {
     private readonly configService: ConfigService<ApplicationConfig, true>,
     @Inject(PAYMENT_ADAPTER) private readonly paymentAdapter: PaymentAdapter,
     private readonly realtime: RealtimeService,
+    private readonly notifications: NotificationsService,
   ) {
     const paymentsConfig = configService.get("payments", { infer: true });
 
@@ -246,6 +249,7 @@ export class PaymentsService {
       vatMinor +
       platformCommissionMinor -
       discountMinor;
+    const undiscountedTotalMinor = totalMinor + discountMinor;
 
     // Validate client-provided totals to prevent cheating/manipulation
     if (input.subtotalMinor !== subtotalMinor) {
@@ -276,7 +280,7 @@ export class PaymentsService {
         `Platform commission mismatch: expected ${platformCommissionMinor}, got ${input.platformCommissionMinor}`,
       );
     }
-    if (input.totalMinor !== totalMinor) {
+    if (input.totalMinor !== totalMinor && input.totalMinor !== undiscountedTotalMinor) {
       throw new BadRequestException(
         `Total mismatch: expected ${totalMinor}, got ${input.totalMinor}`,
       );
@@ -553,6 +557,10 @@ export class PaymentsService {
         status: order.status,
         updatedAt: order.updatedAt,
       });
+
+      if (nextPaymentStatus === PaymentStatus.SUCCESS) {
+        await this.notifyAdminsOfSuccessfulPayment(order, payment);
+      }
     }
 
     this.logger.log(
@@ -560,6 +568,52 @@ export class PaymentsService {
     );
 
     return { already: false };
+  }
+
+  private async notifyAdminsOfSuccessfulPayment(order: MasterOrder, payment: Payment) {
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    const outletIds = [...new Set(subOrders.map((subOrder) => subOrder.outletId))];
+    const recipients = await this.users.find({
+      where: [
+        { role: UserRole.SUPER_ADMIN },
+        ...(outletIds.length > 0 ? [{ role: UserRole.ADMIN, outletId: In(outletIds) }] : []),
+      ],
+      select: { id: true, role: true, outletId: true },
+    });
+    const title = "Payment successful";
+    const body = `Payment received for order ${order.id}.`;
+    const data = {
+      masterOrderId: order.id,
+      paymentId: payment.id,
+      reference: payment.reference,
+      amountMinor: payment.amountMinor,
+      currency: payment.currency,
+      outletIds,
+      deepLink: `/orders/${order.id}`,
+    };
+
+    await Promise.all(
+      recipients.map((recipient) =>
+        this.notifications.createAndPush({
+          recipientId: recipient.id,
+          recipientRole: recipient.role,
+          type: "PAYMENT_SUCCESS",
+          title,
+          body,
+          data,
+        }),
+      ),
+    );
+
+    this.realtime.emitAdminNotification(
+      {
+        type: "PAYMENT_SUCCESS",
+        title,
+        body,
+        data,
+      },
+      outletIds,
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -626,25 +680,9 @@ export class PaymentsService {
     if (!payment) {
       throw new NotFoundException("Payment not found");
     }
-    if (payment.status !== PaymentStatus.SUCCESS) {
-      throw new BadRequestException("Only successful payments can be refunded");
-    }
-
-    const requestedAmountMinor = input.amountMinor ?? payment.amountMinor;
-    if (requestedAmountMinor <= 0 || requestedAmountMinor > payment.amountMinor) {
-      throw new BadRequestException(
-        "Refund amount must be greater than 0 and not exceed payment amount",
-      );
-    }
-
-    const existingRefunds = await this.refunds.find({ where: { paymentId: payment.id } });
-    const alreadyRefundedMinor = existingRefunds
-      .filter((refund) => refund.status !== "FAILED")
-      .reduce((sum, refund) => sum + refund.amountMinor, 0);
-
-    if (alreadyRefundedMinor + requestedAmountMinor > payment.amountMinor) {
-      throw new BadRequestException("Refund amount exceeds remaining refundable balance");
-    }
+    const requestedAmountMinor = await this.validateRefundRequest(payment, input.amountMinor, {
+      includePending: false,
+    });
 
     const reason = input.reason?.trim() || null;
     const providerRefund = await this.paymentAdapter.refund({
@@ -668,6 +706,74 @@ export class PaymentsService {
         providerResponse: providerRefund.providerResponse,
       }),
     );
+  }
+
+  async requestRefund(
+    user: AuthenticatedUser,
+    reference: string,
+    input: { amountMinor?: number; reason?: string },
+  ): Promise<PaymentRefund> {
+    const payment = await this.payments.findOneBy({ reference });
+
+    if (!payment) {
+      throw new NotFoundException("Payment not found");
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: payment.masterOrderId });
+
+    if (!order || order.customerId !== user.id) {
+      throw new NotFoundException("Payment not found");
+    }
+
+    const requestedAmountMinor = await this.validateRefundRequest(payment, input.amountMinor, {
+      includePending: true,
+    });
+    const reason = input.reason?.trim() || null;
+
+    return this.refunds.save(
+      this.refunds.create({
+        paymentId: payment.id,
+        reference: payment.reference,
+        amountMinor: requestedAmountMinor,
+        currency: payment.currency,
+        status: "PENDING",
+        reason,
+        provider: payment.gateway,
+        providerRefundId: null,
+        requestedBy: user.id,
+        providerResponse: null,
+      }),
+    );
+  }
+
+  private async validateRefundRequest(
+    payment: Payment,
+    amountMinor: number | undefined,
+    options: { includePending: boolean },
+  ): Promise<number> {
+    if (payment.status !== PaymentStatus.SUCCESS) {
+      throw new BadRequestException("Only successful payments can be refunded");
+    }
+
+    const requestedAmountMinor = amountMinor ?? payment.amountMinor;
+    if (requestedAmountMinor <= 0 || requestedAmountMinor > payment.amountMinor) {
+      throw new BadRequestException(
+        "Refund amount must be greater than 0 and not exceed payment amount",
+      );
+    }
+
+    const existingRefunds = await this.refunds.find({ where: { paymentId: payment.id } });
+    const alreadyRefundedMinor = existingRefunds
+      .filter((refund) =>
+        options.includePending ? refund.status !== "FAILED" : refund.status === "SUCCESS",
+      )
+      .reduce((sum, refund) => sum + refund.amountMinor, 0);
+
+    if (alreadyRefundedMinor + requestedAmountMinor > payment.amountMinor) {
+      throw new BadRequestException("Refund amount exceeds remaining refundable balance");
+    }
+
+    return requestedAmountMinor;
   }
 
   private async priceCart(input: InitiatePaymentDto): Promise<PricedLine[]> {

@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { io } from "socket.io-client";
 
+import { toastBus } from "../lib/toast-bus";
+
 const PLATFORM_ADMIN_ROOM = "platform:admin";
 
 interface OutletStatusUpdateEvent {
@@ -14,6 +16,11 @@ interface MenuItemAvailabilityUpdateEvent {
   menuItemId: string;
   outletId: string;
   isAvailable: boolean;
+}
+
+interface NotificationEvent {
+  title?: string;
+  body?: string;
 }
 
 function getRealtimeOrigin() {
@@ -50,6 +57,12 @@ export function useAdminRealtime() {
     socket.on("suborder:new", refreshOrdersAndStats);
 
     socket.on("order:status_update", refreshOrdersAndStats);
+
+    socket.on("notification:new", (event: NotificationEvent) => {
+      refreshOrdersAndStats();
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toastBus.emit(event.title ?? event.body ?? "New notification", "info");
+    });
 
     socket.on("outlet:status_update", (event: OutletStatusUpdateEvent) => {
       queryClient.setQueriesData<OutletSummary[]>({ queryKey: ["admin", "outlets"] }, (outlets) =>

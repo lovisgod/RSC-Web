@@ -166,6 +166,8 @@ export const riderResultSchema = z.object({
   plateNumber: z.string().nullable(),
   riderStatus: z.string().nullable(),
   temporaryPassword: z.string().min(8),
+  temporaryPasswordEmailSent: z.boolean().default(true),
+  temporaryPasswordEmailError: z.string().nullable().default(null),
 });
 
 export const riderAdminSchema = z.object({
@@ -451,6 +453,8 @@ export const processRefundInputSchema = z
     reason: z.string().trim().min(1).max(500).optional(),
   })
   .strict();
+
+export const requestRefundInputSchema = processRefundInputSchema;
 
 export const paymentRefundSchema = z.object({
   id: z.uuid(),
@@ -1169,6 +1173,7 @@ export type RetryPaymentInput = z.infer<typeof retryPaymentInputSchema>;
 export type InitiatePaymentResult = z.infer<typeof initiatePaymentResultSchema>;
 export type PaymentVerifyResult = z.infer<typeof paymentVerifyResultSchema>;
 export type ProcessRefundInput = z.infer<typeof processRefundInputSchema>;
+export type RequestRefundInput = z.infer<typeof requestRefundInputSchema>;
 export type PaymentRefund = z.infer<typeof paymentRefundSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
