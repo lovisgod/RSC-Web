@@ -1,4 +1,4 @@
-import type { Repository } from "typeorm";
+import type { FindManyOptions, Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Customer } from "../auth/customer.entity";
@@ -291,13 +291,10 @@ describe(NotificationsService.name, () => {
 
     await expect(service.listPromos()).resolves.toEqual([savedPromo]);
 
-    expect(promos.find).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ isActive: true }),
-        order: { endsAt: "ASC", createdAt: "DESC" },
-        take: 100,
-      }),
-    );
+    const findOptions = promos.find.mock.calls.at(-1)?.[0] as FindManyOptions<Promo>;
+    expect(findOptions.where).toEqual(expect.objectContaining({ isActive: true }));
+    expect(findOptions.order).toEqual({ endsAt: "ASC", createdAt: "DESC" });
+    expect(findOptions.take).toBe(100);
   });
 
   it("lists notifications for the authenticated recipient only", async () => {

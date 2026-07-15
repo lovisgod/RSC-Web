@@ -17,7 +17,7 @@ import { SubOrder } from "../orders/sub-order.entity";
 import { Outlet } from "../outlets/outlet.entity";
 import type { Promo } from "../notifications/promo.entity";
 import type { NotificationsService } from "../notifications/notifications.service";
-import type { RealtimeService } from "../realtime/realtime.service";
+import type { RealtimeNotificationEvent, RealtimeService } from "../realtime/realtime.service";
 import type { Payment } from "./payment.entity";
 import { PaymentStatus } from "./payment.entity";
 import type {
@@ -671,18 +671,19 @@ describe(PaymentsService.name, () => {
         type: "PAYMENT_SUCCESS",
       }),
     );
-    expect(realtime.emitAdminNotification).toHaveBeenCalledWith(
+    const notificationCall = realtime.emitAdminNotification.mock.calls.at(-1);
+    const notificationEvent = notificationCall?.[0] as RealtimeNotificationEvent;
+    const notificationOutletIds = notificationCall?.[1] as string[];
+    expect(notificationEvent.type).toBe("PAYMENT_SUCCESS");
+    expect(notificationEvent.data).toEqual(
       expect.objectContaining({
-        type: "PAYMENT_SUCCESS",
-        data: expect.objectContaining({
-          masterOrderId: order.id,
-          paymentId: payment.id,
-          reference: payment.reference,
-          outletIds: [outletId],
-        }),
+        masterOrderId: order.id,
+        paymentId: payment.id,
+        reference: payment.reference,
+        outletIds: [outletId],
       }),
-      [outletId],
     );
+    expect(notificationOutletIds).toEqual([outletId]);
   });
 
   it("stores recipient phone on the master order and preparation note on every sub-order", async () => {
