@@ -19,6 +19,7 @@ const navItems = [
 export function SideNav() {
   const pathname = usePathname();
   const itemCount = useCartStore((s) => cartItemCount(s.cart));
+  const isSignedIn = useAuthStore((s) => s.isSignedIn);
   const signOut = useAuthStore((s) => s.signOut);
 
   async function handleLogout() {
@@ -93,18 +94,19 @@ export function SideNav() {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="px-3 py-5 border-t border-white/10">
-        <button
-          type="button"
-          onClick={handleLogout}
-          aria-label="Sign out"
-          className="flex items-center gap-3 px-3 py-3 w-full rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-        >
-          <LogOut className="h-5 w-5" aria-hidden="true" />
-          <span>Logout</span>
-        </button>
-      </div>
+      {isSignedIn && (
+        <div className="px-3 py-5 border-t border-white/10">
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label="Sign out"
+            className="flex items-center gap-3 px-3 py-3 w-full rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <LogOut className="h-5 w-5" aria-hidden="true" />
+            <span>Logout</span>
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

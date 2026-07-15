@@ -17,6 +17,8 @@ import {
   pickupSubOrderInputSchema,
   platformChargesSchema,
   preparationSuggestionSchema,
+  processRefundInputSchema,
+  paymentRefundSchema,
   queryPreparationSuggestionsInputSchema,
   profileUpdateResultSchema,
   rateMenuItemInputSchema,
@@ -86,6 +88,8 @@ import {
   type PickupSubOrderInput,
   type PlatformCharges,
   type PreparationSuggestion,
+  type ProcessRefundInput,
+  type PaymentRefund,
   type QueryPreparationSuggestionsInput,
   type ProfileUpdateResult,
   type RateMenuItemInput,
@@ -674,6 +678,18 @@ export function createApiClient(options: ApiClientOptions) {
       return request(
         `/api/v1/payments/verify/${encodeURIComponent(reference)}`,
         paymentVerifyResultSchema,
+      );
+    },
+    processRefund(reference: string, input: ProcessRefundInput = {}): Promise<PaymentRefund> {
+      const body = processRefundInputSchema.parse(input);
+
+      return request(
+        `/api/v1/payments/${encodeURIComponent(reference)}/refund`,
+        paymentRefundSchema,
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        },
       );
     },
     pickupSubOrder(

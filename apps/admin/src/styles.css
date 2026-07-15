@@ -2177,6 +2177,32 @@ th {
   white-space: nowrap;
 }
 
+.order-modal__sub-rejection {
+  margin-inline: 1rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-danger) 30%, white);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--rsc-danger) 10%, white);
+}
+
+.order-modal__sub-rejection .order-modal__finance-row {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.order-modal__sub-rejection .order-modal__finance-label,
+.order-modal__sub-rejection .order-modal__finance-payout {
+  color: var(--rsc-danger);
+}
+
+.order-modal__sub-rejection .order-modal__finance-label {
+  font-weight: 800;
+}
+
+.order-modal__sub-rejection .order-modal__finance-payout {
+  white-space: normal;
+}
+
 /* Financial breakdown rows */
 .order-modal__sub-finance {
   display: flex;

@@ -217,11 +217,11 @@ export function OrdersFeedPage() {
                                   }
                                 >
                                   <span className="order-outlet-badge__name">{outlet.name}</span>
-                                  {outlet.status === "REJECTED" && outlet.rejectionReason && (
+                                  {/* {outlet.status === "REJECTED" && outlet.rejectionReason && (
                                     <span className="order-outlet-badge__reason">
                                       {outlet.rejectionReason}
                                     </span>
-                                  )}
+                                  )} */}
                                 </span>
                               ))
                             : "—"}

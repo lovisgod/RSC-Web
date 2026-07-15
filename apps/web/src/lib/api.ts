@@ -1,5 +1,7 @@
 import { createApiClient } from "@rsc/api-client";
 
+import { isPublicWebRoute } from "@/src/lib/public-routes";
+
 // In the browser, all /api/v1/* requests go through the Next.js rewrite proxy
 // (same origin → cookies are forwarded automatically).
 // In server-side contexts, fall back to the direct API URL.
@@ -26,6 +28,11 @@ function handleUnauthorized(path: string) {
     window.location.pathname === "/sign-in" ||
     PUBLIC_AUTH_ENDPOINTS.some((endpoint) => path.startsWith(endpoint))
   ) {
+    return;
+  }
+
+  if (isPublicWebRoute(window.location.pathname)) {
+    window.sessionStorage.removeItem("rsc-auth-session");
     return;
   }
 

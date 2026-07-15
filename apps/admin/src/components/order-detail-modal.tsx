@@ -89,7 +89,9 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
   }
 
   const statusText = STATUS_LABELS[order.status] ?? order.status;
-  const canRefund = order.status !== "PENDING_PAYMENT" && !!order.paymentReference;
+  const hasRejectedSubOrder = subOrders.some((subOrder) => subOrder.status === "REJECTED");
+  const canRefund =
+    hasRejectedSubOrder && order.status !== "PENDING_PAYMENT" && !!order.paymentReference;
 
   function handleRefund() {
     if (!canRefund || refundMutation.isPending) return;
@@ -173,11 +175,7 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
           {subOrders.map((sub) => {
             const outlet = outletById[sub.outletId];
             const lines = linesBySubOrder[sub.id] ?? [];
-            const commPct =
-              sub.subtotalMinor > 0
-                ? Math.round((sub.commissionMinor / sub.subtotalMinor) * 100)
-                : 0;
-            const payoutPct = 100 - commPct;
+            const payOutAmount = sub.netMinor + sub.commissionMinor;
             const outletNote =
               sub.status === "REJECTED" && typeof sub.rejectionReason === "string"
                 ? sub.rejectionReason.trim()
@@ -186,7 +184,7 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                   : "";
             const outletNoteLabel =
               sub.status === "REJECTED" || order.status === "CANCELLED"
-                ? "Rejection reason"
+                ? "Rejection Reason"
                 : "Outlet note";
 
             return (
@@ -259,18 +257,16 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                     <span className="order-modal__finance-label">
                       Settlement Account: <code>{outlet?.settlementSubaccountCode ?? "—"}</code>
                     </span>
-                    <span className="order-modal__finance-payout">
-                      Payout ({payoutPct}%): {fmt(sub.netMinor)}
-                    </span>
+                    <span className="order-modal__finance-payout">Payout: {fmt(payOutAmount)}</span>
                   </div>
-                  <div className="order-modal__finance-row">
+                  {/* <div className="order-modal__finance-row">
                     <span className="order-modal__finance-label">
                       Platform Fee: <code>RSC_MAIN_WALLET</code>
                     </span>
                     <span className="order-modal__finance-commission">
                       Commission ({commPct}%): {fmt(sub.commissionMinor)}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             );
@@ -315,6 +311,11 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
             type="button"
             disabled={!canRefund || refundMutation.isPending}
             onClick={handleRefund}
+            title={
+              hasRejectedSubOrder
+                ? undefined
+                : "Refunds are only available when at least one sub-order was rejected."
+            }
           >
             {refundMutation.isPending ? "Processing…" : "Process Refund"}
           </Button>
