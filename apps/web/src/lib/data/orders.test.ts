@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { Order } from "./orders";
-import { getStatusConfig, isActiveOrder, isCompletedOrder, isProfileActiveOrder } from "./orders";
+import {
+  getStatusConfig,
+  isActiveOrder,
+  isCancelledOrder,
+  isCompletedOrder,
+  isProfileActiveOrder,
+} from "./orders";
 
 function order(status: string): Order {
   return {
@@ -53,8 +59,18 @@ describe("customer order status grouping", () => {
     expect(isProfileActiveOrder(order(status))).toBe(true),
   );
 
-  it.each(["DELIVERED", "CANCELLED"])("treats %s as completed", (status) =>
-    expect(isCompletedOrder(order(status))).toBe(true),
+  it("treats delivered orders as completed", () =>
+    expect(isCompletedOrder(order("DELIVERED"))).toBe(true));
+
+  it("does not treat cancelled orders as completed", () =>
+    expect(isCompletedOrder(order("CANCELLED"))).toBe(false));
+
+  it("treats cancelled orders as cancelled", () =>
+    expect(isCancelledOrder(order("CANCELLED"))).toBe(true));
+
+  it.each(["DELIVERED", "CONFIRMED", "PENDING_PAYMENT"])(
+    "does not treat %s as cancelled",
+    (status) => expect(isCancelledOrder(order(status))).toBe(false),
   );
 
   it("presents an unknown future status neutrally", () => {

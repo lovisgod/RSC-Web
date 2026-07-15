@@ -8,3 +8,10 @@ export function useNotifications() {
     queryFn: () => apiClient.listNotifications(),
   });
 }
+
+export function usePromoNotifications() {
+  return useQuery({
+    queryKey: ["notifications", "promos"],
+    queryFn: () => apiClient.listPromoNotifications(),
+  });
+}
