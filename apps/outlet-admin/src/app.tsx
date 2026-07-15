@@ -23,6 +23,7 @@ import {
 import { Toaster } from "./components/toaster";
 import { useAuth } from "./hooks/use-auth";
 import { useIdleLogout } from "./hooks/use-idle-logout";
+import { useNewOrderAlert } from "./hooks/use-new-order-alert";
 import { useOrdersQueue } from "./hooks/use-orders-queue";
 import { useOutletRealtime } from "./hooks/use-outlet-realtime";
 import { useOutletInfo } from "./hooks/use-outlet-info";
@@ -231,6 +232,17 @@ function NavigationPanel({ onNavigate }: NavigationPanelProps) {
   );
 }
 
+function OutletOrderNotifier() {
+  const { user } = useAuth();
+  const outletId = user?.outletId ?? "";
+  const { data: orders = [] } = useOrdersQueue(outletId);
+  const activeOrders = orders.filter(isActiveQueueOrder);
+
+  useNewOrderAlert(activeOrders);
+
+  return null;
+}
+
 function AppShell() {
   useIdleLogout();
 
@@ -257,6 +269,7 @@ function AppShell() {
 
   return (
     <div className="flex h-screen min-h-0 bg-[var(--rsc-surface)]">
+      <OutletOrderNotifier />
       {isDesktopNavVisible && (
         <aside
           className="hidden w-72 shrink-0 flex-col border-r border-white/10 px-4 py-6 md:flex"

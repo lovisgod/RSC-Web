@@ -15,7 +15,6 @@ import { useState } from "react";
 import { KanbanColumn } from "../components/kanban-column";
 import { OutletPageHeader } from "../components/outlet-page-header";
 import { useAuth } from "../hooks/use-auth";
-import { useNewOrderAlert } from "../hooks/use-new-order-alert";
 import { useOrdersQueue } from "../hooks/use-orders-queue";
 import { useUpdateOrderStatus } from "../hooks/use-update-order-status";
 import {
@@ -207,8 +206,6 @@ export function ActiveOrdersPage() {
   const { data: orders = [], isLoading } = useOrdersQueue(outletId);
   const { mutate: updateStatus, isPending: isAdvancing } = useUpdateOrderStatus(outletId);
   const activeOrders = orders.filter(isActiveQueueOrder);
-
-  useNewOrderAlert(activeOrders);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
