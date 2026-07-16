@@ -1,5 +1,7 @@
 import {
+  ChevronDown,
   ChevronRight,
+  Banknote,
   ClipboardList,
   Bike,
   Gauge,
@@ -32,6 +34,7 @@ import { PromotionsPage } from "./pages/promotions-page";
 import { RegisterPage } from "./pages/register-page";
 import { ResetPasswordPage } from "./pages/reset-password-page";
 import { RiderReportsPage } from "./pages/rider-reports-page";
+import { RefundsPage } from "./pages/refunds-page";
 import { VerifyPage } from "./pages/verify-page";
 
 const navigation = [
@@ -46,7 +49,14 @@ const navigation = [
     ],
   },
   { label: "Rider Reports", to: "/riders", icon: Bike },
-  { label: "Financial Reconciliation", to: "/finance", icon: Wallet },
+  {
+    label: "Financial Reconciliation",
+    icon: Wallet,
+    children: [
+      { label: "Reconciliation & Payouts Ledger", to: "/finance", icon: Wallet },
+      { label: "Refund Operation", to: "/finance/refunds", icon: Banknote },
+    ],
+  },
   { label: "Promotions Composer", to: "/promotions", icon: Megaphone },
 ] as const;
 
@@ -57,6 +67,7 @@ const routeTitles: Record<string, string> = {
   "/platform-control": "Platform Control",
   "/riders": "Rider Performance Reports",
   "/finance": "Reconciliation & Payouts Ledger",
+  "/finance/refunds": "Refund Operation",
   "/promotions": "Promotions Push Composer",
 };
 
@@ -68,6 +79,8 @@ function getPageTitle(pathname: string): string {
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<string>>(() => new Set());
 
   return (
     <>
@@ -77,25 +90,51 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
           if ("children" in item) {
             const isGroupActive =
-              location.pathname === "/platform-control" || location.pathname.startsWith("/outlets");
+              item.children.some(({ to }) => location.pathname === to) ||
+              (item.label === "Outlet & Platform Control" &&
+                location.pathname.startsWith("/outlets/"));
+            const isCollapsed = collapsedGroups.has(item.label);
+            const isGroupOpen = isGroupActive && !isCollapsed;
             const defaultChild = item.children[0];
 
             return (
               <div className="sidebar-nav-group" key={item.label}>
-                <NavLink
+                <button
+                  type="button"
+                  aria-expanded={isGroupOpen}
                   className={`sidebar-nav-parent${isGroupActive ? " active" : ""}`}
-                  to={defaultChild.to}
-                  onClick={onNavigate}
+                  onClick={() => {
+                    if (!isGroupActive) {
+                      setCollapsedGroups((current) => {
+                        const next = new Set(current);
+                        next.delete(item.label);
+                        return next;
+                      });
+                      navigate(defaultChild.to);
+                      onNavigate?.();
+                      return;
+                    }
+
+                    setCollapsedGroups((current) => {
+                      const next = new Set(current);
+                      if (next.has(item.label)) {
+                        next.delete(item.label);
+                      } else {
+                        next.add(item.label);
+                      }
+                      return next;
+                    });
+                  }}
                 >
                   <Icon aria-hidden="true" size={19} strokeWidth={1.8} />
                   <span>{item.label}</span>
-                  <ChevronRight className="nav-chevron" aria-hidden="true" size={15} />
-                </NavLink>
-                {isGroupActive && (
+                  <ChevronDown className="nav-chevron" aria-hidden="true" size={15} />
+                </button>
+                {isGroupOpen && (
                   <div className="sidebar-nav-children">
                     {item.children.map(({ icon: ChildIcon, label, to }) => (
                       <NavLink
-                        end={to === "/platform-control"}
+                        end={to === "/platform-control" || to === "/finance"}
                         key={to}
                         to={to}
                         onClick={onNavigate}
@@ -265,6 +304,7 @@ function AdminShell() {
             <Route path="/outlets/:id" element={<OutletDetailPage />} />
             <Route path="/riders" element={<RiderReportsPage />} />
             <Route path="/finance" element={<FinancialReconciliationPage />} />
+            <Route path="/finance/refunds" element={<RefundsPage />} />
             <Route path="/promotions" element={<PromotionsPage />} />
             <Route path="/settings" element={<Navigate to="/" replace />} />
           </Routes>
