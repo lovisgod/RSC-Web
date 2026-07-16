@@ -9,6 +9,7 @@ import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import { RejectAssignedOrderDto } from "../orders/dto/orders.dto";
 import { OrdersService } from "../orders/orders.service";
+import { UpdateRiderAvailabilityDto } from "./dto/rider-availability.dto";
 import { RecordRiderLocationDto, RiderDeliveriesQueryDto } from "./dto/rider-location.dto";
 import { RidersService } from "./riders.service";
 
@@ -42,6 +43,22 @@ export class RidersController {
   })
   listMine(@Req() request: AuthenticatedRequest) {
     return this.riders.listMine(request.user!);
+  }
+
+  @Patch("me/availability")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.RIDER)
+  @ApiMessage("Rider availability updated")
+  @ApiOperation({
+    summary: "Update my rider availability",
+    description:
+      "Rider-only endpoint for opting in or out of new delivery assignments. Unavailable riders are excluded from auto-assignment.",
+  })
+  updateAvailability(
+    @Req() request: AuthenticatedRequest,
+    @Body() input: UpdateRiderAvailabilityDto,
+  ) {
+    return this.riders.updateAvailability(request.user!, input);
   }
 
   @Get("me/deliveries")
