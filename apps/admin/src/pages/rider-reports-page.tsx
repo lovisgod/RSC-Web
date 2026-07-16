@@ -1,6 +1,6 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button, EmptyState, MetricCard } from "@rsc/ui";
-import { Bike, CalendarDays, Clock3, Plus, Trash2, Trophy } from "lucide-react";
+import { Bike, CalendarDays, Clock3, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { RiderOnboardModal } from "../components/rider-onboard-modal";
@@ -22,6 +22,7 @@ interface RiderReportRow {
   totalMinutes: number;
   measuredDeliveries: number;
   lastCompletedAt: string | null;
+  riderStatus: string | null;
 }
 
 function getTodayInputDate(): string {
@@ -95,6 +96,7 @@ function aggregateRiderReports(orders: AdminOrderItem[]): RiderReportRow[] {
         totalMinutes: 0,
         measuredDeliveries: 0,
         lastCompletedAt: null,
+        riderStatus: null,
       } satisfies RiderReportRow);
 
     if (order.status === "DELIVERED") {
@@ -150,6 +152,7 @@ function mergeRidersWithReports(
       totalMinutes: row?.totalMinutes ?? 0,
       measuredDeliveries: row?.measuredDeliveries ?? 0,
       lastCompletedAt: row?.lastCompletedAt ?? null,
+      riderStatus: rider.riderStatus,
     } satisfies RiderReportRow;
   });
 
@@ -409,8 +412,8 @@ export function RiderReportsPage() {
                         <td className="order-date-time">{formatDateTime(row.lastCompletedAt)}</td>
                         <td>
                           <span className="rider-signal">
-                            <Trophy aria-hidden="true" size={14} />
-                            {row.completedDeliveries > 0 ? "Active performer" : "No history"}
+                            <Bike aria-hidden="true" size={14} />
+                            {row.riderStatus === "UNAVAILABLE" ? "Unavailable" : "Available"}
                           </span>
                         </td>
                         <td>
