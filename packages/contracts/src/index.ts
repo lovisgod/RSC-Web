@@ -632,6 +632,69 @@ export const subOrderStatusSchema = z.enum([
 
 export const deliveryModeSchema = z.enum(["DELIVERY", "TAKEOUT"]);
 
+export const refundRequestListQuerySchema = z
+  .object({
+    status: z.enum(["PENDING", "SUCCESS", "FAILED"]).optional(),
+    reference: z.string().trim().min(2).max(120).optional(),
+    customerId: z.uuid().optional(),
+    requestedBy: z.uuid().optional(),
+    dateFrom: z.iso.datetime().optional(),
+    dateTo: z.iso.datetime().optional(),
+    limit: z.int().min(1).max(100).optional(),
+    offset: z.int().min(0).optional(),
+  })
+  .strict();
+
+export const refundRequestItemSchema = z.object({
+  refund: paymentRefundSchema,
+  payment: z
+    .object({
+      id: z.uuid(),
+      masterOrderId: z.uuid(),
+      amountMinor: z.coerce.number().int().nonnegative(),
+      currency: currencySchema,
+      gateway: z.string().min(1),
+      reference: z.string().min(1),
+      status: z.enum(["PENDING", "SUCCESS", "FAILED"]),
+      createdAt: z.iso.datetime(),
+    })
+    .nullable(),
+  order: z
+    .object({
+      id: z.uuid(),
+      customerId: z.uuid(),
+      status: masterOrderStatusSchema,
+      totalMinor: z.coerce.number().int().nonnegative(),
+      currency: currencySchema,
+      createdAt: z.iso.datetime(),
+    })
+    .nullable(),
+  customer: z
+    .object({
+      id: z.uuid(),
+      name: z.string().min(1),
+    })
+    .nullable(),
+  requestedBy: z
+    .object({
+      id: z.uuid(),
+      name: z.string().min(1),
+      role: userRoleSchema,
+    })
+    .nullable(),
+});
+
+export const refundRequestListSchema = z.object({
+  refundRequests: z.array(refundRequestItemSchema),
+  total: z.int().nonnegative(),
+  limit: z.int().min(1).max(100),
+  offset: z.int().min(0),
+  next: z.int().min(0).nullable(),
+  previous: z.int().min(0).nullable(),
+  hasNext: z.boolean(),
+  hasPrevious: z.boolean(),
+});
+
 export const adminOrdersQuerySchema = z
   .object({
     outletId: z.uuid().optional(),
@@ -1183,6 +1246,9 @@ export type PaymentVerifyResult = z.infer<typeof paymentVerifyResultSchema>;
 export type ProcessRefundInput = z.infer<typeof processRefundInputSchema>;
 export type RequestRefundInput = z.infer<typeof requestRefundInputSchema>;
 export type PaymentRefund = z.infer<typeof paymentRefundSchema>;
+export type RefundRequestListQuery = z.infer<typeof refundRequestListQuerySchema>;
+export type RefundRequestItem = z.infer<typeof refundRequestItemSchema>;
+export type RefundRequestList = z.infer<typeof refundRequestListSchema>;
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type PaginatedCustomerOrders = z.infer<typeof paginatedCustomerOrdersSchema>;
