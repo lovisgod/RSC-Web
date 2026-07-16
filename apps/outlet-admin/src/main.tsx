@@ -7,6 +7,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import { App } from "./app";
+import { registerOutletServiceWorker } from "./lib/register-service-worker";
 import { toastBus } from "./lib/toast-bus";
 
 const queryClient = new QueryClient({
@@ -29,6 +30,8 @@ const container = document.getElementById("root");
 if (!container) {
   throw new Error("Missing #root container");
 }
+
+registerOutletServiceWorker();
 
 createRoot(container, {
   onRecoverableError(error, errorInfo) {
