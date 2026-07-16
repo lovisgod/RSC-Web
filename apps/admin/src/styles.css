@@ -1802,18 +1802,18 @@ th {
   text-overflow: ellipsis;
 }
 
-.rider-rank {
-  display: inline-flex;
-  width: 2rem;
-  height: 2rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: white;
-  background: linear-gradient(135deg, var(--rsc-main), var(--rsc-navy-light));
-  box-shadow: 0 8px 16px rgb(30 49 96 / 18%);
-  font-size: 0.8rem;
-  font-weight: 900;
+.rider-status-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgb(239 68 68 / 16%);
+}
+
+.rider-status-dot--online {
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgb(16 185 129 / 16%);
 }
 
 /* ─────────────────────────────────────────────
