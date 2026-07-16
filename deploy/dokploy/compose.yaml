@@ -5,6 +5,7 @@ services:
     image: postgis/postgis:16-3.5-alpine
     restart: unless-stopped
     environment:
+      TZ: Africa/Lagos
       POSTGRES_DB: rsc
       POSTGRES_USER: rsc
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -22,6 +23,7 @@ services:
     image: redis:7.4-alpine
     restart: unless-stopped
     environment:
+      TZ: Africa/Lagos
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     command: ["sh", "-c", 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"']
     volumes:
@@ -43,6 +45,7 @@ services:
         APP_VERSION: ${APP_VERSION:-dokploy}
     restart: "no"
     environment:
+      TZ: Africa/Lagos
       NODE_ENV: production
       DATABASE_URL: postgresql://rsc:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/rsc
       DATABASE_SSL: "false"
@@ -80,6 +83,7 @@ services:
         APP_VERSION: ${APP_VERSION:-dokploy}
     restart: unless-stopped
     environment:
+      TZ: Africa/Lagos
       NODE_ENV: production
       PORT: "4000"
       APP_VERSION: ${APP_VERSION:-dokploy}
@@ -167,6 +171,7 @@ services:
         APP_VERSION: ${APP_VERSION:-dokploy}
     restart: unless-stopped
     environment:
+      TZ: Africa/Lagos
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: "3000"
@@ -194,6 +199,8 @@ services:
         VITE_API_BASE_URL: ${PUBLIC_API_URL:-}
         APP_VERSION: ${APP_VERSION:-dokploy}
     restart: unless-stopped
+    environment:
+      TZ: Africa/Lagos
     expose:
       - "8080"
     healthcheck:
@@ -211,6 +218,8 @@ services:
         VITE_API_BASE_URL: ${PUBLIC_API_URL:-}
         APP_VERSION: ${APP_VERSION:-dokploy}
     restart: unless-stopped
+    environment:
+      TZ: Africa/Lagos
     expose:
       - "8080"
     healthcheck:
