@@ -22,7 +22,6 @@ interface RiderReportRow {
   totalMinutes: number;
   measuredDeliveries: number;
   lastCompletedAt: string | null;
-  riderStatus: string | null;
 }
 
 function getTodayInputDate(): string {
@@ -96,7 +95,6 @@ function aggregateRiderReports(orders: AdminOrderItem[]): RiderReportRow[] {
         totalMinutes: 0,
         measuredDeliveries: 0,
         lastCompletedAt: null,
-        riderStatus: null,
       } satisfies RiderReportRow);
 
     if (order.status === "DELIVERED") {
@@ -152,7 +150,6 @@ function mergeRidersWithReports(
       totalMinutes: row?.totalMinutes ?? 0,
       measuredDeliveries: row?.measuredDeliveries ?? 0,
       lastCompletedAt: row?.lastCompletedAt ?? null,
-      riderStatus: rider.riderStatus,
     } satisfies RiderReportRow;
   });
 
@@ -413,7 +410,7 @@ export function RiderReportsPage() {
                         <td>
                           <span className="rider-signal">
                             <Bike aria-hidden="true" size={14} />
-                            {row.riderStatus === "UNAVAILABLE" ? "Unavailable" : "Available"}
+                            {online ? "Available" : "Unavailable"}
                           </span>
                         </td>
                         <td>

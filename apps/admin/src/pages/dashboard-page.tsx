@@ -37,7 +37,6 @@ interface OutletPerformanceRow {
   volume: number;
   completed: number;
   inProgress: number;
-  pendingApproval: number;
   rejected: number;
 }
 
@@ -65,7 +64,6 @@ function buildOutletPerformanceRows(
       volume: 0,
       completed: 0,
       inProgress: 0,
-      pendingApproval: 0,
       rejected: 0,
     });
   });
@@ -83,7 +81,6 @@ function buildOutletPerformanceRows(
           volume: 0,
           completed: 0,
           inProgress: 0,
-          pendingApproval: 0,
           rejected: 0,
         } satisfies OutletPerformanceRow);
 
@@ -93,8 +90,6 @@ function buildOutletPerformanceRows(
         row.completed += 1;
       } else if (IN_PROGRESS_SUB_ORDER_STATUSES.has(subOrder.status)) {
         row.inProgress += 1;
-      } else if (subOrder.status === "PENDING") {
-        row.pendingApproval += 1;
       } else if (subOrder.status === "REJECTED") {
         row.rejected += 1;
       }
@@ -128,7 +123,7 @@ function OutletPerformanceTable({
           <p className="kicker">Outlet performance</p>
           <h2>Order handling by outlet</h2>
           <p className="outlet-performance-panel__copy">
-            Operational volume only: completed, active, pending approval, and rejected outlet work.
+            Operational volume only: completed, active, and rejected outlet work.
           </p>
         </div>
         {isError && (
@@ -158,7 +153,6 @@ function OutletPerformanceTable({
                 <th>Volume</th>
                 <th>Completed</th>
                 <th>In progress</th>
-                <th>Pending approval</th>
                 <th>Rejected</th>
               </tr>
             </thead>
@@ -179,7 +173,6 @@ function OutletPerformanceTable({
                   <td>{row.volume}</td>
                   <td>{row.completed}</td>
                   <td>{row.inProgress}</td>
-                  <td>{row.pendingApproval}</td>
                   <td>
                     <span className={row.rejected > 0 ? "outlet-performance-rejected" : ""}>
                       {row.rejected}
