@@ -43,8 +43,10 @@ export class RidersService {
 
     await this.ensureActiveRider(user.id);
 
-    if (input.masterOrderId) {
-      await this.ensureCanRecordOrderLocation(user.id, input.masterOrderId);
+    const masterOrderId = input.masterOrderId ?? (await this.findCurrentTrackableOrderId(user.id));
+
+    if (masterOrderId) {
+      await this.ensureCanRecordOrderLocation(user.id, masterOrderId);
     }
 
     const rows = await this.dataSource.query<RiderLocation[]>(
@@ -53,7 +55,7 @@ export class RidersService {
         VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326))
         RETURNING id, rider_id AS "riderId", master_order_id AS "masterOrderId", ST_AsText(geom) AS geom, recorded_at AS "recordedAt"
       `,
-      [user.id, input.masterOrderId ?? null, input.longitude, input.latitude],
+      [user.id, masterOrderId, input.longitude, input.latitude],
     );
 
     const location = rows[0]!;
@@ -67,6 +69,24 @@ export class RidersService {
     });
 
     return location;
+  }
+
+  private async findCurrentTrackableOrderId(riderId: string): Promise<string | null> {
+    const rows = await this.dataSource.query<Array<{ id: string }>>(
+      `
+        SELECT id
+        FROM master_orders
+        WHERE rider_id = $1
+          AND delivery_mode = 'DELIVERY'
+          AND status = $2
+          AND deleted_at IS NULL
+        ORDER BY updated_at DESC
+        LIMIT 1
+      `,
+      [riderId, MasterOrderStatus.OUT_FOR_DELIVERY],
+    );
+
+    return rows[0]?.id ?? null;
   }
 
   private async ensureActiveRider(riderId: string): Promise<void> {
