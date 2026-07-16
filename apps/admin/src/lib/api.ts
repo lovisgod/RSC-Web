@@ -16,6 +16,8 @@ import {
   paymentRefundSchema,
   platformChargesSchema,
   processRefundInputSchema,
+  refundRequestListQuerySchema,
+  refundRequestListSchema,
   createRiderInputSchema,
   riderResultSchema,
   riderAdminSchema,
@@ -48,6 +50,8 @@ import {
   type OutletSummary,
   type OutletSettlementSummary,
   type PaymentRefund,
+  type RefundRequestList,
+  type RefundRequestListQuery,
   type RegistrationResult,
   type ResendVerificationCodeResult,
   type ResetPasswordResult,
@@ -285,6 +289,30 @@ export const processPaymentRefund = (
   ).then((data) => parseResponse(paymentRefundSchema, data));
 
 /** PATCH — dedicated endpoint for toggling online status only */
+function refundRequestsQueryString(query: RefundRequestListQuery = {}): string {
+  const parsed = refundRequestListQuerySchema.parse(query);
+  const params = new URLSearchParams();
+
+  if (parsed.status) params.set("status", parsed.status);
+  if (parsed.reference) params.set("reference", parsed.reference);
+  if (parsed.customerId) params.set("customerId", parsed.customerId);
+  if (parsed.requestedBy) params.set("requestedBy", parsed.requestedBy);
+  if (parsed.dateFrom) params.set("dateFrom", parsed.dateFrom);
+  if (parsed.dateTo) params.set("dateTo", parsed.dateTo);
+  if (parsed.limit !== undefined) params.set("limit", String(parsed.limit));
+  if (parsed.offset !== undefined) params.set("offset", String(parsed.offset));
+
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export const listRefundRequests = (
+  query: RefundRequestListQuery = {},
+): Promise<RefundRequestList> =>
+  get<unknown>(`/api/v1/payments/refund-requests${refundRequestsQueryString(query)}`).then((data) =>
+    parseResponse(refundRequestListSchema, data),
+  );
+
 export const toggleOutletOnlineStatus = (
   id: string,
   body: { isOnline: boolean },
