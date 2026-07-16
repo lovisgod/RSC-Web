@@ -32,6 +32,14 @@ export interface MenuItemAvailabilityUpdateEvent {
   updatedAt: Date;
 }
 
+export interface RiderAvailabilityUpdateEvent {
+  riderId: string;
+  outletId: string | null;
+  riderStatus: string;
+  isAvailable: boolean;
+  updatedAt: Date;
+}
+
 export interface RealtimeNotificationEvent {
   id?: string;
   recipientId?: string;
@@ -102,6 +110,10 @@ export class RealtimeService {
 
   emitMenuItemAvailabilityUpdate(event: MenuItemAvailabilityUpdateEvent): void {
     this.server?.emit("menu_item:availability_update", event);
+  }
+
+  emitRiderAvailabilityUpdate(event: RiderAvailabilityUpdateEvent): void {
+    this.server?.emit("rider:availability_update", event);
   }
 
   emitPreparationSuggestionCreated(suggestion: PreparationSuggestion): void {

@@ -671,6 +671,57 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("auto-assigns a rider when remaining fulfillable sub-orders are ready after one is rejected", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.PARTIALLY_READY,
+      deliveryMode: "DELIVERY",
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const readySubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      pickupCode: "123456",
+      status: SubOrderStatus.READY,
+    });
+    const rejectingSubOrder = Object.assign(new SubOrder(), {
+      id: "6b8537f9-b0c1-4df3-8567-aa49517d7de1",
+      masterOrderId: order.id,
+      outletId: otherOutletId,
+      pickupCode: "654321",
+      status: SubOrderStatus.PREPARING,
+    });
+    const riderId = "07c89f55-9343-4e69-bd41-bc18dcaf1478";
+    const { service, notifications, realtime } = createService({
+      adminOutletId: otherOutletId,
+      orders: [order],
+      availableRiders: [{ id: riderId, assignmentCount: 0 }],
+      outlets: [Object.assign(new Outlet(), { id: outletId, name: "Outlet One" })],
+      subOrders: [readySubOrder, rejectingSubOrder],
+    });
+
+    await service.updateStatus(adminUser, rejectingSubOrder.id, {
+      status: MasterOrderStatus.CANCELLED,
+      rejectionReason: "Unavailable",
+    });
+
+    expect(order.status).toBe(MasterOrderStatus.PARTIALLY_FULFILLED);
+    expect(order.riderId).toBe(riderId);
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: riderId,
+        recipientRole: UserRole.RIDER,
+        type: "ORDER_ASSIGNMENT",
+      }),
+    );
+    expect(realtime.emitOrderStatusUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ masterOrderId: order.id, riderId }),
+    );
+  });
+
   it("returns not found when no available free rider exists", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
@@ -699,7 +750,7 @@ describe(OrdersService.name, () => {
     );
   });
 
-  it("lists active preparing dispatches assigned to the calling rider", async () => {
+  it("hides assigned dispatches until all fulfillable sub-orders are ready", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
@@ -732,18 +783,66 @@ describe(OrdersService.name, () => {
 
     const result = await service.listAssignedDispatches(riderUser);
 
+    expect(result).toHaveLength(0);
+  });
+
+  it("shows assigned dispatches when ready sub-orders remain after another sub-order is rejected", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: riderUser.id,
+      status: MasterOrderStatus.PARTIALLY_FULFILLED,
+      deliveryMode: "DELIVERY",
+      createdAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const readySubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      pickupCode: "123456",
+      status: SubOrderStatus.READY,
+    });
+    const rejectedSubOrder = Object.assign(new SubOrder(), {
+      id: "6b8537f9-b0c1-4df3-8567-aa49517d7de1",
+      masterOrderId: order.id,
+      outletId: otherOutletId,
+      pickupCode: "654321",
+      status: SubOrderStatus.REJECTED,
+    });
+    const lineItem = Object.assign(new OrderLineItem(), {
+      id: "a43a459d-a9c0-4c81-a9be-f5ed41d9dfde",
+      masterOrderId: order.id,
+      subOrderId: readySubOrder.id,
+      itemNameSnapshot: "Jollof Rice",
+      quantity: 2,
+      modifiersSnapshot: [],
+    });
+    const { service } = createService({
+      orders: [order],
+      outlets: [Object.assign(new Outlet(), { id: outletId, name: "Outlet One" })],
+      subOrders: [readySubOrder, rejectedSubOrder],
+      lineItems: [lineItem],
+    });
+
+    const result = await service.listAssignedDispatches(riderUser);
+
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(
+    expect(result[0]?.orderId).toBe(order.id);
+    expect(result[0]?.status).toBe(MasterOrderStatus.PARTIALLY_FULFILLED);
+    expect(result[0]?.riderId).toBe(riderUser.id);
+    expect(result[0]?.outlets).toHaveLength(2);
+    expect(result[0]?.outlets[0]).toEqual(
       expect.objectContaining({
-        orderId: order.id,
-        status: MasterOrderStatus.PREPARING,
-        riderId: riderUser.id,
-        outlets: [
-          expect.objectContaining({
-            pickupCode: "123456",
-            items: [expect.objectContaining({ name: "Jollof Rice", quantity: 2 })],
-          }),
-        ],
+        subOrderId: readySubOrder.id,
+        pickupCode: "123456",
+        items: [expect.objectContaining({ name: "Jollof Rice", quantity: 2 })],
+      }),
+    );
+    expect(result[0]?.outlets[1]).toEqual(
+      expect.objectContaining({
+        subOrderId: rejectedSubOrder.id,
+        pickupCode: "654321",
+        status: SubOrderStatus.REJECTED,
       }),
     );
   });
