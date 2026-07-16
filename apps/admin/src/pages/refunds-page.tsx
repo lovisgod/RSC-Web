@@ -7,14 +7,17 @@ import {
   Banknote,
   CheckCircle2,
   ClipboardList,
+  Eye,
   RefreshCw,
   Search,
+  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useProcessRefundRequest, useRefundRequests } from "../hooks/use-refund-requests";
 
 const PAGE_SIZE = 20;
+const TABLE_COLUMNS = 5;
 
 const moneyFormatter = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -71,8 +74,135 @@ function statusClass(status: RefundRequestItem["refund"]["status"]) {
   return "badge--pending";
 }
 
+function statusLabel(status: RefundRequestItem["refund"]["status"]) {
+  if (status === "SUCCESS") return "Processed";
+  if (status === "FAILED") return "Failed";
+  return "Pending";
+}
+
 function shortId(id: string) {
   return id.slice(0, 8).toUpperCase();
+}
+
+function refundPaymentReference(item: RefundRequestItem) {
+  return item.payment?.reference ?? item.refund.reference;
+}
+
+function RefundReviewModal({
+  item,
+  isProcessing,
+  onClose,
+  onProcess,
+}: {
+  item: RefundRequestItem;
+  isProcessing: boolean;
+  onClose: () => void;
+  onProcess: (item: RefundRequestItem) => void;
+}) {
+  const paymentReference = refundPaymentReference(item);
+  const canProcess = item.refund.status === "PENDING";
+
+  return (
+    <div className="modal-overlay" aria-hidden="true" onClick={onClose}>
+      <div
+        className="modal refund-review-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="refund-review-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="refund-review-modal__head">
+          <div>
+            <span className="modal-kicker">Refund review</span>
+            <h2 id="refund-review-title">
+              {item.order ? `Order #${shortId(item.order.id)}` : "Unlinked refund request"}
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="refund-review-modal__close"
+            onClick={onClose}
+            aria-label="Close refund review"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="refund-review-modal__body">
+          <section className="refund-review-summary" aria-label="Refund summary">
+            <div>
+              <span>Refund amount</span>
+              <strong>{formatMinor(item.refund.amountMinor)}</strong>
+            </div>
+            <div>
+              <span>Status</span>
+              <strong className={`badge ${statusClass(item.refund.status)}`}>
+                {statusLabel(item.refund.status)}
+              </strong>
+            </div>
+          </section>
+
+          <section className="refund-review-grid" aria-label="Refund details">
+            <div>
+              <span>Customer</span>
+              <strong>{item.customer?.name ?? "Not available"}</strong>
+            </div>
+            <div>
+              <span>Requested by</span>
+              <strong>{item.requestedBy?.name ?? "Unknown"}</strong>
+            </div>
+            <div>
+              <span>Payment reference</span>
+              <code>{paymentReference}</code>
+            </div>
+            <div>
+              <span>Payment status</span>
+              <strong>{item.payment?.status ?? "Unknown"}</strong>
+            </div>
+            <div>
+              <span>Provider</span>
+              <strong>{item.refund.provider}</strong>
+            </div>
+            <div>
+              <span>Requested at</span>
+              <strong>{formatDateTime(item.refund.createdAt)}</strong>
+            </div>
+            {item.order && (
+              <>
+                <div>
+                  <span>Order status</span>
+                  <strong>{item.order.status.replaceAll("_", " ")}</strong>
+                </div>
+                <div>
+                  <span>Order total</span>
+                  <strong>{formatMinor(item.order.totalMinor)}</strong>
+                </div>
+              </>
+            )}
+          </section>
+
+          <section className="refund-review-reason" aria-label="Refund reason">
+            <span>Reason for refund request</span>
+            <p>{item.refund.reason ?? "No reason was provided for this refund request."}</p>
+          </section>
+
+          <div className="refund-review-modal__actions">
+            <Button tone="quiet" type="button" onClick={onClose} disabled={isProcessing}>
+              Close
+            </Button>
+            <Button
+              tone="navy"
+              type="button"
+              disabled={!canProcess || isProcessing}
+              onClick={() => onProcess(item)}
+            >
+              {isProcessing ? "Processing..." : "Process refund"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function RefundsPage() {
@@ -82,6 +212,7 @@ export function RefundsPage() {
   const [submittedReference, setSubmittedReference] = useState("");
   const [selectedDate, setSelectedDate] = useState(today);
   const [offset, setOffset] = useState(0);
+  const [reviewingRefund, setReviewingRefund] = useState<RefundRequestItem | null>(null);
   const selectedDateBounds = useMemo(() => dateBounds(selectedDate), [selectedDate]);
   const query = useMemo(
     () => ({
@@ -101,27 +232,44 @@ export function RefundsPage() {
 
   function applySearch() {
     setOffset(0);
-    setSubmittedReference(reference);
+    setSubmittedReference(reference.trim());
+  }
+
+  function handleReferenceChange(value: string) {
+    setReference(value);
+
+    if (value.trim() === "" && submittedReference !== "") {
+      setOffset(0);
+      setSubmittedReference("");
+    }
   }
 
   function processRequest(item: RefundRequestItem) {
-    const paymentReference = item.payment?.reference ?? item.refund.reference;
-    const label = item.order
-      ? `order #${shortId(item.order.id)}`
-      : `refund ${item.refund.reference}`;
-    if (!window.confirm(`Process ${formatMinor(item.refund.amountMinor)} refund for ${label}?`)) {
-      return;
-    }
-
-    processRefund.mutate({
-      reference: paymentReference,
-      amountMinor: item.refund.amountMinor,
-      reason: item.refund.reason ?? `Admin processed refund ${item.refund.reference}`,
-    });
+    processRefund.mutate(
+      {
+        reference: refundPaymentReference(item),
+        amountMinor: item.refund.amountMinor,
+        reason: item.refund.reason ?? `Admin processed refund ${item.refund.reference}`,
+      },
+      {
+        onSuccess: () => setReviewingRefund(null),
+      },
+    );
   }
 
   return (
     <div className="refunds-page">
+      {reviewingRefund && (
+        <RefundReviewModal
+          item={reviewingRefund}
+          isProcessing={processRefund.isPending}
+          onClose={() => {
+            if (!processRefund.isPending) setReviewingRefund(null);
+          }}
+          onProcess={processRequest}
+        />
+      )}
+
       <section className="refund-panel">
         <div className="refund-command-bar" aria-label="Refund request controls">
           <div className="refund-command-bar__header">
@@ -184,24 +332,50 @@ export function RefundsPage() {
               <input
                 value={reference}
                 placeholder="Search reference"
-                onChange={(event) => setReference(event.target.value)}
+                onChange={(event) => handleReferenceChange(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") applySearch();
                 }}
               />
             </label>
-            <Button tone="navy" type="button" onClick={applySearch}>
-              <Search aria-hidden="true" size={17} />
+            <Button
+              tone="navy"
+              type="button"
+              className="admin-compact-action"
+              onClick={applySearch}
+            >
+              <Search aria-hidden="true" size={14} />
               Search
             </Button>
           </div>
         </div>
 
         {refunds.isPending ? (
-          <div className="refund-list">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} variant="rectangular" height={126} sx={{ borderRadius: 24 }} />
-            ))}
+          <div className="refund-table-panel">
+            <div className="table-wrap">
+              <table className="refund-table">
+                <thead>
+                  <tr>
+                    <th>Request</th>
+                    <th>Amount</th>
+                    <th>Date &amp; Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 5 }).map((_, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {Array.from({ length: TABLE_COLUMNS }).map((__, cellIndex) => (
+                        <td key={cellIndex}>
+                          <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : refunds.isError ? (
           <div className="refund-empty">
@@ -224,55 +398,56 @@ export function RefundsPage() {
             <p>Try another status or reference search.</p>
           </div>
         ) : (
-          <div className="refund-list">
-            {items.map((item) => (
-              <article className="refund-card" key={item.refund.id}>
-                <div className="refund-card__main">
-                  <div>
-                    <span className={`badge ${statusClass(item.refund.status)}`}>
-                      {item.refund.status === "SUCCESS"
-                        ? "Processed"
-                        : item.refund.status === "FAILED"
-                          ? "Failed"
-                          : "Pending"}
-                    </span>
-                    <h3>
-                      {item.order ? `Order #${shortId(item.order.id)}` : "Unlinked order context"}
-                    </h3>
-                    <p>
-                      Customer: <strong>{item.customer?.name ?? "Not available"}</strong>
-                    </p>
-                    <p>
-                      Payment ref: <code>{item.payment?.reference ?? item.refund.reference}</code>
-                    </p>
-                  </div>
-                  <div className="refund-card__amount">
-                    <strong>{formatMinor(item.refund.amountMinor)}</strong>
-                    <span>{formatDateTime(item.refund.createdAt)}</span>
-                  </div>
-                </div>
-
-                <div className="refund-card__meta">
-                  <span>Requested by {item.requestedBy?.name ?? "Unknown"}</span>
-                  <span>Provider: {item.refund.provider}</span>
-                  <span>Payment: {item.payment?.status ?? "Unknown"}</span>
-                  {item.refund.reason && (
-                    <span className="refund-card__reason">{item.refund.reason}</span>
-                  )}
-                </div>
-
-                <div className="refund-card__actions">
-                  <Button
-                    tone="navy"
-                    type="button"
-                    disabled={item.refund.status !== "PENDING" || processRefund.isPending}
-                    onClick={() => processRequest(item)}
-                  >
-                    {processRefund.isPending ? "Processing..." : "Process refund"}
-                  </Button>
-                </div>
-              </article>
-            ))}
+          <div className="refund-table-panel">
+            <div className="table-wrap">
+              <table className="refund-table">
+                <thead>
+                  <tr>
+                    <th>Request</th>
+                    <th>Amount</th>
+                    <th>Date &amp; Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.refund.id}>
+                      <td>
+                        <span className="refund-request-cell">
+                          <strong>
+                            {item.order
+                              ? `#${shortId(item.order.id)}`
+                              : `#${shortId(item.refund.id)}`}
+                          </strong>
+                          <small>{item.customer?.name ?? "Customer not available"}</small>
+                        </span>
+                      </td>
+                      <td className="refund-table-amount">
+                        {formatMinor(item.refund.amountMinor)}
+                      </td>
+                      <td className="order-date-time">{formatDateTime(item.refund.createdAt)}</td>
+                      <td>
+                        <span className={`badge ${statusClass(item.refund.status)}`}>
+                          {statusLabel(item.refund.status)}
+                        </span>
+                      </td>
+                      <td>
+                        <Button
+                          tone="quiet"
+                          type="button"
+                          className="refund-review-action"
+                          onClick={() => setReviewingRefund(item)}
+                        >
+                          <Eye aria-hidden="true" size={15} />
+                          Review
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

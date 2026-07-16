@@ -56,6 +56,12 @@ export function MenuSearchView() {
   function handleInput(value: string) {
     setInput(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (value.trim() === "") {
+      setQuery("");
+      return;
+    }
+
     debounceRef.current = setTimeout(() => setQuery(value.trim()), DEBOUNCE_MS);
   }
 
