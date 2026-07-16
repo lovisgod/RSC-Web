@@ -28,9 +28,11 @@ describe(RidersService.name, () => {
       findOne: vi.fn().mockResolvedValue(
         Object.assign(new Customer(), {
           id: riderUser.id,
+          outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
           role: UserRole.RIDER,
           status: CustomerStatus.ACTIVE,
           riderStatus: "UNAVAILABLE",
+          updatedAt: new Date("2026-07-16T12:00:00.000Z"),
         }),
       ),
       save: vi.fn((rider: Customer) => Promise.resolve(rider)),
@@ -40,13 +42,17 @@ describe(RidersService.name, () => {
       users as unknown as Repository<Customer>,
       {} as Repository<RiderLocation>,
       { query: vi.fn() } as unknown as DataSource,
-      { emitRiderLocationUpdate: vi.fn() } as unknown as RealtimeService,
+      {
+        emitRiderLocationUpdate: vi.fn(),
+        emitRiderAvailabilityUpdate: vi.fn(),
+      } as unknown as RealtimeService,
     );
   });
 
   it("sets an active rider available for assignments", async () => {
     await expect(service.updateAvailability(riderUser, { isAvailable: true })).resolves.toEqual({
       id: riderUser.id,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
       riderStatus: "AVAILABLE",
       isAvailable: true,
     });
@@ -56,6 +62,7 @@ describe(RidersService.name, () => {
   it("sets an active rider unavailable for assignments", async () => {
     await expect(service.updateAvailability(riderUser, { isAvailable: false })).resolves.toEqual({
       id: riderUser.id,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
       riderStatus: "UNAVAILABLE",
       isAvailable: false,
     });

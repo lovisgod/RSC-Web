@@ -134,6 +134,18 @@ export class RealtimeController {
             updatedAt: "ISO-8601 timestamp",
           },
         },
+        {
+          name: "rider:availability_update",
+          rooms: ["all connected authenticated clients"],
+          cadence: "Emitted immediately when a rider toggles availability.",
+          payload: {
+            riderId: "uuid",
+            outletId: "uuid|null",
+            riderStatus: "AVAILABLE",
+            isAvailable: true,
+            updatedAt: "ISO-8601 timestamp",
+          },
+        },
       ],
       clientExample:
         "const socket = io('https://api-dev.rscdev.tech/realtime', { auth: { token }, withCredentials: true }); socket.emit('room:subscribe', { room: `order:${masterOrderId}` }); socket.on('outlet:status_update', handler);",

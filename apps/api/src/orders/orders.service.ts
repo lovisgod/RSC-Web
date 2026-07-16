@@ -410,10 +410,7 @@ export class OrdersService {
       where: {
         riderId: user.id,
         status: In([
-          MasterOrderStatus.CONFIRMED,
-          MasterOrderStatus.PREPARING,
           MasterOrderStatus.PARTIALLY_FULFILLED,
-          MasterOrderStatus.PARTIALLY_READY,
           MasterOrderStatus.READY,
           MasterOrderStatus.OUT_FOR_DELIVERY,
         ]),
@@ -421,8 +418,17 @@ export class OrdersService {
       order: { createdAt: "DESC" },
       take: 50,
     });
+    const dispatches = await Promise.all(
+      orders.map(async (order) => ({
+        order,
+        subOrders: await this.subOrders.find({ where: { masterOrderId: order.id } }),
+      })),
+    );
+    const visibleOrders = dispatches
+      .filter(({ order, subOrders }) => this.isRiderDispatchVisible(order, subOrders))
+      .map(({ order }) => order);
 
-    return Promise.all(orders.map((order) => this.buildRiderDispatch(order)));
+    return Promise.all(visibleOrders.map((order) => this.buildRiderDispatch(order)));
   }
 
   async rejectAssignedOrder(user: AuthenticatedUser, id: string, input: RejectAssignedOrderDto) {
@@ -1166,11 +1172,12 @@ export class OrdersService {
     order: MasterOrder,
     actor: AuthenticatedUser,
   ): Promise<{ riderId: string; dispatch: RiderDispatch } | null> {
-    if (
-      order.riderId ||
-      order.deliveryMode !== "DELIVERY" ||
-      order.status !== MasterOrderStatus.READY
-    ) {
+    if (order.riderId || order.deliveryMode !== "DELIVERY") {
+      return null;
+    }
+
+    const subOrders = await this.subOrders.find({ where: { masterOrderId: order.id } });
+    if (!this.hasAllFulfillableSubOrdersReady(subOrders)) {
       return null;
     }
 
@@ -1180,6 +1187,25 @@ export class OrdersService {
       "Auto assigned when order became ready",
       [],
       false,
+    );
+  }
+
+  private isRiderDispatchVisible(order: MasterOrder, subOrders: SubOrder[]): boolean {
+    if (order.status === MasterOrderStatus.OUT_FOR_DELIVERY) {
+      return true;
+    }
+
+    return this.hasAllFulfillableSubOrdersReady(subOrders);
+  }
+
+  private hasAllFulfillableSubOrdersReady(subOrders: SubOrder[]): boolean {
+    const fulfillableSubOrders = subOrders.filter(
+      (subOrder) => subOrder.status !== SubOrderStatus.REJECTED,
+    );
+
+    return (
+      fulfillableSubOrders.length > 0 &&
+      fulfillableSubOrders.every((subOrder) => subOrder.status === SubOrderStatus.READY)
     );
   }
 
