@@ -501,6 +501,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
             <Button
               tone="primary"
               type="button"
+              className="!rounded-lg !px-4 !py-1.5"
               onClick={(event) => {
                 stopCardOpen(event);
                 reorderMutation.mutate();
@@ -513,6 +514,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
             <Button
               tone="danger"
               type="button"
+              className="!rounded-lg !px-4 !py-1.5"
               onClick={(event) => {
                 stopCardOpen(event);
                 refundMutation.mutate();

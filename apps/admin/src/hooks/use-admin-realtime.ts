@@ -21,7 +21,7 @@ interface MenuItemAvailabilityUpdateEvent {
 interface RiderAvailabilityUpdateEvent {
   riderId: string;
   outletId: string | null;
-  riderStatus: string;
+  riderStatus?: string;
   isAvailable: boolean;
 }
 
@@ -99,10 +99,10 @@ export function useAdminRealtime() {
     });
 
     socket.on("rider:availability_update", (event: RiderAvailabilityUpdateEvent) => {
+      const riderStatus = event.riderStatus ?? (event.isAvailable ? "AVAILABLE" : "UNAVAILABLE");
+
       queryClient.setQueriesData<RiderAdmin[]>({ queryKey: ["riders"] }, (riders) =>
-        riders?.map((rider) =>
-          rider.id === event.riderId ? { ...rider, riderStatus: event.riderStatus } : rider,
-        ),
+        riders?.map((rider) => (rider.id === event.riderId ? { ...rider, riderStatus } : rider)),
       );
 
       void queryClient.invalidateQueries({ queryKey: ["riders"] });

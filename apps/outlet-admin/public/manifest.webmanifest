@@ -1,0 +1,19 @@
+{
+  "name": "RSC Outlet Admin",
+  "short_name": "RSC Outlet",
+  "description": "Outlet operations, kitchen queue, menu control, and POS-ready workflows for RSC Foods.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#162449",
+  "background_color": "#f9fafb",
+  "icons": [
+    {
+      "src": "/icons/rsc-outlet-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

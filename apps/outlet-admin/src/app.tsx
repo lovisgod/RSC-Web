@@ -21,6 +21,7 @@ import {
 } from "react-router-dom";
 
 import { Toaster } from "./components/toaster";
+import { InstallAppButton } from "./components/install-app-button";
 import { useAuth } from "./hooks/use-auth";
 import { useIdleLogout } from "./hooks/use-idle-logout";
 import { useNewOrderAlert } from "./hooks/use-new-order-alert";
@@ -335,6 +336,7 @@ function AppShell() {
             <p className="m-0 truncate text-sm font-bold text-[var(--rsc-panel)]">{pageTitle}</p>
             <p className="m-0 mt-0.5 hidden text-[11px] text-white/45 sm:block">RSC Outlet Admin</p>
           </div>
+          <InstallAppButton />
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto bg-[var(--rsc-panel)]">
