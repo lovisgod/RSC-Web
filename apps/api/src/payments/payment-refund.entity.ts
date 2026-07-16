@@ -4,6 +4,10 @@ export type PaymentRefundStatus = "PENDING" | "SUCCESS" | "FAILED";
 
 @Entity({ name: "payment_refunds" })
 @Index("ix_payment_refunds_payment", ["paymentId", "createdAt"])
+@Index("uq_payment_refunds_pending_requester", ["paymentId", "requestedBy"], {
+  unique: true,
+  where: `"status" = 'PENDING'`,
+})
 export class PaymentRefund {
   @PrimaryGeneratedColumn("uuid")
   id!: string;

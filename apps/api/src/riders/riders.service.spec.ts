@@ -21,6 +21,11 @@ describe(RidersService.name, () => {
     findOne: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
   };
+  let dataSource: { query: ReturnType<typeof vi.fn> };
+  let realtime: {
+    emitRiderLocationUpdate: ReturnType<typeof vi.fn>;
+    emitRiderAvailabilityUpdate: ReturnType<typeof vi.fn>;
+  };
   let service: RidersService;
 
   beforeEach(() => {
@@ -37,16 +42,82 @@ describe(RidersService.name, () => {
       ),
       save: vi.fn((rider: Customer) => Promise.resolve(rider)),
     };
+    dataSource = { query: vi.fn() };
+    realtime = {
+      emitRiderLocationUpdate: vi.fn(),
+      emitRiderAvailabilityUpdate: vi.fn(),
+    };
 
     service = new RidersService(
       users as unknown as Repository<Customer>,
       {} as Repository<RiderLocation>,
-      { query: vi.fn() } as unknown as DataSource,
-      {
-        emitRiderLocationUpdate: vi.fn(),
-        emitRiderAvailabilityUpdate: vi.fn(),
-      } as unknown as RealtimeService,
+      dataSource as unknown as DataSource,
+      realtime as unknown as RealtimeService,
     );
+  });
+
+  it("attaches the active out-for-delivery order when the rider location omits masterOrderId", async () => {
+    const masterOrderId = "4c14d989-9057-4380-a2ad-63a8a4ec7abf";
+    const recordedAt = new Date("2026-07-16T12:03:00.000Z");
+    dataSource.query
+      .mockResolvedValueOnce([{ id: masterOrderId }])
+      .mockResolvedValueOnce([{ riderId: riderUser.id }])
+      .mockResolvedValueOnce([
+        {
+          id: "84e0477e-45b2-43d4-a186-5b4d089f6b36",
+          riderId: riderUser.id,
+          masterOrderId,
+          geom: "POINT(3.3552573 6.6137385)",
+          recordedAt,
+        },
+      ]);
+
+    await expect(
+      service.recordLocation(riderUser, { latitude: 6.6137385, longitude: 3.3552573 }),
+    ).resolves.toMatchObject({ riderId: riderUser.id, masterOrderId });
+
+    expect(dataSource.query).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining("INSERT INTO rider_locations"),
+      [riderUser.id, masterOrderId, 3.3552573, 6.6137385],
+    );
+    expect(realtime.emitRiderLocationUpdate).toHaveBeenCalledWith({
+      riderId: riderUser.id,
+      masterOrderId,
+      latitude: 6.6137385,
+      longitude: 3.3552573,
+      recordedAt,
+    });
+  });
+
+  it("keeps general rider location updates unbound when no active delivery exists", async () => {
+    const recordedAt = new Date("2026-07-16T12:03:00.000Z");
+    dataSource.query.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        id: "84e0477e-45b2-43d4-a186-5b4d089f6b36",
+        riderId: riderUser.id,
+        masterOrderId: null,
+        geom: "POINT(3.3552573 6.6137385)",
+        recordedAt,
+      },
+    ]);
+
+    await expect(
+      service.recordLocation(riderUser, { latitude: 6.6137385, longitude: 3.3552573 }),
+    ).resolves.toMatchObject({ riderId: riderUser.id, masterOrderId: null });
+
+    expect(dataSource.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("INSERT INTO rider_locations"),
+      [riderUser.id, null, 3.3552573, 6.6137385],
+    );
+    expect(realtime.emitRiderLocationUpdate).toHaveBeenCalledWith({
+      riderId: riderUser.id,
+      masterOrderId: null,
+      latitude: 6.6137385,
+      longitude: 3.3552573,
+      recordedAt,
+    });
   });
 
   it("sets an active rider available for assignments", async () => {
