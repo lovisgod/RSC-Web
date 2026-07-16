@@ -14,6 +14,7 @@ const COMPLETED_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
 interface RiderReportRow {
   riderId: string;
   riderName: string;
+  riderStatus: string | null;
   activeOrders: number;
   completedDeliveries: number;
   cancelledOrders: number;
@@ -68,6 +69,12 @@ function riderLabel(riderId: string): string {
   return `Rider ${riderId.slice(0, 8).toUpperCase()}`;
 }
 
+function isRiderOnline(status: string | null): boolean {
+  if (!status) return false;
+
+  return ["ACTIVE", "AVAILABLE", "ONLINE"].includes(status.trim().toUpperCase());
+}
+
 function aggregateRiderReports(orders: AdminOrderItem[]): RiderReportRow[] {
   const rows = new Map<string, RiderReportRow>();
 
@@ -80,6 +87,7 @@ function aggregateRiderReports(orders: AdminOrderItem[]): RiderReportRow[] {
       ({
         riderId: order.riderId,
         riderName: riderLabel(order.riderId),
+        riderStatus: null,
         activeOrders: 0,
         completedDeliveries: 0,
         cancelledOrders: 0,
@@ -134,6 +142,7 @@ function mergeRidersWithReports(
     return {
       riderId: rider.id,
       riderName: rider.name,
+      riderStatus: rider.riderStatus ?? row?.riderStatus ?? null,
       activeOrders: row?.activeOrders ?? 0,
       completedDeliveries: row?.completedDeliveries ?? 0,
       cancelledOrders: row?.cancelledOrders ?? 0,
@@ -195,7 +204,6 @@ function DeleteRiderModal({
                 This removes the rider from the admin rider list. Existing order history remains
                 available for reporting.
               </p>
-              <small>{rider.riderId}</small>
             </div>
           </div>
 
@@ -369,18 +377,22 @@ export function RiderReportsPage() {
                     </tr>
                   ))
                 ) : riderRows.length > 0 ? (
-                  riderRows.map((row, index) => {
+                  riderRows.map((row) => {
                     const average =
                       row.measuredDeliveries > 0 ? row.totalMinutes / row.measuredDeliveries : null;
+                    const online = isRiderOnline(row.riderStatus);
 
                     return (
                       <tr key={row.riderId}>
                         <td>
                           <span className="rider-identity">
-                            <span className="rider-rank">{index + 1}</span>
+                            <span
+                              className={`rider-status-dot${online ? " rider-status-dot--online" : ""}`}
+                              aria-label={online ? "Rider online" : "Rider offline"}
+                              title={online ? "Online" : "Offline"}
+                            />
                             <span>
                               <strong>{row.riderName}</strong>
-                              <small>{row.riderId}</small>
                             </span>
                           </span>
                         </td>
