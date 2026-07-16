@@ -1,4 +1,4 @@
-import type { OutletSummary } from "@rsc/contracts";
+import type { OutletSummary, RiderAdmin } from "@rsc/contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { io } from "socket.io-client";
@@ -15,6 +15,13 @@ interface OutletStatusUpdateEvent {
 interface MenuItemAvailabilityUpdateEvent {
   menuItemId: string;
   outletId: string;
+  isAvailable: boolean;
+}
+
+interface RiderAvailabilityUpdateEvent {
+  riderId: string;
+  outletId: string | null;
+  riderStatus: string;
   isAvailable: boolean;
 }
 
@@ -89,6 +96,16 @@ export function useAdminRealtime() {
       );
 
       void queryClient.invalidateQueries({ queryKey: ["menu-items"] });
+    });
+
+    socket.on("rider:availability_update", (event: RiderAvailabilityUpdateEvent) => {
+      queryClient.setQueriesData<RiderAdmin[]>({ queryKey: ["riders"] }, (riders) =>
+        riders?.map((rider) =>
+          rider.id === event.riderId ? { ...rider, riderStatus: event.riderStatus } : rider,
+        ),
+      );
+
+      void queryClient.invalidateQueries({ queryKey: ["riders"] });
     });
 
     return () => {

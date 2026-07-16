@@ -17,6 +17,7 @@ const RIDER_STATUS_UNAVAILABLE = "UNAVAILABLE";
 
 export interface RiderAvailabilityResult {
   id: string;
+  outletId: string | null;
   riderStatus: string;
   isAvailable: boolean;
 }
@@ -125,7 +126,7 @@ export class RidersService {
 
     const rider = await this.users.findOne({
       where: { id: user.id, role: UserRole.RIDER },
-      select: { id: true, status: true, riderStatus: true },
+      select: { id: true, outletId: true, status: true, riderStatus: true, updatedAt: true },
     });
 
     if (!rider || rider.status !== CustomerStatus.ACTIVE) {
@@ -134,11 +135,21 @@ export class RidersService {
 
     rider.riderStatus = input.isAvailable ? RIDER_STATUS_AVAILABLE : RIDER_STATUS_UNAVAILABLE;
     const saved = await this.users.save(rider);
+    const isAvailable = saved.riderStatus === RIDER_STATUS_AVAILABLE;
+
+    this.realtime.emitRiderAvailabilityUpdate({
+      riderId: saved.id,
+      outletId: saved.outletId,
+      riderStatus: saved.riderStatus ?? RIDER_STATUS_UNAVAILABLE,
+      isAvailable,
+      updatedAt: saved.updatedAt,
+    });
 
     return {
       id: saved.id,
+      outletId: saved.outletId,
       riderStatus: saved.riderStatus ?? RIDER_STATUS_UNAVAILABLE,
-      isAvailable: saved.riderStatus === RIDER_STATUS_AVAILABLE,
+      isAvailable,
     };
   }
 
