@@ -300,6 +300,29 @@ describe("registration API client", () => {
     );
   });
 
+  it("deletes the active user's account through the delete endpoint", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { deleted: true },
+          message: "Account deleted successfully",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.deleteAccount()).resolves.toEqual({ deleted: true });
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/users/me",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
   it("lists menu items for an outlet", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(
