@@ -733,8 +733,8 @@ export function createApiClient(options: ApiClientOptions) {
       );
     },
     deleteAccount(): Promise<unknown> {
-      return request("/api/v1/users/me/deactivate", z.unknown(), {
-        method: "POST",
+      return request("/api/v1/users/me", z.unknown(), {
+        method: "DELETE",
       });
     },
     deleteUser(id: string): Promise<unknown> {

@@ -41,6 +41,11 @@ describe(UsersService.name, () => {
   let emailSender: {
     sendTemporaryPassword: ReturnType<typeof vi.fn>;
   };
+  let phoneOtp: {
+    revoke: ReturnType<typeof vi.fn>;
+    revokeEmail: ReturnType<typeof vi.fn>;
+    revokePasswordReset: ReturnType<typeof vi.fn>;
+  };
   let service: UsersService;
 
   beforeEach(() => {
@@ -68,11 +73,16 @@ describe(UsersService.name, () => {
     emailSender = {
       sendTemporaryPassword: vi.fn().mockResolvedValue(undefined),
     };
+    phoneOtp = {
+      revoke: vi.fn().mockResolvedValue(undefined),
+      revokeEmail: vi.fn().mockResolvedValue(undefined),
+      revokePasswordReset: vi.fn().mockResolvedValue(undefined),
+    };
 
     service = new UsersService(
       users as unknown as Repository<Customer>,
       piiCrypto as unknown as PiiCryptoService,
-      {} as PhoneOtpService,
+      phoneOtp as unknown as PhoneOtpService,
       {} as SmsSender,
       emailSender as unknown as EmailSender,
       {} as MediaService,
@@ -114,6 +124,41 @@ describe(UsersService.name, () => {
       email: "manager@example.com",
       phone: "+2348031234567",
     });
+  });
+
+  it("anonymizes and soft-deletes the active user's own account", async () => {
+    await expect(
+      service.deleteMyAccount({
+        id: admin.id,
+        role: UserRole.ADMIN,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      }),
+    ).resolves.toEqual({ deleted: true });
+
+    expect(users.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: admin.id,
+        name: "Deleted user",
+        status: CustomerStatus.SUSPENDED,
+        phoneEncrypted: "encrypted:deleted-phone:b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+        phoneHash: "hash:deleted-phone:b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+        emailEncrypted:
+          "encrypted:deleted-email:b709c9f9-7d01-4d84-90d6-50b0ad470bc5@deleted.local",
+        emailHash: "hash:deleted-email:b709c9f9-7d01-4d84-90d6-50b0ad470bc5",
+        avatarUrl: null,
+        fcmToken: null,
+        pendingPhoneEncrypted: null,
+        pendingPhoneHash: null,
+        pendingEmailEncrypted: null,
+        pendingEmailHash: null,
+        notificationPreferences: {},
+      }),
+    );
+    expect(phoneOtp.revoke).toHaveBeenCalledWith(admin.id);
+    expect(phoneOtp.revokeEmail).toHaveBeenCalledWith(admin.id);
+    expect(phoneOtp.revokePasswordReset).toHaveBeenCalledWith(admin.id);
+    expect(users.softRemove).toHaveBeenCalledWith(expect.objectContaining({ id: admin.id }));
   });
 
   it("soft-deletes outlet admins through the role-specific path", async () => {
