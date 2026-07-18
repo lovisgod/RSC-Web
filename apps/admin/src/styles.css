@@ -5050,6 +5050,79 @@ th {
   color: var(--rsc-muted);
 }
 
+.audit-panel {
+  overflow: hidden;
+}
+
+.audit-filters {
+  margin-bottom: 1rem;
+}
+
+.audit-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--rsc-border);
+  border-radius: 14px;
+}
+
+.audit-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  background: white;
+}
+
+.audit-table th,
+.audit-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--rsc-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.audit-table th {
+  color: var(--rsc-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--rsc-panel) 70%, white);
+}
+
+.audit-table td {
+  color: var(--rsc-main);
+  font-size: 0.88rem;
+}
+
+.audit-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.audit-table small,
+.audit-table span,
+.audit-table strong {
+  display: block;
+}
+
+.audit-table small {
+  max-width: 260px;
+  overflow: hidden;
+  color: var(--rsc-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audit-actor-role {
+  font-weight: 800;
+}
+
+.audit-metadata {
+  max-width: 340px;
+  color: var(--rsc-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 760px) {
   .refund-card__main {
     display: grid;
