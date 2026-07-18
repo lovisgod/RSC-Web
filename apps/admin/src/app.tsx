@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Bike,
   Gauge,
+  History,
   LogOut,
   Megaphone,
   Menu,
@@ -22,6 +23,7 @@ import { useAdminRealtime } from "./hooks/use-admin-realtime";
 import { useLiveClock } from "./hooks/use-live-clock";
 import { useAuth } from "./hooks/use-auth";
 import { logout as apiLogout } from "./lib/api";
+import { AuditLogsPage } from "./pages/audit-logs-page";
 import { toastBus } from "./lib/toast-bus";
 import { DashboardPage } from "./pages/dashboard-page";
 import { FinancialReconciliationPage } from "./pages/financial-reconciliation-page";
@@ -58,6 +60,7 @@ const navigation = [
     ],
   },
   { label: "Promotions Composer", to: "/promotions", icon: Megaphone },
+  { label: "Audit Logs", to: "/audit-logs", icon: History },
 ] as const;
 
 const routeTitles: Record<string, string> = {
@@ -69,6 +72,7 @@ const routeTitles: Record<string, string> = {
   "/finance": "Reconciliation & Payouts Ledger",
   "/finance/refunds": "Refund Operation",
   "/promotions": "Promotions Push Composer",
+  "/audit-logs": "Audit Logs",
 };
 
 function getPageTitle(pathname: string): string {
@@ -306,6 +310,7 @@ function AdminShell() {
             <Route path="/finance" element={<FinancialReconciliationPage />} />
             <Route path="/finance/refunds" element={<RefundsPage />} />
             <Route path="/promotions" element={<PromotionsPage />} />
+            <Route path="/audit-logs" element={<AuditLogsPage />} />
             <Route path="/settings" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
