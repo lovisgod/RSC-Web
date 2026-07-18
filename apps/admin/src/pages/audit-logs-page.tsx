@@ -5,11 +5,80 @@ import { RefreshCw, Search } from "lucide-react";
 import { listAuditLogs, type AuditLogQuery } from "../lib/api";
 
 const LIMIT = 25;
+const DATE_RANGE_OPTIONS = [
+  ["", "All dates"],
+  ["today", "Today"],
+  ["yesterday", "Yesterday"],
+  ["last7", "Last 7 days"],
+  ["last30", "Last 30 days"],
+] as const;
 
-function toIsoFromLocal(value: string): string | undefined {
-  if (!value) return undefined;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+const ACTION_OPTIONS = [
+  ["", "All actions"],
+  ["POST", "Created / submitted"],
+  ["PATCH", "Updated"],
+  ["PUT", "Replaced"],
+  ["DELETE", "Deleted"],
+] as const;
+
+const RESOURCE_OPTIONS = [
+  ["", "All resources"],
+  ["auth", "Auth"],
+  ["users", "Users"],
+  ["outlets", "Outlets"],
+  ["menu", "Menu"],
+  ["orders", "Orders"],
+  ["payments", "Payments"],
+  ["finance", "Finance"],
+  ["delivery", "Delivery"],
+  ["riders", "Riders"],
+  ["notifications", "Notifications"],
+  ["refunds", "Refunds"],
+  ["audit-logs", "Audit logs"],
+] as const;
+
+type DateRangeOption = (typeof DATE_RANGE_OPTIONS)[number][0];
+type AuditFilterKey = "action" | "resourceType" | "resourceId" | "actorId" | "dateRange";
+
+function startOfLocalDay(date: Date): Date {
+  const value = new Date(date);
+  value.setHours(0, 0, 0, 0);
+  return value;
+}
+
+function endOfLocalDay(date: Date): Date {
+  const value = new Date(date);
+  value.setHours(23, 59, 59, 999);
+  return value;
+}
+
+function getDateRange(value: DateRangeOption): Pick<AuditLogQuery, "dateFrom" | "dateTo"> {
+  if (!value) return {};
+
+  const now = new Date();
+  if (value === "today") {
+    return {
+      dateFrom: startOfLocalDay(now).toISOString(),
+      dateTo: endOfLocalDay(now).toISOString(),
+    };
+  }
+
+  if (value === "yesterday") {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return {
+      dateFrom: startOfLocalDay(yesterday).toISOString(),
+      dateTo: endOfLocalDay(yesterday).toISOString(),
+    };
+  }
+
+  const days = value === "last7" ? 7 : 30;
+  const from = new Date(now);
+  from.setDate(from.getDate() - (days - 1));
+  return {
+    dateFrom: startOfLocalDay(from).toISOString(),
+    dateTo: endOfLocalDay(now).toISOString(),
+  };
 }
 
 function formatDateTime(iso: string): string {
@@ -36,6 +105,12 @@ function metadataSummary(metadata: Record<string, unknown> | null): string {
   return parts.join(" · ") || "—";
 }
 
+function uniquePresent(values: Array<string | null | undefined>): string[] {
+  return Array.from(
+    new Set(values.filter((value): value is string => Boolean(value?.trim()))),
+  ).sort((left, right) => left.localeCompare(right));
+}
+
 export function AuditLogsPage() {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -43,8 +118,7 @@ export function AuditLogsPage() {
     resourceType: "",
     resourceId: "",
     actorId: "",
-    dateFrom: "",
-    dateTo: "",
+    dateRange: "" as DateRangeOption,
   });
 
   const query = useMemo<AuditLogQuery>(
@@ -55,8 +129,7 @@ export function AuditLogsPage() {
       ...(filters.resourceType.trim() ? { resourceType: filters.resourceType.trim() } : {}),
       ...(filters.resourceId.trim() ? { resourceId: filters.resourceId.trim() } : {}),
       ...(filters.actorId.trim() ? { actorId: filters.actorId.trim() } : {}),
-      ...(toIsoFromLocal(filters.dateFrom) ? { dateFrom: toIsoFromLocal(filters.dateFrom) } : {}),
-      ...(toIsoFromLocal(filters.dateTo) ? { dateTo: toIsoFromLocal(filters.dateTo) } : {}),
+      ...getDateRange(filters.dateRange),
     }),
     [filters, page],
   );
@@ -66,6 +139,13 @@ export function AuditLogsPage() {
     queryFn: () => listAuditLogs(query),
   });
   const rows = auditLogs.data?.auditLogs ?? [];
+  const resourceIdOptions = uniquePresent(rows.map((log) => log.resourceId));
+  const actorIdOptions = uniquePresent(rows.map((log) => log.actorId));
+
+  const updateFilter = (key: AuditFilterKey, value: string) => {
+    setPage(1);
+    setFilters((current) => ({ ...current, [key]: value }));
+  };
 
   return (
     <div className="panel orders-panel audit-panel">
@@ -89,72 +169,76 @@ export function AuditLogsPage() {
       <div className="orders-filters audit-filters">
         <label>
           <span className="sr-only">Action</span>
-          <input
+          <select
             className="field-input orders-filter-select"
-            placeholder="Action"
             value={filters.action}
-            onChange={(event) => {
-              setPage(1);
-              setFilters((current) => ({ ...current, action: event.target.value }));
-            }}
-          />
+            onChange={(event) => updateFilter("action", event.target.value)}
+          >
+            {ACTION_OPTIONS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           <span className="sr-only">Resource type</span>
-          <input
+          <select
             className="field-input orders-filter-select"
-            placeholder="Resource"
             value={filters.resourceType}
-            onChange={(event) => {
-              setPage(1);
-              setFilters((current) => ({ ...current, resourceType: event.target.value }));
-            }}
-          />
+            onChange={(event) => updateFilter("resourceType", event.target.value)}
+          >
+            {RESOURCE_OPTIONS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           <span className="sr-only">Resource ID</span>
-          <input
+          <select
             className="field-input orders-filter-select"
-            placeholder="Resource ID"
             value={filters.resourceId}
-            onChange={(event) => {
-              setPage(1);
-              setFilters((current) => ({ ...current, resourceId: event.target.value }));
-            }}
-          />
+            onChange={(event) => updateFilter("resourceId", event.target.value)}
+          >
+            <option value="">All record IDs</option>
+            {resourceIdOptions.map((resourceId) => (
+              <option key={resourceId} value={resourceId}>
+                {resourceId}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           <span className="sr-only">Actor ID</span>
-          <input
+          <select
             className="field-input orders-filter-select"
-            placeholder="Actor ID"
             value={filters.actorId}
-            onChange={(event) => {
-              setPage(1);
-              setFilters((current) => ({ ...current, actorId: event.target.value }));
-            }}
-          />
+            onChange={(event) => updateFilter("actorId", event.target.value)}
+          >
+            <option value="">All actors</option>
+            {actorIdOptions.map((actorId) => (
+              <option key={actorId} value={actorId}>
+                {actorId}
+              </option>
+            ))}
+          </select>
         </label>
-        <input
-          className="field-input orders-filter-select"
-          type="datetime-local"
-          value={filters.dateFrom}
-          onChange={(event) => {
-            setPage(1);
-            setFilters((current) => ({ ...current, dateFrom: event.target.value }));
-          }}
-          aria-label="Date from"
-        />
-        <input
-          className="field-input orders-filter-select"
-          type="datetime-local"
-          value={filters.dateTo}
-          onChange={(event) => {
-            setPage(1);
-            setFilters((current) => ({ ...current, dateTo: event.target.value }));
-          }}
-          aria-label="Date to"
-        />
+        <label>
+          <span className="sr-only">Date range</span>
+          <select
+            className="field-input orders-filter-select"
+            value={filters.dateRange}
+            onChange={(event) => updateFilter("dateRange", event.target.value)}
+          >
+            {DATE_RANGE_OPTIONS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {auditLogs.isPending ? (
@@ -218,7 +302,7 @@ export function AuditLogsPage() {
       )}
 
       {auditLogs.data && (
-        <div className="orders-pagination" aria-label="Audit logs pagination">
+        <div className="orders-pagination audit-pagination" aria-label="Audit logs pagination">
           <button
             type="button"
             className="orders-pagination__button"
