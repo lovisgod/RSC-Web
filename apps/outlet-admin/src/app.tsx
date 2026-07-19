@@ -19,6 +19,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { RouteNotFound } from "@rsc/ui";
 
 import { Toaster } from "./components/toaster";
 import { InstallAppButton } from "./components/install-app-button";
@@ -367,8 +368,19 @@ export function App() {
           <Route path="menu" element={<MenuPage />} />
           <Route path="earnings" element={<EarningsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route
+            path="*"
+            element={
+              <RouteNotFound
+                eyebrow="404 · Outlet Admin"
+                title="This outlet route does not exist"
+                description="That link is not part of this outlet workspace. Return to the queue or jump back to menu control."
+                primaryAction={{ label: "Go to active orders", href: "/" }}
+                secondaryAction={{ label: "Menu control", href: "/menu" }}
+              />
+            }
+          />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
     </>
