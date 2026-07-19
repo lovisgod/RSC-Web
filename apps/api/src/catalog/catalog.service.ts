@@ -1141,5 +1141,9 @@ export interface PublicOutletCatalog extends Outlet {
 function normalizeSettlementSubaccountCode(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
 
+  if (trimmed && /\s/.test(trimmed)) {
+    throw new BadRequestException("Settlement subaccount code must not contain spaces");
+  }
+
   return trimmed ? trimmed : null;
 }

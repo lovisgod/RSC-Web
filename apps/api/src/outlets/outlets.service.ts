@@ -126,6 +126,10 @@ export class OutletsService {
     }
 
     const normalizedSubaccountCode = subaccountCode.trim();
+    if (/\s/.test(normalizedSubaccountCode)) {
+      throw new BadRequestException("Settlement subaccount code must not contain spaces");
+    }
+
     const paymentsConfig = this.configService.get("payments", { infer: true });
 
     if (paymentsConfig.provider === "paystack") {

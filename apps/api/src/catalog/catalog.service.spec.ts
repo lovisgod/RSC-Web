@@ -358,6 +358,16 @@ describe(CatalogService.name, () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it("rejects settlement subaccounts containing spaces", async () => {
+    await expect(
+      service.createOutlet({
+        name: "New Outlet",
+        cuisineType: "Nigerian",
+        settlementSubaccountCode: "MOMENT OUTLET 123",
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it("blocks making an outlet available without a settlement subaccount", async () => {
     outlets.findOneBy.mockResolvedValueOnce(
       Object.assign(new Outlet(), {

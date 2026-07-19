@@ -139,6 +139,9 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
     const errs: typeof fieldErrors = {};
     if (!form.name.trim()) errs.name = "Outlet name is required";
     if (!form.cuisineType.trim()) errs.cuisineType = "Cuisine type is required";
+    if (/\s/.test(form.settlementSubaccountCode.trim())) {
+      errs.settlementSubaccountCode = "Settlement subaccount code must not contain spaces";
+    }
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -270,7 +273,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
                 setForm((current) => ({
                   ...current,
                   settlementSubaccountCode: event.target.value,
-                  isOnline: event.target.value.trim() ? current.isOnline : false,
+                  isOnline: event.target.value.trim() ? true : false,
                 }))
               }
             />
