@@ -7,6 +7,7 @@ import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import type { ApplicationConfig } from "../../config/configuration";
 import type {
   EmailSender,
+  SendMarketingEmailInput,
   SendPasswordResetEmailInput,
   SendTemporaryPasswordEmailInput,
   SendWelcomeVerificationEmailInput,
@@ -152,6 +153,45 @@ export class SmtpEmailSender implements EmailSender {
         `SMTP rejected temporary password email: ${JSON.stringify({ message: (error as Error).message })}`,
       );
       throw new BadGatewayException("Unable to send temporary password email");
+    }
+  }
+
+  async sendMarketing(input: SendMarketingEmailInput): Promise<void> {
+    const html = renderEmailTemplate({
+      preheader: input.preheader ?? input.body,
+      heading: input.title,
+      greetingName: input.name,
+      intro: input.body,
+      footerNote:
+        "You are receiving this because promotional notifications are enabled on your RSC account.",
+    });
+
+    this.logger.log(
+      `Sending SMTP marketing email: ${JSON.stringify({
+        host: this.config.host,
+        port: this.config.port,
+        from: this.config.from,
+        to: input.email,
+        subject: input.subject,
+      })}`,
+    );
+
+    try {
+      const info: SMTPTransport.SentMessageInfo = await this.transporter.sendMail({
+        from: this.config.from,
+        to: input.email,
+        subject: input.subject,
+        html,
+      });
+
+      this.logger.log(
+        `SMTP accepted marketing email: ${JSON.stringify({ messageId: info.messageId })}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `SMTP rejected marketing email: ${JSON.stringify({ message: (error as Error).message })}`,
+      );
+      throw new BadGatewayException("Unable to send marketing email");
     }
   }
 }

@@ -63,6 +63,7 @@ describe(AuthService.name, () => {
     sendWelcomeVerification: ReturnType<typeof vi.fn>;
     sendPasswordReset: ReturnType<typeof vi.fn>;
     sendTemporaryPassword: ReturnType<typeof vi.fn>;
+    sendMarketing: ReturnType<typeof vi.fn>;
   };
   let sessions: { issueSession: ReturnType<typeof vi.fn> };
   let service: AuthService;
@@ -125,6 +126,7 @@ describe(AuthService.name, () => {
       sendWelcomeVerification: vi.fn().mockResolvedValue(undefined),
       sendPasswordReset: vi.fn().mockResolvedValue(undefined),
       sendTemporaryPassword: vi.fn().mockResolvedValue(undefined),
+      sendMarketing: vi.fn().mockResolvedValue(undefined),
     };
     sessions = {
       issueSession: vi.fn().mockResolvedValue({
