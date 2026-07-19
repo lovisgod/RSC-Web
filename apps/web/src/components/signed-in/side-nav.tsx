@@ -19,6 +19,7 @@ const navItems = [
 export function SideNav() {
   const pathname = usePathname();
   const itemCount = useCartStore((s) => cartItemCount(s.cart));
+  const releaseCartOwner = useCartStore((s) => s.releaseActiveSessionOwner);
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
   const signOut = useAuthStore((s) => s.signOut);
 
@@ -28,6 +29,7 @@ export function SideNav() {
     } catch {
       // proceed with local sign-out even if the API call fails
     }
+    releaseCartOwner();
     signOut();
     // window.location.replace does a full-page navigation that replaces the
     // current history entry — authenticated pages can no longer be reached
