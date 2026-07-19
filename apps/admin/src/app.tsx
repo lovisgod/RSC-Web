@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
   Wallet,
 } from "lucide-react";
+import { RouteNotFound } from "@rsc/ui";
 import { useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -307,6 +308,18 @@ function AdminShell() {
             <Route path="/finance/refunds" element={<RefundsPage />} />
             <Route path="/promotions" element={<PromotionsPage />} />
             <Route path="/settings" element={<Navigate to="/" replace />} />
+            <Route
+              path="*"
+              element={
+                <RouteNotFound
+                  eyebrow="404 · RSC Central"
+                  title="This admin route is not available"
+                  description="The page may have moved, or this central operations workspace does not include that route."
+                  primaryAction={{ label: "Go to live board", href: "/" }}
+                  secondaryAction={{ label: "View orders feed", href: "/orders" }}
+                />
+              }
+            />
           </Routes>
         </div>
       </div>
