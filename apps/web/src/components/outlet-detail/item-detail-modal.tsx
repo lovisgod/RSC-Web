@@ -2,6 +2,7 @@
 
 import { Button } from "@rsc/ui";
 import { useQuery } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { apiClient } from "@/src/lib/api";
@@ -92,6 +93,15 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
     return () => clearTimeout(timer);
   }, [preparationNote]);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const { data: preparationSuggestions = [] } = useQuery({
     queryKey: ["preparation-suggestions", item.outletId, item.id, debouncedPreparationNote],
     queryFn: () =>
@@ -179,9 +189,19 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
       <div className="w-full md:max-w-md bg-white rounded-t-3xl md:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header image */}
         <div
-          className="h-52 flex items-center justify-center flex-shrink-0"
+          className="relative h-52 flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: item.bgColor }}
         >
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close item details"
+            className="absolute left-4 top-4 z-10 inline-flex h-10 items-center gap-2 rounded-full bg-white/95 px-3 text-sm font-bold text-gray-700 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-brand)] md:right-4 md:left-auto md:w-10 md:justify-center md:px-0"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+            <span className="md:sr-only">Close</span>
+          </button>
+
           {item.image.startsWith("/") || item.image.startsWith("http") ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
