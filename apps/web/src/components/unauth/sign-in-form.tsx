@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { ApiError } from "@rsc/api-client";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -30,8 +31,24 @@ export function SignInForm() {
   } = useForm<SignInFormData>({ resolver: zodResolver(signInSchema) });
 
   const mutation = useMutation({
-    mutationFn: (data: SignInFormData) =>
-      apiClient.login({ identifier: data.identifier, password: data.password }),
+    mutationFn: async (data: SignInFormData) => {
+      const result = await apiClient.login({
+        identifier: data.identifier,
+        password: data.password,
+      });
+
+      if (result.user.role !== "CUSTOMER") {
+        try {
+          await apiClient.logout();
+        } catch {
+          // The role gate must still reject this login even if session cleanup fails.
+        }
+
+        throw new ApiError("Use the correct admin or rider portal for this account.", 403, null);
+      }
+
+      return result;
+    },
     onSuccess: (result) => {
       const stored = localStorage.getItem(AUTH_REDIRECT_KEY);
       if (stored) localStorage.removeItem(AUTH_REDIRECT_KEY);
