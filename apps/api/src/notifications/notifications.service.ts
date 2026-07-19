@@ -269,6 +269,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       }),
     );
     await this.enqueueCampaign(campaign);
+    await this.sendCampaignEmails(campaign);
 
     return campaign;
   }
@@ -422,12 +423,6 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         );
 
         if (!recipient.fcmToken) {
-          await this.sendMarketingEmail(recipient, {
-            type: "CAMPAIGN",
-            subject: campaign.title,
-            title: campaign.title,
-            body: campaign.body,
-          });
           failedCount += 1;
           continue;
         }
@@ -455,13 +450,6 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
             })}`,
           );
         }
-
-        await this.sendMarketingEmail(recipient, {
-          type: "CAMPAIGN",
-          subject: campaign.title,
-          title: campaign.title,
-          body: campaign.body,
-        });
       }
 
       campaign.status = "SENT";
@@ -494,6 +482,21 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     }
 
     return query.getMany();
+  }
+
+  private async sendCampaignEmails(campaign: NotificationCampaign): Promise<void> {
+    const recipients = await this.resolveCampaignRecipients(campaign);
+
+    await Promise.all(
+      recipients.map((recipient) =>
+        this.sendMarketingEmail(recipient, {
+          type: "CAMPAIGN",
+          subject: campaign.title,
+          title: campaign.title,
+          body: campaign.body,
+        }),
+      ),
+    );
   }
 
   private async sendMarketingEmail(
