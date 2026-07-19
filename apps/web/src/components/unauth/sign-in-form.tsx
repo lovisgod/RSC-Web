@@ -20,6 +20,7 @@ import { useCartStore } from "@/src/stores/cart-store";
 export function SignInForm() {
   const searchParams = useSearchParams();
   const signIn = useAuthStore((s) => s.signIn);
+  const claimCartOwner = useCartStore((s) => s.claimActiveSessionOwner);
   const reconcileCartOwner = useCartStore((s) => s.reconcileOwner);
 
   const {
@@ -32,12 +33,19 @@ export function SignInForm() {
     mutationFn: (data: SignInFormData) =>
       apiClient.login({ identifier: data.identifier, password: data.password }),
     onSuccess: (result) => {
-      reconcileCartOwner(result.user.id);
-      signIn(result.user.id);
       const stored = localStorage.getItem(AUTH_REDIRECT_KEY);
       if (stored) localStorage.removeItem(AUTH_REDIRECT_KEY);
+      const redirectTarget = stored ?? searchParams.get("redirect") ?? "/outlets";
+
+      if (redirectTarget === "/checkout" || redirectTarget.startsWith("/checkout?")) {
+        reconcileCartOwner(result.user.id);
+      } else {
+        claimCartOwner(result.user.id);
+      }
+
+      signIn(result.user.id);
       // Replace so /sign-in is gone from history — back button can't return here
-      window.location.replace(stored ?? searchParams.get("redirect") ?? "/outlets");
+      window.location.replace(redirectTarget);
     },
   });
 

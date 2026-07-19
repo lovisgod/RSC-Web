@@ -73,6 +73,69 @@ function NoActiveOrder() {
   );
 }
 
+function TrackingPageSkeleton() {
+  return (
+    <div className="space-y-3" aria-label="Loading active orders">
+      <Card className="overflow-hidden border-gray-100 shadow-[0_12px_30px_rgba(30,49,96,0.07)]">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 w-28 animate-pulse rounded-full bg-gray-200" />
+            <div className="h-3 w-44 animate-pulse rounded-full bg-gray-100" />
+            <div className="h-9 w-40 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)]" />
+          </div>
+          <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-gray-100" />
+        </div>
+      </Card>
+
+      <Card className="overflow-hidden border-t-4 border-t-[var(--rsc-brand)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--rsc-main)_92%,white)_0%,var(--rsc-main)_100%)] shadow-[0_18px_45px_rgba(30,49,96,0.14)]">
+        <div className="space-y-3">
+          <div className="h-3 w-28 animate-pulse rounded-full bg-white/25" />
+          <div className="h-6 w-36 animate-pulse rounded-full bg-white/35" />
+          <div className="h-4 w-full max-w-sm animate-pulse rounded-full bg-white/20" />
+        </div>
+      </Card>
+
+      <Card className="space-y-4 border-gray-100 shadow-[0_12px_32px_rgba(30,49,96,0.06)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-9 animate-pulse rounded-full bg-[color-mix(in_srgb,var(--rsc-main)_10%,white)]" />
+            <div className="space-y-2">
+              <div className="h-4 w-32 animate-pulse rounded-full bg-gray-200" />
+              <div className="h-3 w-40 animate-pulse rounded-full bg-gray-100" />
+            </div>
+          </div>
+          <div className="h-7 w-16 animate-pulse rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)]" />
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 p-4">
+          <div className="mb-4 flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 animate-pulse rounded-xl bg-gray-100" />
+              <div className="space-y-2">
+                <div className="h-4 w-36 animate-pulse rounded-full bg-gray-200" />
+                <div className="h-3 w-20 animate-pulse rounded-full bg-gray-100" />
+              </div>
+            </div>
+            <div className="h-7 w-20 animate-pulse rounded-full bg-gray-100" />
+          </div>
+
+          <div className="space-y-2">
+            {[1, 2].map((item) => (
+              <div key={item} className="flex gap-3 rounded-xl border border-gray-100 px-3 py-3">
+                <div className="h-7 w-7 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-40 animate-pulse rounded-full bg-gray-200" />
+                  <div className="h-3 w-28 animate-pulse rounded-full bg-gray-100" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function KitchenBreakdown({
   subOrders,
   lineItems,
@@ -551,7 +614,7 @@ export function TrackingView({
   }
 
   if (isPending) {
-    return <p className="py-8 text-center text-sm text-gray-400">Checking for active orders…</p>;
+    return <TrackingPageSkeleton />;
   }
 
   if (isError) {

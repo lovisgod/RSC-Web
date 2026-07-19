@@ -20,6 +20,7 @@ interface CartState {
   updateQuantity: (outletId: string, lineId: string, quantity: number) => void;
   claimActiveSessionOwner: (userId: string) => void;
   reconcileOwner: (userId: string) => void;
+  releaseActiveSessionOwner: () => void;
   clear: () => void;
 }
 
@@ -83,6 +84,68 @@ function withCurrentCartSaved(state: CartState): Record<string, Cart> {
   };
 }
 
+function mergeCartIntoCart(baseCart: Cart, incomingCart: Cart): Cart {
+  if (!hasCartItems(incomingCart)) return baseCart;
+  if (!hasCartItems(baseCart)) return incomingCart;
+
+  const groups = baseCart.groups.map((group) => ({
+    ...group,
+    items: [...group.items],
+  }));
+
+  for (const incomingGroup of incomingCart.groups) {
+    const groupIdx = groups.findIndex((group) => group.outletId === incomingGroup.outletId);
+
+    if (groupIdx === -1) {
+      groups.push({
+        ...incomingGroup,
+        items: incomingGroup.items.map((item) => ({
+          ...item,
+          lineId: createCartLineId(item),
+        })),
+      });
+      continue;
+    }
+
+    const group = groups[groupIdx]!;
+
+    for (const incomingItem of incomingGroup.items) {
+      const incomingSignature = cartItemSignature(incomingItem);
+      const existingIdx = group.items.findIndex(
+        (item) => cartItemSignature(item) === incomingSignature,
+      );
+
+      if (existingIdx === -1) {
+        group.items.push({ ...incomingItem, lineId: createCartLineId(incomingItem) });
+      } else {
+        group.items[existingIdx] = {
+          ...group.items[existingIdx]!,
+          quantity: group.items[existingIdx]!.quantity + incomingItem.quantity,
+        };
+      }
+    }
+  }
+
+  return { ...baseCart, groups };
+}
+
+function withActiveCartCommitted(
+  state: CartState,
+  cart: Cart,
+): Pick<CartState, "cart" | "cartsByUserId"> {
+  if (!state.ownerUserId) {
+    return { cart, cartsByUserId: state.cartsByUserId };
+  }
+
+  return {
+    cart,
+    cartsByUserId: {
+      ...state.cartsByUserId,
+      [state.ownerUserId]: cart,
+    },
+  };
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
@@ -116,7 +179,7 @@ export const useCartStore = create<CartState>()(
             groups[groupIdx] = group;
           }
 
-          return { cart: { ...state.cart, groups } };
+          return withActiveCartCommitted(state, { ...state.cart, groups });
         }),
 
       removeItem: (outletId, lineId) =>
@@ -128,7 +191,7 @@ export const useCartStore = create<CartState>()(
                 : { ...g, items: g.items.filter((i) => getCartLineId(i) !== lineId) },
             )
             .filter((g) => g.items.length > 0);
-          return { cart: { ...state.cart, groups } };
+          return withActiveCartCommitted(state, { ...state.cart, groups });
         }),
 
       updateQuantity: (outletId, lineId, quantity) =>
@@ -142,7 +205,7 @@ export const useCartStore = create<CartState>()(
                   items: g.items.map((i) => (getCartLineId(i) === lineId ? { ...i, quantity } : i)),
                 },
           );
-          return { cart: { ...state.cart, groups } };
+          return withActiveCartCommitted(state, { ...state.cart, groups });
         }),
 
       claimActiveSessionOwner: (userId) =>
@@ -152,11 +215,15 @@ export const useCartStore = create<CartState>()(
           }
 
           const cartsByUserId = withCurrentCartSaved(state);
+          const savedUserCart = cartsByUserId[userId] ?? EMPTY_CART;
 
           return {
-            cart: cartsByUserId[userId] ?? EMPTY_CART,
+            cart: savedUserCart,
             ownerUserId: userId,
-            cartsByUserId,
+            cartsByUserId: {
+              ...cartsByUserId,
+              [userId]: savedUserCart,
+            },
           };
         }),
 
@@ -167,11 +234,30 @@ export const useCartStore = create<CartState>()(
           }
 
           const cartsByUserId = withCurrentCartSaved(state);
+          const savedUserCart = cartsByUserId[userId] ?? EMPTY_CART;
+          const claimedCart =
+            !state.ownerUserId && hasCartItems(state.cart)
+              ? mergeCartIntoCart(savedUserCart, state.cart)
+              : savedUserCart;
 
           return {
-            cart: cartsByUserId[userId] ?? EMPTY_CART,
+            cart: claimedCart,
             ownerUserId: userId,
-            cartsByUserId,
+            cartsByUserId: {
+              ...cartsByUserId,
+              [userId]: claimedCart,
+            },
+          };
+        }),
+
+      releaseActiveSessionOwner: () =>
+        set((state) => {
+          if (!state.ownerUserId) return state;
+
+          return {
+            cart: EMPTY_CART,
+            ownerUserId: null,
+            cartsByUserId: withCurrentCartSaved(state),
           };
         }),
 
@@ -190,7 +276,7 @@ export const useCartStore = create<CartState>()(
     {
       name: "rsc-customer-cart",
       storage: createJSONStorage(() => localStorage),
-      version: 6,
+      version: 7,
       migrate: (persistedState, version) => {
         if (!persistedState || typeof persistedState !== "object") return persistedState;
 
@@ -215,6 +301,36 @@ export const useCartStore = create<CartState>()(
               state.ownerUserId && hasCartItems(state.cart)
                 ? { [state.ownerUserId]: addMissingLineIds(state.cart) }
                 : {},
+          };
+        }
+
+        if (version < 7) {
+          const hydratedCart = addMissingLineIds(state.cart);
+          const cartsByUserId = Object.fromEntries(
+            Object.entries(state.cartsByUserId ?? {}).map(([userId, cart]) => [
+              userId,
+              isCart(cart) ? addMissingLineIds(cart) : EMPTY_CART,
+            ]),
+          );
+
+          if (!state.ownerUserId) {
+            return {
+              ...state,
+              cart: hydratedCart,
+              cartsByUserId,
+            };
+          }
+
+          return {
+            ...state,
+            cart: EMPTY_CART,
+            ownerUserId: null,
+            cartsByUserId: hasCartItems(hydratedCart)
+              ? {
+                  ...cartsByUserId,
+                  [state.ownerUserId]: hydratedCart,
+                }
+              : cartsByUserId,
           };
         }
 
