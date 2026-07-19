@@ -15,8 +15,10 @@ import { LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
+import { EMAIL_SENDER, type EmailSender } from "../auth/email/email-sender";
 import { CustomerStatus } from "../auth/customer-status.enum";
 import { UserRole } from "../auth/user-role.enum";
+import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import type { ApplicationConfig } from "../config/configuration";
 import type {
   CreateNotificationCampaignDto,
@@ -61,6 +63,8 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     @InjectRepository(Customer)
     private readonly users: Repository<Customer>,
     @Inject(PUSH_SENDER) private readonly pushSender: PushSender,
+    @Inject(EMAIL_SENDER) private readonly emailSender: EmailSender,
+    private readonly piiCrypto: PiiCryptoService,
     configService: ConfigService<ApplicationConfig, true>,
   ) {
     const connection = redisConnectionOptions(configService.get("redis.url", { infer: true }));
@@ -156,7 +160,13 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
 
     const recipients = await this.users.find({
       where: { role: input.recipientRole },
-      select: { id: true, role: true },
+      select: {
+        id: true,
+        role: true,
+        name: true,
+        emailEncrypted: true,
+        notificationPreferences: true,
+      },
     });
     const promo = await this.savePromoFromInput(input);
 
@@ -177,6 +187,12 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
           ...(promo.outletId ? { outletId: promo.outletId } : {}),
           ...(input.deepLink ? { deepLink: input.deepLink } : {}),
         },
+      });
+      await this.sendMarketingEmail(recipient, {
+        type: input.type,
+        subject: input.title,
+        title: input.title,
+        body: input.body,
       });
     }
 
@@ -406,6 +422,12 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         );
 
         if (!recipient.fcmToken) {
+          await this.sendMarketingEmail(recipient, {
+            type: "CAMPAIGN",
+            subject: campaign.title,
+            title: campaign.title,
+            body: campaign.body,
+          });
           failedCount += 1;
           continue;
         }
@@ -433,6 +455,13 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
             })}`,
           );
         }
+
+        await this.sendMarketingEmail(recipient, {
+          type: "CAMPAIGN",
+          subject: campaign.title,
+          title: campaign.title,
+          body: campaign.body,
+        });
       }
 
       campaign.status = "SENT";
@@ -452,7 +481,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   private resolveCampaignRecipients(campaign: NotificationCampaign): Promise<CampaignRecipient[]> {
     const query = this.users
       .createQueryBuilder("user")
-      .select(["user.id", "user.role", "user.fcmToken"])
+      .select(["user.id", "user.role", "user.name", "user.emailEncrypted", "user.fcmToken"])
       .addSelect("user.notificationPreferences")
       .where("user.role = :role", { role: UserRole.CUSTOMER });
 
@@ -465,6 +494,33 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     }
 
     return query.getMany();
+  }
+
+  private async sendMarketingEmail(
+    recipient: CampaignRecipient,
+    input: { type: string; subject: string; title: string; body: string },
+  ): Promise<void> {
+    if (!shouldDeliverByPreference(recipient, input.type)) {
+      return;
+    }
+
+    try {
+      await this.emailSender.sendMarketing({
+        email: this.piiCrypto.decrypt(recipient.emailEncrypted),
+        name: recipient.name,
+        subject: input.subject,
+        title: input.title,
+        body: input.body,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Marketing email delivery failed: ${JSON.stringify({
+          recipientId: recipient.id,
+          type: input.type,
+          message: error instanceof Error ? error.message : "Unknown email error",
+        })}`,
+      );
+    }
   }
 }
 
@@ -534,7 +590,9 @@ interface NotificationCampaignJob {
 
 interface CampaignRecipient {
   id: string;
+  name: string;
   role: UserRole;
+  emailEncrypted: string;
   fcmToken: string | null;
   notificationPreferences?: Record<string, unknown> | null;
 }
