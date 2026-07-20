@@ -4,6 +4,7 @@ import { SERVER_ERROR_MESSAGE } from "@rsc/api-client";
 import {
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
+  auditLogQuerySchema,
   operationsQueueSchema,
   operationsStatsQuerySchema,
   operationsSummarySchema,
@@ -13,6 +14,7 @@ import {
   outletSettlementSummaryListSchema,
   outletSettlementSummarySchema,
   notificationCampaignSchema,
+  paginatedAuditLogsSchema,
   promoSchema,
   paymentRefundSchema,
   platformChargesSchema,
@@ -36,6 +38,7 @@ import {
   type AdminResult,
   type AdminOrdersQuery,
   type AdminOrdersResult,
+  type AuditLogQuery,
   type CreateAdminInput,
   type ForgotPasswordResult,
   type LoginResult,
@@ -50,6 +53,7 @@ import {
   type CreateRiderInput,
   type OutletSummary,
   type OutletSettlementSummary,
+  type PaginatedAuditLogs,
   type PaymentRefund,
   type RefundRequestList,
   type RefundRequestListQuery,
@@ -72,7 +76,7 @@ import {
 
 import { authStore } from "../stores/auth-store";
 
-export type { AdminOrdersQuery, AdminOrdersResult } from "@rsc/contracts";
+export type { AdminOrdersQuery, AdminOrdersResult, AuditLogQuery } from "@rsc/contracts";
 
 // ─── Axios instance ───────────────────────────────────────────────────────────
 
@@ -528,6 +532,28 @@ export const listOutletAdmins = (outletId?: string): Promise<OutletAdminUser[]> 
 
 export const deleteOutletAdmin = (id: string): Promise<void> =>
   http.delete(`/api/v1/users/outlet-admins/${id}`).then(() => undefined);
+
+// ─── Audit logs ──────────────────────────────────────────────────────────────
+
+function auditLogQueryString(input: AuditLogQuery = {}): string {
+  const query = auditLogQuerySchema.parse(input);
+  const params = new URLSearchParams();
+  if (query.page !== undefined) params.set("page", String(query.page));
+  if (query.limit !== undefined) params.set("limit", String(query.limit));
+  if (query.actorId) params.set("actorId", query.actorId);
+  if (query.action) params.set("action", query.action);
+  if (query.resourceType) params.set("resourceType", query.resourceType);
+  if (query.resourceId) params.set("resourceId", query.resourceId);
+  if (query.dateFrom) params.set("dateFrom", query.dateFrom);
+  if (query.dateTo) params.set("dateTo", query.dateTo);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export const listAuditLogs = (input: AuditLogQuery = {}): Promise<PaginatedAuditLogs> =>
+  get<unknown>(`/api/v1/audit-logs${auditLogQueryString(input)}`).then((data) =>
+    paginatedAuditLogsSchema.parse(data),
+  );
 
 // ─── Platform charges ─────────────────────────────────────────────────────────
 

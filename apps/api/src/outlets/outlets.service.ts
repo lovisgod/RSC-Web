@@ -1,4 +1,12 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
@@ -7,7 +15,6 @@ import { PAYMENT_ADAPTER, type PaymentAdapter } from "../payments/payment-adapte
 import { Outlet } from "./outlet.entity";
 import { Customer } from "../auth/customer.entity";
 import { UserRole } from "../auth/user-role.enum";
-import { ForbiddenException } from "@nestjs/common";
 import type { ApplicationConfig } from "../config/configuration";
 
 export interface ProvisionOutletSubaccountInput {
@@ -95,6 +102,8 @@ export class OutletsService {
       percentageCharge: commissionPct,
     });
 
+    await this.ensureUniqueSettlementSubaccountCode(result.subaccountCode, outlet.id);
+
     outlet.settlementSubaccountCode = result.subaccountCode;
     await this.outlets.save(outlet);
 
@@ -116,25 +125,43 @@ export class OutletsService {
       throw new NotFoundException("Outlet not found");
     }
 
+    const normalizedSubaccountCode = subaccountCode.trim();
+    if (/\s/.test(normalizedSubaccountCode)) {
+      throw new BadRequestException("Settlement subaccount code must not contain spaces");
+    }
+
     const paymentsConfig = this.configService.get("payments", { infer: true });
 
     if (paymentsConfig.provider === "paystack") {
-      if (!subaccountCode.startsWith("ACCT_")) {
+      if (!normalizedSubaccountCode.startsWith("ACCT_")) {
         throw new BadRequestException(
           "Invalid subaccount code format — Paystack codes must start with ACCT_",
         );
       }
     } else {
-      if (subaccountCode.length < 2) {
+      if (normalizedSubaccountCode.length < 2) {
         throw new BadRequestException(
           "Subaccount code must be longer than or equal to 2 characters",
         );
       }
     }
 
-    outlet.settlementSubaccountCode = subaccountCode;
+    await this.ensureUniqueSettlementSubaccountCode(normalizedSubaccountCode, outlet.id);
+
+    outlet.settlementSubaccountCode = normalizedSubaccountCode;
     await this.outlets.save(outlet);
 
-    return { subaccountCode, outlet };
+    return { subaccountCode: normalizedSubaccountCode, outlet };
+  }
+
+  private async ensureUniqueSettlementSubaccountCode(
+    settlementSubaccountCode: string,
+    outletId: string,
+  ): Promise<void> {
+    const existing = await this.outlets.findOne({ where: { settlementSubaccountCode } });
+
+    if (existing && existing.id !== outletId) {
+      throw new ConflictException("Settlement subaccount code already belongs to another outlet");
+    }
   }
 }

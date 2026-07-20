@@ -3,11 +3,16 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 
 @Entity({ name: "outlets" })
+@Index("uq_outlets_settlement_subaccount_code", ["settlementSubaccountCode"], {
+  unique: true,
+  where: "settlement_subaccount_code IS NOT NULL AND settlement_subaccount_code <> ''",
+})
 export class Outlet {
   @PrimaryGeneratedColumn("uuid")
   id!: string;

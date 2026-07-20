@@ -50,6 +50,7 @@ describe(PaymentsService.name, () => {
   };
   let refunds: {
     find: ReturnType<typeof vi.fn>;
+    findOne: ReturnType<typeof vi.fn>;
     createQueryBuilder: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
@@ -140,6 +141,7 @@ describe(PaymentsService.name, () => {
     };
     refunds = {
       find: vi.fn().mockResolvedValue([]),
+      findOne: vi.fn().mockResolvedValue(null),
       createQueryBuilder: vi.fn(),
       create: vi.fn((value: Partial<PaymentRefund>) => value),
       save: vi.fn((value: Partial<PaymentRefund>) =>
@@ -631,6 +633,39 @@ describe(PaymentsService.name, () => {
         providerResponse: { requestedSubOrderId: rejectedSubOrder.id },
       }),
     );
+  });
+
+  it("does not allow a customer to submit another pending refund request for the same payment", async () => {
+    masterOrders.findOneBy.mockResolvedValue(
+      Object.assign(new MasterOrder(), {
+        id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+        customerId,
+      }),
+    );
+    refunds.findOne.mockResolvedValue(
+      Object.assign(new PaymentRefund(), {
+        id: "2d314436-919a-4873-ad0f-92d8d79ce448",
+        paymentId: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+        requestedBy: customerId,
+        status: "PENDING",
+      }),
+    );
+
+    await expect(
+      service.requestRefund(
+        {
+          id: customerId,
+          role: UserRole.CUSTOMER,
+          sessionId: "session-1",
+          accessTokenId: "access-token-1",
+        },
+        "RSC-reference",
+        { amountMinor: 250000, reason: "Order issue" },
+      ),
+    ).rejects.toThrow("A refund request is already pending for this payment");
+
+    expect(refunds.save).not.toHaveBeenCalled();
+    expect(refundPayment).not.toHaveBeenCalled();
   });
 
   it("does not allow customers to request refunds for another customer's payment", async () => {

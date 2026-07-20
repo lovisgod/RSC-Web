@@ -59,6 +59,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(outlet?.imageUrl ?? null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const hasSettlementSubaccount = form.settlementSubaccountCode.trim().length > 0;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
@@ -86,7 +87,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
         name: form.name.trim(),
         description: form.description.trim(),
         cuisineType: form.cuisineType.trim(),
-        isOnline: form.isOnline,
+        isOnline: hasSettlementSubaccount && form.isOnline,
         settlementSubaccountCode: form.settlementSubaccountCode.trim() || null,
         ...(resolvedImageUrl !== undefined && { imageUrl: resolvedImageUrl }),
       };
@@ -138,6 +139,9 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
     const errs: typeof fieldErrors = {};
     if (!form.name.trim()) errs.name = "Outlet name is required";
     if (!form.cuisineType.trim()) errs.cuisineType = "Cuisine type is required";
+    if (/\s/.test(form.settlementSubaccountCode.trim())) {
+      errs.settlementSubaccountCode = "Settlement subaccount code must not contain spaces";
+    }
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -264,7 +268,14 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
               className={`field-input${fieldErrors.settlementSubaccountCode ? " field-input--error" : ""}`}
               type="text"
               placeholder="Provider subaccount code (optional)"
-              {...field("settlementSubaccountCode")}
+              value={form.settlementSubaccountCode}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  settlementSubaccountCode: event.target.value,
+                  isOnline: event.target.value.trim() ? true : false,
+                }))
+              }
             />
             {fieldErrors.settlementSubaccountCode && (
               <span className="field-error">{fieldErrors.settlementSubaccountCode}</span>
@@ -276,17 +287,20 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
             <div>
               <strong>Available for orders</strong>
               <p>
-                {isEditMode
-                  ? "Toggle outlet availability"
-                  : "Outlet accepts orders right after onboarding"}
+                {!hasSettlementSubaccount
+                  ? "Add settlement code before accepting orders"
+                  : isEditMode
+                    ? "Toggle outlet availability"
+                    : "Outlet accepts orders right after onboarding"}
               </p>
             </div>
             <button
               type="button"
               role="switch"
-              aria-checked={form.isOnline}
+              aria-checked={hasSettlementSubaccount && form.isOnline}
               aria-label="Toggle availability"
-              className={`outlet-toggle${form.isOnline ? " outlet-toggle--on" : ""}`}
+              className={`outlet-toggle${hasSettlementSubaccount && form.isOnline ? " outlet-toggle--on" : ""}`}
+              disabled={!hasSettlementSubaccount}
               onClick={() => setForm((p) => ({ ...p, isOnline: !p.isOnline }))}
             />
           </div>

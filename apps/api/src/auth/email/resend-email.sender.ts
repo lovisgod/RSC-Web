@@ -4,6 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import type { ApplicationConfig } from "../../config/configuration";
 import type {
   EmailSender,
+  SendMarketingEmailInput,
   SendPasswordResetEmailInput,
   SendTemporaryPasswordEmailInput,
   SendWelcomeVerificationEmailInput,
@@ -69,6 +70,21 @@ export class ResendEmailSender implements EmailSender {
         codeLabel: "Temporary password",
         code: input.temporaryPassword,
         body: "Please change this password after your first sign in.",
+      }),
+    });
+  }
+
+  async sendMarketing(input: SendMarketingEmailInput): Promise<void> {
+    await this.sendEmail({
+      to: input.email,
+      subject: input.subject,
+      html: renderEmailTemplate({
+        preheader: input.preheader ?? input.body,
+        heading: input.title,
+        greetingName: input.name,
+        intro: input.body,
+        footerNote:
+          "You are receiving this because promotional notifications are enabled on your RSC account.",
       }),
     });
   }

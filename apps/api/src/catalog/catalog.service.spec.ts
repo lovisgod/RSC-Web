@@ -1,4 +1,4 @@
-import { ForbiddenException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException } from "@nestjs/common";
 import type { ConfigService } from "@nestjs/config";
 import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -29,6 +29,7 @@ describe(CatalogService.name, () => {
   let users: { findOne: ReturnType<typeof vi.fn> };
   let outlets: {
     find: ReturnType<typeof vi.fn>;
+    findOne: ReturnType<typeof vi.fn>;
     findOneBy: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
@@ -105,6 +106,7 @@ describe(CatalogService.name, () => {
     };
     outlets = {
       find: vi.fn().mockResolvedValue([]),
+      findOne: vi.fn().mockResolvedValue(null),
       findOneBy: vi.fn(({ id }: { id: string }) =>
         Promise.resolve(Object.assign(new Outlet(), { id, name: "Outlet" })),
       ),
@@ -287,6 +289,14 @@ describe(CatalogService.name, () => {
   });
 
   it("updates outlet online status for the super admin path", async () => {
+    outlets.findOneBy.mockResolvedValueOnce(
+      Object.assign(new Outlet(), {
+        id: outletId,
+        name: "Outlet",
+        settlementSubaccountCode: "MOMENT_OUTLET_123",
+      }),
+    );
+
     const result = await service.updateOutletOnlineStatus(outletId, { isOnline: false });
 
     expect(result.isOnline).toBe(false);
@@ -296,6 +306,80 @@ describe(CatalogService.name, () => {
       isOnline: false,
       updatedAt: result.updatedAt,
     });
+  });
+
+  it("creates an offline outlet when no settlement subaccount is provided", async () => {
+    const result = await service.createOutlet({
+      name: "New Outlet",
+      cuisineType: "Nigerian",
+      settlementSubaccountCode: null,
+    });
+
+    expect(result.settlementSubaccountCode).toBeNull();
+    expect(result.isOnline).toBe(false);
+    expect(outlets.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "New Outlet",
+        isOnline: false,
+        settlementSubaccountCode: null,
+      }),
+    );
+  });
+
+  it("keeps a provided settlement subaccount when creating an outlet", async () => {
+    const result = await service.createOutlet({
+      name: "New Outlet",
+      cuisineType: "Nigerian",
+      settlementSubaccountCode: "MOMENT_OUTLET_123",
+    });
+
+    expect(result.settlementSubaccountCode).toBe("MOMENT_OUTLET_123");
+    expect(outlets.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settlementSubaccountCode: "MOMENT_OUTLET_123",
+      }),
+    );
+  });
+
+  it("rejects duplicate settlement subaccounts when creating an outlet", async () => {
+    outlets.findOne.mockResolvedValueOnce(
+      Object.assign(new Outlet(), {
+        id: otherOutletId,
+        settlementSubaccountCode: "MOMENT_OUTLET_123",
+      }),
+    );
+
+    await expect(
+      service.createOutlet({
+        name: "New Outlet",
+        cuisineType: "Nigerian",
+        settlementSubaccountCode: "MOMENT_OUTLET_123",
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it("rejects settlement subaccounts containing spaces", async () => {
+    await expect(
+      service.createOutlet({
+        name: "New Outlet",
+        cuisineType: "Nigerian",
+        settlementSubaccountCode: "MOMENT OUTLET 123",
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("blocks making an outlet available without a settlement subaccount", async () => {
+    outlets.findOneBy.mockResolvedValueOnce(
+      Object.assign(new Outlet(), {
+        id: outletId,
+        name: "Outlet",
+        settlementSubaccountCode: null,
+      }),
+    );
+
+    await expect(
+      service.updateOutletOnlineStatus(outletId, { isOnline: true }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it("lets customers rate an outlet and updates the aggregate rating", async () => {
