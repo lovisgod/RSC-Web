@@ -19,6 +19,7 @@ import {
   orderPulseSchema,
   outletSettlementExportSchema,
   outletSettlementSummarySchema,
+  paginatedAuditLogsSchema,
   platformChargesSchema,
   profileUpdateResultSchema,
   rateMenuItemInputSchema,
@@ -241,6 +242,43 @@ describe("operations stats contracts", () => {
         ],
       }),
     ).toBeTruthy();
+  });
+});
+
+describe("audit log contracts", () => {
+  it("documents paginated audit log responses", () => {
+    expect(
+      paginatedAuditLogsSchema.parse({
+        auditLogs: [
+          {
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            actorId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+            actorRole: "SUPER_ADMIN",
+            action: "PATCH /api/v1/users/riders/721da55a-e320-410e-a22a-f88fb66d6d45",
+            method: "PATCH",
+            path: "/api/v1/users/riders/721da55a-e320-410e-a22a-f88fb66d6d45",
+            statusCode: 200,
+            resourceType: "users",
+            resourceId: "721da55a-e320-410e-a22a-f88fb66d6d45",
+            requestId: "request-1",
+            ipAddress: "127.0.0.1",
+            userAgent: "Vitest",
+            metadata: { body: { phone: "[REDACTED]" } },
+            createdAt: "2026-07-18T19:00:00.000Z",
+          },
+        ],
+        total: 1,
+        limit: 50,
+        offset: 0,
+        next: null,
+        previous: null,
+        hasNext: false,
+        hasPrevious: false,
+      }),
+    ).toMatchObject({
+      total: 1,
+      auditLogs: [expect.objectContaining({ resourceType: "users" })],
+    });
   });
 });
 

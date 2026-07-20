@@ -19,10 +19,20 @@ export interface SendTemporaryPasswordEmailInput {
   temporaryPassword: string;
 }
 
+export interface SendMarketingEmailInput {
+  email: string;
+  name: string;
+  subject: string;
+  title: string;
+  body: string;
+  preheader?: string;
+}
+
 export interface EmailSender {
   sendWelcomeVerification(input: SendWelcomeVerificationEmailInput): Promise<void>;
   sendPasswordReset(input: SendPasswordResetEmailInput): Promise<void>;
   sendTemporaryPassword(input: SendTemporaryPasswordEmailInput): Promise<void>;
+  sendMarketing(input: SendMarketingEmailInput): Promise<void>;
 }
 
 export const EMAIL_SENDER = Symbol("EMAIL_SENDER");

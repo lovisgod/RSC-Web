@@ -2,6 +2,7 @@ import {
   adminResultSchema,
   apiErrorResponseSchema,
   apiResponseSchema,
+  auditLogQuerySchema,
   changePasswordInputSchema,
   changePasswordResultSchema,
   createAdminInputSchema,
@@ -13,6 +14,7 @@ import {
   initiatePaymentResultSchema,
   notificationCampaignSchema,
   notificationPreferencesSchema,
+  paginatedAuditLogsSchema,
   paginatedMenuItemsSchema,
   pickupSubOrderInputSchema,
   platformChargesSchema,
@@ -73,6 +75,7 @@ import {
   userVerificationResultSchema,
   verifyUserInputSchema,
   type AdminResult,
+  type AuditLogQuery,
   type ChangePasswordInput,
   type ChangePasswordResult,
   type CreateAdminInput,
@@ -84,6 +87,7 @@ import {
   type InitiatePaymentResult,
   type NotificationCampaign,
   type NotificationPreferences,
+  type PaginatedAuditLogs,
   type PaginatedMenuItems,
   type PickupSubOrderInput,
   type PlatformCharges,
@@ -733,14 +737,29 @@ export function createApiClient(options: ApiClientOptions) {
       );
     },
     deleteAccount(): Promise<unknown> {
-      return request("/api/v1/users/me/deactivate", z.unknown(), {
-        method: "POST",
+      return request("/api/v1/users/me", z.unknown(), {
+        method: "DELETE",
       });
     },
     deleteUser(id: string): Promise<unknown> {
       return request(`/api/v1/users/${encodeURIComponent(id)}`, z.unknown(), {
         method: "DELETE",
       });
+    },
+    listAuditLogs(input: AuditLogQuery = {}): Promise<PaginatedAuditLogs> {
+      const query = auditLogQuerySchema.parse(input);
+      const params = new URLSearchParams();
+      if (query.page !== undefined) params.set("page", String(query.page));
+      if (query.limit !== undefined) params.set("limit", String(query.limit));
+      if (query.actorId) params.set("actorId", query.actorId);
+      if (query.action) params.set("action", query.action);
+      if (query.resourceType) params.set("resourceType", query.resourceType);
+      if (query.resourceId) params.set("resourceId", query.resourceId);
+      if (query.dateFrom) params.set("dateFrom", query.dateFrom);
+      if (query.dateTo) params.set("dateTo", query.dateTo);
+      const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
+      return request(`/api/v1/audit-logs${suffix}`, paginatedAuditLogsSchema);
     },
     getOperationsSummary(input: OperationsStatsQuery = {}): Promise<OperationsSummary> {
       const query = operationsStatsQuerySchema.parse(input);

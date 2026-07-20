@@ -223,6 +223,32 @@ export class UsersService {
     return { deactivated: true };
   }
 
+  async deleteMyAccount(user: AuthenticatedUser): Promise<{ deleted: true }> {
+    const account = await this.requireUser(user.id);
+
+    account.status = CustomerStatus.SUSPENDED;
+    account.name = "Deleted user";
+    account.phoneEncrypted = this.piiCrypto.encrypt(`deleted-phone:${account.id}`);
+    account.phoneHash = this.piiCrypto.searchHash(`deleted-phone:${account.id}`);
+    account.emailEncrypted = this.piiCrypto.encrypt(`deleted-email:${account.id}@deleted.local`);
+    account.emailHash = this.piiCrypto.searchHash(`deleted-email:${account.id}`);
+    account.avatarUrl = null;
+    account.fcmToken = null;
+    account.pendingPhoneEncrypted = null;
+    account.pendingPhoneHash = null;
+    account.pendingEmailEncrypted = null;
+    account.pendingEmailHash = null;
+    account.notificationPreferences = {};
+
+    await this.phoneOtp.revoke(account.id);
+    await this.phoneOtp.revokeEmail(account.id);
+    await this.phoneOtp.revokePasswordReset(account.id);
+    const saved = await this.saveUser(account);
+    await this.users.softRemove(saved);
+
+    return { deleted: true };
+  }
+
   async createRider(actor: AuthenticatedUser, input: CreateRiderDto): Promise<RiderResult> {
     if (actor.role !== UserRole.SUPER_ADMIN && actor.role !== UserRole.ADMIN) {
       throw new ForbiddenException("Only admins can add riders");

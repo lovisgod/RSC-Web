@@ -300,6 +300,80 @@ describe("registration API client", () => {
     );
   });
 
+  it("deletes the active user's account through the delete endpoint", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { deleted: true },
+          message: "Account deleted successfully",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.deleteAccount()).resolves.toEqual({ deleted: true });
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/users/me",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
+  it("lists audit logs with filters", async () => {
+    const requestFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            auditLogs: [
+              {
+                id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+                actorId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+                actorRole: "SUPER_ADMIN",
+                action: "DELETE /api/v1/users/me",
+                method: "DELETE",
+                path: "/api/v1/users/me",
+                statusCode: 200,
+                resourceType: "users",
+                resourceId: null,
+                requestId: "request-1",
+                ipAddress: "127.0.0.1",
+                userAgent: "Vitest",
+                metadata: { body: {} },
+                createdAt: "2026-07-18T19:00:00.000Z",
+              },
+            ],
+            total: 1,
+            limit: 20,
+            offset: 0,
+            next: null,
+            previous: null,
+            hasNext: false,
+            hasPrevious: false,
+          },
+          message: "Audit logs retrieved",
+          status: 200,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+    });
+
+    await expect(client.listAuditLogs({ limit: 20, resourceType: "users" })).resolves.toEqual(
+      expect.objectContaining({ total: 1 }),
+    );
+    expect(requestFetch).toHaveBeenCalledWith(
+      "https://api-dev.rscapp.xyz/api/v1/audit-logs?limit=20&resourceType=users",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("lists menu items for an outlet", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(

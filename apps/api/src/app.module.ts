@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
 import { AppController } from "./app.controller";
+import { AuditModule } from "./audit/audit.module";
 import { AuthModule } from "./auth/auth.module";
 import { CatalogModule } from "./catalog/catalog.module";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
@@ -34,6 +35,7 @@ import { UsersModule } from "./users/users.module";
     DatabaseModule,
     RedisModule,
     SecurityModule,
+    AuditModule,
     AuthModule,
     UsersModule,
     CatalogModule,

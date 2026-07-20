@@ -1,4 +1,11 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomUUID } from "node:crypto";
@@ -104,6 +111,13 @@ export class CatalogService {
   }
 
   async createOutlet(input: CreateOutletDto): Promise<Outlet> {
+    const settlementSubaccountCode = normalizeSettlementSubaccountCode(
+      input.settlementSubaccountCode,
+    );
+    if (settlementSubaccountCode) {
+      await this.ensureUniqueSettlementSubaccountCode(settlementSubaccountCode);
+    }
+
     return this.outlets.save(
       this.outlets.create({
         name: input.name,
@@ -111,12 +125,12 @@ export class CatalogService {
         address: input.address ?? null,
         cuisineType: input.cuisineType,
         imageUrl: input.imageUrl ?? null,
-        isOnline: input.isOnline ?? true,
+        isOnline: settlementSubaccountCode ? (input.isOnline ?? true) : false,
         vatBps: input.vatBps ?? 0,
         latitude: input.latitude ?? null,
         longitude: input.longitude ?? null,
         deliveryRadiusKm: input.deliveryRadiusKm ?? 15,
-        settlementSubaccountCode: input.settlementSubaccountCode ?? null,
+        settlementSubaccountCode,
       }),
     );
   }
@@ -130,6 +144,19 @@ export class CatalogService {
     }
 
     const { settlementSubaccountCode, ...updates } = input;
+    const nextSettlementSubaccountCode =
+      settlementSubaccountCode === undefined
+        ? outlet.settlementSubaccountCode
+        : normalizeSettlementSubaccountCode(settlementSubaccountCode);
+
+    if (nextSettlementSubaccountCode) {
+      await this.ensureUniqueSettlementSubaccountCode(nextSettlementSubaccountCode, outlet.id);
+    }
+    if ((input.isOnline ?? outlet.isOnline) && !nextSettlementSubaccountCode) {
+      throw new BadRequestException(
+        "Outlet must have a settlement subaccount code before it can accept orders",
+      );
+    }
 
     Object.assign(outlet, {
       ...updates,
@@ -139,7 +166,7 @@ export class CatalogService {
     });
 
     if (settlementSubaccountCode !== undefined) {
-      outlet.settlementSubaccountCode = settlementSubaccountCode;
+      outlet.settlementSubaccountCode = nextSettlementSubaccountCode;
     }
 
     return this.outlets.save(outlet);
@@ -147,6 +174,12 @@ export class CatalogService {
 
   async updateOutletOnlineStatus(id: string, input: UpdateOutletOnlineStatusDto): Promise<Outlet> {
     const outlet = await this.requireOutlet(id);
+    if (input.isOnline && !outlet.settlementSubaccountCode) {
+      throw new BadRequestException(
+        "Outlet must have a settlement subaccount code before it can accept orders",
+      );
+    }
+
     outlet.isOnline = input.isOnline;
     const saved = await this.outlets.save(outlet);
 
@@ -627,6 +660,17 @@ export class CatalogService {
     await this.requireAdminOutletId(user, outletId);
   }
 
+  private async ensureUniqueSettlementSubaccountCode(
+    settlementSubaccountCode: string,
+    outletId?: string,
+  ): Promise<void> {
+    const existing = await this.outlets.findOne({ where: { settlementSubaccountCode } });
+
+    if (existing && existing.id !== outletId) {
+      throw new ConflictException("Settlement subaccount code already belongs to another outlet");
+    }
+  }
+
   private async queryPublicItems(query: ListMenuItemsQueryDto): Promise<MenuItemsPage> {
     const limit = query.limit ?? 30;
     const offset = query.offset ?? 0;
@@ -1092,4 +1136,14 @@ export interface PublicOutletCatalog extends Outlet {
   itemModifierGroups: ItemModifierGroup[];
   itemModifiers: ItemModifier[];
   menuItemModifierGroups: MenuItemModifierGroup[];
+}
+
+function normalizeSettlementSubaccountCode(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+
+  if (trimmed && /\s/.test(trimmed)) {
+    throw new BadRequestException("Settlement subaccount code must not contain spaces");
+  }
+
+  return trimmed ? trimmed : null;
 }

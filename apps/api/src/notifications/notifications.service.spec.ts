@@ -2,6 +2,7 @@ import type { FindManyOptions, Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Customer } from "../auth/customer.entity";
+import type { EmailSender } from "../auth/email/email-sender";
 import { UserRole } from "../auth/user-role.enum";
 import { NotificationCampaign } from "./notification-campaign.entity";
 import { Notification } from "./notification.entity";
@@ -48,9 +49,13 @@ describe(NotificationsService.name, () => {
     findOne: ReturnType<typeof vi.fn>;
     find: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    createQueryBuilder: ReturnType<typeof vi.fn>;
   };
   let sendPush: ReturnType<typeof vi.fn<PushSender["send"]>>;
   let pushSender: PushSender;
+  let sendMarketingEmail: ReturnType<typeof vi.fn<EmailSender["sendMarketing"]>>;
+  let emailSender: EmailSender;
+  let piiCrypto: { decrypt: ReturnType<typeof vi.fn> };
   let service: NotificationsService;
 
   beforeEach(() => {
@@ -97,15 +102,34 @@ describe(NotificationsService.name, () => {
       ),
       find: vi.fn().mockResolvedValue([]),
       update: vi.fn().mockResolvedValue(undefined),
+      createQueryBuilder: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        addSelect: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        getMany: vi.fn().mockResolvedValue([]),
+      })),
     };
     sendPush = vi.fn<PushSender["send"]>().mockResolvedValue(undefined);
     pushSender = { send: (input) => sendPush(input) };
+    sendMarketingEmail = vi.fn<EmailSender["sendMarketing"]>().mockResolvedValue(undefined);
+    emailSender = {
+      sendWelcomeVerification: vi.fn<EmailSender["sendWelcomeVerification"]>(),
+      sendPasswordReset: vi.fn<EmailSender["sendPasswordReset"]>(),
+      sendTemporaryPassword: vi.fn<EmailSender["sendTemporaryPassword"]>(),
+      sendMarketing: (input) => sendMarketingEmail(input),
+    };
+    piiCrypto = {
+      decrypt: vi.fn((value: string) => `${value}@example.com`),
+    };
     service = new NotificationsService(
       notifications as unknown as Repository<Notification>,
       campaigns as unknown as Repository<NotificationCampaign>,
       promos as unknown as Repository<Promo>,
       users as unknown as Repository<Customer>,
       pushSender,
+      emailSender,
+      piiCrypto as never,
       { get: vi.fn().mockReturnValue("redis://localhost:6379") } as never,
     );
   });
@@ -153,8 +177,18 @@ describe(NotificationsService.name, () => {
   it("broadcasts promo notifications to matching recipients so customer GET has data", async () => {
     const secondRecipientId = "41e98748-bc19-44e9-b070-178b3a126efb";
     users.find.mockResolvedValueOnce([
-      Object.assign(new Customer(), { id: recipientId, role: UserRole.CUSTOMER }),
-      Object.assign(new Customer(), { id: secondRecipientId, role: UserRole.CUSTOMER }),
+      Object.assign(new Customer(), {
+        id: recipientId,
+        name: "First Customer",
+        role: UserRole.CUSTOMER,
+        emailEncrypted: "first",
+      }),
+      Object.assign(new Customer(), {
+        id: secondRecipientId,
+        name: "Second Customer",
+        role: UserRole.CUSTOMER,
+        emailEncrypted: "second",
+      }),
     ]);
     users.findOne
       .mockResolvedValueOnce(
@@ -211,6 +245,14 @@ describe(NotificationsService.name, () => {
       | Partial<Notification>
       | undefined;
     expect(createdNotification?.data).toEqual(expect.objectContaining({ promo: true }));
+    expect(sendMarketingEmail).toHaveBeenCalledTimes(2);
+    expect(sendMarketingEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "first@example.com",
+        name: "First Customer",
+        subject: "Weekend discount",
+      }),
+    );
   });
 
   it("rejects promo creation when startsAt is in the past", async () => {
@@ -238,6 +280,53 @@ describe(NotificationsService.name, () => {
     ).rejects.toThrow(/startsAt/);
 
     expect(promos.save).not.toHaveBeenCalled();
+  });
+
+  it("sends customer emails immediately when a campaign is scheduled", async () => {
+    const campaignRecipient = Object.assign(new Customer(), {
+      id: recipientId,
+      name: "Ada Customer",
+      role: UserRole.CUSTOMER,
+      emailEncrypted: "ada",
+      fcmToken: null,
+      notificationPreferences: { seasonalOffers: true },
+    });
+    const getMany = vi.fn().mockResolvedValue([campaignRecipient]);
+    users.createQueryBuilder.mockReturnValueOnce({
+      select: vi.fn().mockReturnThis(),
+      addSelect: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      getMany,
+    });
+
+    await expect(
+      service.scheduleCampaign(
+        {
+          id: "31a2df7e-7f2a-4433-9d5e-1caad0f91c4d",
+          role: UserRole.SUPER_ADMIN,
+          sessionId: "session-1",
+          accessTokenId: "access-token-1",
+        },
+        {
+          title: "Independence Day menu",
+          body: "Try something special today.",
+          targetSegment: "ALL_CUSTOMERS",
+          scheduledAt: "2099-10-01T09:00:00.000Z",
+        },
+      ),
+    ).resolves.toMatchObject({
+      title: "Independence Day menu",
+      status: "SCHEDULED",
+    });
+
+    expect(sendMarketingEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "ada@example.com",
+        name: "Ada Customer",
+        subject: "Independence Day menu",
+      }),
+    );
   });
 
   it("lists recent promo notifications for admins", async () => {

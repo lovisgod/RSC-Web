@@ -14,6 +14,7 @@ import {
   IsUrl,
   IsUUID,
   Length,
+  Matches,
   MaxLength,
   Min,
   Max,
@@ -100,6 +101,7 @@ export class CreateOutletDto {
   @ValidateIf((object, value) => value !== null && value !== "")
   @IsString()
   @Length(2, 100)
+  @Matches(/^\S+$/, { message: "settlementSubaccountCode must not contain spaces" })
   settlementSubaccountCode?: string | null;
 }
 

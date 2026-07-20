@@ -147,6 +147,47 @@ export const adminResultSchema = z.object({
   temporaryPassword: z.string().min(8),
 });
 
+export const auditLogSchema = z.object({
+  id: z.uuid(),
+  actorId: z.uuid().nullable(),
+  actorRole: userRoleSchema.nullable(),
+  action: z.string().min(1),
+  method: z.string().min(1),
+  path: z.string().min(1),
+  statusCode: z.int().min(100).max(599),
+  resourceType: z.string().nullable(),
+  resourceId: z.string().nullable(),
+  requestId: z.string().nullable(),
+  ipAddress: z.string().nullable(),
+  userAgent: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  createdAt: z.iso.datetime(),
+});
+
+export const paginatedAuditLogsSchema = z.object({
+  auditLogs: z.array(auditLogSchema),
+  total: z.int().nonnegative(),
+  limit: z.int().positive(),
+  offset: z.int().nonnegative(),
+  next: z.int().nonnegative().nullable(),
+  previous: z.int().nonnegative().nullable(),
+  hasNext: z.boolean(),
+  hasPrevious: z.boolean(),
+});
+
+export const auditLogQuerySchema = z
+  .object({
+    page: z.int().positive().optional(),
+    limit: z.int().positive().max(100).optional(),
+    actorId: z.uuid().optional(),
+    action: z.string().min(1).optional(),
+    resourceType: z.string().min(1).optional(),
+    resourceId: z.string().min(1).optional(),
+    dateFrom: z.iso.datetime().optional(),
+    dateTo: z.iso.datetime().optional(),
+  })
+  .strict();
+
 export const createRiderInputSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
@@ -1189,6 +1230,9 @@ export type LoginResult = z.infer<typeof loginResultSchema>;
 export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;
+export type AuditLog = z.infer<typeof auditLogSchema>;
+export type AuditLogQuery = z.infer<typeof auditLogQuerySchema>;
+export type PaginatedAuditLogs = z.infer<typeof paginatedAuditLogsSchema>;
 export type CreateRiderInput = z.infer<typeof createRiderInputSchema>;
 export type RiderResult = z.infer<typeof riderResultSchema>;
 export type RiderAdmin = z.infer<typeof riderAdminSchema>;

@@ -1,9 +1,16 @@
 import { randomUUID } from "node:crypto";
 
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, Repository } from "typeorm";
+import { DataSource, In, QueryFailedError, Repository } from "typeorm";
 
 import { Customer } from "../auth/customer.entity";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
@@ -936,6 +943,14 @@ export class PaymentsService {
       throw new NotFoundException("Payment not found");
     }
 
+    const pendingRefundRequest = await this.refunds.findOne({
+      where: { paymentId: payment.id, requestedBy: user.id, status: "PENDING" },
+    });
+
+    if (pendingRefundRequest) {
+      throw new ConflictException("A refund request is already pending for this payment");
+    }
+
     const calculatedSubOrderAmountMinor = input.subOrderId
       ? await this.calculateRejectedSubOrderRefundAmount(order, input.subOrderId)
       : null;
@@ -956,20 +971,28 @@ export class PaymentsService {
 
     const reason = input.reason?.trim() || null;
 
-    return this.refunds.save(
-      this.refunds.create({
-        paymentId: payment.id,
-        reference: payment.reference,
-        amountMinor: requestedAmountMinor,
-        currency: payment.currency,
-        status: "PENDING",
-        reason,
-        provider: payment.gateway,
-        providerRefundId: null,
-        requestedBy: user.id,
-        providerResponse: input.subOrderId ? { requestedSubOrderId: input.subOrderId } : null,
-      }),
-    );
+    try {
+      return await this.refunds.save(
+        this.refunds.create({
+          paymentId: payment.id,
+          reference: payment.reference,
+          amountMinor: requestedAmountMinor,
+          currency: payment.currency,
+          status: "PENDING",
+          reason,
+          provider: payment.gateway,
+          providerRefundId: null,
+          requestedBy: user.id,
+          providerResponse: input.subOrderId ? { requestedSubOrderId: input.subOrderId } : null,
+        }),
+      );
+    } catch (error) {
+      if (isUniqueConstraintViolation(error)) {
+        throw new ConflictException("A refund request is already pending for this payment");
+      }
+
+      throw error;
+    }
   }
 
   private async calculateRejectedSubOrderRefundAmount(
@@ -1342,4 +1365,17 @@ function paginationMeta(total: number, limit: number, offset: number) {
     hasNext: next !== null,
     hasPrevious: previous !== null,
   };
+}
+
+function isUniqueConstraintViolation(error: unknown): boolean {
+  if (!(error instanceof QueryFailedError)) {
+    return false;
+  }
+
+  const driverError: unknown = error.driverError;
+  if (typeof driverError !== "object" || driverError === null || !("code" in driverError)) {
+    return false;
+  }
+
+  return driverError.code === "23505";
 }

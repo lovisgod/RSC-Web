@@ -13,6 +13,7 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  Res,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import {
@@ -25,9 +26,13 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
+import type { Response } from "express";
 
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "../auth/auth.constants";
 import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
+import { AuthSessionService } from "../auth/auth-session.service";
+import { clearAuthCookies, readCookie } from "../auth/cookies";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
@@ -43,7 +48,10 @@ import { UsersService } from "./users.service";
 @UseGuards(AuthGuard)
 @Controller({ path: "users", version: "1" })
 export class UsersController {
-  constructor(private readonly users: UsersService) {}
+  constructor(
+    private readonly users: UsersService,
+    private readonly sessions: AuthSessionService,
+  ) {}
 
   @Get("me")
   @ApiMessage("Profile retrieved")
@@ -107,6 +115,28 @@ export class UsersController {
   @ApiMessage("Account deactivated successfully")
   deactivateAccount(@Req() request: AuthenticatedRequest) {
     return this.users.deactivateAccount(request.user!);
+  }
+
+  @Delete("me")
+  @HttpCode(HttpStatus.OK)
+  @ApiMessage("Account deleted successfully")
+  @ApiOperation({
+    summary: "Delete the active user's account",
+    description:
+      "Soft-deletes the authenticated user's account, clears auth cookies, and revokes the active session. Historical orders remain linked for operational records.",
+  })
+  async deleteMyAccount(
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.users.deleteMyAccount(request.user!);
+    await this.sessions.revokeSession(
+      readCookie(request.headers.cookie, ACCESS_TOKEN_COOKIE),
+      readCookie(request.headers.cookie, REFRESH_TOKEN_COOKIE),
+    );
+    clearAuthCookies(response);
+
+    return result;
   }
 
   @Post("riders")
