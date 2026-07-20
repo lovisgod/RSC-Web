@@ -12,6 +12,7 @@ import {
   outletSummarySchema,
   outletSettlementSummaryListSchema,
   outletSettlementSummarySchema,
+  notificationCampaignSchema,
   promoSchema,
   paymentRefundSchema,
   platformChargesSchema,
@@ -474,7 +475,9 @@ export const togglePromoActive = (id: string, body: TogglePromoActiveInput): Pro
   );
 
 export const listNotificationCampaigns = (): Promise<NotificationCampaign[]> =>
-  get("/api/v1/notifications/campaigns");
+  get<unknown>("/api/v1/notifications/campaigns").then((data) =>
+    parseResponse(notificationCampaignSchema.array(), data),
+  );
 
 export const scheduleNotificationCampaign = (
   body: CreateNotificationCampaignInput,
