@@ -45,9 +45,11 @@ function SectionLabel({ icon, text }: { icon: string; text: string }) {
 
 export function FulfillmentStep({
   initial,
+  onModeChange,
   onComplete,
 }: {
   initial: DeliveryForm;
+  onModeChange?: (mode: FulfillmentMode) => void;
   onComplete: (
     data: DeliveryForm,
     orderId: string,
@@ -377,12 +379,14 @@ export function FulfillmentStep({
           <button
             key={m}
             type="button"
-            onClick={() => setMode(m)}
+            onClick={() => {
+              setMode(m);
+              onModeChange?.(m);
+            }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
               mode === m ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            <span>{m === "delivery" ? "??" : "???"}</span>
             <span className="capitalize">{m}</span>
           </button>
         ))}
@@ -608,7 +612,7 @@ export function FulfillmentStep({
           </div>
           <div className="flex justify-between text-gray-500">
             <span>Delivery Fee</span>
-            <span>{deliveryFee === 0 ? "?0" : formatNaira(deliveryFee)}</span>
+            <span>{formatNaira(deliveryFee)}</span>
           </div>
           <div className="flex justify-between text-gray-500">
             <span>VAT</span>
@@ -692,7 +696,7 @@ export function FulfillmentStep({
               Placing order…
             </span>
           ) : (
-            "Proceed to Payment ??"
+            "Proceed to Payment"
           )}
         </Button>
       </div>

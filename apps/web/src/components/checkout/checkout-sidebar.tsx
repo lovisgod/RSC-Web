@@ -8,7 +8,7 @@ import {
   itemLabel,
   outletSubtotalMinor,
 } from "@/src/lib/data/cart";
-import { type OrderSnapshot } from "@/src/lib/data/checkout";
+import { type FulfillmentMode, type OrderSnapshot } from "@/src/lib/data/checkout";
 import { useCart } from "@/src/hooks/use-cart";
 import { useOutlets } from "@/src/hooks/use-outlets";
 import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
@@ -22,7 +22,13 @@ function FeeLine({ label, value, muted }: { label: string; value: string; muted?
   );
 }
 
-export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }) {
+export function CheckoutSidebar({
+  mode,
+  snapshot,
+}: {
+  mode: FulfillmentMode;
+  snapshot: OrderSnapshot | null;
+}) {
   const { data: cart } = useCart();
   const { data: charges } = usePlatformCharges();
   const { data: outlets = [] } = useOutlets();
@@ -117,9 +123,10 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
 
   // Live cart view (step 1 only)
   const subtotal = cartSubtotalMinor(cart!);
+  const includeDelivery = mode === "delivery";
   const fees = charges
     ? {
-        delivery: charges.deliveryFeeMinor,
+        delivery: includeDelivery ? charges.deliveryFeeMinor : 0,
         service: charges.serviceFeeMinor,
         commission: Math.round((subtotal * charges.platformCommissionBps) / 10_000),
         vat: cart!.groups.reduce((sum, group) => {
@@ -168,7 +175,8 @@ export function CheckoutSidebar({ snapshot }: { snapshot: OrderSnapshot | null }
           <>
             <FeeLine
               label="Delivery fee"
-              value={fees.delivery === 0 ? "Free" : formatNaira(fees.delivery)}
+              value={includeDelivery ? formatNaira(fees.delivery) : "Not applicable"}
+              muted={!includeDelivery}
             />
             <FeeLine label={`VAT (${vatPct}%)`} value={formatNaira(fees.vat)} muted />
             <FeeLine

@@ -35,10 +35,15 @@ export function MenuSearchItemCard({
   const emoji = FOOD_EMOJIS[seed % FOOD_EMOJIS.length]!;
   const hasImage = !!item.imageUrl;
   const soldOut = !item.isAvailable;
+  const disabled = soldOut || loading;
 
   return (
-    <article
-      className={`bg-white rounded-2xl border border-gray-100 shadow-sm flex items-start gap-3 p-3 transition-opacity ${soldOut ? "opacity-60" : ""}`}
+    <button
+      type="button"
+      onClick={disabled ? undefined : onViewOptions}
+      disabled={disabled}
+      aria-label={`${loading ? "Loading options for" : "View options for"} ${item.name} from ${outletName}`}
+      className={`flex w-full items-start gap-3 rounded-2xl border border-gray-100 bg-white p-3 text-left shadow-sm transition hover:border-[color:color-mix(in_srgb,var(--rsc-main)_18%,white)] hover:shadow-[0_10px_24px_rgba(30,49,96,0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-main)] disabled:cursor-not-allowed ${soldOut ? "opacity-60" : ""}`}
     >
       {/* Thumbnail */}
       <div
@@ -83,12 +88,7 @@ export function MenuSearchItemCard({
           <span className="text-sm font-bold" style={{ color: "var(--rsc-dark)" }}>
             {formatNaira(item.priceMinor)}
           </span>
-          <button
-            type="button"
-            onClick={soldOut || loading ? undefined : onViewOptions}
-            disabled={soldOut || loading}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600">
             {loading ? (
               <>
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -97,9 +97,9 @@ export function MenuSearchItemCard({
             ) : (
               "View options"
             )}
-          </button>
+          </span>
         </div>
       </div>
-    </article>
+    </button>
   );
 }

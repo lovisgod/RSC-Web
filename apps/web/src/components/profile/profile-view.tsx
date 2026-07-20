@@ -222,6 +222,7 @@ function ProfileHeader() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const signOut = useAuthStore((s) => s.signOut);
+  const releaseCartOwner = useCartStore((s) => s.releaseActiveSessionOwner);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -230,6 +231,7 @@ function ProfileHeader() {
     } catch {
       // proceed even if the API call fails
     }
+    releaseCartOwner();
     signOut();
     window.location.replace("/sign-in");
   }
