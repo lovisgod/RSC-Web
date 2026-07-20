@@ -6,6 +6,8 @@ import { useState, type ReactNode } from "react";
 import { ApiError } from "@rsc/api-client";
 
 import { useAuthStore } from "@/src/stores/auth-store";
+import { useCartStore } from "@/src/stores/cart-store";
+import { CartSessionBridge } from "@/src/components/providers/cart-session-bridge";
 import { OutletRealtimeBridge } from "@/src/components/providers/outlet-realtime-bridge";
 import { isPublicWebRoute } from "@/src/lib/public-routes";
 
@@ -15,6 +17,7 @@ function handleGlobalError(error: unknown) {
     error.status === 401 &&
     error.message === "Authentication required"
   ) {
+    useCartStore.getState().releaseActiveSessionOwner();
     useAuthStore.getState().signOut();
     if (isPublicWebRoute(window.location.pathname)) return;
     window.location.replace("/sign-in");
@@ -44,6 +47,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={client}>
+      <CartSessionBridge />
       <OutletRealtimeBridge />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />

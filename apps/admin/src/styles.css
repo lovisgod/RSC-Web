@@ -3597,20 +3597,46 @@ th {
    PROMOTIONS PAGE
 ──────────────────────────────────────────────── */
 
-.promo-wrap {
+.promo-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.promo-hero {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--rsc-brand) 16%, var(--rsc-line));
+  background:
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--rsc-brand) 18%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(135deg, #fff 0%, color-mix(in srgb, var(--rsc-main) 4%, white) 100%);
+}
+
+.promo-section-title-row {
   display: flex;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
 }
 
-.promo-panel {
-  width: min(640px, 100%);
-}
-
-.promo-panel__title {
-  margin: 0 0 1.75rem;
-  font-size: 1.1rem;
-  font-weight: 700;
+.promo-hero h1 {
+  margin: 0.2rem 0 0.35rem;
   color: var(--rsc-navy-dark);
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+}
+
+.promo-hero p:last-child {
+  max-width: 680px;
+  margin: 0;
+  color: var(--rsc-muted);
+}
+
+.promo-section-title-row > svg {
+  flex: 0 0 auto;
+  color: var(--rsc-brand);
 }
 
 .promo-form {
@@ -3661,6 +3687,395 @@ th {
   padding-top: 0.25rem;
 }
 
+.promo-management {
+  display: grid;
+  gap: 1rem;
+}
+
+.promo-management__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.promo-management__head > div {
+  width: 100%;
+}
+
+.promo-management__head h2 {
+  margin: 0.2rem 0 0.25rem;
+  color: var(--rsc-navy-dark);
+}
+
+.promo-management__head p:last-child {
+  margin: 0;
+  color: var(--rsc-muted);
+}
+
+.promo-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0 0.95rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rsc-main);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.promo-refresh-btn:hover {
+  border-color: color-mix(in srgb, var(--rsc-main) 28%, var(--rsc-line));
+  box-shadow: 0 10px 24px rgba(30, 49, 96, 0.08);
+  transform: translateY(-1px);
+}
+
+.promo-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.promo-stat {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-main) 10%, var(--rsc-line));
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, var(--rsc-main) 4%, white);
+}
+
+.promo-stat span {
+  color: var(--rsc-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.promo-stat strong {
+  color: var(--rsc-navy-dark);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.promo-stat--green {
+  border-color: color-mix(in srgb, var(--rsc-success) 22%, var(--rsc-line));
+  background: color-mix(in srgb, var(--rsc-success) 9%, white);
+}
+
+.promo-stat--orange {
+  border-color: color-mix(in srgb, var(--rsc-brand) 22%, var(--rsc-line));
+  background: color-mix(in srgb, var(--rsc-brand) 9%, white);
+}
+
+.promo-management-tabs {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rsc-line) 34%, white);
+}
+
+.promo-management-tabs button {
+  min-height: 2.45rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rsc-muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+.promo-management-tabs button.is-active {
+  background: var(--rsc-dark);
+  color: #fff;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.13);
+}
+
+.promo-management-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.promo-management-card {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-main) 10%, var(--rsc-line));
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--rsc-main) 2%, white) 100%);
+  box-shadow: 0 12px 28px rgba(30, 49, 96, 0.07);
+}
+
+.promo-management-card.is-muted {
+  background: color-mix(in srgb, var(--rsc-line) 32%, white);
+}
+
+.promo-management-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.promo-management-card__top h3 {
+  margin: 0.45rem 0 0.3rem;
+  color: var(--rsc-navy-dark);
+  font-size: 1rem;
+}
+
+.promo-management-card__top p {
+  margin: 0;
+  color: var(--rsc-muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.promo-code-chip,
+.campaign-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0 0.65rem;
+  background: color-mix(in srgb, var(--rsc-brand) 13%, white);
+  color: var(--rsc-brand-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.promo-active-pill {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.73rem;
+  font-weight: 900;
+}
+
+.promo-active-pill.is-on {
+  background: color-mix(in srgb, var(--rsc-success) 14%, white);
+  color: var(--rsc-success);
+}
+
+.promo-active-pill.is-off {
+  background: color-mix(in srgb, var(--rsc-danger) 10%, white);
+  color: var(--rsc-danger);
+}
+
+.promo-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.promo-meta-grid span {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+  padding: 0.7rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--rsc-line) 38%, white);
+  color: var(--rsc-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.promo-meta-grid strong {
+  overflow: hidden;
+  color: var(--rsc-navy-dark);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.promo-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.promo-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.3rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rsc-main);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding: 0 0.85rem;
+  cursor: pointer;
+}
+
+.promo-action-btn.is-danger {
+  color: var(--rsc-danger);
+}
+
+.promo-action-btn.is-success {
+  color: var(--rsc-success);
+}
+
+.promo-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.promo-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 2.75rem 1rem;
+  border: 1px dashed var(--rsc-line);
+  border-radius: 1.25rem;
+  color: var(--rsc-muted);
+  text-align: center;
+}
+
+.promo-empty-state strong {
+  color: var(--rsc-navy-dark);
+}
+
+.promo-empty-state button {
+  margin-top: 0.35rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rsc-main);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding: 0.55rem 0.95rem;
+  cursor: pointer;
+}
+
+.campaign-card > svg,
+.campaign-card .promo-management-card__top > svg {
+  color: var(--rsc-brand);
+}
+
+.campaign-status-pill.status-pill--scheduled {
+  background: color-mix(in srgb, var(--rsc-brand) 13%, white);
+  color: var(--rsc-brand-strong);
+}
+
+.campaign-status-pill.status-pill--dispatching {
+  background: color-mix(in srgb, var(--rsc-main) 12%, white);
+  color: var(--rsc-main);
+}
+
+.campaign-status-pill.status-pill--sent {
+  background: color-mix(in srgb, var(--rsc-success) 14%, white);
+  color: var(--rsc-success);
+}
+
+.campaign-status-pill.status-pill--failed {
+  background: color-mix(in srgb, var(--rsc-danger) 12%, white);
+  color: var(--rsc-danger);
+}
+
+.campaign-failure {
+  margin: 0;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--rsc-danger) 10%, white);
+  color: var(--rsc-danger);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.75rem 0.85rem;
+}
+
+.promo-edit-modal {
+  width: min(720px, 100%);
+  max-height: min(88dvh, 760px);
+  overflow-y: auto;
+  border-radius: 1.5rem;
+  background: #fff;
+  padding: 1.25rem;
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.3);
+}
+
+.promo-create-modal {
+  width: min(680px, 100%);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(7px);
+}
+
+.icon-btn {
+  display: inline-grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--rsc-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rsc-muted);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.icon-btn:hover {
+  border-color: color-mix(in srgb, var(--rsc-main) 22%, var(--rsc-line));
+  color: var(--rsc-main);
+}
+
+.promo-edit-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.promo-edit-modal__head h2 {
+  margin: 0.2rem 0 0;
+  color: var(--rsc-navy-dark);
+}
+
+.promo-edit-grid {
+  display: grid;
+  gap: 1rem;
+}
+
 @media (max-width: 600px) {
   .orders-panel__head {
     flex-direction: column;
@@ -3682,6 +4097,33 @@ th {
 
   .promo-actions {
     flex-direction: column;
+  }
+
+  .promo-management__head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .promo-section-title-row {
+    align-items: flex-start;
+    flex-direction: row;
+  }
+
+  .promo-section-title-row .promo-refresh-btn {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+  }
+
+  .promo-stats-row,
+  .promo-management-grid,
+  .promo-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-management-tabs {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

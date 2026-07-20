@@ -51,6 +51,22 @@ function getCountdownTone(secondsRemaining: number): string {
   return "border-emerald-200 bg-emerald-50 text-emerald-700";
 }
 
+function formatNaira(minor: number): string {
+  return `₦${(minor / 100).toLocaleString("en-NG")}`;
+}
+
+function itemModifierTotalMinor(item: PosSubOrder["items"][number]): number {
+  return (item.modifiers ?? []).reduce((sum, modifier) => sum + modifier.priceDeltaMinor, 0);
+}
+
+function itemLineTotalMinor(item: PosSubOrder["items"][number]): number {
+  return item.quantity * (item.priceMinor + itemModifierTotalMinor(item));
+}
+
+function subOrderItemsTotalMinor(order: PosSubOrder): number {
+  return order.items.reduce((sum, item) => sum + itemLineTotalMinor(item), 0);
+}
+
 function PrepCountdown({ order }: { order: PosSubOrder }) {
   const [now, setNow] = useState(() => Date.now());
   const prepMinutes = order.estimatedPrepTimeMinutes;
@@ -84,22 +100,56 @@ function PrepCountdown({ order }: { order: PosSubOrder }) {
   );
 }
 
-function ItemList({ items }: { items: PosSubOrder["items"] }) {
+function ItemList({ order }: { order: PosSubOrder }) {
+  const computedTotalMinor = subOrderItemsTotalMinor(order);
+
   return (
-    <ul className="mb-2.5 space-y-1.5">
-      {items.map((item, i) => (
-        <li key={i}>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-xs font-bold text-orange-500">{item.quantity}×</span>
-            <span className="text-xs font-semibold text-slate-600">
-              ₦{((item.quantity * item.priceMinor) / 100).toLocaleString("en-NG")}
-            </span>
-          </div>
-          <p className="text-sm text-slate-800">{item.name}</p>
-          {item.customerNote && (
-            <p className="mt-0.5 rounded-md bg-slate-50 px-2 py-1 text-xs italic text-slate-500">
-              Note: {item.customerNote}
-            </p>
+    <div className="mb-2.5 space-y-2">
+      <ul className="space-y-1.5">
+        {order.items.map((item, i) => (
+          <li key={i}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-xs font-bold text-orange-500">{item.quantity}×</span>
+              <span className="text-xs font-semibold text-slate-600">
+                {formatNaira(itemLineTotalMinor(item))}
+              </span>
+            </div>
+            <p className="text-sm text-slate-800">{item.name}</p>
+            {item.modifiers && item.modifiers.length > 0 && (
+              <p className="mt-0.5 line-clamp-1 text-xs text-slate-400">
+                + {item.modifiers.map((modifier) => modifier.name).join(", ")}
+              </p>
+            )}
+            {item.customerNote && (
+              <p className="mt-0.5 rounded-md bg-slate-50 px-2 py-1 text-xs italic text-slate-500">
+                Note: {item.customerNote}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      <div className="flex items-baseline justify-between rounded-lg bg-slate-50 px-2 py-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          Suborder total
+        </span>
+        <span className="text-xs font-bold text-slate-800">{formatNaira(computedTotalMinor)}</span>
+      </div>
+    </div>
+  );
+}
+
+function ItemModifierBreakdown({ item }: { item: PosSubOrder["items"][number] }) {
+  if (!item.modifiers || item.modifiers.length === 0) return null;
+
+  return (
+    <ul className="ml-3 mt-1 space-y-0.5">
+      {item.modifiers.map((mod, j) => (
+        <li key={j} className="flex items-baseline gap-1.5 text-xs text-slate-500">
+          <span className="shrink-0 text-slate-400">+</span>
+          <span className="flex-1">{mod.name}</span>
+          {mod.priceDeltaMinor > 0 && (
+            <span className="shrink-0 text-slate-400">+{formatNaira(mod.priceDeltaMinor)}</span>
           )}
         </li>
       ))}
@@ -110,6 +160,8 @@ function ItemList({ items }: { items: PosSubOrder["items"] }) {
 // ─── Expanded order detail ────────────────────────────────────────────────────
 
 function OrderDetailPanel({ order }: { order: PosSubOrder }) {
+  const computedTotalMinor = subOrderItemsTotalMinor(order);
+
   return (
     <div className="mb-2.5 space-y-2.5 rounded-lg bg-slate-50 p-2.5">
       {order.items.map((item, i) => (
@@ -118,7 +170,7 @@ function OrderDetailPanel({ order }: { order: PosSubOrder }) {
             <span className="text-xs font-bold text-orange-500">{item.quantity}×</span>
             <span className="min-w-0 flex-1 text-xs font-semibold text-slate-800">{item.name}</span>
             <span className="shrink-0 text-xs font-bold text-slate-600">
-              ₦{((item.quantity * item.priceMinor) / 100).toLocaleString("en-NG")}
+              {formatNaira(itemLineTotalMinor(item))}
             </span>
           </div>
           {item.customerNote && (
@@ -126,21 +178,7 @@ function OrderDetailPanel({ order }: { order: PosSubOrder }) {
               Note: {item.customerNote}
             </p>
           )}
-          {item.modifiers && item.modifiers.length > 0 && (
-            <ul className="ml-3 mt-1 space-y-0.5">
-              {item.modifiers.map((mod, j) => (
-                <li key={j} className="flex items-baseline gap-1.5 text-xs text-slate-500">
-                  <span className="shrink-0 text-slate-400">+</span>
-                  <span className="flex-1">{mod.name}</span>
-                  {mod.priceDeltaMinor > 0 && (
-                    <span className="shrink-0 text-slate-400">
-                      +₦{(mod.priceDeltaMinor / 100).toLocaleString("en-NG")}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+          <ItemModifierBreakdown item={item} />
         </div>
       ))}
 
@@ -149,7 +187,7 @@ function OrderDetailPanel({ order }: { order: PosSubOrder }) {
         <div className="flex items-baseline justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total</span>
           <span className="text-xs font-bold text-slate-800">
-            ₦{(order.totalAmountMinor / 100).toLocaleString("en-NG")}
+            {formatNaira(computedTotalMinor)}
           </span>
         </div>
         <div className="flex items-baseline justify-between">
@@ -243,7 +281,7 @@ function CardShell({ order, isAdvancing, accentClass, rightSlot, children }: She
           )}
 
           {/* Item list: compact or detailed */}
-          {expanded ? <OrderDetailPanel order={order} /> : <ItemList items={order.items} />}
+          {expanded ? <OrderDetailPanel order={order} /> : <ItemList order={order} />}
 
           {/* Action footer */}
           {children}
@@ -385,9 +423,9 @@ function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
       lines: order.items.map((item) => ({
         label: item.name,
         quantity: item.quantity,
-        amountMinor: item.priceMinor,
+        amountMinor: item.priceMinor + itemModifierTotalMinor(item),
       })),
-      totalMinor: order.totalAmountMinor,
+      totalMinor: subOrderItemsTotalMinor(order),
       currency: "NGN",
     });
     if (!result.printed) toastBus.emit("Printing unavailable outside POS shell", "warning");

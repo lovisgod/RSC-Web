@@ -60,6 +60,7 @@ export function CheckoutView() {
           {step === 1 && (
             <FulfillmentStep
               initial={delivery}
+              onModeChange={(mode) => setDelivery((current) => ({ ...current, mode }))}
               onComplete={(d, id, snap, url) => {
                 setDelivery(d);
                 setOrderId(id);
@@ -83,7 +84,7 @@ export function CheckoutView() {
 
         {/* Order summary sidebar — always visible, uses snapshot once cart is cleared */}
         <div className="w-full max-w-xl lg:sticky lg:top-20 lg:w-[340px] lg:max-w-none">
-          <CheckoutSidebar snapshot={snapshot} />
+          <CheckoutSidebar mode={delivery.mode} snapshot={snapshot} />
         </div>
       </div>
     </div>

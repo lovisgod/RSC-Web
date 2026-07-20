@@ -54,7 +54,7 @@ export function PaymentStep({
           </div>
         ) : (
           <p className="text-sm leading-relaxed text-gray-500">
-            We have prepared your order. Continue to the payment gateway to complete payment
+            We have recieved your order. Continue to the payment gateway to complete payment
             securely.
           </p>
         )}
