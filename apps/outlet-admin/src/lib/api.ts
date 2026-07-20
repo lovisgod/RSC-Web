@@ -280,6 +280,7 @@ export interface PosSubOrderItem {
   name: string;
   quantity: number;
   priceMinor: number;
+  lineTotalMinor: number;
   customerNote?: string;
   modifiers?: PosSubOrderItemModifier[];
 }
@@ -319,6 +320,7 @@ function toSubOrders(data: AdminOrdersResult, outletId: string): PosSubOrder[] {
             name: li.itemNameSnapshot,
             quantity: li.quantity,
             priceMinor: li.unitPriceMinor,
+            lineTotalMinor: li.lineTotalMinor,
             ...(typeof li.customerNote === "string" && li.customerNote.trim()
               ? { customerNote: li.customerNote.trim() }
               : {}),

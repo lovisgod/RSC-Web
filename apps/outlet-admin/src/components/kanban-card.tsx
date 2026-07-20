@@ -55,16 +55,8 @@ function formatNaira(minor: number): string {
   return `₦${(minor / 100).toLocaleString("en-NG")}`;
 }
 
-function itemModifierTotalMinor(item: PosSubOrder["items"][number]): number {
-  return (item.modifiers ?? []).reduce((sum, modifier) => sum + modifier.priceDeltaMinor, 0);
-}
-
 function itemLineTotalMinor(item: PosSubOrder["items"][number]): number {
-  return item.quantity * (item.priceMinor + itemModifierTotalMinor(item));
-}
-
-function subOrderItemsTotalMinor(order: PosSubOrder): number {
-  return order.items.reduce((sum, item) => sum + itemLineTotalMinor(item), 0);
+  return item.lineTotalMinor;
 }
 
 function PrepCountdown({ order }: { order: PosSubOrder }) {
@@ -101,8 +93,6 @@ function PrepCountdown({ order }: { order: PosSubOrder }) {
 }
 
 function ItemList({ order }: { order: PosSubOrder }) {
-  const computedTotalMinor = subOrderItemsTotalMinor(order);
-
   return (
     <div className="mb-2.5 space-y-2">
       <ul className="space-y-1.5">
@@ -133,7 +123,9 @@ function ItemList({ order }: { order: PosSubOrder }) {
         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
           Suborder total
         </span>
-        <span className="text-xs font-bold text-slate-800">{formatNaira(computedTotalMinor)}</span>
+        <span className="text-xs font-bold text-slate-800">
+          {formatNaira(order.totalAmountMinor)}
+        </span>
       </div>
     </div>
   );
@@ -160,8 +152,6 @@ function ItemModifierBreakdown({ item }: { item: PosSubOrder["items"][number] })
 // ─── Expanded order detail ────────────────────────────────────────────────────
 
 function OrderDetailPanel({ order }: { order: PosSubOrder }) {
-  const computedTotalMinor = subOrderItemsTotalMinor(order);
-
   return (
     <div className="mb-2.5 space-y-2.5 rounded-lg bg-slate-50 p-2.5">
       {order.items.map((item, i) => (
@@ -187,7 +177,7 @@ function OrderDetailPanel({ order }: { order: PosSubOrder }) {
         <div className="flex items-baseline justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total</span>
           <span className="text-xs font-bold text-slate-800">
-            {formatNaira(computedTotalMinor)}
+            {formatNaira(order.totalAmountMinor)}
           </span>
         </div>
         <div className="flex items-baseline justify-between">
@@ -423,9 +413,9 @@ function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
       lines: order.items.map((item) => ({
         label: item.name,
         quantity: item.quantity,
-        amountMinor: item.priceMinor + itemModifierTotalMinor(item),
+        amountMinor: item.priceMinor,
       })),
-      totalMinor: subOrderItemsTotalMinor(order),
+      totalMinor: order.totalAmountMinor,
       currency: "NGN",
     });
     if (!result.printed) toastBus.emit("Printing unavailable outside POS shell", "warning");
