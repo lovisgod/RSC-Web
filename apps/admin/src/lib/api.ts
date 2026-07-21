@@ -5,6 +5,8 @@ import {
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
   auditLogQuerySchema,
+  changePasswordInputSchema,
+  changePasswordResultSchema,
   operationsQueueSchema,
   operationsStatsQuerySchema,
   operationsSummarySchema,
@@ -39,6 +41,8 @@ import {
   type AdminOrdersQuery,
   type AdminOrdersResult,
   type AuditLogQuery,
+  type ChangePasswordInput,
+  type ChangePasswordResult,
   type CreateAdminInput,
   type ForgotPasswordResult,
   type LoginResult,
@@ -175,6 +179,14 @@ export const login = (body: { identifier: string; password: string }): Promise<L
   post("/api/v1/auth/login", body);
 
 export const logout = (): Promise<LogoutResult> => post("/api/v1/auth/logout");
+
+export const changePassword = async (body: ChangePasswordInput): Promise<ChangePasswordResult> => {
+  const payload = changePasswordInputSchema.parse(body);
+  return parseResponse(
+    changePasswordResultSchema,
+    await post<unknown>("/api/v1/auth/change-password", payload),
+  );
+};
 
 export interface RegisterBody {
   name: string;

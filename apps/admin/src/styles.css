@@ -211,10 +211,19 @@ select {
   flex-shrink: 0;
   place-items: center;
   padding: 0;
-  border: 0;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 8px;
   background: transparent;
-  color: rgb(255 255 255 / 42%);
-  cursor: not-allowed;
+  color: rgb(255 255 255 / 72%);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.operator-settings-btn:hover {
+  color: white;
+  background: rgb(255 255 255 / 9%);
 }
 
 .logout-btn {
@@ -4730,6 +4739,34 @@ th {
   border-radius: 10px;
   color: var(--rsc-danger);
   font-size: 0.875rem;
+}
+
+/* Admin settings */
+
+.settings-page {
+  width: min(100%, 56rem);
+  margin-inline: auto;
+  padding: clamp(1rem, 2vw, 1.5rem) 0;
+}
+
+.settings-page__head {
+  margin-bottom: 1.5rem;
+}
+
+.settings-page__head h1 {
+  margin: 0.25rem 0 0;
+  color: var(--rsc-navy-dark);
+  font-size: clamp(1.65rem, 3vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.settings-page__head p:last-child {
+  max-width: 40rem;
+  margin: 0.5rem 0 0;
+  color: var(--rsc-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 @media (max-width: 480px) {
