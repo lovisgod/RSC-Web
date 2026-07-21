@@ -1,5 +1,6 @@
 export { Button } from "./button";
 export { Card } from "./card";
+export { ChangePasswordPanel } from "./change-password-panel";
 export { EmptyState } from "./empty-state";
 export { Input } from "./input";
 export { MetricCard } from "./metric-card";

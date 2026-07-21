@@ -453,19 +453,12 @@ function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
 
 // ─── Ready card ───────────────────────────────────────────────────────────────
 
-const READY_ACTION_LABEL: Record<string, string> = {
-  DELIVERY: "Rider Handoff",
-  TAKEOUT: "Customer Pickup",
-};
-
-function ReadyCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
+function ReadyCard({ order, isAdvancing }: Pick<KanbanCardProps, "order" | "isAdvancing">) {
   const badge = (
     <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-emerald-600">
       Ready
     </span>
   );
-
-  const actionLabel = READY_ACTION_LABEL[order.deliveryMode] ?? "Complete";
 
   return (
     <CardShell
@@ -474,19 +467,14 @@ function ReadyCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
       accentClass="bg-emerald-500"
       rightSlot={badge}
     >
-      <div className="flex items-center justify-between gap-2 border-t border-slate-50 pt-2">
+      <div className="border-t border-slate-50 pt-2">
         <p className="text-xs font-medium text-slate-500">
           {DELIVERY_MODE_EMOJI[order.deliveryMode] ?? "📦"}{" "}
           {DELIVERY_MODE_LABEL[order.deliveryMode] ?? order.deliveryMode}
         </p>
-        <button
-          type="button"
-          disabled={isAdvancing}
-          onClick={() => onAdvance(order.id, "DELIVERED")}
-          className="rounded-lg bg-emerald-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
-        >
-          {actionLabel}
-        </button>
+        <p className="mt-1 text-[11px] leading-4 text-slate-400">
+          Verify the pickup code above before releasing this order.
+        </p>
       </div>
     </CardShell>
   );
@@ -499,7 +487,7 @@ export function KanbanCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
     return <KitchenCard order={order} onAdvance={onAdvance} isAdvancing={isAdvancing} />;
   }
   if (order.status === "READY") {
-    return <ReadyCard order={order} onAdvance={onAdvance} isAdvancing={isAdvancing} />;
+    return <ReadyCard order={order} isAdvancing={isAdvancing} />;
   }
   return <IncomingCard order={order} onAdvance={onAdvance} isAdvancing={isAdvancing} />;
 }

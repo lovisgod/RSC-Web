@@ -38,6 +38,7 @@ import { RegisterPage } from "./pages/register-page";
 import { ResetPasswordPage } from "./pages/reset-password-page";
 import { RiderReportsPage } from "./pages/rider-reports-page";
 import { RefundsPage } from "./pages/refunds-page";
+import { SettingsPage } from "./pages/settings-page";
 import { VerifyPage } from "./pages/verify-page";
 
 const navigation = [
@@ -74,6 +75,7 @@ const routeTitles: Record<string, string> = {
   "/finance/refunds": "Refund Operation",
   "/promotions": "Promotions Push Composer",
   "/audit-logs": "Audit Logs",
+  "/settings": "Settings",
 };
 
 function getPageTitle(pathname: string): string {
@@ -200,9 +202,9 @@ function OperatorFooter() {
       <button
         type="button"
         className="operator-settings-btn"
-        aria-label="Settings unavailable"
-        title="Settings unavailable"
-        disabled
+        aria-label="Open settings"
+        title="Settings"
+        onClick={() => navigate("/settings")}
       >
         <Settings aria-hidden="true" size={19} />
       </button>
@@ -312,7 +314,7 @@ function AdminShell() {
             <Route path="/finance/refunds" element={<RefundsPage />} />
             <Route path="/promotions" element={<PromotionsPage />} />
             <Route path="/audit-logs" element={<AuditLogsPage />} />
-            <Route path="/settings" element={<Navigate to="/" replace />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route
               path="*"
               element={
