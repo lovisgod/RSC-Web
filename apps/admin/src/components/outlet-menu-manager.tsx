@@ -302,7 +302,6 @@ function MenuItemModal({
   const [categoryId, setCategoryId] = useState(item?.categoryId ?? categories[0]?.id ?? "");
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
   const [isAvailable, setIsAvailable] = useState(item?.isAvailable ?? true);
-  const [sortOrder, setSortOrder] = useState(String(item?.sortOrder ?? 0));
   const [modifierGroupIds, setModifierGroupIds] = useState(assignedModifierGroupIds);
 
   const save = useMutation({
@@ -320,7 +319,7 @@ function MenuItemModal({
         ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
         priceMinor,
         isAvailable,
-        sortOrder: Number.parseInt(sortOrder, 10) || 0,
+        sortOrder: item?.sortOrder ?? 0,
         modifierGroupIds,
       };
 
@@ -400,21 +399,13 @@ function MenuItemModal({
             {item?.imageUrl && !imageFile && <small>Current image will be kept.</small>}
             {imageFile && <small>{imageFile.name}</small>}
           </FormField>
-          <div className="admin-menu-form-grid">
+          <div className="admin-menu-form-grid admin-menu-form-grid--single">
             <FormField label="Price (₦) *">
               <input
                 type="number"
                 value={price}
                 onChange={(event) => setPrice(event.target.value)}
                 required
-              />
-            </FormField>
-            <FormField label="Sort Order">
-              <input
-                type="number"
-                min={0}
-                value={sortOrder}
-                onChange={(event) => setSortOrder(event.target.value)}
               />
             </FormField>
           </div>
@@ -656,6 +647,7 @@ function CategoryEditor({
             value={sortOrder}
             onChange={(event) => setSortOrder(event.target.value)}
           />
+          <small>Lower numbers appear first in the customer-facing menu sections.</small>
         </FormField>
         <label className="admin-menu-inline-switch">
           <span>Active</span>
@@ -843,6 +835,7 @@ function ModifierEditor({
             value={sortOrder}
             onChange={(event) => setSortOrder(event.target.value)}
           />
+          <small>Lower numbers show this modifier group earlier on the item options screen.</small>
         </FormField>
         <label className="admin-menu-checkbox">
           <input
@@ -916,6 +909,7 @@ function ModifierOptionEditor({
             value={sortOrder}
             onChange={(event) => setSortOrder(event.target.value)}
           />
+          <small>Lower numbers show this option earlier inside its modifier group.</small>
         </FormField>
       </div>
       <label className="admin-menu-inline-switch">

@@ -187,6 +187,9 @@ function ModifierGroupEditor({
             onChange={(event) => setSortOrder(Number(event.target.value))}
             className={fieldClass}
           />
+          <span className="mt-1.5 block text-xs leading-relaxed text-slate-500">
+            Lower numbers show this modifier group earlier on the item options screen.
+          </span>
         </label>
 
         {error && <p className="text-xs text-red-600">{error}</p>}
@@ -289,6 +292,9 @@ function ModifierOptionEditor({
               onChange={(event) => setSortOrder(Number(event.target.value))}
               className={fieldClass}
             />
+            <span className="mt-1.5 block text-xs leading-relaxed text-slate-500">
+              Lower numbers show this option earlier inside its modifier group.
+            </span>
           </label>
           <label className="flex items-end">
             <span className="flex min-h-11 w-full items-center justify-between rounded-xl border border-slate-200 px-3">
