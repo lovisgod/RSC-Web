@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import { Button } from "./button";
