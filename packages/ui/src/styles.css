@@ -259,6 +259,227 @@ a {
   border-color: var(--rsc-danger);
 }
 
+/* Change password panel */
+
+.rsc-change-password-panel {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--rsc-main) 10%, var(--rsc-line));
+  border-radius: calc(var(--rsc-radius) + 6px);
+  background: var(--rsc-panel);
+  box-shadow: 0 14px 42px rgb(30 49 96 / 8%);
+}
+
+.rsc-change-password-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--rsc-main) 8%, var(--rsc-line));
+  background: color-mix(in srgb, var(--rsc-surface) 72%, white);
+}
+
+.rsc-change-password-panel__title-group {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.rsc-change-password-panel__icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.85rem;
+  color: var(--rsc-main);
+  background: color-mix(in srgb, var(--rsc-main) 10%, white);
+}
+
+.rsc-change-password-panel h2,
+.rsc-change-password-panel h3,
+.rsc-change-password-panel p {
+  margin: 0;
+}
+
+.rsc-change-password-panel h2 {
+  color: var(--rsc-ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.rsc-change-password-panel__head p,
+.rsc-change-password-panel__form-head p,
+.rsc-change-password-panel__idle p {
+  margin-top: 0.35rem;
+  color: var(--rsc-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.rsc-change-password-panel__cta {
+  flex-shrink: 0;
+  gap: 0.45rem;
+}
+
+.rsc-change-password-panel__form {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+.rsc-change-password-panel__form-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rsc-change-password-panel h3 {
+  color: var(--rsc-ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.rsc-change-password-panel__close {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 0.7rem;
+  color: var(--rsc-muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.rsc-change-password-panel__close:hover:not(:disabled) {
+  color: var(--rsc-ink);
+  background: color-mix(in srgb, var(--rsc-main) 7%, white);
+}
+
+.rsc-change-password-panel__close:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rsc-change-password-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.rsc-change-password-panel__span {
+  grid-column: 1 / -1;
+}
+
+.rsc-settings-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.rsc-settings-field label {
+  color: var(--rsc-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.rsc-settings-password {
+  position: relative;
+}
+
+.rsc-settings-password input {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0.75rem 2.8rem 0.75rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  color: var(--rsc-ink);
+  background: color-mix(in srgb, var(--rsc-surface) 45%, white);
+  outline: none;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.rsc-settings-password input:focus {
+  border-color: var(--rsc-main);
+  background: white;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rsc-main) 10%, transparent);
+}
+
+.rsc-settings-password input[aria-invalid="true"] {
+  border-color: var(--rsc-danger);
+}
+
+.rsc-settings-password button {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  display: grid;
+  padding: 0;
+  border: 0;
+  color: var(--rsc-muted);
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.rsc-settings-field__error {
+  color: var(--rsc-danger);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.rsc-change-password-panel__error {
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-danger) 18%, white);
+  border-radius: 0.85rem;
+  color: var(--rsc-danger);
+  background: color-mix(in srgb, var(--rsc-danger) 8%, white);
+  font-size: 0.88rem;
+}
+
+.rsc-change-password-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--rsc-main) 8%, var(--rsc-line));
+}
+
+.rsc-change-password-panel__idle {
+  padding: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .rsc-change-password-panel__head,
+  .rsc-change-password-panel__form-head,
+  .rsc-change-password-panel__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rsc-change-password-panel__cta,
+  .rsc-change-password-panel__actions .rsc-button {
+    width: 100%;
+  }
+
+  .rsc-change-password-panel__close {
+    align-self: flex-end;
+  }
+
+  .rsc-change-password-panel__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Route not found */
 
 .rsc-not-found {

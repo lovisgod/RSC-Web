@@ -1,6 +1,6 @@
 import { Button } from "@rsc/ui";
 import type { OutletSummary } from "@rsc/contracts";
-import { Upload, X } from "lucide-react";
+import { Info, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -263,7 +263,16 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
 
           {/* Settlement account code */}
           <label className="field-label">
-            Settlement Subaccount Code
+            <span className="field-label__row">
+              Settlement Subaccount Code
+              <span
+                className="field-info-icon"
+                title="If this outlet does not have a settlement subaccount code, it will not be visible to customers."
+                aria-label="Outlet visibility depends on settlement subaccount code"
+              >
+                <Info size={14} aria-hidden="true" />
+              </span>
+            </span>
             <input
               className={`field-input${fieldErrors.settlementSubaccountCode ? " field-input--error" : ""}`}
               type="text"
@@ -277,6 +286,9 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
                 }))
               }
             />
+            <span className="field-hint">
+              If this is not added, the outlet will stay closed and unaccessible customers.
+            </span>
             {fieldErrors.settlementSubaccountCode && (
               <span className="field-error">{fieldErrors.settlementSubaccountCode}</span>
             )}

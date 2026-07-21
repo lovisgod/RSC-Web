@@ -5,6 +5,8 @@ import {
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
   auditLogQuerySchema,
+  changePasswordInputSchema,
+  changePasswordResultSchema,
   operationsQueueSchema,
   operationsStatsQuerySchema,
   operationsSummarySchema,
@@ -39,6 +41,8 @@ import {
   type AdminOrdersQuery,
   type AdminOrdersResult,
   type AuditLogQuery,
+  type ChangePasswordInput,
+  type ChangePasswordResult,
   type CreateAdminInput,
   type ForgotPasswordResult,
   type LoginResult,
@@ -176,6 +180,14 @@ export const login = (body: { identifier: string; password: string }): Promise<L
 
 export const logout = (): Promise<LogoutResult> => post("/api/v1/auth/logout");
 
+export const changePassword = async (body: ChangePasswordInput): Promise<ChangePasswordResult> => {
+  const payload = changePasswordInputSchema.parse(body);
+  return parseResponse(
+    changePasswordResultSchema,
+    await post<unknown>("/api/v1/auth/change-password", payload),
+  );
+};
+
 export interface RegisterBody {
   name: string;
   email: string;
@@ -241,6 +253,20 @@ export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<Out
   patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) =>
     parseResponse(outletSummarySchema, data),
   );
+
+export const setOutletSubaccountCode = (
+  outletId: string,
+  body: { subaccountCode: string },
+): Promise<{ subaccountCode: string; outlet: OutletSummary }> =>
+  http.put<Envelope<unknown>>(`/api/v1/outlets/${outletId}/subaccount-code`, body).then((r) => {
+    const parsed = z
+      .object({
+        subaccountCode: z.string(),
+        outlet: outletSummarySchema,
+      })
+      .parse(r.data.data);
+    return parsed;
+  });
 
 export interface OutletSettlementQuery {
   dateFrom?: string;

@@ -2,6 +2,7 @@ import type { ItemModifier, ItemModifierGroup } from "@rsc/contracts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CircleDollarSign,
+  Info,
   Loader2,
   Pencil,
   Plus,
@@ -177,8 +178,16 @@ function ModifierGroupEditor({
         </div>
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
             Display order
+            <button
+              type="button"
+              aria-label="Lower numbers show this modifier group earlier on the item options screen."
+              title="Lower numbers show this modifier group earlier on the item options screen."
+              className="grid h-4 w-4 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500"
+            >
+              <Info size={11} aria-hidden="true" />
+            </button>
           </span>
           <input
             type="number"
@@ -279,8 +288,16 @@ function ModifierOptionEditor({
 
         <div className="grid grid-cols-2 gap-3">
           <label>
-            <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
               Display order
+              <button
+                type="button"
+                aria-label="Lower numbers show this option earlier inside its modifier group."
+                title="Lower numbers show this option earlier inside its modifier group."
+                className="grid h-4 w-4 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500"
+              >
+                <Info size={11} aria-hidden="true" />
+              </button>
             </span>
             <input
               type="number"

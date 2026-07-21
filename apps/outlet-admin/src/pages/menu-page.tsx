@@ -121,7 +121,6 @@ function AddItemModal({
   const [price, setPrice] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [isAvailable, setIsAvailable] = useState(true);
-  const [sortOrder, setSortOrder] = useState("0");
   const [selectedModifierGroupIds, setSelectedModifierGroupIds] = useState<string[]>([]);
   const [shaking, setShaking] = useState(false);
 
@@ -153,7 +152,7 @@ function AddItemModal({
           ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
           priceMinor,
           isAvailable,
-          sortOrder: parseInt(sortOrder, 10) || 0,
+          sortOrder: 0,
           ...(selectedModifierGroupIds.length > 0
             ? { modifierGroupIds: selectedModifierGroupIds }
             : {}),
@@ -196,7 +195,7 @@ function AddItemModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Jollof Rice"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
             />
           </FormField>
 
@@ -206,7 +205,7 @@ function AddItemModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Short description of the item"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
             />
           </FormField>
 
@@ -247,7 +246,7 @@ function AddItemModal({
             </label>
           </FormField>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <FormField label="Price (₦) *">
               <input
                 type="number"
@@ -255,17 +254,7 @@ function AddItemModal({
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="e.g. 4500"
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
-              />
-            </FormField>
-
-            <FormField label="Sort Order">
-              <input
-                type="number"
-                min={0}
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               />
             </FormField>
           </div>
@@ -276,7 +265,7 @@ function AddItemModal({
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               >
                 {categories.length === 0 && <option value="">No categories yet</option>}
                 {categories.map((cat) => (
@@ -293,7 +282,7 @@ function AddItemModal({
                 value={deliveryTimeRange}
                 onChange={(e) => setDeliveryTimeRange(e.target.value)}
                 placeholder="e.g. 25-35 mins"
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               />
             </FormField>
           </div>
@@ -388,7 +377,6 @@ function EditItemModal({
   const [price, setPrice] = useState(String(item.priceMinor / 100));
   const [categoryId, setCategoryId] = useState(item.categoryId);
   const [isAvailable, setIsAvailable] = useState(item.isAvailable);
-  const [sortOrder, setSortOrder] = useState(String(item.sortOrder));
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
   const [selectedModifierGroupIds, setSelectedModifierGroupIds] =
     useState<string[]>(assignedModifierGroupIds);
@@ -424,7 +412,7 @@ function EditItemModal({
           ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
           priceMinor,
           isAvailable,
-          sortOrder: parseInt(sortOrder, 10) || 0,
+          sortOrder: item.sortOrder,
           modifierGroupIds: selectedModifierGroupIds,
         },
         ...(imageFile ? { imageFile } : {}),
@@ -461,7 +449,7 @@ function EditItemModal({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
             />
           </FormField>
 
@@ -471,7 +459,7 @@ function EditItemModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Short description of the item"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
             />
           </FormField>
 
@@ -523,24 +511,14 @@ function EditItemModal({
             </label>
           </FormField>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <FormField label="Price (₦) *">
               <input
                 type="number"
                 required
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
-              />
-            </FormField>
-
-            <FormField label="Sort Order">
-              <input
-                type="number"
-                min={0}
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               />
             </FormField>
           </div>
@@ -551,7 +529,7 @@ function EditItemModal({
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -567,7 +545,7 @@ function EditItemModal({
                 value={deliveryTimeRange}
                 onChange={(e) => setDeliveryTimeRange(e.target.value)}
                 placeholder="e.g. 25-35 mins"
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               />
             </FormField>
           </div>
