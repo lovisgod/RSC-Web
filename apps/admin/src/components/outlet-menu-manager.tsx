@@ -18,7 +18,16 @@ import type {
   MenuItem,
   OutletSummary,
 } from "@rsc/contracts";
-import { ArrowLeft, GripVertical, Lightbulb, Pencil, Plus, Trash2, Utensils } from "lucide-react";
+import {
+  ArrowLeft,
+  GripVertical,
+  Info,
+  Lightbulb,
+  Pencil,
+  Plus,
+  Trash2,
+  Utensils,
+} from "lucide-react";
 import { type FormEvent, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -98,10 +107,31 @@ function useRefreshOutletMenu(outletId: string) {
     ]);
 }
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+function FormField({
+  label,
+  children,
+  tooltip,
+}: {
+  label: string;
+  children: React.ReactNode;
+  tooltip?: string;
+}) {
   return (
     <label className="admin-menu-field">
-      <span>{label}</span>
+      <span className="admin-menu-field__label-row">
+        {label}
+        {tooltip && (
+          <button
+            type="button"
+            className="admin-field-tooltip"
+            aria-label={tooltip}
+            title={tooltip}
+            tabIndex={0}
+          >
+            <Info size={13} aria-hidden="true" />
+          </button>
+        )}
+      </span>
       {children}
     </label>
   );
@@ -640,14 +670,16 @@ function CategoryEditor({
         <input value={name} onChange={(event) => setName(event.target.value)} />
       </FormField>
       <div className="admin-menu-form-grid">
-        <FormField label="Sort Order">
+        <FormField
+          label="Sort Order"
+          tooltip="Lower numbers appear first in the customer-facing menu sections."
+        >
           <input
             type="number"
             min={0}
             value={sortOrder}
             onChange={(event) => setSortOrder(event.target.value)}
           />
-          <small>Lower numbers appear first in the customer-facing menu sections.</small>
         </FormField>
         <label className="admin-menu-inline-switch">
           <span>Active</span>
@@ -828,14 +860,16 @@ function ModifierEditor({
         </FormField>
       </div>
       <div className="admin-menu-form-grid">
-        <FormField label="Sort Order">
+        <FormField
+          label="Sort Order"
+          tooltip="Lower numbers show this modifier group earlier on the item options screen."
+        >
           <input
             type="number"
             min={0}
             value={sortOrder}
             onChange={(event) => setSortOrder(event.target.value)}
           />
-          <small>Lower numbers show this modifier group earlier on the item options screen.</small>
         </FormField>
         <label className="admin-menu-checkbox">
           <input
@@ -902,14 +936,16 @@ function ModifierOptionEditor({
         <FormField label="Price Delta (₦)">
           <input type="number" value={price} onChange={(event) => setPrice(event.target.value)} />
         </FormField>
-        <FormField label="Sort Order">
+        <FormField
+          label="Sort Order"
+          tooltip="Lower numbers show this option earlier inside its modifier group."
+        >
           <input
             type="number"
             min={0}
             value={sortOrder}
             onChange={(event) => setSortOrder(event.target.value)}
           />
-          <small>Lower numbers show this option earlier inside its modifier group.</small>
         </FormField>
       </div>
       <label className="admin-menu-inline-switch">

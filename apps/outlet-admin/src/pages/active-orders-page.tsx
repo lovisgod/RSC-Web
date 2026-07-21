@@ -94,6 +94,20 @@ function HandoffVerifier({
   const codeIsComplete = code.length === 6;
   const notFound = codeIsComplete && hasPickupCodes && !matchedOrder;
   const pickupCodesUnavailable = codeIsComplete && !hasPickupCodes;
+  const matchedHandoffMode: HandoffMode | null = matchedOrder
+    ? matchedOrder.deliveryMode === "TAKEOUT"
+      ? "takeout"
+      : matchedOrder.deliveryMode === "DELIVERY"
+        ? "dispatch"
+        : null
+    : null;
+  const matchedActionCopy = matchedHandoffMode ? HANDOFF_MODES[matchedHandoffMode] : null;
+  const matchedActionLabel =
+    matchedHandoffMode === "takeout"
+      ? "Confirm customer pickup"
+      : matchedHandoffMode === "dispatch"
+        ? "Confirm rider handoff"
+        : "";
 
   return (
     <section className="mx-6 mb-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
@@ -157,28 +171,28 @@ function HandoffVerifier({
               )}
             </ul>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={Boolean(submittingMode)}
-                onClick={() => void confirmHandoff("takeout")}
-                className="h-10 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
-              >
-                {submittingMode === "takeout"
-                  ? HANDOFF_MODES.takeout.pending
-                  : "Confirm customer pickup"}
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(submittingMode)}
-                onClick={() => void confirmHandoff("dispatch")}
-                className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
-              >
-                {submittingMode === "dispatch"
-                  ? HANDOFF_MODES.dispatch.pending
-                  : "Confirm rider handoff"}
-              </button>
-            </div>
+            {matchedHandoffMode && matchedActionCopy ? (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  disabled={Boolean(submittingMode)}
+                  onClick={() => void confirmHandoff(matchedHandoffMode)}
+                  className={`h-10 rounded-xl px-4 text-sm font-semibold text-white transition disabled:opacity-50 ${
+                    matchedHandoffMode === "takeout"
+                      ? "bg-emerald-500 hover:bg-emerald-600"
+                      : "bg-slate-900 hover:bg-slate-700"
+                  }`}
+                >
+                  {submittingMode === matchedHandoffMode
+                    ? matchedActionCopy.pending
+                    : matchedActionLabel}
+                </button>
+              </div>
+            ) : (
+              <p className="mt-3 text-xs font-medium text-amber-600">
+                This order delivery mode cannot be verified from the outlet queue.
+              </p>
+            )}
           </div>
         )}
 

@@ -254,6 +254,20 @@ export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<Out
     parseResponse(outletSummarySchema, data),
   );
 
+export const setOutletSubaccountCode = (
+  outletId: string,
+  body: { subaccountCode: string },
+): Promise<{ subaccountCode: string; outlet: OutletSummary }> =>
+  http.put<Envelope<unknown>>(`/api/v1/outlets/${outletId}/subaccount-code`, body).then((r) => {
+    const parsed = z
+      .object({
+        subaccountCode: z.string(),
+        outlet: outletSummarySchema,
+      })
+      .parse(r.data.data);
+    return parsed;
+  });
+
 export interface OutletSettlementQuery {
   dateFrom?: string;
   dateTo?: string;

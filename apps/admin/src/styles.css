@@ -3108,6 +3108,30 @@ th {
   text-transform: uppercase;
 }
 
+.admin-menu-field__label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admin-field-tooltip {
+  display: inline-grid;
+  width: 1.05rem;
+  height: 1.05rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--rsc-navy) 14%, var(--rsc-border));
+  border-radius: 999px;
+  color: var(--rsc-navy);
+  background: color-mix(in srgb, var(--rsc-navy) 6%, white);
+  cursor: help;
+}
+
+.admin-field-tooltip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--rsc-navy) 35%, white);
+  outline-offset: 2px;
+}
+
 .admin-menu-field input,
 .admin-menu-field select {
   width: 100%;
@@ -4767,6 +4791,153 @@ th {
   color: var(--rsc-text-muted);
   font-size: 0.92rem;
   line-height: 1.55;
+}
+
+.admin-settlement-settings {
+  margin-top: 1.5rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--rsc-navy) 10%, var(--rsc-line));
+  border-radius: 24px;
+  background: var(--rsc-panel);
+  box-shadow: 0 14px 42px rgb(30 49 96 / 8%);
+}
+
+.admin-settlement-settings__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--rsc-navy) 8%, var(--rsc-line));
+  background: color-mix(in srgb, var(--rsc-surface) 72%, white);
+}
+
+.admin-settlement-settings__icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.85rem;
+  color: var(--rsc-main);
+  background: color-mix(in srgb, var(--rsc-main) 10%, white);
+}
+
+.admin-settlement-settings h2,
+.admin-settlement-settings p {
+  margin: 0;
+}
+
+.admin-settlement-settings h2 {
+  color: var(--rsc-navy-dark);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.admin-settlement-settings__head p {
+  margin-top: 0.35rem;
+  color: var(--rsc-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.admin-settlement-settings__form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.admin-settlement-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-settlement-field > span {
+  color: var(--rsc-text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-settlement-field input,
+.admin-settlement-field select {
+  width: 100%;
+  min-height: 2.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  color: var(--rsc-navy-dark);
+  background: #f8fafc;
+  outline: none;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.admin-settlement-field input:focus,
+.admin-settlement-field select:focus {
+  border-color: var(--rsc-main);
+  background: white;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rsc-main) 10%, transparent);
+}
+
+.admin-settlement-field small {
+  color: var(--rsc-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.admin-settlement-field code {
+  font-weight: 800;
+  color: var(--rsc-navy-dark);
+}
+
+.admin-settlement-status {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-brand) 22%, white);
+  border-radius: 0.95rem;
+  color: #92400e;
+  background: color-mix(in srgb, var(--rsc-brand) 10%, white);
+}
+
+.admin-settlement-status--active {
+  border-color: color-mix(in srgb, var(--rsc-success) 18%, white);
+  color: #166534;
+  background: color-mix(in srgb, var(--rsc-success) 9%, white);
+}
+
+.admin-settlement-status strong {
+  font-size: 0.86rem;
+}
+
+.admin-settlement-status span {
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.admin-settlement-settings__error {
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-danger) 18%, white);
+  border-radius: 0.85rem;
+  color: var(--rsc-danger);
+  background: color-mix(in srgb, var(--rsc-danger) 8%, white);
+  font-size: 0.88rem;
+}
+
+.admin-settlement-settings__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .admin-settlement-settings__actions .rsc-button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
