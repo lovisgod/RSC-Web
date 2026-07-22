@@ -1878,6 +1878,16 @@ th {
   gap: 0.75rem;
 }
 
+.outlet-empty-state {
+  border: 1px dashed color-mix(in srgb, var(--rsc-navy) 14%, var(--rsc-line));
+  border-radius: var(--rsc-radius);
+  background: color-mix(in srgb, var(--rsc-navy) 3%, white);
+}
+
+.outlet-empty-state .rsc-empty-state {
+  padding: clamp(2.25rem, 7vw, 4.25rem) 1.25rem;
+}
+
 .outlet-card {
   display: flex;
   align-items: center;
@@ -3541,6 +3551,16 @@ th {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--rsc-navy-dark);
+}
+
+.recon-empty-state {
+  border: 1px dashed color-mix(in srgb, var(--rsc-navy) 14%, var(--rsc-line));
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--rsc-navy) 3%, white);
+}
+
+.recon-empty-state .rsc-empty-state {
+  padding: clamp(2.5rem, 7vw, 4.75rem) 1.25rem;
 }
 
 .outlet-name-cell {
