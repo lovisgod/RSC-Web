@@ -1,7 +1,7 @@
-import { Button } from "@rsc/ui";
+import { Button, EmptyState } from "@rsc/ui";
 import type { OutletSummary } from "@rsc/contracts";
 import Skeleton from "@mui/material/Skeleton";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Store, Trash2 } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -191,97 +191,113 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
               </Button>
             </div>
 
-            <div className="outlet-list">
-              {isLoading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton
-                      key={i}
-                      variant="rectangular"
-                      height={84}
-                      sx={{ borderRadius: CARD_RADIUS, transform: "none" }}
-                    />
-                  ))
-                : outlets?.map((outlet) => {
-                    const isOnline = onlineState[outlet.id] ?? outlet.isOnline;
-                    const isDeleteReady = deleteReadyId === outlet.id;
-                    const isBeingDeleted = isDeleting && deletingId === outlet.id;
+            {isLoading ? (
+              <div className="outlet-list">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rectangular"
+                    height={84}
+                    sx={{ borderRadius: CARD_RADIUS, transform: "none" }}
+                  />
+                ))}
+              </div>
+            ) : outlets && outlets.length === 0 ? (
+              <div className="outlet-empty-state">
+                <EmptyState
+                  icon={<Store size={34} />}
+                  heading="No outlets yet"
+                  body="Create the first outlet to configure menus, staff access, settlement codes, and customer availability."
+                  action={
+                    <Button tone="navy" type="button" onClick={() => setModalOutlet(null)}>
+                      <span className="onboard-icon">+</span>
+                      <span>Onboard New Outlet</span>
+                    </Button>
+                  }
+                />
+              </div>
+            ) : (
+              <div className="outlet-list">
+                {outlets?.map((outlet) => {
+                  const isOnline = onlineState[outlet.id] ?? outlet.isOnline;
+                  const isDeleteReady = deleteReadyId === outlet.id;
+                  const isBeingDeleted = isDeleting && deletingId === outlet.id;
 
-                    return (
-                      <div
-                        key={outlet.id}
-                        className={[
-                          "outlet-card",
-                          isDeleteReady ? "outlet-card--delete-ready" : "",
-                          isBeingDeleted ? "outlet-card--deleting" : "",
-                        ]
-                          .join(" ")
-                          .trim()}
-                        onClick={() => handleCardClick(outlet.id)}
-                        onDoubleClick={() => handleCardDoubleClick(outlet.id)}
-                      >
-                        {/* Side action buttons — slide in on double-tap */}
-                        <div className="outlet-card__side-actions">
-                          <button
-                            type="button"
-                            aria-label={`Edit ${outlet.name}`}
-                            className="outlet-edit-btn"
-                            tabIndex={isDeleteReady ? 0 : -1}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteReadyId(null);
-                              setModalOutlet(outlet);
-                            }}
-                          >
-                            <Pencil size={15} />
-                          </button>
-
-                          <button
-                            type="button"
-                            aria-label={`Delete ${outlet.name}`}
-                            className="outlet-delete-btn"
-                            tabIndex={isDeleteReady ? 0 : -1}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(outlet.id);
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-
-                        <OutletAvatar imageUrl={outlet.imageUrl} name={outlet.name} />
-
-                        <div className="outlet-card__info">
-                          <strong>{outlet.name}</strong>
-                          <small className="outlet-card__cuisine">{outlet.cuisineType}</small>
-                          <small>
-                            Sub-account:{" "}
-                            {outlet.settlementSubaccountCode ?? "None (Pending Onboarding)"}
-                          </small>
-                        </div>
-
-                        <span
-                          className={`outlet-status${isOnline ? "" : " outlet-status--closed"}`}
+                  return (
+                    <div
+                      key={outlet.id}
+                      className={[
+                        "outlet-card",
+                        isDeleteReady ? "outlet-card--delete-ready" : "",
+                        isBeingDeleted ? "outlet-card--deleting" : "",
+                      ]
+                        .join(" ")
+                        .trim()}
+                      onClick={() => handleCardClick(outlet.id)}
+                      onDoubleClick={() => handleCardDoubleClick(outlet.id)}
+                    >
+                      {/* Side action buttons — slide in on double-tap */}
+                      <div className="outlet-card__side-actions">
+                        <button
+                          type="button"
+                          aria-label={`Edit ${outlet.name}`}
+                          className="outlet-edit-btn"
+                          tabIndex={isDeleteReady ? 0 : -1}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteReadyId(null);
+                            setModalOutlet(outlet);
+                          }}
                         >
-                          {isOnline ? "ONLINE & TRADING" : "REMOTELY CLOSED"}
-                        </span>
+                          <Pencil size={15} />
+                        </button>
 
                         <button
                           type="button"
-                          role="switch"
-                          aria-checked={isOnline}
-                          aria-label={`Toggle ${outlet.name} availability`}
-                          className={`outlet-toggle${isOnline ? " outlet-toggle--on" : ""}${pendingToggleId === outlet.id ? " outlet-toggle--pending" : ""}`}
-                          disabled={pendingToggleId === outlet.id}
+                          aria-label={`Delete ${outlet.name}`}
+                          className="outlet-delete-btn"
+                          tabIndex={isDeleteReady ? 0 : -1}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleToggle(outlet, isOnline);
+                            handleDelete(outlet.id);
                           }}
-                        />
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
-                    );
-                  })}
-            </div>
+
+                      <OutletAvatar imageUrl={outlet.imageUrl} name={outlet.name} />
+
+                      <div className="outlet-card__info">
+                        <strong>{outlet.name}</strong>
+                        <small className="outlet-card__cuisine">{outlet.cuisineType}</small>
+                        <small>
+                          Sub-account:{" "}
+                          {outlet.settlementSubaccountCode ?? "None (Pending Onboarding)"}
+                        </small>
+                      </div>
+
+                      <span className={`outlet-status${isOnline ? "" : " outlet-status--closed"}`}>
+                        {isOnline ? "ONLINE & TRADING" : "REMOTELY CLOSED"}
+                      </span>
+
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={isOnline}
+                        aria-label={`Toggle ${outlet.name} availability`}
+                        className={`outlet-toggle${isOnline ? " outlet-toggle--on" : ""}${pendingToggleId === outlet.id ? " outlet-toggle--pending" : ""}`}
+                        disabled={pendingToggleId === outlet.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggle(outlet, isOnline);
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 
