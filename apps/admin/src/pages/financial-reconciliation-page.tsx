@@ -1,7 +1,7 @@
 import Skeleton from "@mui/material/Skeleton";
-import { Button } from "@rsc/ui";
+import { Button, EmptyState } from "@rsc/ui";
 import { useMutation } from "@tanstack/react-query";
-import { Download, X } from "lucide-react";
+import { Download, ReceiptText, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useOutletsLive } from "../hooks/use-outlets-live";
@@ -298,99 +298,109 @@ export function FinancialReconciliationPage() {
           </div>
         </div>
 
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Outlet Name</th>
-                <th>Settlement Subaccount</th>
-                <th>Completed Sub-Orders</th>
-                <th>Gross Volume</th>
-                <th>RSC Commission</th>
-                <th>Net Payable</th>
-                <th>Payout Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <tr key={i}>
-                      {Array.from({ length: 8 }).map((_, j) => (
-                        <td key={j}>
-                          <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                : rows.map((settlement) => {
-                    const isCurrentApproval =
-                      isApproving &&
-                      variables?.outletId === settlement.outletId &&
-                      variables.dateFrom === selectedDate &&
-                      variables.dateTo === selectedDate;
-
-                    return (
-                      <tr key={settlement.outletId}>
-                        <td>
-                          <div className="outlet-name-cell">
-                            <div className="outlet-cell-avatar">
-                              {settlement.imageUrl ? (
-                                <img
-                                  src={settlement.imageUrl}
-                                  alt=""
-                                  className="outlet-cell-avatar__img"
-                                />
-                              ) : (
-                                <span aria-hidden="true">{settlement.outletName.charAt(0)}</span>
-                              )}
-                            </div>
-                            <strong>{settlement.outletName}</strong>
-                          </div>
-                        </td>
-                        <td className="text-mono">{settlement.subaccountCode ?? "—"}</td>
-                        <td>{settlement.completedSubOrders}</td>
-                        <td>
-                          <span className="amount">{formatMinor(settlement.grossMinor)}</span>
-                        </td>
-                        <td>
-                          <span className="amount amount--negative">
-                            {formatMinor(settlement.commissionMinor)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="amount amount--positive">
-                            {formatMinor(settlement.netMinor)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`badge ${statusClass(settlement.status)}`}>
-                            {statusLabel(settlement.status)}
-                          </span>
-                        </td>
-                        <td>
-                          <Button
-                            tone="navy"
-                            type="button"
-                            disabled={!settlement.approvalAvailable || isCurrentApproval}
-                            title={settlement.approvalUnavailableReason ?? undefined}
-                            onClick={() =>
-                              approveSettlement({
-                                outletId: settlement.outletId,
-                                dateFrom: selectedDate,
-                                dateTo: selectedDate,
-                              })
-                            }
-                          >
-                            {isCurrentApproval ? "Approving..." : "Approve Settlement"}
-                          </Button>
-                        </td>
+        {!isLoading && rows.length === 0 ? (
+          <div className="recon-empty-state">
+            <EmptyState
+              icon={<ReceiptText size={34} />}
+              heading="No settlement rows for this date"
+              body="There are no successful-payment outlet transactions to reconcile for the selected date."
+            />
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Outlet Name</th>
+                  <th>Settlement Subaccount</th>
+                  <th>Completed Sub-Orders</th>
+                  <th>Gross Volume</th>
+                  <th>RSC Commission</th>
+                  <th>Net Payable</th>
+                  <th>Payout Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i}>
+                        {Array.from({ length: 8 }).map((_, j) => (
+                          <td key={j}>
+                            <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
+                          </td>
+                        ))}
                       </tr>
-                    );
-                  })}
-            </tbody>
-          </table>
-        </div>
+                    ))
+                  : rows.map((settlement) => {
+                      const isCurrentApproval =
+                        isApproving &&
+                        variables?.outletId === settlement.outletId &&
+                        variables.dateFrom === selectedDate &&
+                        variables.dateTo === selectedDate;
+
+                      return (
+                        <tr key={settlement.outletId}>
+                          <td>
+                            <div className="outlet-name-cell">
+                              <div className="outlet-cell-avatar">
+                                {settlement.imageUrl ? (
+                                  <img
+                                    src={settlement.imageUrl}
+                                    alt=""
+                                    className="outlet-cell-avatar__img"
+                                  />
+                                ) : (
+                                  <span aria-hidden="true">{settlement.outletName.charAt(0)}</span>
+                                )}
+                              </div>
+                              <strong>{settlement.outletName}</strong>
+                            </div>
+                          </td>
+                          <td className="text-mono">{settlement.subaccountCode ?? "—"}</td>
+                          <td>{settlement.completedSubOrders}</td>
+                          <td>
+                            <span className="amount">{formatMinor(settlement.grossMinor)}</span>
+                          </td>
+                          <td>
+                            <span className="amount amount--negative">
+                              {formatMinor(settlement.commissionMinor)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="amount amount--positive">
+                              {formatMinor(settlement.netMinor)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${statusClass(settlement.status)}`}>
+                              {statusLabel(settlement.status)}
+                            </span>
+                          </td>
+                          <td>
+                            <Button
+                              tone="navy"
+                              type="button"
+                              disabled={!settlement.approvalAvailable || isCurrentApproval}
+                              title={settlement.approvalUnavailableReason ?? undefined}
+                              onClick={() =>
+                                approveSettlement({
+                                  outletId: settlement.outletId,
+                                  dateFrom: selectedDate,
+                                  dateTo: selectedDate,
+                                })
+                              }
+                            >
+                              {isCurrentApproval ? "Approving..." : "Approve Settlement"}
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </>
   );
