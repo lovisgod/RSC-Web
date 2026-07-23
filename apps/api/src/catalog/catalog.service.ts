@@ -840,8 +840,13 @@ export class CatalogService {
   ): Promise<PreparationSuggestion[]> {
     const fallbackSuggestions = await this.listConfiguredPreparationSuggestions(query);
     const aiSuggestions = await this.generateAiPreparationSuggestions(query, fallbackSuggestions);
+    const localSuggestions = localPreparationSuggestions(query, fallbackSuggestions);
 
-    return dedupePreparationSuggestions([...aiSuggestions, ...fallbackSuggestions]).slice(0, 10);
+    return dedupePreparationSuggestions([
+      ...aiSuggestions,
+      ...localSuggestions,
+      ...fallbackSuggestions,
+    ]).slice(0, 10);
   }
 
   private async listConfiguredPreparationSuggestions(
@@ -1041,6 +1046,9 @@ function buildPreparationSuggestionPrompt(input: {
     rules: [
       "Return a JSON array of strings only.",
       "Each suggestion must be 80 characters or less.",
+      "Never return an empty array when customerSearch is present.",
+      "Use customerSearch as the user's intent and complete it into practical order notes.",
+      "For customerSearch like 'extra', suggest common extras such as extra spice, sauce, pepper, or cutlery.",
       "No numbering, markdown, quotes around the whole response, or explanations.",
       "Avoid duplicates of existing configured fallback suggestions.",
       "Keep suggestions practical and safe, like spice level, sauce, cutlery, and packaging notes.",
@@ -1102,10 +1110,13 @@ function parseAiSuggestionTexts(content: string | undefined): string[] {
   }
 
   const trimmed = content.trim();
-  const jsonText = trimmed.startsWith("[") ? trimmed : (trimmed.match(/\[[\s\S]*\]/)?.[0] ?? "[]");
+  const arrayMatch = trimmed.startsWith("[") ? trimmed : trimmed.match(/\[[\s\S]*\]/)?.[0];
+  if (!arrayMatch) {
+    return parseLooseSuggestionTexts(trimmed);
+  }
 
   try {
-    const parsed = JSON.parse(jsonText) as unknown;
+    const parsed = JSON.parse(arrayMatch) as unknown;
     if (!Array.isArray(parsed)) {
       return [];
     }
@@ -1116,8 +1127,58 @@ function parseAiSuggestionTexts(content: string | undefined): string[] {
       .filter((value) => value.length > 0 && value.length <= 80)
       .slice(0, 5);
   } catch {
+    return parseLooseSuggestionTexts(trimmed);
+  }
+}
+
+function parseLooseSuggestionTexts(content: string): string[] {
+  return content
+    .split(/\r?\n|;/)
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^[-*•\d.)\s]+/, "")
+        .replace(/^["']|["']$/g, "")
+        .replace(/\s+/g, " "),
+    )
+    .filter((value) => value.length > 0 && value.length <= 80)
+    .slice(0, 5);
+}
+
+function localPreparationSuggestions(
+  query: QueryPreparationSuggestionsDto,
+  fallbackSuggestions: PreparationSuggestion[],
+): PreparationSuggestion[] {
+  const search = query.q?.trim().toLowerCase();
+  if (!search) {
     return [];
   }
+
+  const fallbackTexts = new Set(
+    fallbackSuggestions.map((suggestion) => suggestion.text.trim().toLowerCase()),
+  );
+  const suggestions = localPreparationSuggestionTexts(search).filter(
+    (text) => !fallbackTexts.has(text.toLowerCase()),
+  );
+
+  return suggestions.map((text, index) => generatedPreparationSuggestion(text, query, index));
+}
+
+function localPreparationSuggestionTexts(search: string): string[] {
+  if ("extra".startsWith(search) || search.includes("extra")) {
+    return ["Extra spicy", "Extra pepper", "Extra sauce on the side", "Extra cutlery"];
+  }
+  if ("spicy".startsWith(search) || search.includes("pepper") || search.includes("spic")) {
+    return ["Make it spicy", "Mild spice", "No pepper", "Pepper on the side"];
+  }
+  if (search.includes("sauce")) {
+    return ["Sauce on the side", "Extra sauce", "No sauce"];
+  }
+  if (search.includes("onion")) {
+    return ["No onions", "Extra onions", "Onions on the side"];
+  }
+
+  return [];
 }
 
 function generatedPreparationSuggestion(
