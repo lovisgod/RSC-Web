@@ -5,6 +5,8 @@ import {
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
   auditLogQuerySchema,
+  databaseBackupRunResultSchema,
+  databaseBackupSettingsSchema,
   changePasswordInputSchema,
   changePasswordResultSchema,
   operationsQueueSchema,
@@ -17,6 +19,7 @@ import {
   outletSettlementSummarySchema,
   notificationCampaignSchema,
   paginatedAuditLogsSchema,
+  updateDatabaseBackupSettingsInputSchema,
   promoSchema,
   paymentRefundSchema,
   platformChargesSchema,
@@ -43,6 +46,8 @@ import {
   type AuditLogQuery,
   type ChangePasswordInput,
   type ChangePasswordResult,
+  type DatabaseBackupRunResult,
+  type DatabaseBackupSettings,
   type CreateAdminInput,
   type ForgotPasswordResult,
   type LoginResult,
@@ -70,6 +75,7 @@ import {
   type UserVerificationResult,
   type UpdatePlatformChargesInput,
   type ProcessRefundInput,
+  type UpdateDatabaseBackupSettingsInput,
   preparationSuggestionSchema,
   createPreparationSuggestionInputSchema,
   queryPreparationSuggestionsInputSchema,
@@ -580,6 +586,25 @@ export const listAuditLogs = (input: AuditLogQuery = {}): Promise<PaginatedAudit
   get<unknown>(`/api/v1/audit-logs${auditLogQueryString(input)}`).then((data) =>
     paginatedAuditLogsSchema.parse(data),
   );
+
+// ─── Owner-only database backups ─────────────────────────────────────────────
+
+export const getDatabaseBackupSettings = async (): Promise<DatabaseBackupSettings> =>
+  databaseBackupSettingsSchema.parse(await get<unknown>("/api/v1/system/backups/settings"));
+
+export const updateDatabaseBackupSettings = async (
+  body: UpdateDatabaseBackupSettingsInput,
+): Promise<DatabaseBackupSettings> => {
+  const input = updateDatabaseBackupSettingsInputSchema.parse(body);
+  return databaseBackupSettingsSchema.parse(
+    await http
+      .put<Envelope<unknown>>("/api/v1/system/backups/settings", input)
+      .then((r) => r.data.data),
+  );
+};
+
+export const runDatabaseBackupNow = async (): Promise<DatabaseBackupRunResult> =>
+  databaseBackupRunResultSchema.parse(await post<unknown>("/api/v1/system/backups/run"));
 
 // ─── Platform charges ─────────────────────────────────────────────────────────
 

@@ -118,6 +118,7 @@ describe(NotificationsService.name, () => {
       sendPasswordReset: vi.fn<EmailSender["sendPasswordReset"]>(),
       sendTemporaryPassword: vi.fn<EmailSender["sendTemporaryPassword"]>(),
       sendMarketing: (input) => sendMarketingEmail(input),
+      sendDatabaseBackup: vi.fn<EmailSender["sendDatabaseBackup"]>(),
     };
     piiCrypto = {
       decrypt: vi.fn((value: string) => `${value}@example.com`),

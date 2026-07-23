@@ -9,6 +9,7 @@ import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 import { SecurityModule } from "./common/security/security.module";
 import configuration from "./config/configuration";
 import { validateEnvironment } from "./config/environment";
+import { DatabaseBackupsModule } from "./database-backups/database-backups.module";
 import { DatabaseModule } from "./database/database.module";
 import { HealthModule } from "./health/health.module";
 import { MediaModule } from "./media/media.module";
@@ -36,6 +37,7 @@ import { UsersModule } from "./users/users.module";
     RedisModule,
     SecurityModule,
     AuditModule,
+    DatabaseBackupsModule,
     AuthModule,
     UsersModule,
     CatalogModule,

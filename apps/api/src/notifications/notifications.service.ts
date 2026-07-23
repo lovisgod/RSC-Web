@@ -17,7 +17,7 @@ import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { EMAIL_SENDER, type EmailSender } from "../auth/email/email-sender";
 import { CustomerStatus } from "../auth/customer-status.enum";
-import { UserRole } from "../auth/user-role.enum";
+import { isOperationalAdminRole, isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import type { ApplicationConfig } from "../config/configuration";
 import type {
@@ -110,7 +110,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async create(user: AuthenticatedUser, input: CreateNotificationDto): Promise<Notification> {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(user.role)) {
       throw new ForbiddenException("Only admins can create notifications");
     }
 
@@ -154,7 +154,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     user: AuthenticatedUser,
     input: CreatePromoNotificationDto,
   ): Promise<{ sent: number }> {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(user.role)) {
       throw new ForbiddenException("Only admins can create promo notifications");
     }
 
@@ -200,7 +200,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async listPromos(user?: AuthenticatedUser | null): Promise<Promo[]> {
-    if (user?.role === UserRole.SUPER_ADMIN || user?.role === UserRole.ADMIN) {
+    if (user && isOperationalAdminRole(user.role)) {
       return this.promos.find({ order: { createdAt: "DESC" }, take: 100 });
     }
 
@@ -217,7 +217,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async updatePromo(user: AuthenticatedUser, id: string, input: UpdatePromoDto): Promise<Promo> {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(user.role)) {
       throw new ForbiddenException("Only admins can update promos");
     }
 
@@ -253,7 +253,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     user: AuthenticatedUser,
     input: CreateNotificationCampaignDto,
   ): Promise<NotificationCampaign> {
-    if (user.role !== UserRole.SUPER_ADMIN) {
+    if (!isPlatformAdminRole(user.role)) {
       throw new ForbiddenException("Only super admins can schedule notification campaigns");
     }
 

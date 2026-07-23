@@ -21,7 +21,7 @@ import { PhoneOtpService } from "../auth/otp/phone-otp.service";
 import { hashPassword } from "../auth/password";
 import { normalizeNigerianPhoneNumber } from "../auth/phone-number";
 import { SMS_SENDER, type SmsSender } from "../auth/sms/sms-sender";
-import { UserRole } from "../auth/user-role.enum";
+import { isOperationalAdminRole, isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { MediaService, type UploadedImageFile } from "../media/media.service";
 import type { OutletAdminQueryDto } from "./dto/outlet-admin-query.dto";
@@ -250,7 +250,7 @@ export class UsersService {
   }
 
   async createRider(actor: AuthenticatedUser, input: CreateRiderDto): Promise<RiderResult> {
-    if (actor.role !== UserRole.SUPER_ADMIN && actor.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(actor.role)) {
       throw new ForbiddenException("Only admins can add riders");
     }
 
@@ -337,7 +337,7 @@ export class UsersService {
         throw new ForbiddenException("Outlet admins can only retrieve riders for their own outlet");
       }
       targetOutletId = adminOutletId;
-    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+    } else if (!isPlatformAdminRole(actor.role)) {
       throw new ForbiddenException("Only admins can list riders");
     }
 
@@ -364,7 +364,7 @@ export class UsersService {
       if (rider.outletId !== adminOutletId) {
         throw new ForbiddenException("Outlet admins can only retrieve riders for their own outlet");
       }
-    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+    } else if (!isPlatformAdminRole(actor.role)) {
       throw new ForbiddenException("Only admins can retrieve riders");
     }
 
@@ -387,7 +387,7 @@ export class UsersService {
       if (rider.outletId !== adminOutletId) {
         throw new ForbiddenException("Outlet admins can only update riders for their own outlet");
       }
-    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+    } else if (!isPlatformAdminRole(actor.role)) {
       throw new ForbiddenException("Only admins can update riders");
     }
 
@@ -449,7 +449,7 @@ export class UsersService {
       if (rider.outletId !== adminOutletId) {
         throw new ForbiddenException("Outlet admins can only delete riders for their own outlet");
       }
-    } else if (actor.role !== UserRole.SUPER_ADMIN) {
+    } else if (!isPlatformAdminRole(actor.role)) {
       throw new ForbiddenException("Only admins can delete riders");
     }
 
@@ -478,7 +478,7 @@ export class UsersService {
     actor: AuthenticatedUser,
     query: OutletAdminQueryDto = {},
   ): Promise<OutletAdminResult[]> {
-    if (actor.role !== UserRole.SUPER_ADMIN) {
+    if (!isPlatformAdminRole(actor.role)) {
       throw new ForbiddenException("Only super admins can list outlet admins");
     }
 
@@ -494,7 +494,7 @@ export class UsersService {
   }
 
   async deleteOutletAdmin(actor: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
-    if (actor.role !== UserRole.SUPER_ADMIN) {
+    if (!isPlatformAdminRole(actor.role)) {
       throw new ForbiddenException("Only super admins can delete outlet admins");
     }
 
@@ -514,7 +514,7 @@ export class UsersService {
   }
 
   async deleteUser(actor: AuthenticatedUser, id: string): Promise<{ deleted: true }> {
-    if (actor.role !== UserRole.SUPER_ADMIN) {
+    if (!isPlatformAdminRole(actor.role)) {
       throw new ForbiddenException("Only super admins can delete users");
     }
 

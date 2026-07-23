@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 
 import type {
   EmailSender,
+  SendDatabaseBackupEmailInput,
   SendPasswordResetEmailInput,
   SendMarketingEmailInput,
   SendTemporaryPasswordEmailInput,
@@ -32,6 +33,12 @@ export class NoopEmailSender implements EmailSender {
 
   sendMarketing(input: SendMarketingEmailInput): Promise<void> {
     this.logger.debug(`Skipping marketing email for ${input.email}`);
+
+    return Promise.resolve();
+  }
+
+  sendDatabaseBackup(input: SendDatabaseBackupEmailInput): Promise<void> {
+    this.logger.debug(`Skipping database backup email for ${input.email}`);
 
     return Promise.resolve();
   }
