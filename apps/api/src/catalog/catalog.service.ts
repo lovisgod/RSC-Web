@@ -907,14 +907,12 @@ export class CatalogService {
         outletName: outlet?.name ?? null,
         fallbackTexts: fallbackSuggestions.map((suggestion) => suggestion.text).slice(0, 8),
       });
-      const headers: Record<string, string> = { "content-type": "application/json" };
-      if (aiConfig.apiKey) {
-        headers.authorization = `Bearer ${aiConfig.apiKey}`;
-      }
-
-      const response = await fetch(pollinationsTextUrl(aiConfig.baseUrl), {
+      const response = await fetch(aiPreparationSuggestionsUrl(aiConfig), {
         method: "POST",
-        headers,
+        headers: aiPreparationSuggestionsHeaders(
+          aiConfig,
+          this.config.get("app.customerWebUrl", { infer: true }),
+        ),
         body: JSON.stringify({
           model: aiConfig.model,
           messages: [
@@ -1056,13 +1054,38 @@ function buildPreparationSuggestionPrompt(input: {
   });
 }
 
-function pollinationsTextUrl(baseUrl: string): string {
-  const normalized = baseUrl.replace(/\/$/, "");
+function aiPreparationSuggestionsUrl(input: {
+  provider: "noop" | "pollinations" | "openrouter";
+  baseUrl: string;
+}): string {
+  const normalized = input.baseUrl.replace(/\/$/, "");
+  if (input.provider === "openrouter") {
+    return `${normalized}/chat/completions`;
+  }
   if (normalized.includes("gen.pollinations.ai")) {
     return "https://text.pollinations.ai/openai";
   }
 
   return `${normalized}/openai`;
+}
+
+function aiPreparationSuggestionsHeaders(
+  input: {
+    provider: "noop" | "pollinations" | "openrouter";
+    apiKey: string;
+  },
+  appUrl: string,
+): Record<string, string> {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (input.apiKey) {
+    headers.authorization = `Bearer ${input.apiKey}`;
+  }
+  if (input.provider === "openrouter") {
+    headers["HTTP-Referer"] = appUrl;
+    headers["X-Title"] = "RSC";
+  }
+
+  return headers;
 }
 
 function preparationSuggestionCacheKey(query: QueryPreparationSuggestionsDto): string {
