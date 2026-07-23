@@ -55,7 +55,13 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
     this.timer = setInterval(() => {
       void this.runDueBackup();
     }, CHECK_INTERVAL_MS);
-    void this.runDueBackup();
+    void this.runDueBackup().catch((error: unknown) => {
+      this.logger.error(
+        `Database backup scheduler failed during startup: ${
+          error instanceof Error ? error.message : "unknown error"
+        }`,
+      );
+    });
   }
 
   onModuleDestroy(): void {
@@ -255,7 +261,10 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async ensureSettings(): Promise<DatabaseBackupSettings> {
-    const existing = await this.settingsRepository.findOne({ order: { createdAt: "ASC" } });
+    const [existing] = await this.settingsRepository.find({
+      order: { createdAt: "ASC" },
+      take: 1,
+    });
     if (existing) {
       return existing;
     }
