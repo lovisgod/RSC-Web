@@ -201,11 +201,13 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
 
   async listPromos(user?: AuthenticatedUser | null): Promise<Promo[]> {
     if (user && isOperationalAdminRole(user.role)) {
-      return this.promos.find({ order: { createdAt: "DESC" }, take: 100 });
+      const promos = await this.promos.find({ order: { createdAt: "DESC" }, take: 100 });
+
+      return promos.map((promo) => this.withEffectivePromoActivity(promo));
     }
 
     const now = new Date();
-    return this.promos.find({
+    const promos = await this.promos.find({
       where: {
         isActive: true,
         startsAt: LessThanOrEqual(now),
@@ -214,6 +216,8 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       order: { endsAt: "ASC", createdAt: "DESC" },
       take: 100,
     });
+
+    return promos.map((promo) => this.withEffectivePromoActivity(promo, now));
   }
 
   async updatePromo(user: AuthenticatedUser, id: string, input: UpdatePromoDto): Promise<Promo> {
@@ -238,7 +242,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     if (input.deepLink !== undefined) promo.deepLink = input.deepLink;
     this.validatePromo(promo, { requireFutureStart: input.startsAt !== undefined });
 
-    return this.promos.save(promo);
+    return this.withEffectivePromoActivity(await this.promos.save(promo));
   }
 
   togglePromoActive(
@@ -257,6 +261,11 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       throw new ForbiddenException("Only super admins can schedule notification campaigns");
     }
 
+    const scheduledAt = new Date(input.scheduledAt);
+    if (scheduledAt < new Date()) {
+      throw new BadRequestException("Campaign scheduledAt must not be in the past");
+    }
+
     const campaign = await this.campaigns.save(
       this.campaigns.create({
         createdById: user.id,
@@ -264,7 +273,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         body: input.body,
         targetSegment: input.targetSegment,
         deepLink: input.deepLink ?? null,
-        scheduledAt: new Date(input.scheduledAt),
+        scheduledAt,
         status: "SCHEDULED",
       }),
     );
@@ -294,7 +303,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     });
     this.validatePromo(promo, { requireFutureStart: true });
 
-    return this.promos.save(promo);
+    return this.withEffectivePromoActivity(await this.promos.save(promo));
   }
 
   private validatePromo(promo: Promo, options: { requireFutureStart?: boolean } = {}): void {
@@ -310,6 +319,12 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     if (promo.endsAt <= promo.startsAt) {
       throw new BadRequestException("Promo endsAt must be after startsAt");
     }
+  }
+
+  private withEffectivePromoActivity(promo: Promo, now = new Date()): Promo {
+    return Object.assign(promo, {
+      isActive: promo.isActive && promo.startsAt <= now && promo.endsAt >= now,
+    });
   }
 
   async registerDeviceToken(user: AuthenticatedUser, token: string): Promise<{ registered: true }> {

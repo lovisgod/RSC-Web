@@ -53,6 +53,8 @@ async function main(): Promise<void> {
   await dataSource.initialize();
 
   try {
+    await dataSource.query(`ALTER TYPE "user_role" ADD VALUE IF NOT EXISTS 'OWNER'`);
+
     const input = ownerSeedInput();
     const piiCrypto = new PiiCryptoService({
       get: () => ({
