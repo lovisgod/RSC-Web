@@ -31,6 +31,7 @@ import { FinancialReconciliationPage } from "./pages/financial-reconciliation-pa
 import { ForgotPasswordPage } from "./pages/forgot-password-page";
 import { LoginPage } from "./pages/login-page";
 import { OrdersFeedPage } from "./pages/orders-feed-page";
+import { OwnerBackupsPage } from "./pages/owner-backups-page";
 import { OutletControlPage } from "./pages/outlet-control-page";
 import { OutletDetailPage } from "./pages/outlet-detail-page";
 import { PromotionsPage } from "./pages/promotions-page";
@@ -75,6 +76,7 @@ const routeTitles: Record<string, string> = {
   "/finance/refunds": "Refund Operation",
   "/promotions": "Promotions Push Composer",
   "/audit-logs": "Audit Logs",
+  "/owner/backups": "Database Backups",
   "/settings": "Settings",
 };
 
@@ -314,6 +316,7 @@ function AdminShell() {
             <Route path="/finance/refunds" element={<RefundsPage />} />
             <Route path="/promotions" element={<PromotionsPage />} />
             <Route path="/audit-logs" element={<AuditLogsPage />} />
+            <Route path="/owner/backups" element={<OwnerBackupsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route
               path="*"

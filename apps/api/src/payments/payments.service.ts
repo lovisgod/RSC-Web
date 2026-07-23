@@ -669,6 +669,7 @@ export class PaymentsService {
     const outletIds = [...new Set(subOrders.map((subOrder) => subOrder.outletId))];
     const recipients = await this.users.find({
       where: [
+        { role: UserRole.OWNER },
         { role: UserRole.SUPER_ADMIN },
         ...(outletIds.length > 0 ? [{ role: UserRole.ADMIN, outletId: In(outletIds) }] : []),
       ],

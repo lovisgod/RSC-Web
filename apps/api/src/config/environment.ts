@@ -65,6 +65,7 @@ export interface Environment {
   POLLINATIONS_TEXT_MODEL: string;
   POLLINATIONS_API_KEY?: string;
   PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: number;
+  DATABASE_BACKUP_MAX_ATTACHMENT_MB: number;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -229,6 +230,7 @@ const environmentSchema = Joi.object<Environment>({
   POLLINATIONS_TEXT_MODEL: Joi.string().min(1).default("openai"),
   POLLINATIONS_API_KEY: Joi.string().optional().allow(""),
   PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: Joi.number().integer().min(500).max(10_000).default(4_000),
+  DATABASE_BACKUP_MAX_ATTACHMENT_MB: Joi.number().integer().min(1).max(40).default(20),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {

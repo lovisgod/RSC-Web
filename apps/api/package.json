@@ -18,9 +18,13 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts",
     "seed:super-admin": "ts-node src/auth/seed-super-admin.ts",
+    "seed:owner": "ts-node src/auth/seed-owner.ts",
     "seed:demo": "ts-node src/database/seed-demo-data.ts",
+    "backup:run": "ts-node src/database-backups/trigger-database-backup.ts",
     "seed:super-admin:prod": "node dist/src/auth/seed-super-admin.js",
+    "seed:owner:prod": "node dist/src/auth/seed-owner.js",
     "seed:demo:prod": "node dist/src/database/seed-demo-data.js",
+    "backup:run:prod": "node dist/src/database-backups/trigger-database-backup.js",
     "db:reset": "bash ../../scripts/reset-api-db.sh"
   },
   "dependencies": {

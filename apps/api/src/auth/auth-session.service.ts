@@ -8,7 +8,7 @@ import type { ApplicationConfig } from "../config/configuration";
 import { REDIS_CLIENT } from "../redis/redis.constants";
 import type { AuthenticatedUser } from "./authenticated-user";
 import type { Customer } from "./customer.entity";
-import { UserRole } from "./user-role.enum";
+import { isOperationalAdminRole, UserRole } from "./user-role.enum";
 
 type TokenType = "access" | "refresh";
 
@@ -131,7 +131,7 @@ export class AuthSessionService {
     const now = nowSeconds();
 
     if (
-      (session.role === UserRole.ADMIN || session.role === UserRole.SUPER_ADMIN) &&
+      isOperationalAdminRole(session.role) &&
       now - session.lastActivityAt > this.adminInactivityTimeoutSeconds
     ) {
       await this.redis.del(this.sessionKey(payload.sid));

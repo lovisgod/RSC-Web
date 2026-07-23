@@ -13,7 +13,7 @@ import { In, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
-import { UserRole } from "../auth/user-role.enum";
+import { isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import type { ApplicationConfig } from "../config/configuration";
 import { MediaService, type UploadedImageFile } from "../media/media.service";
 import { Outlet } from "../outlets/outlet.entity";
@@ -83,7 +83,7 @@ export class CatalogService {
   ) {}
 
   async listOutlets(user: AuthenticatedUser): Promise<Outlet[]> {
-    if (user.role === UserRole.SUPER_ADMIN) {
+    if (isPlatformAdminRole(user.role)) {
       return this.outlets.find({ order: { name: "ASC" } });
     }
 
@@ -139,7 +139,7 @@ export class CatalogService {
     await this.ensureOutletAccess(user, id);
     const outlet = await this.requireOutlet(id);
 
-    if (user.role !== UserRole.SUPER_ADMIN && input.isOnline !== undefined) {
+    if (!isPlatformAdminRole(user.role) && input.isOnline !== undefined) {
       throw new ForbiddenException("Only super admins can change outlet online status");
     }
 
@@ -617,7 +617,7 @@ export class CatalogService {
     user: AuthenticatedUser,
     requestedOutletId?: string,
   ): Promise<string> {
-    if (user.role === UserRole.SUPER_ADMIN) {
+    if (isPlatformAdminRole(user.role)) {
       if (!requestedOutletId) {
         throw new ForbiddenException("outletId is required for this operation");
       }
@@ -653,7 +653,7 @@ export class CatalogService {
   }
 
   private async ensureOutletAccess(user: AuthenticatedUser, outletId: string): Promise<void> {
-    if (user.role === UserRole.SUPER_ADMIN) {
+    if (isPlatformAdminRole(user.role)) {
       return;
     }
 

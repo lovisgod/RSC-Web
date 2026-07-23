@@ -26,6 +26,26 @@ describe(RolesGuard.name, () => {
       ),
     ).toThrow(ForbiddenException);
   });
+
+  it("allows owner users through any role-protected route", () => {
+    const reflector = {
+      getAllAndOverride: vi.fn().mockReturnValue([UserRole.SUPER_ADMIN]),
+    };
+    const guard = new RolesGuard(reflector as unknown as Reflector);
+
+    expect(
+      guard.canActivate(
+        contextFor({
+          user: {
+            id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+            role: UserRole.OWNER,
+            sessionId: "session",
+            accessTokenId: "token",
+          },
+        }),
+      ),
+    ).toBe(true);
+  });
 });
 
 function contextFor(request: unknown): ExecutionContext {

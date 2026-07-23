@@ -40,6 +40,9 @@ ENV APP_VERSION=$APP_VERSION
 
 WORKDIR /app
 
+USER root
+RUN apk add --no-cache postgresql-client
+
 COPY --from=builder --chown=node:node /prod/api/node_modules ./node_modules
 COPY --from=builder --chown=node:node /prod/api/package.json ./package.json
 COPY --from=builder --chown=node:node /app/apps/api/dist ./dist
