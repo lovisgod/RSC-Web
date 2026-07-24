@@ -324,6 +324,7 @@ function PromoCard({
   const starts = new Date(promo.startsAt).getTime();
   const ends = new Date(promo.endsAt).getTime();
   const lifecycle = now < starts ? "Scheduled" : now > ends ? "Expired" : "Live window";
+  const lifecycleDate = lifecycle === "Scheduled" ? promo.startsAt : promo.endsAt;
   const live = isPromoLive(promo, now);
 
   return (
@@ -356,7 +357,7 @@ function PromoCard({
         </span>
         <span>
           <strong>{lifecycle}</strong>
-          {formatDateTime(promo.startsAt)}
+          {formatDateTime(lifecycleDate)}
         </span>
       </div>
 
