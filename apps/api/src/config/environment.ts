@@ -60,11 +60,15 @@ export interface Environment {
   GOOGLE_MAPS_API_KEY?: string;
   OPENCAGE_API_KEY?: string;
   OPENCAGE_BASE_URL: string;
-  PREPARATION_SUGGESTIONS_AI_PROVIDER: "noop" | "pollinations";
+  PREPARATION_SUGGESTIONS_AI_PROVIDER: "noop" | "pollinations" | "openrouter";
   POLLINATIONS_BASE_URL: string;
   POLLINATIONS_TEXT_MODEL: string;
   POLLINATIONS_API_KEY?: string;
+  OPENROUTER_BASE_URL: string;
+  OPENROUTER_MODEL: string;
+  OPENROUTER_API_KEY?: string;
   PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: number;
+  DATABASE_BACKUP_MAX_ATTACHMENT_MB: number;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -221,14 +225,24 @@ const environmentSchema = Joi.object<Environment>({
     .uri({ scheme: ["https"] })
     .default("https://api.opencagedata.com/geocode/v1/json"),
   PREPARATION_SUGGESTIONS_AI_PROVIDER: Joi.string()
-    .valid("noop", "pollinations")
+    .valid("noop", "pollinations", "openrouter")
     .default("pollinations"),
   POLLINATIONS_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
     .default("https://text.pollinations.ai"),
   POLLINATIONS_TEXT_MODEL: Joi.string().min(1).default("openai"),
   POLLINATIONS_API_KEY: Joi.string().optional().allow(""),
+  OPENROUTER_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://openrouter.ai/api/v1"),
+  OPENROUTER_MODEL: Joi.string().min(1).default("openrouter/free"),
+  OPENROUTER_API_KEY: Joi.when("PREPARATION_SUGGESTIONS_AI_PROVIDER", {
+    is: "openrouter",
+    then: Joi.string().min(10).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
   PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: Joi.number().integer().min(500).max(10_000).default(4_000),
+  DATABASE_BACKUP_MAX_ATTACHMENT_MB: Joi.number().integer().min(1).max(40).default(20),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {

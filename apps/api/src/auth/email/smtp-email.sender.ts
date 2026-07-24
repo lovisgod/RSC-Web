@@ -7,6 +7,7 @@ import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import type { ApplicationConfig } from "../../config/configuration";
 import type {
   EmailSender,
+  SendDatabaseBackupEmailInput,
   SendMarketingEmailInput,
   SendPasswordResetEmailInput,
   SendTemporaryPasswordEmailInput,
@@ -194,4 +195,52 @@ export class SmtpEmailSender implements EmailSender {
       throw new BadGatewayException("Unable to send marketing email");
     }
   }
+
+  async sendDatabaseBackup(input: SendDatabaseBackupEmailInput): Promise<void> {
+    const subject = `RSC database backup - ${input.createdAt.toISOString()}`;
+    const html = renderEmailTemplate({
+      preheader: "Your requested RSC database backup is attached.",
+      heading: "Database backup ready",
+      greetingName: "Owner",
+      intro: "The latest RSC database backup has been generated and attached to this email.",
+      body: `File: ${input.fileName}. Size: ${formatBytes(input.fileSizeBytes)}.`,
+      footerNote: "Store this backup securely and avoid forwarding it over unsecured channels.",
+    });
+
+    this.logger.log(
+      `Sending SMTP database backup email: ${JSON.stringify({
+        host: this.config.host,
+        port: this.config.port,
+        from: this.config.from,
+        to: input.email,
+        subject,
+        fileName: input.fileName,
+      })}`,
+    );
+
+    try {
+      const info: SMTPTransport.SentMessageInfo = await this.transporter.sendMail({
+        from: this.config.from,
+        to: input.email,
+        subject,
+        html,
+        attachments: [{ filename: input.fileName, path: input.filePath }],
+      });
+
+      this.logger.log(
+        `SMTP accepted database backup email: ${JSON.stringify({ messageId: info.messageId })}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `SMTP rejected database backup email: ${JSON.stringify({ message: (error as Error).message })}`,
+      );
+      throw new BadGatewayException("Unable to send database backup email");
+    }
+  }
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} bytes`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }

@@ -15,7 +15,7 @@ import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { ACCESS_TOKEN_COOKIE } from "../auth/auth.constants";
 import { readCookie } from "../auth/cookies";
 import { Customer } from "../auth/customer.entity";
-import { UserRole } from "../auth/user-role.enum";
+import { isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import { MasterOrder } from "../orders/master-order.entity";
 import { MasterOrderStatus } from "../orders/order-status.enum";
 import { SubOrder } from "../orders/sub-order.entity";
@@ -130,7 +130,7 @@ export class RealtimeGateway {
     const [kind, id] = room.split(":");
 
     if (room === platformAdminRoom()) {
-      return user.role === UserRole.SUPER_ADMIN;
+      return isPlatformAdminRole(user.role);
     }
 
     if (!kind || !id) {
@@ -167,7 +167,7 @@ export class RealtimeGateway {
       return false;
     }
 
-    if (user.role === UserRole.SUPER_ADMIN || order.customerId === user.id) {
+    if (isPlatformAdminRole(user.role) || order.customerId === user.id) {
       return true;
     }
 
@@ -195,7 +195,7 @@ export class RealtimeGateway {
       return false;
     }
 
-    if (user.role === UserRole.SUPER_ADMIN) {
+    if (isPlatformAdminRole(user.role)) {
       return true;
     }
 
@@ -211,7 +211,7 @@ export class RealtimeGateway {
       return false;
     }
 
-    if (user.role === UserRole.SUPER_ADMIN || user.id === riderId) {
+    if (isPlatformAdminRole(user.role) || user.id === riderId) {
       return true;
     }
 

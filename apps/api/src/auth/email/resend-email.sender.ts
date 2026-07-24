@@ -1,9 +1,11 @@
 import { BadGatewayException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { readFile } from "node:fs/promises";
 
 import type { ApplicationConfig } from "../../config/configuration";
 import type {
   EmailSender,
+  SendDatabaseBackupEmailInput,
   SendMarketingEmailInput,
   SendPasswordResetEmailInput,
   SendTemporaryPasswordEmailInput,
@@ -89,12 +91,40 @@ export class ResendEmailSender implements EmailSender {
     });
   }
 
-  private async sendEmail(input: { to: string; subject: string; html: string }): Promise<void> {
+  async sendDatabaseBackup(input: SendDatabaseBackupEmailInput): Promise<void> {
+    const subject = `RSC database backup - ${input.createdAt.toISOString()}`;
+    await this.sendEmail({
+      to: input.email,
+      subject,
+      html: renderEmailTemplate({
+        preheader: "Your requested RSC database backup is attached.",
+        heading: "Database backup ready",
+        greetingName: "Owner",
+        intro: "The latest RSC database backup has been generated and attached to this email.",
+        body: `File: ${input.fileName}. Size: ${formatBytes(input.fileSizeBytes)}.`,
+        footerNote: "Store this backup securely and avoid forwarding it over unsecured channels.",
+      }),
+      attachments: [
+        {
+          filename: input.fileName,
+          content: (await readFile(input.filePath)).toString("base64"),
+        },
+      ],
+    });
+  }
+
+  private async sendEmail(input: {
+    to: string;
+    subject: string;
+    html: string;
+    attachments?: Array<{ filename: string; content: string }>;
+  }): Promise<void> {
     const body = {
       from: this.config.from,
       to: input.to,
       subject: input.subject,
       html: input.html,
+      ...(input.attachments ? { attachments: input.attachments } : {}),
       ...(this.config.replyTo ? { reply_to: this.config.replyTo } : {}),
     };
 
@@ -136,4 +166,10 @@ export class ResendEmailSender implements EmailSender {
       throw new BadGatewayException("Unable to send email verification code");
     }
   }
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} bytes`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }

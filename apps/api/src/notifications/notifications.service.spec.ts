@@ -118,6 +118,7 @@ describe(NotificationsService.name, () => {
       sendPasswordReset: vi.fn<EmailSender["sendPasswordReset"]>(),
       sendTemporaryPassword: vi.fn<EmailSender["sendTemporaryPassword"]>(),
       sendMarketing: (input) => sendMarketingEmail(input),
+      sendDatabaseBackup: vi.fn<EmailSender["sendDatabaseBackup"]>(),
     };
     piiCrypto = {
       decrypt: vi.fn((value: string) => `${value}@example.com`),
@@ -329,6 +330,27 @@ describe(NotificationsService.name, () => {
     );
   });
 
+  it("rejects campaign scheduling in the past", async () => {
+    await expect(
+      service.scheduleCampaign(
+        {
+          id: "31a2df7e-7f2a-4433-9d5e-1caad0f91c4d",
+          role: UserRole.SUPER_ADMIN,
+          sessionId: "session-1",
+          accessTokenId: "access-token-1",
+        },
+        {
+          title: "Old campaign",
+          body: "This should not be accepted.",
+          targetSegment: "ALL_CUSTOMERS",
+          scheduledAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+      ),
+    ).rejects.toThrow(/scheduledAt/);
+
+    expect(campaigns.save).not.toHaveBeenCalled();
+  });
+
   it("lists recent promo notifications for admins", async () => {
     const savedPromo = Object.assign(new Promo(), {
       id: "9d353d54-7254-4538-9487-c21ab15b833e",
@@ -360,6 +382,32 @@ describe(NotificationsService.name, () => {
         take: 100,
       }),
     );
+  });
+
+  it("does not return elapsed promos as active for admins", async () => {
+    const expiredPromo = Object.assign(new Promo(), {
+      id: "9d353d54-7254-4538-9487-c21ab15b833e",
+      code: "OLD50",
+      title: "Old discount",
+      body: "This offer has ended.",
+      discountTarget: "ORDER",
+      discountPercent: 50,
+      scope: "ALL_OUTLETS",
+      outletId: null,
+      startsAt: new Date(Date.now() - 172_800_000),
+      endsAt: new Date(Date.now() - 86_400_000),
+      isActive: true,
+    });
+    promos.find.mockResolvedValueOnce([expiredPromo]);
+
+    await expect(
+      service.listPromos({
+        id: "31a2df7e-7f2a-4433-9d5e-1caad0f91c4d",
+        role: UserRole.ADMIN,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      }),
+    ).resolves.toEqual([expect.objectContaining({ code: "OLD50", isActive: false })]);
   });
 
   it("lists only active current promos for anonymous callers", async () => {

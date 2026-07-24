@@ -28,11 +28,20 @@ export interface SendMarketingEmailInput {
   preheader?: string;
 }
 
+export interface SendDatabaseBackupEmailInput {
+  email: string;
+  fileName: string;
+  filePath: string;
+  fileSizeBytes: number;
+  createdAt: Date;
+}
+
 export interface EmailSender {
   sendWelcomeVerification(input: SendWelcomeVerificationEmailInput): Promise<void>;
   sendPasswordReset(input: SendPasswordResetEmailInput): Promise<void>;
   sendTemporaryPassword(input: SendTemporaryPasswordEmailInput): Promise<void>;
   sendMarketing(input: SendMarketingEmailInput): Promise<void>;
+  sendDatabaseBackup(input: SendDatabaseBackupEmailInput): Promise<void>;
 }
 
 export const EMAIL_SENDER = Symbol("EMAIL_SENDER");
