@@ -1,15 +1,6 @@
 import type { ItemModifier, ItemModifierGroup } from "@rsc/contracts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  CircleDollarSign,
-  Info,
-  Loader2,
-  Pencil,
-  Plus,
-  SlidersHorizontal,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Info, Loader2, Pencil, Plus, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
 import { useOutletInfo } from "../hooks/use-outlet-info";
@@ -569,10 +560,6 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
                           key={modifier.id}
                           className="flex items-center gap-2 rounded-lg bg-white px-3 py-2"
                         >
-                          <CircleDollarSign
-                            className="h-4 w-4 shrink-0 text-emerald-500"
-                            aria-hidden="true"
-                          />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-slate-700">
                               {modifier.name}
