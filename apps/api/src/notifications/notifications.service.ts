@@ -17,7 +17,7 @@ import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { EMAIL_SENDER, type EmailSender } from "../auth/email/email-sender";
 import { CustomerStatus } from "../auth/customer-status.enum";
-import { UserRole } from "../auth/user-role.enum";
+import { isOperationalAdminRole, isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import type { ApplicationConfig } from "../config/configuration";
 import type {
@@ -110,7 +110,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async create(user: AuthenticatedUser, input: CreateNotificationDto): Promise<Notification> {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(user.role)) {
       throw new ForbiddenException("Only admins can create notifications");
     }
 
@@ -154,7 +154,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     user: AuthenticatedUser,
     input: CreatePromoNotificationDto,
   ): Promise<{ sent: number }> {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(user.role)) {
       throw new ForbiddenException("Only admins can create promo notifications");
     }
 
@@ -200,12 +200,14 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async listPromos(user?: AuthenticatedUser | null): Promise<Promo[]> {
-    if (user?.role === UserRole.SUPER_ADMIN || user?.role === UserRole.ADMIN) {
-      return this.promos.find({ order: { createdAt: "DESC" }, take: 100 });
+    if (user && isOperationalAdminRole(user.role)) {
+      const promos = await this.promos.find({ order: { createdAt: "DESC" }, take: 100 });
+
+      return promos.map((promo) => this.withEffectivePromoActivity(promo));
     }
 
     const now = new Date();
-    return this.promos.find({
+    const promos = await this.promos.find({
       where: {
         isActive: true,
         startsAt: LessThanOrEqual(now),
@@ -214,10 +216,12 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       order: { endsAt: "ASC", createdAt: "DESC" },
       take: 100,
     });
+
+    return promos.map((promo) => this.withEffectivePromoActivity(promo, now));
   }
 
   async updatePromo(user: AuthenticatedUser, id: string, input: UpdatePromoDto): Promise<Promo> {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(user.role)) {
       throw new ForbiddenException("Only admins can update promos");
     }
 
@@ -238,7 +242,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     if (input.deepLink !== undefined) promo.deepLink = input.deepLink;
     this.validatePromo(promo, { requireFutureStart: input.startsAt !== undefined });
 
-    return this.promos.save(promo);
+    return this.withEffectivePromoActivity(await this.promos.save(promo));
   }
 
   togglePromoActive(
@@ -253,8 +257,13 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     user: AuthenticatedUser,
     input: CreateNotificationCampaignDto,
   ): Promise<NotificationCampaign> {
-    if (user.role !== UserRole.SUPER_ADMIN) {
+    if (!isPlatformAdminRole(user.role)) {
       throw new ForbiddenException("Only super admins can schedule notification campaigns");
+    }
+
+    const scheduledAt = new Date(input.scheduledAt);
+    if (scheduledAt < new Date()) {
+      throw new BadRequestException("Campaign scheduledAt must not be in the past");
     }
 
     const campaign = await this.campaigns.save(
@@ -264,7 +273,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         body: input.body,
         targetSegment: input.targetSegment,
         deepLink: input.deepLink ?? null,
-        scheduledAt: new Date(input.scheduledAt),
+        scheduledAt,
         status: "SCHEDULED",
       }),
     );
@@ -294,7 +303,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     });
     this.validatePromo(promo, { requireFutureStart: true });
 
-    return this.promos.save(promo);
+    return this.withEffectivePromoActivity(await this.promos.save(promo));
   }
 
   private validatePromo(promo: Promo, options: { requireFutureStart?: boolean } = {}): void {
@@ -310,6 +319,12 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     if (promo.endsAt <= promo.startsAt) {
       throw new BadRequestException("Promo endsAt must be after startsAt");
     }
+  }
+
+  private withEffectivePromoActivity(promo: Promo, now = new Date()): Promo {
+    return Object.assign(promo, {
+      isActive: promo.isActive && promo.startsAt <= now && promo.endsAt >= now,
+    });
   }
 
   async registerDeviceToken(user: AuthenticatedUser, token: string): Promise<{ registered: true }> {

@@ -4954,8 +4954,113 @@ th {
   padding-top: 0.25rem;
 }
 
+.owner-backups-page code {
+  color: var(--rsc-navy-dark);
+  font-weight: 800;
+}
+
+.owner-backups-card .panel-state {
+  margin: 1.25rem;
+}
+
+.owner-backups-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-navy) 10%, var(--rsc-line));
+  border-radius: 0.95rem;
+  background: #f8fafc;
+}
+
+.owner-backups-toggle span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.owner-backups-toggle strong {
+  color: var(--rsc-navy-dark);
+  font-size: 0.9rem;
+}
+
+.owner-backups-toggle small {
+  color: var(--rsc-text-muted);
+  font-size: 0.78rem;
+}
+
+.owner-backups-toggle input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--rsc-main);
+}
+
+.owner-backups-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.owner-backups-summary > div {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 0.9rem;
+  background: white;
+}
+
+.owner-backups-summary span,
+.owner-backups-summary small {
+  color: var(--rsc-text-muted);
+  font-size: 0.76rem;
+}
+
+.owner-backups-summary strong {
+  overflow-wrap: anywhere;
+  color: var(--rsc-navy-dark);
+  font-size: 0.88rem;
+}
+
+.owner-backups-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.owner-backups-actions .rsc-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.owner-backups-denied {
+  display: grid;
+  place-items: center;
+  gap: 0.75rem;
+  min-height: 50vh;
+  text-align: center;
+  color: var(--rsc-text-muted);
+}
+
+.owner-backups-denied h1,
+.owner-backups-denied p {
+  margin: 0;
+}
+
+.owner-backups-denied h1 {
+  color: var(--rsc-navy-dark);
+  font-size: 1.5rem;
+}
+
 @media (max-width: 640px) {
   .admin-settlement-settings__actions .rsc-button {
+    width: 100%;
+  }
+
+  .owner-backups-actions .rsc-button {
     width: 100%;
   }
 }

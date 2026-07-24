@@ -10,7 +10,7 @@ export const nigerianPhoneNumberSchema = z
   );
 
 export const customerStatusSchema = z.enum(["UNVERIFIED", "ACTIVE", "SUSPENDED"]);
-export const userRoleSchema = z.enum(["SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"]);
+export const userRoleSchema = z.enum(["OWNER", "SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"]);
 
 export const apiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
   z.object({
@@ -187,6 +187,40 @@ export const auditLogQuerySchema = z
     dateTo: z.iso.datetime().optional(),
   })
   .strict();
+
+export const databaseBackupStatusSchema = z.enum(["NEVER_RUN", "RUNNING", "SUCCESS", "FAILED"]);
+
+export const databaseBackupSettingsSchema = z.object({
+  id: z.uuid(),
+  isEnabled: z.boolean(),
+  intervalMinutes: z.int().min(15).max(10080),
+  recipientEmail: z.email().nullable(),
+  lastRunAt: z.iso.datetime().nullable(),
+  nextRunAt: z.iso.datetime().nullable(),
+  lastStatus: databaseBackupStatusSchema,
+  lastError: z.string().nullable(),
+  lastFileName: z.string().nullable(),
+  lastFileSizeBytes: z.int().nonnegative().nullable(),
+  updatedById: z.uuid().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const updateDatabaseBackupSettingsInputSchema = z
+  .object({
+    isEnabled: z.boolean().optional(),
+    intervalMinutes: z.int().min(15).max(10080).optional(),
+    recipientEmail: z.string().trim().toLowerCase().pipe(z.email().max(254)).optional(),
+  })
+  .strict();
+
+export const databaseBackupRunResultSchema = z.object({
+  sent: z.literal(true),
+  fileName: z.string().min(1),
+  fileSizeBytes: z.int().nonnegative(),
+  recipientEmail: z.email(),
+  completedAt: z.iso.datetime(),
+});
 
 export const createRiderInputSchema = z
   .object({
@@ -1233,6 +1267,12 @@ export type AdminResult = z.infer<typeof adminResultSchema>;
 export type AuditLog = z.infer<typeof auditLogSchema>;
 export type AuditLogQuery = z.infer<typeof auditLogQuerySchema>;
 export type PaginatedAuditLogs = z.infer<typeof paginatedAuditLogsSchema>;
+export type DatabaseBackupStatus = z.infer<typeof databaseBackupStatusSchema>;
+export type DatabaseBackupSettings = z.infer<typeof databaseBackupSettingsSchema>;
+export type UpdateDatabaseBackupSettingsInput = z.infer<
+  typeof updateDatabaseBackupSettingsInputSchema
+>;
+export type DatabaseBackupRunResult = z.infer<typeof databaseBackupRunResultSchema>;
 export type CreateRiderInput = z.infer<typeof createRiderInputSchema>;
 export type RiderResult = z.infer<typeof riderResultSchema>;
 export type RiderAdmin = z.infer<typeof riderAdminSchema>;

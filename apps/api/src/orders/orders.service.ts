@@ -9,7 +9,7 @@ import { DataSource, In, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
-import { UserRole } from "../auth/user-role.enum";
+import { isOperationalAdminRole, isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import { NotificationsService } from "../notifications/notifications.service";
 import { Outlet } from "../outlets/outlet.entity";
 import { RealtimeService } from "../realtime/realtime.service";
@@ -172,7 +172,7 @@ export class OrdersService {
     user: AuthenticatedUser,
     query: ListAdminOrdersQueryDto,
   ): Promise<AdminOrderListResult> {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(user.role)) {
       throw new ForbiddenException("Order listing requires admin access");
     }
 
@@ -378,7 +378,7 @@ export class OrdersService {
   }
 
   async assignRider(user: AuthenticatedUser, id: string, input: AssignOrderRiderDto) {
-    if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN) {
+    if (!isOperationalAdminRole(user.role)) {
       throw new ForbiddenException("Only admins can assign riders");
     }
 
@@ -1226,7 +1226,7 @@ export class OrdersService {
       throw new NotFoundException("Order not found");
     }
 
-    if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.RIDER) {
+    if (isPlatformAdminRole(user.role) || user.role === UserRole.RIDER) {
       return order;
     }
 
@@ -1433,6 +1433,21 @@ export class OrdersService {
       title: "Order status updated",
       body: `Your order is now ${order.status.replaceAll("_", " ").toLowerCase()}.`,
     });
+
+    if (order.status === MasterOrderStatus.OUT_FOR_DELIVERY && order.riderId) {
+      await this.notifications.createAndPush({
+        recipientId: order.riderId,
+        recipientRole: UserRole.RIDER,
+        type: "ORDER_STATUS",
+        title: "Order is out for delivery",
+        body: "You are now out for delivery. Keep location sharing active until completion.",
+        data: {
+          deepLink: `rsc://rider/dispatch/${order.id}`,
+          masterOrderId: order.id,
+          riderLocationTracking: "START",
+        },
+      });
+    }
   }
 
   private async getLatestRiderLocation(id: string): Promise<LatestLocation | null> {

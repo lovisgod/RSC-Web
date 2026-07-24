@@ -4,7 +4,7 @@ import { DataSource, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
-import { UserRole } from "../auth/user-role.enum";
+import { isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import type { OperationsStatsQueryDto, OrderPulseQueryDto } from "./dto/operations-stats.dto";
 
 interface CountRow {
@@ -256,7 +256,7 @@ export class StatsService {
     user: AuthenticatedUser,
     requestedOutletId: string | undefined,
   ): Promise<string | null> {
-    if (user.role === UserRole.SUPER_ADMIN) {
+    if (isPlatformAdminRole(user.role)) {
       return requestedOutletId ?? null;
     }
 

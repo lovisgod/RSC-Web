@@ -91,6 +91,18 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function isPromoLive(promo: Promo, now: number) {
+  return (
+    promo.isActive &&
+    new Date(promo.startsAt).getTime() <= now &&
+    new Date(promo.endsAt).getTime() >= now
+  );
+}
+
+function isCampaignUpcoming(campaign: NotificationCampaign, now: number) {
+  return campaign.status === "SCHEDULED" && new Date(campaign.scheduledAt).getTime() > now;
+}
+
 function promoToForm(promo: Promo): PromoEditForm {
   return {
     title: promo.title,
@@ -313,17 +325,24 @@ function PromoCard({
   const ends = new Date(promo.endsAt).getTime();
   const lifecycle = now < starts ? "Scheduled" : now > ends ? "Expired" : "Live window";
   const lifecycleDate = lifecycle === "Scheduled" ? promo.startsAt : promo.endsAt;
+  const live = isPromoLive(promo, now);
 
   return (
-    <article className={`promo-management-card ${promo.isActive ? "" : "is-muted"}`}>
+    <article className={`promo-management-card ${live ? "" : "is-muted"}`}>
       <div className="promo-management-card__top">
         <div>
           <span className="promo-code-chip">{promo.code}</span>
           <h3>{promo.title}</h3>
           <p>{promo.body}</p>
         </div>
-        <span className={`promo-active-pill ${promo.isActive ? "is-on" : "is-off"}`}>
-          {promo.isActive ? "Active" : "Paused"}
+        <span className={`promo-active-pill ${live ? "is-on" : "is-off"}`}>
+          {live
+            ? "Active"
+            : lifecycle === "Expired"
+              ? "Expired"
+              : promo.isActive
+                ? "Scheduled"
+                : "Paused"}
         </span>
       </div>
 
@@ -457,9 +476,11 @@ export function PromotionsPage() {
   const isCampaign = form.notificationType === "CAMPAIGN";
   const isPromo = form.notificationType === "PROMO";
   const isSubmitting = isPending || scheduleCampaign.isPending;
-  const activePromos = (promos.data ?? []).filter((promo) => promo.isActive).length;
-  const scheduledCampaigns = (campaigns.data ?? []).filter(
-    (campaign) => campaign.status === "SCHEDULED",
+  const activePromos = (promos.data ?? []).filter((promo) =>
+    isPromoLive(promo, currentTime),
+  ).length;
+  const scheduledCampaigns = (campaigns.data ?? []).filter((campaign) =>
+    isCampaignUpcoming(campaign, currentTime),
   ).length;
 
   function field(key: keyof typeof EMPTY_FORM) {

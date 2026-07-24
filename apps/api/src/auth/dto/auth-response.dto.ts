@@ -46,8 +46,11 @@ export class LoginUserDto {
   @ApiProperty({ example: "2abf9577-027c-4936-83a8-e004fd56a46e", format: "uuid" })
   id!: string;
 
-  @ApiProperty({ enum: ["SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"], example: "CUSTOMER" })
-  role!: "SUPER_ADMIN" | "CUSTOMER" | "ADMIN" | "RIDER";
+  @ApiProperty({
+    enum: ["OWNER", "SUPER_ADMIN", "CUSTOMER", "ADMIN", "RIDER"],
+    example: "CUSTOMER",
+  })
+  role!: "OWNER" | "SUPER_ADMIN" | "CUSTOMER" | "ADMIN" | "RIDER";
 
   @ApiProperty({
     example: "4273e96c-2887-49a5-a6d5-269f007f04f0",

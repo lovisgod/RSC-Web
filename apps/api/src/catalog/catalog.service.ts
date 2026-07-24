@@ -13,7 +13,7 @@ import { In, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
-import { UserRole } from "../auth/user-role.enum";
+import { isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import type { ApplicationConfig } from "../config/configuration";
 import { MediaService, type UploadedImageFile } from "../media/media.service";
 import { Outlet } from "../outlets/outlet.entity";
@@ -83,7 +83,7 @@ export class CatalogService {
   ) {}
 
   async listOutlets(user: AuthenticatedUser): Promise<Outlet[]> {
-    if (user.role === UserRole.SUPER_ADMIN) {
+    if (isPlatformAdminRole(user.role)) {
       return this.outlets.find({ order: { name: "ASC" } });
     }
 
@@ -139,7 +139,7 @@ export class CatalogService {
     await this.ensureOutletAccess(user, id);
     const outlet = await this.requireOutlet(id);
 
-    if (user.role !== UserRole.SUPER_ADMIN && input.isOnline !== undefined) {
+    if (!isPlatformAdminRole(user.role) && input.isOnline !== undefined) {
       throw new ForbiddenException("Only super admins can change outlet online status");
     }
 
@@ -617,7 +617,7 @@ export class CatalogService {
     user: AuthenticatedUser,
     requestedOutletId?: string,
   ): Promise<string> {
-    if (user.role === UserRole.SUPER_ADMIN) {
+    if (isPlatformAdminRole(user.role)) {
       if (!requestedOutletId) {
         throw new ForbiddenException("outletId is required for this operation");
       }
@@ -653,7 +653,7 @@ export class CatalogService {
   }
 
   private async ensureOutletAccess(user: AuthenticatedUser, outletId: string): Promise<void> {
-    if (user.role === UserRole.SUPER_ADMIN) {
+    if (isPlatformAdminRole(user.role)) {
       return;
     }
 
@@ -840,8 +840,13 @@ export class CatalogService {
   ): Promise<PreparationSuggestion[]> {
     const fallbackSuggestions = await this.listConfiguredPreparationSuggestions(query);
     const aiSuggestions = await this.generateAiPreparationSuggestions(query, fallbackSuggestions);
+    const localSuggestions = localPreparationSuggestions(query, fallbackSuggestions);
 
-    return dedupePreparationSuggestions([...aiSuggestions, ...fallbackSuggestions]).slice(0, 10);
+    return dedupePreparationSuggestions([
+      ...aiSuggestions,
+      ...localSuggestions,
+      ...fallbackSuggestions,
+    ]).slice(0, 10);
   }
 
   private async listConfiguredPreparationSuggestions(
@@ -907,14 +912,12 @@ export class CatalogService {
         outletName: outlet?.name ?? null,
         fallbackTexts: fallbackSuggestions.map((suggestion) => suggestion.text).slice(0, 8),
       });
-      const headers: Record<string, string> = { "content-type": "application/json" };
-      if (aiConfig.apiKey) {
-        headers.authorization = `Bearer ${aiConfig.apiKey}`;
-      }
-
-      const response = await fetch(pollinationsTextUrl(aiConfig.baseUrl), {
+      const response = await fetch(aiPreparationSuggestionsUrl(aiConfig), {
         method: "POST",
-        headers,
+        headers: aiPreparationSuggestionsHeaders(
+          aiConfig,
+          this.config.get("app.customerWebUrl", { infer: true }),
+        ),
         body: JSON.stringify({
           model: aiConfig.model,
           messages: [
@@ -1043,6 +1046,9 @@ function buildPreparationSuggestionPrompt(input: {
     rules: [
       "Return a JSON array of strings only.",
       "Each suggestion must be 80 characters or less.",
+      "Never return an empty array when customerSearch is present.",
+      "Use customerSearch as the user's intent and complete it into practical order notes.",
+      "For customerSearch like 'extra', suggest common extras such as extra spice, sauce, pepper, or cutlery.",
       "No numbering, markdown, quotes around the whole response, or explanations.",
       "Avoid duplicates of existing configured fallback suggestions.",
       "Keep suggestions practical and safe, like spice level, sauce, cutlery, and packaging notes.",
@@ -1056,13 +1062,38 @@ function buildPreparationSuggestionPrompt(input: {
   });
 }
 
-function pollinationsTextUrl(baseUrl: string): string {
-  const normalized = baseUrl.replace(/\/$/, "");
+function aiPreparationSuggestionsUrl(input: {
+  provider: "noop" | "pollinations" | "openrouter";
+  baseUrl: string;
+}): string {
+  const normalized = input.baseUrl.replace(/\/$/, "");
+  if (input.provider === "openrouter") {
+    return `${normalized}/chat/completions`;
+  }
   if (normalized.includes("gen.pollinations.ai")) {
     return "https://text.pollinations.ai/openai";
   }
 
   return `${normalized}/openai`;
+}
+
+function aiPreparationSuggestionsHeaders(
+  input: {
+    provider: "noop" | "pollinations" | "openrouter";
+    apiKey: string;
+  },
+  appUrl: string,
+): Record<string, string> {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (input.apiKey) {
+    headers.authorization = `Bearer ${input.apiKey}`;
+  }
+  if (input.provider === "openrouter") {
+    headers["HTTP-Referer"] = appUrl;
+    headers["X-Title"] = "RSC";
+  }
+
+  return headers;
 }
 
 function preparationSuggestionCacheKey(query: QueryPreparationSuggestionsDto): string {
@@ -1079,10 +1110,13 @@ function parseAiSuggestionTexts(content: string | undefined): string[] {
   }
 
   const trimmed = content.trim();
-  const jsonText = trimmed.startsWith("[") ? trimmed : (trimmed.match(/\[[\s\S]*\]/)?.[0] ?? "[]");
+  const arrayMatch = trimmed.startsWith("[") ? trimmed : trimmed.match(/\[[\s\S]*\]/)?.[0];
+  if (!arrayMatch) {
+    return parseLooseSuggestionTexts(trimmed);
+  }
 
   try {
-    const parsed = JSON.parse(jsonText) as unknown;
+    const parsed = JSON.parse(arrayMatch) as unknown;
     if (!Array.isArray(parsed)) {
       return [];
     }
@@ -1093,8 +1127,58 @@ function parseAiSuggestionTexts(content: string | undefined): string[] {
       .filter((value) => value.length > 0 && value.length <= 80)
       .slice(0, 5);
   } catch {
+    return parseLooseSuggestionTexts(trimmed);
+  }
+}
+
+function parseLooseSuggestionTexts(content: string): string[] {
+  return content
+    .split(/\r?\n|;/)
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^[-*•\d.)\s]+/, "")
+        .replace(/^["']|["']$/g, "")
+        .replace(/\s+/g, " "),
+    )
+    .filter((value) => value.length > 0 && value.length <= 80)
+    .slice(0, 5);
+}
+
+function localPreparationSuggestions(
+  query: QueryPreparationSuggestionsDto,
+  fallbackSuggestions: PreparationSuggestion[],
+): PreparationSuggestion[] {
+  const search = query.q?.trim().toLowerCase();
+  if (!search) {
     return [];
   }
+
+  const fallbackTexts = new Set(
+    fallbackSuggestions.map((suggestion) => suggestion.text.trim().toLowerCase()),
+  );
+  const suggestions = localPreparationSuggestionTexts(search).filter(
+    (text) => !fallbackTexts.has(text.toLowerCase()),
+  );
+
+  return suggestions.map((text, index) => generatedPreparationSuggestion(text, query, index));
+}
+
+function localPreparationSuggestionTexts(search: string): string[] {
+  if ("extra".startsWith(search) || search.includes("extra")) {
+    return ["Extra spicy", "Extra pepper", "Extra sauce on the side", "Extra cutlery"];
+  }
+  if ("spicy".startsWith(search) || search.includes("pepper") || search.includes("spic")) {
+    return ["Make it spicy", "Mild spice", "No pepper", "Pepper on the side"];
+  }
+  if (search.includes("sauce")) {
+    return ["Sauce on the side", "Extra sauce", "No sauce"];
+  }
+  if (search.includes("onion")) {
+    return ["No onions", "Extra onions", "Onions on the side"];
+  }
+
+  return [];
 }
 
 function generatedPreparationSuggestion(

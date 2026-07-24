@@ -93,7 +93,7 @@ export interface ApplicationConfig {
     };
   };
   preparationSuggestionsAi: {
-    provider: "noop" | "pollinations";
+    provider: "noop" | "pollinations" | "openrouter";
     baseUrl: string;
     model: string;
     apiKey: string;
@@ -230,16 +230,39 @@ export default function configuration(): ApplicationConfig {
         ).replace(/\/$/, ""),
       },
     },
-    preparationSuggestionsAi: {
-      provider:
-        process.env.PREPARATION_SUGGESTIONS_AI_PROVIDER === "noop" ? "noop" : "pollinations",
-      baseUrl: (process.env.POLLINATIONS_BASE_URL ?? "https://text.pollinations.ai").replace(
+    preparationSuggestionsAi: preparationSuggestionsAiConfig(),
+  };
+}
+
+function preparationSuggestionsAiConfig(): ApplicationConfig["preparationSuggestionsAi"] {
+  const provider =
+    process.env.PREPARATION_SUGGESTIONS_AI_PROVIDER === "noop"
+      ? "noop"
+      : process.env.PREPARATION_SUGGESTIONS_AI_PROVIDER === "openrouter"
+        ? "openrouter"
+        : "pollinations";
+
+  if (provider === "openrouter") {
+    return {
+      provider,
+      baseUrl: (process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1").replace(
         /\/$/,
         "",
       ),
-      model: process.env.POLLINATIONS_TEXT_MODEL ?? "openai",
-      apiKey: process.env.POLLINATIONS_API_KEY ?? "",
+      model: process.env.OPENROUTER_MODEL ?? "openrouter/free",
+      apiKey: process.env.OPENROUTER_API_KEY ?? "",
       timeoutMs: Number(process.env.PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS ?? 4_000),
-    },
+    };
+  }
+
+  return {
+    provider,
+    baseUrl: (process.env.POLLINATIONS_BASE_URL ?? "https://text.pollinations.ai").replace(
+      /\/$/,
+      "",
+    ),
+    model: process.env.POLLINATIONS_TEXT_MODEL ?? "openai",
+    apiKey: process.env.POLLINATIONS_API_KEY ?? "",
+    timeoutMs: Number(process.env.PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS ?? 4_000),
   };
 }

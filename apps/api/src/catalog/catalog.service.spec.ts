@@ -459,6 +459,125 @@ describe(CatalogService.name, () => {
     fetchSpy.mockRestore();
   });
 
+  it("supports OpenRouter free-route preparation suggestions", async () => {
+    preparationSuggestions.createQueryBuilder.mockReturnValueOnce({
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      addOrderBy: vi.fn().mockReturnThis(),
+      getMany: vi.fn().mockResolvedValue([]),
+    });
+    config.get
+      .mockReturnValueOnce({
+        provider: "openrouter",
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "openrouter/free",
+        apiKey: "openrouter-api-key",
+        timeoutMs: 500,
+      })
+      .mockReturnValueOnce("https://rscdev.tech");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: '["Extra spicy","Sauce on the side"]' } }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const result = await service.listPreparationSuggestions({ outletId });
+
+    expect(result.map((suggestion) => suggestion.text)).toEqual([
+      "Extra spicy",
+      "Sauce on the side",
+    ]);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://openrouter.ai/api/v1/chat/completions",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          authorization: "Bearer openrouter-api-key",
+          "HTTP-Referer": "https://rscdev.tech",
+          "X-Title": "RSC",
+        }) as Record<string, string>,
+      }),
+    );
+
+    fetchSpy.mockRestore();
+  });
+
+  it("parses non-json AI suggestion lines from free models", async () => {
+    preparationSuggestions.createQueryBuilder.mockReturnValueOnce({
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      addOrderBy: vi.fn().mockReturnThis(),
+      getMany: vi.fn().mockResolvedValue([]),
+    });
+    config.get
+      .mockReturnValueOnce({
+        provider: "openrouter",
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "openrouter/free",
+        apiKey: "openrouter-api-key",
+        timeoutMs: 500,
+      })
+      .mockReturnValueOnce("https://rscdev.tech");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "- Extra pepper\n- Extra sauce on the side" } }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const result = await service.listPreparationSuggestions({ outletId, q: "extra" });
+
+    expect(result.map((suggestion) => suggestion.text)).toEqual([
+      "Extra pepper",
+      "Extra sauce on the side",
+      "Extra spicy",
+      "Extra cutlery",
+    ]);
+
+    fetchSpy.mockRestore();
+  });
+
+  it("returns local extra suggestions when AI returns an empty array", async () => {
+    preparationSuggestions.createQueryBuilder.mockReturnValueOnce({
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      addOrderBy: vi.fn().mockReturnThis(),
+      getMany: vi.fn().mockResolvedValue([]),
+    });
+    config.get.mockReturnValueOnce({
+      provider: "pollinations",
+      baseUrl: "https://gen.pollinations.ai",
+      model: "openai",
+      apiKey: "",
+      timeoutMs: 500,
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ choices: [{ message: { content: "[]" } }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const result = await service.listPreparationSuggestions({ outletId, q: "extra" });
+
+    expect(result.map((suggestion) => suggestion.text)).toEqual([
+      "Extra spicy",
+      "Extra pepper",
+      "Extra sauce on the side",
+      "Extra cutlery",
+    ]);
+
+    fetchSpy.mockRestore();
+  });
+
   it("falls back to configured preparation suggestions when AI is unavailable", async () => {
     const configuredSuggestion = Object.assign({} as PreparationSuggestion, {
       id: "c37fbf84-2e98-4e8a-b2d0-752ec86f1927",

@@ -264,6 +264,43 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("notifies the assigned rider when an order goes out for delivery", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "4c14d989-9057-4380-a2ad-63a8a4ec7abf",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: riderUser.id,
+      status: MasterOrderStatus.READY,
+      deliveryMode: "DELIVERY",
+      updatedAt: new Date("2026-07-15T20:52:40.541Z"),
+    });
+    const { service, notifications } = createService({ orders: [order] });
+
+    await service.updateStatus(riderUser, order.id, {
+      status: MasterOrderStatus.OUT_FOR_DELIVERY,
+    });
+
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: order.customerId,
+        recipientRole: UserRole.CUSTOMER,
+        type: "ORDER_STATUS",
+      }),
+    );
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: riderUser.id,
+        recipientRole: UserRole.RIDER,
+        type: "ORDER_STATUS",
+        title: "Order is out for delivery",
+        data: {
+          deepLink: `rsc://rider/dispatch/${order.id}`,
+          masterOrderId: order.id,
+          riderLocationTracking: "START",
+        },
+      }),
+    );
+  });
+
   it("scopes outlet admins to their outlet and returns visible sub-orders and line items", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "50296ef7-fb39-4b42-ae55-81caec8efd21",
