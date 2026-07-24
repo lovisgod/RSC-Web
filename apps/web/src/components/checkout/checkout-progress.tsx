@@ -29,7 +29,7 @@ export function CheckoutProgress({ current }: { current: number }) {
                       : { backgroundColor: "#f3f4f6", color: "#9ca3af" }
                 }
               >
-                {done ? <Check className="w-4 h-4" strokeWidth={2.5} /> : i + 1}
+                {done ? <Check className="w-5 h-5" strokeWidth={2.5} /> : i + 1}
               </div>
               <span
                 className="text-[10px] font-semibold tracking-wide whitespace-nowrap"

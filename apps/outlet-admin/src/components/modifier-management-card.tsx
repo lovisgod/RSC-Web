@@ -56,7 +56,7 @@ function ModalShell({
             aria-label="Close"
             className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
         {children}
@@ -175,7 +175,7 @@ function ModifierGroupEditor({
               type="button"
               aria-label="Lower numbers show this modifier group earlier on the item options screen."
               title="Lower numbers show this modifier group earlier on the item options screen."
-              className="grid h-4 w-4 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500"
+              className="grid h-5 w-5 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500"
             >
               <Info size={11} aria-hidden="true" />
             </button>
@@ -196,7 +196,7 @@ function ModifierGroupEditor({
           disabled={busy}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
         >
-          {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+          {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
           {busy ? "Saving…" : group ? "Save group" : "Create group"}
         </button>
       </form>
@@ -285,7 +285,7 @@ function ModifierOptionEditor({
                 type="button"
                 aria-label="Lower numbers show this option earlier inside its modifier group."
                 title="Lower numbers show this option earlier inside its modifier group."
-                className="grid h-4 w-4 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500"
+                className="grid h-5 w-5 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500"
               >
                 <Info size={11} aria-hidden="true" />
               </button>
@@ -318,7 +318,7 @@ function ModifierOptionEditor({
           disabled={busy}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
         >
-          {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+          {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
           {busy ? "Saving…" : modifier ? "Save option" : "Add option"}
         </button>
       </form>
@@ -366,7 +366,7 @@ function DeleteConfirmation({
             disabled={busy}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
           >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
             Delete
           </button>
         </div>
@@ -476,7 +476,7 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
             disabled={!outletId}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
           >
-            <Plus className="h-4 w-4" aria-hidden="true" />
+            <Plus className="h-5 w-5" aria-hidden="true" />
             Create group
           </button>
         </div>
@@ -534,7 +534,7 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
                         aria-label={`Edit ${group.name}`}
                         className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-slate-700"
                       >
-                        <Pencil className="h-4 w-4" aria-hidden="true" />
+                        <Pencil className="h-5 w-5" aria-hidden="true" />
                       </button>
                       <button
                         type="button"
@@ -544,7 +544,7 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
                         aria-label={`Delete ${group.name}`}
                         className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
                       >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        <Trash2 className="h-5 w-5" aria-hidden="true" />
                       </button>
                     </div>
                   </div>

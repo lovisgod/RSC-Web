@@ -111,7 +111,7 @@ function RatingModal({
             aria-label="Close ratings"
             className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:opacity-40"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -170,7 +170,7 @@ function RatingModal({
             className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: "var(--rsc-main)" }}
           >
-            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {mutation.isPending && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
             {mutation.isPending
               ? "Submitting…"
               : `Submit ${selectedRatings.length || ""} ${

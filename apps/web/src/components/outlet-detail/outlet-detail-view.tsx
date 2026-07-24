@@ -126,7 +126,7 @@ export function OutletDetailView({ id }: { id: string }) {
                 className="inline-flex items-center gap-1 font-semibold"
                 style={{ color: "var(--rsc-dark)" }}
               >
-                <Star className="h-4 w-4 fill-current" aria-hidden="true" />
+                <Star className="h-5 w-5 fill-current" aria-hidden="true" />
                 {rating}
               </span>
               {menu.deliveryTime && <span>⏱ {menu.deliveryTime}</span>}

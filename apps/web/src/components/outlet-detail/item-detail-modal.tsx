@@ -198,7 +198,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
             aria-label="Close item details"
             className="absolute left-4 top-4 z-10 inline-flex h-10 items-center gap-2 rounded-full bg-white/95 px-3 text-sm font-bold text-gray-700 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-brand)] md:right-4 md:left-auto md:w-10 md:justify-center md:px-0"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <X className="h-5 w-5" aria-hidden="true" />
             <span className="md:sr-only">Close</span>
           </button>
 
