@@ -759,6 +759,59 @@ describe(OrdersService.name, () => {
     );
   });
 
+  it("assigns the oldest ready unassigned order when a rider becomes available", async () => {
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      riderId: null,
+      status: MasterOrderStatus.READY,
+      deliveryMode: "DELIVERY",
+      updatedAt: new Date("2026-07-02T08:00:00.000Z"),
+    });
+    const outletSubOrder = Object.assign(new SubOrder(), {
+      id: "be139e74-fd59-430c-9b16-e0c8aeb72ff2",
+      masterOrderId: order.id,
+      outletId,
+      pickupCode: "123456",
+      status: SubOrderStatus.READY,
+    });
+    const riderId = "07c89f55-9343-4e69-bd41-bc18dcaf1478";
+    const { service, notifications, realtime, dataSource } = createService({
+      orders: [order],
+      outlets: [Object.assign(new Outlet(), { id: outletId, name: "Outlet One" })],
+      subOrders: [outletSubOrder],
+    });
+    dataSource.query.mockResolvedValueOnce([
+      { orderId: order.id, id: riderId, assignmentCount: 0 },
+    ] as never);
+
+    await expect(
+      service.assignOldestReadyOrderToRider({
+        id: riderId,
+        role: UserRole.RIDER,
+        outletId,
+        sessionId: "session-id",
+        accessTokenId: "access-token-id",
+      }),
+    ).resolves.toMatchObject({ riderId });
+
+    expect(order.riderId).toBe(riderId);
+    expect(dataSource.query).toHaveBeenCalledWith(
+      expect.stringContaining("mo.rider_id IS NULL"),
+      expect.arrayContaining([riderId, outletId]),
+    );
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: riderId,
+        recipientRole: UserRole.RIDER,
+        type: "ORDER_ASSIGNMENT",
+      }),
+    );
+    expect(realtime.emitOrderStatusUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ masterOrderId: order.id, riderId }),
+    );
+  });
+
   it("returns not found when no available free rider exists", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
