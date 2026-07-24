@@ -7,6 +7,7 @@ import { Customer } from "../auth/customer.entity";
 import { CustomerStatus } from "../auth/customer-status.enum";
 import { UserRole } from "../auth/user-role.enum";
 import { MasterOrderStatus } from "../orders/order-status.enum";
+import { OrdersService } from "../orders/orders.service";
 import { RealtimeService } from "../realtime/realtime.service";
 import type { UpdateRiderAvailabilityDto } from "./dto/rider-availability.dto";
 import type { RecordRiderLocationDto, RiderDeliveriesQueryDto } from "./dto/rider-location.dto";
@@ -31,6 +32,7 @@ export class RidersService {
     private readonly locations: Repository<RiderLocation>,
     private readonly dataSource: DataSource,
     private readonly realtime: RealtimeService,
+    private readonly orders: OrdersService,
   ) {}
 
   async recordLocation(
@@ -164,6 +166,16 @@ export class RidersService {
       isAvailable,
       updatedAt: saved.updatedAt,
     });
+
+    if (isAvailable) {
+      await this.orders.assignOldestReadyOrderToRider({
+        id: saved.id,
+        role: UserRole.RIDER,
+        outletId: saved.outletId,
+        sessionId: user.sessionId,
+        accessTokenId: user.accessTokenId,
+      });
+    }
 
     return {
       id: saved.id,

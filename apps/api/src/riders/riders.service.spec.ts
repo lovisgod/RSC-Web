@@ -6,6 +6,7 @@ import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Customer } from "../auth/customer.entity";
 import { CustomerStatus } from "../auth/customer-status.enum";
 import { UserRole } from "../auth/user-role.enum";
+import type { OrdersService } from "../orders/orders.service";
 import type { RealtimeService } from "../realtime/realtime.service";
 import type { RiderLocation } from "./rider-location.entity";
 import { RidersService } from "./riders.service";
@@ -26,6 +27,7 @@ describe(RidersService.name, () => {
     emitRiderLocationUpdate: ReturnType<typeof vi.fn>;
     emitRiderAvailabilityUpdate: ReturnType<typeof vi.fn>;
   };
+  let orders: { assignOldestReadyOrderToRider: ReturnType<typeof vi.fn> };
   let service: RidersService;
 
   beforeEach(() => {
@@ -47,12 +49,16 @@ describe(RidersService.name, () => {
       emitRiderLocationUpdate: vi.fn(),
       emitRiderAvailabilityUpdate: vi.fn(),
     };
+    orders = {
+      assignOldestReadyOrderToRider: vi.fn().mockResolvedValue(null),
+    };
 
     service = new RidersService(
       users as unknown as Repository<Customer>,
       {} as Repository<RiderLocation>,
       dataSource as unknown as DataSource,
       realtime as unknown as RealtimeService,
+      orders as unknown as OrdersService,
     );
   });
 
@@ -128,6 +134,13 @@ describe(RidersService.name, () => {
       isAvailable: true,
     });
     expect(users.save).toHaveBeenCalledWith(expect.objectContaining({ riderStatus: "AVAILABLE" }));
+    expect(orders.assignOldestReadyOrderToRider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: riderUser.id,
+        role: UserRole.RIDER,
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      }),
+    );
   });
 
   it("sets an active rider unavailable for assignments", async () => {
@@ -140,6 +153,7 @@ describe(RidersService.name, () => {
     expect(users.save).toHaveBeenCalledWith(
       expect.objectContaining({ riderStatus: "UNAVAILABLE" }),
     );
+    expect(orders.assignOldestReadyOrderToRider).not.toHaveBeenCalled();
   });
 
   it("rejects non-rider users", async () => {

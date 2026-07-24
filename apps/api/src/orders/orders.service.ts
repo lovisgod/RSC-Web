@@ -401,6 +401,40 @@ export class OrdersService {
     return this.buildOrderDetail(order);
   }
 
+  async assignOldestReadyOrderToRider(
+    rider: AuthenticatedUser & { outletId?: string | null },
+  ): Promise<{ riderId: string; dispatch: RiderDispatch } | null> {
+    if (rider.role !== UserRole.RIDER) {
+      throw new ForbiddenException("Only riders can receive rider assignments");
+    }
+
+    const candidate = await this.findOldestReadyUnassignedOrderForRider(rider.id, rider.outletId);
+    if (!candidate) {
+      return null;
+    }
+
+    const order = await this.masterOrders.findOneBy({ id: candidate.orderId });
+    if (!order || order.riderId) {
+      return null;
+    }
+
+    const assignment = await this.assignSelectedRider(
+      rider,
+      order,
+      { id: rider.id, assignmentCount: candidate.assignmentCount },
+      "Auto assigned when rider became available",
+    );
+    this.realtime.emitOrderStatusUpdate({
+      masterOrderId: order.id,
+      customerId: order.customerId,
+      riderId: order.riderId,
+      status: order.status,
+      updatedAt: order.updatedAt,
+    });
+
+    return assignment;
+  }
+
   async listAssignedDispatches(user: AuthenticatedUser): Promise<RiderDispatch[]> {
     if (user.role !== UserRole.RIDER) {
       throw new ForbiddenException("Only riders can view assigned orders");
@@ -1127,6 +1161,15 @@ export class OrdersService {
       throw error;
     }
 
+    return this.assignSelectedRider(actor, order, rider, note);
+  }
+
+  private async assignSelectedRider(
+    actor: AuthenticatedUser,
+    order: MasterOrder,
+    rider: FairAvailableRiderRow,
+    note: string,
+  ): Promise<{ riderId: string; dispatch: RiderDispatch }> {
     order.riderId = rider.id;
     await this.masterOrders.save(order);
     await this.recordStatusEvent(
@@ -1166,6 +1209,73 @@ export class OrdersService {
     });
 
     return { riderId: rider.id, dispatch };
+  }
+
+  private async findOldestReadyUnassignedOrderForRider(
+    riderId: string,
+    outletId?: string | null,
+  ): Promise<(FairAvailableRiderRow & { orderId: string }) | null> {
+    const rows = await this.dataSource.query<Array<FairAvailableRiderRow & { orderId: string }>>(
+      `
+        WITH rider_assignment_count AS (
+          SELECT COUNT(recent_orders.id)::integer AS "assignmentCount"
+          FROM master_orders recent_orders
+          WHERE recent_orders.rider_id = $1
+            AND recent_orders.created_at >= NOW() - INTERVAL '24 hours'
+            AND recent_orders.status <> 'CANCELLED'
+            AND recent_orders.deleted_at IS NULL
+        )
+        SELECT
+          mo.id AS "orderId",
+          $1::uuid AS "id",
+          rider_assignment_count."assignmentCount"
+        FROM master_orders mo
+        CROSS JOIN rider_assignment_count
+        WHERE mo.rider_id IS NULL
+          AND mo.delivery_mode = 'DELIVERY'
+          AND mo.status = ANY($2)
+          AND mo.deleted_at IS NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM master_orders active_orders
+            WHERE active_orders.rider_id = $1
+              AND active_orders.status <> ALL($3)
+              AND active_orders.deleted_at IS NULL
+          )
+          AND ($4::uuid IS NULL OR EXISTS (
+            SELECT 1
+            FROM sub_orders scope_sub_orders
+            WHERE scope_sub_orders.master_order_id = mo.id
+              AND scope_sub_orders.outlet_id = $4
+              AND scope_sub_orders.deleted_at IS NULL
+          ))
+          AND EXISTS (
+            SELECT 1
+            FROM sub_orders fulfillable_sub_orders
+            WHERE fulfillable_sub_orders.master_order_id = mo.id
+              AND fulfillable_sub_orders.status <> 'REJECTED'
+              AND fulfillable_sub_orders.deleted_at IS NULL
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM sub_orders pending_sub_orders
+            WHERE pending_sub_orders.master_order_id = mo.id
+              AND pending_sub_orders.status <> 'REJECTED'
+              AND pending_sub_orders.status <> 'READY'
+              AND pending_sub_orders.deleted_at IS NULL
+          )
+        ORDER BY mo.created_at ASC
+        LIMIT 1
+      `,
+      [
+        riderId,
+        [MasterOrderStatus.READY, MasterOrderStatus.PARTIALLY_FULFILLED],
+        [MasterOrderStatus.DELIVERED, MasterOrderStatus.CANCELLED],
+        outletId ?? null,
+      ],
+    );
+
+    return rows[0] ?? null;
   }
 
   private async autoAssignRiderIfReady(
