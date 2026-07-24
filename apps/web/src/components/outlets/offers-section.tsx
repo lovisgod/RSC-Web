@@ -20,7 +20,7 @@ function OfferCard({ promo, onDismiss }: { promo: Promo; onDismiss: () => void }
         aria-label={`Dismiss ${promo.title}`}
         className="absolute right-2.5 top-2.5 text-white/50 transition-colors hover:text-white"
       >
-        <X className="h-4 w-4" aria-hidden="true" />
+        <X className="h-5 w-5" aria-hidden="true" />
       </button>
 
       <div className="min-w-0 flex-1 pr-6">
@@ -67,7 +67,7 @@ export function OffersSection() {
           className="inline-flex items-center gap-1.5 text-sm font-semibold"
           style={{ color: "var(--rsc-main)" }}
         >
-          <RotateCw className="h-4 w-4" aria-hidden="true" />
+          <RotateCw className="h-5 w-5" aria-hidden="true" />
           Retry
         </button>
       </div>

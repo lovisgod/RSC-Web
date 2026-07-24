@@ -323,7 +323,7 @@ export function OrderDetailsModal({ order, onClose }: { order: Order; onClose: (
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-gray-50 p-4 sm:p-5">
           {detailQuery.isPending && (
             <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-200 py-10 text-sm text-gray-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
               Loading order contents...
             </div>
           )}
@@ -508,7 +508,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
               }}
               disabled={reorderMutation.isPending}
             >
-              {reorderMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reorder"}
+              {reorderMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Reorder"}
             </Button>
           ) : variant === "cancelled" ? (
             <Button
@@ -521,7 +521,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
               }}
               disabled={refundMutation.isPending}
             >
-              {refundMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refund"}
+              {refundMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Refund"}
             </Button>
           ) : (
             <Button
@@ -540,7 +540,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
               disabled={retryPaymentMutation.isPending}
             >
               {retryPaymentMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : isPendingPayment ? (
                 "Make payment"
               ) : (

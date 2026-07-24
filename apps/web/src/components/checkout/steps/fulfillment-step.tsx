@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
@@ -29,7 +29,7 @@ function SectionLabel({ icon, text }: { icon: string; text: string }) {
     <div className="flex items-center gap-2 mb-2">
       {icon.startsWith("/") ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={icon} alt="" className="w-4 h-4 object-contain" />
+        <img src={icon} alt="" className="w-5 h-5 object-contain" />
       ) : (
         <span className="text-base">{icon}</span>
       )}
@@ -445,10 +445,10 @@ export function FulfillmentStep({
                   className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
                 />
                 {isValidating && (
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400 flex-shrink-0" />
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-400 flex-shrink-0" />
                 )}
                 {isValidated && !isValidating && (
-                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
                 )}
               </div>
 
@@ -470,13 +470,13 @@ export function FulfillmentStep({
                       >
                         <span className="mt-0.5 flex-shrink-0 text-gray-400">
                           {addr.isDefault ? (
-                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                            <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
                           ) : (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src="/icons/png/round-pushpin_1f4cd.png"
                               alt=""
-                              className="w-4 h-4 object-contain"
+                              className="w-5 h-5 object-contain"
                             />
                           )}
                         </span>
@@ -501,7 +501,7 @@ export function FulfillmentStep({
                         <img
                           src="/icons/png/round-pushpin_1f4cd.png"
                           alt=""
-                          className="w-4 h-4 object-contain mt-0.5 flex-shrink-0"
+                          className="w-5 h-5 object-contain mt-0.5 flex-shrink-0"
                         />
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-gray-800 truncate">
@@ -640,7 +640,7 @@ export function FulfillmentStep({
         <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-3">
           <label htmlFor="promo-code" className="flex items-center gap-2 text-xs font-bold">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-[var(--rsc-main)]">
-              <Tag className="h-4 w-4" aria-hidden="true" />
+              <Tag className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="uppercase tracking-[0.18em] text-gray-500">Promo code</span>
           </label>
@@ -692,7 +692,7 @@ export function FulfillmentStep({
         >
           {initiateMutation.isPending ? (
             <span className="flex items-center justify-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
               Placing order…
             </span>
           ) : (

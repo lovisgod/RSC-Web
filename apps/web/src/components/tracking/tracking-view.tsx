@@ -159,7 +159,7 @@ function KitchenBreakdown({
       <div className="flex items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--rsc-main)_10%,white)] text-[var(--rsc-main)]">
-            <Store className="h-4 w-4" aria-hidden="true" />
+            <Store className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
             <p className="text-sm font-bold text-gray-900">Outlet breakdown</p>
@@ -200,7 +200,7 @@ function KitchenBreakdown({
                     color: "var(--rsc-main)",
                   }}
                 >
-                  <Store className="h-4 w-4" aria-hidden="true" />
+                  <Store className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-gray-900">
@@ -359,7 +359,7 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
           onClick={() => void refetch()}
           className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700"
         >
-          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          <RefreshCw className="h-5 w-5" aria-hidden="true" />
           Try again
         </button>
       </div>
@@ -416,7 +416,7 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
       <Card className="space-y-4 border-[color:color-mix(in_srgb,var(--rsc-main)_10%,white)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
         <div className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--rsc-main)_9%,white)] text-[var(--rsc-main)]">
-            <MapPin className="h-4 w-4" aria-hidden="true" />
+            <MapPin className="h-5 w-5" aria-hidden="true" />
           </span>
           <p className="text-sm font-bold text-gray-900">
             {order.deliveryMode === "TAKEOUT" ? "Collection details" : "Delivery details"}
@@ -424,7 +424,7 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
         </div>
         {order.deliveryAddress && (
           <div className="flex items-start gap-2.5">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+            <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
             <p className="text-sm leading-relaxed text-gray-700">{order.deliveryAddress}</p>
           </div>
         )}
@@ -532,7 +532,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${toggleToneClass}`}
         >
           <ChevronDown
-            className="h-4 w-4 transition-transform duration-200"
+            className="h-5 w-5 transition-transform duration-200"
             style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
             aria-hidden="true"
           />
@@ -626,7 +626,7 @@ export function TrackingView({
           onClick={() => void refetch()}
           className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--rsc-main)]"
         >
-          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          <RefreshCw className="h-5 w-5" aria-hidden="true" />
           Try again
         </button>
       </div>

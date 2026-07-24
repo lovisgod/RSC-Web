@@ -63,7 +63,7 @@ export function PaymentStep({
           <Button tone="navy" fullWidth type="button" onClick={handleContinue}>
             <span className="inline-flex items-center justify-center gap-2">
               Continue to payment
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              <ExternalLink className="h-5 w-5" aria-hidden="true" />
             </span>
           </Button>
         )}

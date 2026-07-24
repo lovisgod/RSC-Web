@@ -112,7 +112,7 @@ export function EarningsChart({
                   <td className="px-6 py-4">
                     <div className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                        <ReceiptText className="h-4 w-4" aria-hidden="true" />
+                        <ReceiptText className="h-5 w-5" aria-hidden="true" />
                       </span>
                       <div>
                         <p className="text-sm font-black text-slate-900">

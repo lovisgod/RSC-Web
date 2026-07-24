@@ -136,7 +136,7 @@ function ProfileChangeVerificationModal({
             aria-label="Close verification"
             className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:opacity-40"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -204,7 +204,7 @@ function ProfileChangeVerificationModal({
             className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: "var(--rsc-main)" }}
           >
-            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {mutation.isPending && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
             {mutation.isPending ? "Verifying…" : "Verify change"}
           </button>
         </form>
@@ -659,10 +659,10 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
                   className={addrInputClass}
                 />
                 {(places.isLoading || reverseGeocoding) && (
-                  <Loader2 className="absolute right-3 top-3.5 w-4 h-4 animate-spin text-gray-400" />
+                  <Loader2 className="absolute right-3 top-3.5 w-5 h-5 animate-spin text-gray-400" />
                 )}
                 {geoResult && !places.isLoading && (
-                  <CheckCircle2 className="absolute right-3 top-3.5 w-4 h-4 text-green-500" />
+                  <CheckCircle2 className="absolute right-3 top-3.5 w-5 h-5 text-green-500" />
                 )}
                 {!geo.coords && places.suggestions.length > 0 && (
                   <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden">
@@ -673,7 +673,7 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
                         onClick={() => void selectGoogleSuggestion(suggestion)}
                         className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
                       >
-                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-gray-800 truncate">
                             {suggestion.description}
@@ -707,17 +707,17 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
               >
                 {geo.locating || reverseGeocoding ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                     {geo.locating ? "Getting location…" : "Looking up address…"}
                   </>
                 ) : geo.coords ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
                     <span className="text-green-600">Location pinned — tap to clear</span>
                   </>
                 ) : (
                   <>
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="w-5 h-5" />
                     Pin My Current Location
                   </>
                 )}
@@ -733,7 +733,7 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
               {/* Errors */}
               {(geoError ?? geo.error) && (
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
-                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-red-600">{geoError ?? geo.error}</p>
                 </div>
               )}
@@ -747,7 +747,7 @@ function DefaultAddressModal({ onClose }: { onClose: () => void }) {
               )}
               {mutation.isError && (
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
-                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-red-600">
                     {getMutationErrorMessage(mutation.error, {})}
                   </p>
@@ -911,7 +911,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
               {mutation.isError && (
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
-                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-red-600">
                     {getMutationErrorMessage(mutation.error, {
                       401: "Current password is incorrect.",
@@ -1058,7 +1058,7 @@ function NotificationPreferencesCard() {
         <div id="notification-preferences-panel" className="mt-5 border-t border-gray-100 pt-4">
           {preferencesQuery.isPending ? (
             <div className="flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
               Loading notification preferences…
             </div>
           ) : preferencesQuery.isError ? (
@@ -1211,7 +1211,7 @@ function DeleteAccountCard() {
             >
               {mutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                   Deleting…
                 </>
               ) : (
