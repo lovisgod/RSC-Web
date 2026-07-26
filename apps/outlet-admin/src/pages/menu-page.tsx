@@ -324,7 +324,7 @@ function AddItemModal({
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleModifierGroup(group.id)}
-                        className="h-4 w-4 rounded accent-emerald-500"
+                        className="h-5 w-5 rounded accent-emerald-500"
                       />
                       <span className="text-sm text-slate-700">{group.name}</span>
                       {group.isRequired && (
@@ -586,7 +586,7 @@ function EditItemModal({
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleModifierGroup(group.id)}
-                        className="h-4 w-4 rounded accent-emerald-500"
+                        className="h-5 w-5 rounded accent-emerald-500"
                       />
                       <span className="text-sm text-slate-700">{group.name}</span>
                       {group.isRequired && (

@@ -578,7 +578,7 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
                             }`}
                           >
                             <span
-                              className={`block h-4 w-4 rounded-full bg-white transition-transform ${
+                              className={`block h-5 w-5 rounded-full bg-white transition-transform ${
                                 modifier.isAvailable ? "translate-x-4" : "translate-x-0"
                               }`}
                             />

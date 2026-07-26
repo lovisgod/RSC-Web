@@ -61,7 +61,7 @@ function ModifierGroupSection({
                   checked={checked}
                   disabled={disabled}
                   onChange={() => onToggle(mod.id)}
-                  className="w-4 h-4 accent-[var(--rsc-main)]"
+                  className="w-5 h-5 accent-[var(--rsc-main)]"
                 />
                 <span className="text-sm text-gray-700">{mod.name}</span>
               </div>
