@@ -52,3 +52,6 @@ context lives in [`docs/`](./docs/).
 
 Deployment through Dokploy's native GitHub provider is documented in
 [`docs/deployment.md`](./docs/deployment.md).
+
+The unit, integration, realtime, browser, and coverage test layers are documented
+in [`docs/testing.md`](./docs/testing.md).

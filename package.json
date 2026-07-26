@@ -31,6 +31,9 @@
     "lint:frontend": "pnpm --filter @rsc/admin --filter @rsc/outlet-admin --filter @rsc/web lint",
     "test": "turbo run test",
     "test:e2e": "pnpm --filter @rsc/api test:e2e",
+    "test:integration": "pnpm --filter @rsc/api test:integration",
+    "test:browser": "playwright test",
+    "test:coverage": "pnpm --filter @rsc/api test:coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:reset:api": "sh scripts/reset-api-db.sh",
@@ -39,6 +42,7 @@
     "clean": "turbo run clean && rm -rf .turbo"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "prettier": "3.8.4",
     "turbo": "2.9.18",
     "typescript": "5.9.3"
