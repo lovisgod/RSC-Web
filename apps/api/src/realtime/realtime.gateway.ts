@@ -57,23 +57,30 @@ export class RealtimeGateway {
 
   afterInit(server: Server): void {
     this.realtime.bindServer(server);
+    server.use((client, next) => {
+      void this.authenticateClient(client as AuthenticatedSocket)
+        .then(() => next())
+        .catch((error: unknown) => {
+          this.logger.warn(
+            `Rejected WebSocket connection: ${error instanceof Error ? error.message : "unknown"}`,
+          );
+          next(new Error("Authentication failed"));
+        });
+    });
   }
 
-  async handleConnection(client: AuthenticatedSocket): Promise<void> {
-    try {
-      const token = this.extractToken(client);
+  handleConnection(): void {
+    // Authentication is completed by namespace middleware before the connection event.
+  }
 
-      if (!token) {
-        return;
-      }
+  private async authenticateClient(client: AuthenticatedSocket): Promise<void> {
+    const token = this.extractToken(client);
 
-      socketData(client).user = await this.sessions.authenticateAccessToken(token);
-    } catch (error) {
-      this.logger.warn(
-        `Rejected WebSocket connection: ${error instanceof Error ? error.message : "unknown"}`,
-      );
-      client.disconnect(true);
+    if (!token) {
+      return;
     }
+
+    socketData(client).user = await this.sessions.authenticateAccessToken(token);
   }
 
   @SubscribeMessage("room:subscribe")
