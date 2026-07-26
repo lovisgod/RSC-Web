@@ -559,7 +559,7 @@ export function FulfillmentStep({
                   setRecipientPhoneError(null);
                   if (!e.target.checked) setRecipientPhone("");
                 }}
-                className="w-4 h-4 rounded border-gray-300 accent-[var(--rsc-main)]"
+                className="w-5 h-5 rounded border-gray-300 accent-[var(--rsc-main)]"
               />
               <span className="text-sm text-gray-600">Order on behalf of some else</span>
             </label>
