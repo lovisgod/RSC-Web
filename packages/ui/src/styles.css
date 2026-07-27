@@ -45,6 +45,11 @@
   --rsc-danger: #f08070;
   --rsc-success: #50c982;
   --rsc-shadow: 0 18px 60px rgb(0 0 0 / 28%);
+
+  /* Dark mode primary and navy ink overrides */
+  --rsc-main: #93c5fd;
+  --rsc-navy-dark: var(--rsc-ink);
+  --rsc-navy-light: #60a5fa;
 }
 
 * {

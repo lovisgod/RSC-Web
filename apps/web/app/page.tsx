@@ -1,4 +1,4 @@
-import { Button } from "@rsc/ui";
+import { Button, ThemeToggle } from "@rsc/ui";
 import Link from "next/link";
 
 const principles = [
@@ -25,7 +25,7 @@ export default function HomePage() {
       <header className="site-header">
         <Link className="brand" href="/" aria-label="RSC Kitchens home">
           {/* <span className="brand__mark">R</span> */}
-          <span className="text-[var(--rsc-brand)] text-xl">
+          <span className="text-[var(--rsc-brand)] text-xl font-bold">
             <span className="text-[var(--rsc-main)]">RSC</span> Food
           </span>
         </Link>
@@ -33,9 +33,12 @@ export default function HomePage() {
           <Link href="#how-it-works">How it works</Link>
           <Link href="/outlets">Outlets</Link>
         </nav>
-        <Link href="/sign-in" className="rsc-button--quiet">
-          Sign in
-        </Link>
+        <div className="flex items-center gap-3 justify-self-end">
+          <ThemeToggle />
+          <Link href="/sign-in" className="rsc-button--quiet">
+            Sign in
+          </Link>
+        </div>
       </header>
 
       <section className="hero">
