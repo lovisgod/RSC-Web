@@ -14,6 +14,18 @@ Build the web surfaces for RSC Group's multi-outlet food ordering platform:
 The supplied scope, data model, and technical brief are drafts. Preserve their
 business intent, but challenge unsafe or contradictory implementation details.
 
+## Project skills
+
+Reusable, agent-agnostic workflows live in `.agents/skills/`:
+
+- `rsc-change-safety` for impact analysis, compatibility, and verification.
+- `rsc-payment-safety` for payments, refunds, settlements, and pricing.
+- `rsc-production-ops` for Dokploy, Docker, databases, DNS, and incidents.
+- `rsc-nest-typeorm` for NestJS, TypeORM, transactions, and migrations.
+
+Use the matching skill whenever its description applies. See
+`docs/agent-skills.md` for the authoring and validation guide.
+
 ## Read first
 
 Before coding, read:
