@@ -69,6 +69,7 @@ export interface Environment {
   OPENROUTER_API_KEY?: string;
   PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: number;
   DATABASE_BACKUP_MAX_ATTACHMENT_MB: number;
+  AUDIT_RETENTION_DAYS: number;
 }
 
 const base64Key = Joi.string().custom((value: string, helpers) => {
@@ -243,6 +244,7 @@ const environmentSchema = Joi.object<Environment>({
   }),
   PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS: Joi.number().integer().min(500).max(10_000).default(4_000),
   DATABASE_BACKUP_MAX_ATTACHMENT_MB: Joi.number().integer().min(1).max(40).default(20),
+  AUDIT_RETENTION_DAYS: Joi.number().integer().min(30).max(3_650).default(365),
 }).unknown(true);
 
 export function validateEnvironment(config: Record<string, unknown>): Environment {
@@ -253,6 +255,15 @@ export function validateEnvironment(config: Record<string, unknown>): Environmen
 
   if (result.error) {
     throw new Error(`Environment validation failed: ${result.error.message}`);
+  }
+
+  if (
+    (result.value.NODE_ENV === "staging" || result.value.NODE_ENV === "production") &&
+    result.value.PAYMENT_PROVIDER === "local"
+  ) {
+    throw new Error(
+      "Environment validation failed: PAYMENT_PROVIDER must be paystack or moment outside development/test",
+    );
   }
 
   if (result.value.PUSH_PROVIDER === "firebase") {

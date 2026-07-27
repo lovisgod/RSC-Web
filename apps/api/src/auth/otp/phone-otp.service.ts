@@ -51,6 +51,14 @@ end
 return "INVALID"
 `;
 
+const RATE_LIMIT_SCRIPT = `
+local count = redis.call("INCR", KEYS[1])
+if count == 1 then
+  redis.call("EXPIRE", KEYS[1], ARGV[1])
+end
+return count
+`;
+
 @Injectable()
 export class PhoneOtpService {
   private readonly otpPepper: string;
@@ -64,6 +72,27 @@ export class PhoneOtpService {
 
   generateCode(): string {
     return randomInt(0, 1_000_000).toString().padStart(6, "0");
+  }
+
+  async consumeRateLimit(
+    scope: string,
+    identity: string,
+    limit: number,
+    windowSeconds: number,
+  ): Promise<boolean> {
+    const identityHash = createHmac("sha256", this.otpPepper)
+      .update("rate-limit")
+      .update("\0")
+      .update(identity)
+      .digest("hex");
+    const count = await this.redis.eval(
+      RATE_LIMIT_SCRIPT,
+      1,
+      `auth:rate-limit:${scope}:${identityHash}`,
+      String(windowSeconds),
+    );
+
+    return Number(count) <= limit;
   }
 
   async store(customerId: string, code: string): Promise<void> {
@@ -136,6 +165,23 @@ export class PhoneOtpService {
 
   async verifyRegistrationCode(code: string): Promise<ChannelOtpVerificationResult> {
     return this.verifyIndexedCode(this.registrationCodeIndexKey(code), code);
+  }
+
+  async verifyRegistration(
+    customerId: string,
+    channel: VerificationOtpChannel,
+    code: string,
+  ): Promise<OtpVerificationResult> {
+    const result =
+      channel === "phone"
+        ? await this.verify(customerId, code)
+        : await this.verifyEmail(customerId, code);
+
+    if (result === "VERIFIED") {
+      await this.redis.del(this.registrationCodeIndexKey(code));
+    }
+
+    return result;
   }
 
   async verifyProfileChangeCode(code: string): Promise<ChannelOtpVerificationResult> {

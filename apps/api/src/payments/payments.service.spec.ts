@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ServiceUnavailableException } from "@nestjs/common";
 import type { ConfigService } from "@nestjs/config";
 import type { DataSource, Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -18,8 +18,7 @@ import { Outlet } from "../outlets/outlet.entity";
 import type { Promo } from "../notifications/promo.entity";
 import type { NotificationsService } from "../notifications/notifications.service";
 import type { RealtimeNotificationEvent, RealtimeService } from "../realtime/realtime.service";
-import type { Payment } from "./payment.entity";
-import { PaymentStatus } from "./payment.entity";
+import { Payment, PaymentStatus } from "./payment.entity";
 import type {
   InitiateProviderPaymentInput,
   InitiateProviderPaymentResult,
@@ -38,11 +37,16 @@ describe(PaymentsService.name, () => {
   let menuItems: { findBy: ReturnType<typeof vi.fn> };
   let modifiers: { findBy: ReturnType<typeof vi.fn> };
   let outlets: { findBy: ReturnType<typeof vi.fn> };
-  let masterOrders: { findOneBy: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn> };
+  let masterOrders: {
+    findOne: ReturnType<typeof vi.fn>;
+    findOneBy: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+  };
   let subOrders: { find: ReturnType<typeof vi.fn> };
   let lineItems: { find: ReturnType<typeof vi.fn> };
   let payments: {
     find: ReturnType<typeof vi.fn>;
+    findOne: ReturnType<typeof vi.fn>;
     findOneBy: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
@@ -110,6 +114,7 @@ describe(PaymentsService.name, () => {
       ]),
     };
     masterOrders = {
+      findOne: vi.fn().mockResolvedValue(null),
       findOneBy: vi.fn().mockResolvedValue(null),
       save: vi.fn((value: MasterOrder) => Promise.resolve(value)),
     };
@@ -121,6 +126,7 @@ describe(PaymentsService.name, () => {
     };
     payments = {
       find: vi.fn().mockResolvedValue([]),
+      findOne: vi.fn().mockResolvedValue(null),
       findOneBy: vi.fn().mockResolvedValue({
         id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
         masterOrderId: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
@@ -153,7 +159,17 @@ describe(PaymentsService.name, () => {
       ),
     };
     promos = { findOneBy: vi.fn().mockResolvedValue(null) };
-    dataSource = { query: vi.fn().mockResolvedValue([]), transaction: vi.fn() };
+    dataSource = {
+      query: vi.fn().mockResolvedValue([]),
+      transaction: vi.fn().mockImplementation((work: (manager: unknown) => unknown) =>
+        Promise.resolve(
+          work({
+            query: vi.fn().mockResolvedValue([{ id: "webhook-event-id" }]),
+            getRepository: (entity: unknown) => (entity === Payment ? payments : masterOrders),
+          }),
+        ),
+      ),
+    };
     delivery = {
       validateAddress: vi.fn().mockResolvedValue({
         deliverable: true,
@@ -825,7 +841,9 @@ describe(PaymentsService.name, () => {
       outletId: null,
     };
     payments.findOneBy.mockResolvedValue(payment);
+    payments.findOne.mockResolvedValue(payment);
     masterOrders.findOneBy.mockResolvedValue(order);
+    masterOrders.findOne.mockResolvedValue(order);
     const subOrder = Object.assign(new SubOrder(), {
       id: "0b8706a1-b1d9-4c05-860f-8e15f70410f2",
       masterOrderId: order.id,
@@ -957,6 +975,42 @@ describe(PaymentsService.name, () => {
       expect.any(Function),
       expect.objectContaining({ preparationNote: "No onions across the order" }),
     );
+  });
+
+  it("does not consume a webhook that arrives before its payment row", async () => {
+    payments.findOne.mockResolvedValue(null);
+
+    await expect(
+      service.confirmPayment({
+        eventId: "evt-early",
+        eventType: "payment_session.completed",
+        reference: "RSC-not-committed",
+        status: "SUCCESS",
+        amountMinor: 645000,
+        providerResponse: {},
+      }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(dataSource.query).not.toHaveBeenCalled();
+  });
+
+  it("rejects a successful webhook with a different amount", async () => {
+    payments.findOne.mockResolvedValue({
+      reference: "RSC-reference",
+      amountMinor: 645000,
+      status: PaymentStatus.PENDING,
+    });
+
+    await expect(
+      service.confirmPayment({
+        eventId: "evt-wrong-amount",
+        eventType: "payment_session.completed",
+        reference: "RSC-reference",
+        status: "SUCCESS",
+        amountMinor: 640000,
+        providerResponse: {},
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(dataSource.query).not.toHaveBeenCalled();
   });
 
   describe("Initiate totals validation", () => {

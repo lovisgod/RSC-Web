@@ -14,6 +14,9 @@ export interface ApplicationConfig {
   redis: {
     url: string;
   };
+  audit: {
+    retentionDays: number;
+  };
   security: {
     piiEncryptionKey: string;
     piiHashPepper: string;
@@ -144,6 +147,9 @@ export default function configuration(): ApplicationConfig {
     },
     redis: {
       url: process.env.REDIS_URL ?? "",
+    },
+    audit: {
+      retentionDays: Number(process.env.AUDIT_RETENTION_DAYS ?? 365),
     },
     security: {
       piiEncryptionKey: process.env.PII_ENCRYPTION_KEY ?? "",

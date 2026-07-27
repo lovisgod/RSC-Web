@@ -7,6 +7,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -585,64 +586,94 @@ export class PaymentsService {
   async confirmPayment(event: ParsedWebhookEvent): Promise<{ already: boolean }> {
     const paymentsConfig = this.configService.get("payments", { infer: true });
     const gateway = paymentsConfig.provider;
+    let payment: Payment | null = null;
+    let order: MasterOrder | null = null;
+    let already = false;
 
-    // Idempotency: record this event, bail if already processed
-    try {
-      await this.dataSource.query(
-        `INSERT INTO payment_webhook_events (gateway, event_id, event_type, payload)
-         VALUES ($1, $2, $3, $4)`,
-        [gateway, event.eventId, event.eventType, JSON.stringify(event.providerResponse)],
-      );
-    } catch {
-      // unique constraint violation → already processed
-      this.logger.log(`Webhook event ${event.eventId} already processed — skipping`);
-      return { already: true };
-    }
-
-    const payment = await this.payments.findOneBy({ reference: event.reference });
-
-    if (!payment) {
-      this.logger.warn(`Webhook: no payment found for reference ${event.reference}`);
-      return { already: false };
-    }
-
-    // Already in a terminal state — nothing to do
-    if (payment.status !== PaymentStatus.PENDING) {
-      return { already: true };
-    }
-
-    const nextPaymentStatus =
-      event.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
-    const nextOrderStatus =
-      event.status === "SUCCESS" ? MasterOrderStatus.CONFIRMED : MasterOrderStatus.CANCELLED;
-
-    payment.status = nextPaymentStatus;
-    await this.payments.save(payment);
-
-    const order = await this.masterOrders.findOneBy({ id: payment.masterOrderId });
-
-    if (order && order.status === MasterOrderStatus.PENDING_PAYMENT) {
-      order.status = nextOrderStatus;
-      await this.masterOrders.save(order);
-      this.realtime.emitOrderStatusUpdate({
-        masterOrderId: order.id,
-        customerId: order.customerId,
-        riderId: order.riderId,
-        status: order.status,
-        updatedAt: order.updatedAt,
+    await this.dataSource.transaction(async (manager) => {
+      const paymentRepository = manager.getRepository(Payment);
+      const orderRepository = manager.getRepository(MasterOrder);
+      payment = await paymentRepository.findOne({
+        where: { reference: event.reference },
+        lock: { mode: "pessimistic_write" },
       });
 
-      if (nextPaymentStatus === PaymentStatus.SUCCESS) {
-        await this.emitConfirmedSubOrders(order);
-        await this.notifyAdminsOfSuccessfulPayment(order, payment);
+      if (!payment) {
+        this.logger.warn(`Webhook: no payment found for reference ${event.reference}`);
+        throw new ServiceUnavailableException("Payment is not ready for webhook confirmation");
       }
+
+      if (
+        event.status === "SUCCESS" &&
+        event.amountMinor > 0 &&
+        event.amountMinor !== payment.amountMinor
+      ) {
+        this.logger.error(
+          `Webhook amount mismatch for ${event.reference}: expected ${payment.amountMinor}, received ${event.amountMinor}`,
+        );
+        throw new BadRequestException("Webhook payment amount does not match the order total");
+      }
+
+      const insertedEvents = await manager.query<Array<{ id: string }>>(
+        `INSERT INTO payment_webhook_events (gateway, event_id, event_type, payload)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (gateway, event_id) DO NOTHING
+         RETURNING id`,
+        [gateway, event.eventId, event.eventType, JSON.stringify(event.providerResponse)],
+      );
+      if (insertedEvents.length === 0) {
+        already = true;
+        return;
+      }
+
+      if (payment.status !== PaymentStatus.PENDING) {
+        already = true;
+        return;
+      }
+
+      payment.status = event.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
+      await paymentRepository.save(payment);
+
+      order = await orderRepository.findOne({
+        where: { id: payment.masterOrderId },
+        lock: { mode: "pessimistic_write" },
+      });
+
+      if (order?.status === MasterOrderStatus.PENDING_PAYMENT) {
+        order.status =
+          event.status === "SUCCESS" ? MasterOrderStatus.CONFIRMED : MasterOrderStatus.CANCELLED;
+        await orderRepository.save(order);
+      }
+    });
+
+    const confirmedPayment = payment as Payment | null;
+    const confirmedOrder = order as MasterOrder | null;
+
+    if (already || !confirmedPayment) {
+      if (already) {
+        this.logger.log(`Webhook event ${event.eventId} already processed — skipping`);
+      }
+      return { already };
+    }
+
+    if (confirmedOrder?.status === MasterOrderStatus.CONFIRMED) {
+      this.realtime.emitOrderStatusUpdate({
+        masterOrderId: confirmedOrder.id,
+        customerId: confirmedOrder.customerId,
+        riderId: confirmedOrder.riderId,
+        status: confirmedOrder.status,
+        updatedAt: confirmedOrder.updatedAt,
+      });
+
+      await this.emitConfirmedSubOrders(confirmedOrder);
+      await this.notifyAdminsOfSuccessfulPayment(confirmedOrder, confirmedPayment);
     }
 
     this.logger.log(
-      `Payment ${payment.reference} confirmed: ${nextPaymentStatus} (order ${payment.masterOrderId})`,
+      `Payment ${confirmedPayment.reference} confirmed: ${confirmedPayment.status} (order ${confirmedPayment.masterOrderId})`,
     );
 
-    return { already: false };
+    return { already };
   }
 
   private async emitConfirmedSubOrders(order: MasterOrder) {

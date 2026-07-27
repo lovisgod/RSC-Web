@@ -12,7 +12,7 @@ import { spawn } from "node:child_process";
 import { mkdir, stat, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 
 import { EMAIL_SENDER, type EmailSender } from "../auth/email/email-sender";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
@@ -43,6 +43,7 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @InjectRepository(DatabaseBackupSettings)
     private readonly settingsRepository: Repository<DatabaseBackupSettings>,
+    private readonly dataSource: DataSource,
     private readonly configService: ConfigService<ApplicationConfig, true>,
     @Inject(EMAIL_SENDER) private readonly emailSender: EmailSender,
   ) {}
@@ -136,13 +137,23 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException("Backup recipient email is not configured");
     }
 
+    const lockConnection = this.dataSource.createQueryRunner();
+    await lockConnection.connect();
+    const [lock] = (await lockConnection.query(
+      "SELECT pg_try_advisory_lock(951753824) AS acquired",
+    )) as Array<{ acquired: boolean }>;
+    if (!lock?.acquired) {
+      await lockConnection.release();
+      throw new BadRequestException("A database backup is already running on another API instance");
+    }
+
     this.isRunning = true;
     settings.lastStatus = "RUNNING";
     settings.lastError = null;
-    await this.settingsRepository.save(settings);
 
     let dump: DumpResult | null = null;
     try {
+      await this.settingsRepository.save(settings);
       dump = await this.createDump();
       const maxBytes = this.maxAttachmentBytes();
       if (dump.fileSizeBytes > maxBytes) {
@@ -196,6 +207,8 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
       if (dump) {
         await unlink(dump.filePath).catch(() => undefined);
       }
+      await lockConnection.query("SELECT pg_advisory_unlock(951753824)").catch(() => undefined);
+      await lockConnection.release();
     }
   }
 

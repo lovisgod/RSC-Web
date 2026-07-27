@@ -1121,7 +1121,7 @@ describe(OrdersService.name, () => {
     expect(result.subOrders[0]?.pickupCode).toBe("123456");
   });
 
-  it("reconciles a stale master status when order detail is fetched", async () => {
+  it("projects a derived master status without mutating during order detail fetch", async () => {
     const customerUser: AuthenticatedUser = {
       id: "2abf9577-027c-4936-83a8-e004fd56a46e",
       role: UserRole.CUSTOMER,
@@ -1158,6 +1158,6 @@ describe(OrdersService.name, () => {
     const result = await service.getMine(customerUser, order.id);
 
     expect(result.order.status).toBe(MasterOrderStatus.PARTIALLY_FULFILLED);
-    expect(masterOrders.save).toHaveBeenCalledWith(order);
+    expect(masterOrders.save).not.toHaveBeenCalled();
   });
 });

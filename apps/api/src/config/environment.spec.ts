@@ -54,4 +54,14 @@ describe("environment configuration", () => {
       }),
     ).toThrow(/FIREBASE_PRIVATE_KEY/);
   });
+
+  it("rejects the local payment adapter in production", () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        NODE_ENV: "production",
+        PAYMENT_PROVIDER: "local",
+      }),
+    ).toThrow(/PAYMENT_PROVIDER must be paystack or moment/);
+  });
 });

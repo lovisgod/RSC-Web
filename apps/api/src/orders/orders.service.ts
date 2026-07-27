@@ -863,15 +863,15 @@ export class OrdersService {
       this.getLatestRiderLocation(order.id),
     ]);
     const derivedStatus = this.deriveMasterStatus(subOrders);
-    if (
+    const effectiveOrder =
       derivedStatus !== order.status &&
       order.status !== MasterOrderStatus.PENDING_PAYMENT &&
       (order.status !== MasterOrderStatus.CANCELLED ||
         derivedStatus === MasterOrderStatus.CANCELLED)
-    ) {
-      order.status = derivedStatus;
-      await this.masterOrders.save(order);
-    }
+        ? Object.assign(new MasterOrder(), order, {
+            status: derivedStatus,
+          })
+        : order;
 
     let rider = null;
     if (order.riderId) {
@@ -890,8 +890,8 @@ export class OrdersService {
     }
 
     const projectedOrder = splitKind
-      ? this.projectCustomerOrderDetail(order, subOrders, splitKind)
-      : order;
+      ? this.projectCustomerOrderDetail(effectiveOrder, subOrders, splitKind)
+      : effectiveOrder;
     const visibleSubOrders = splitKind
       ? this.filterSubOrdersForCustomerSplit(subOrders, splitKind)
       : subOrders;
