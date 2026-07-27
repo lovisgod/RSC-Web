@@ -19,7 +19,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { RouteNotFound } from "@rsc/ui";
+import { RouteNotFound, ThemeToggle } from "@rsc/ui";
 
 import { Toaster } from "./components/toaster";
 import { InstallAppButton } from "./components/install-app-button";
@@ -338,6 +338,7 @@ function AppShell() {
             <p className="m-0 mt-0.5 hidden text-[11px] text-white/45 sm:block">RSC Outlet Admin</p>
           </div>
           <InstallAppButton />
+          <ThemeToggle className="ml-auto" />
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto bg-[var(--rsc-panel)]">

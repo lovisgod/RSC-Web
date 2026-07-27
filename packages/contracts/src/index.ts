@@ -584,24 +584,34 @@ export const menuCategorySchema = z.object({
   isActive: z.boolean(),
 });
 
-export const menuItemSchema = z.object({
-  id: z.uuid(),
-  outletId: z.uuid(),
-  categoryId: z.uuid(),
-  name: z.string().min(1),
-  description: z.string().nullable(),
-  imageUrl: z.url().nullable(),
-  deliveryTimeRange: z.string().nullable().optional(),
-  ratingAverage: z.coerce.number().min(0).max(5).default(0),
-  ratingCount: z.int().nonnegative().default(0),
-  priceMinor: z.int().nonnegative(),
-  currency: currencySchema,
-  isAvailable: z.boolean(),
-  sortOrder: z.int().nonnegative(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  deletedAt: z.iso.datetime().nullable(),
-});
+export const menuItemSchema = z
+  .object({
+    id: z.uuid(),
+    outletId: z.uuid(),
+    categoryId: z.uuid(),
+    name: z.string().min(1),
+    description: z.string().nullable(),
+    imageUrl: z.url().nullable(),
+    deliveryTimeRange: z.string().nullable().optional(),
+    ratingAverage: z.coerce.number().min(0).max(5).default(0),
+    ratingCount: z.int().nonnegative().default(0),
+    priceMinor: z.int().nonnegative(),
+    discountPriceMinor: z.int().positive().nullable().default(null),
+    discountStartsAt: z.iso.datetime().nullable().default(null),
+    discountEndsAt: z.iso.datetime().nullable().default(null),
+    currentPriceMinor: z.int().nonnegative().optional(),
+    isDiscountActive: z.boolean().default(false),
+    currency: currencySchema,
+    isAvailable: z.boolean(),
+    sortOrder: z.int().nonnegative(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+    deletedAt: z.iso.datetime().nullable(),
+  })
+  .transform((item) => ({
+    ...item,
+    currentPriceMinor: item.currentPriceMinor ?? item.priceMinor,
+  }));
 
 export const menuItemsPageSchema = z.object({
   items: z.array(menuItemSchema),
@@ -659,6 +669,7 @@ export const outletSummarySchema = z
     cuisineType: z.string().min(1),
     description: z.string().nullable(),
     imageUrl: z.string().nullable(),
+    bannerUrl: z.string().nullable().default(null),
     isOnline: z.boolean(),
     settlementSubaccountCode: z.string().nullable().optional(),
     ratingAverage: z.coerce.number().min(0).max(5).default(0),

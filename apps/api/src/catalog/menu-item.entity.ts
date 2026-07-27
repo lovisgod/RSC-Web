@@ -1,4 +1,7 @@
 import {
+  AfterInsert,
+  AfterLoad,
+  AfterUpdate,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -42,6 +45,19 @@ export class MenuItem {
   @Column({ name: "price_minor", type: "integer" })
   priceMinor!: number;
 
+  @Column({ name: "discount_price_minor", type: "integer", nullable: true })
+  discountPriceMinor!: number | null;
+
+  @Column({ name: "discount_starts_at", type: "timestamptz", nullable: true })
+  discountStartsAt!: Date | null;
+
+  @Column({ name: "discount_ends_at", type: "timestamptz", nullable: true })
+  discountEndsAt!: Date | null;
+
+  currentPriceMinor!: number;
+
+  isDiscountActive!: boolean;
+
   @Column({ type: "char", length: 3, default: "NGN" })
   currency!: "NGN";
 
@@ -59,4 +75,29 @@ export class MenuItem {
 
   @DeleteDateColumn({ name: "deleted_at", type: "timestamptz", nullable: true })
   deletedAt!: Date | null;
+
+  @AfterLoad()
+  @AfterInsert()
+  @AfterUpdate()
+  hydrateCurrentPrice(): void {
+    this.isDiscountActive = this.isDiscountActiveAt();
+    this.currentPriceMinor = this.getCurrentPriceMinor();
+  }
+
+  isDiscountActiveAt(at = new Date()): boolean {
+    const startsAt = this.discountStartsAt?.getTime() ?? Number.NEGATIVE_INFINITY;
+    const endsAt = this.discountEndsAt?.getTime() ?? Number.POSITIVE_INFINITY;
+    return (
+      this.discountPriceMinor !== null &&
+      this.discountPriceMinor !== undefined &&
+      this.discountPriceMinor > 0 &&
+      this.discountPriceMinor < this.priceMinor &&
+      at.getTime() >= startsAt &&
+      at.getTime() <= endsAt
+    );
+  }
+
+  getCurrentPriceMinor(at = new Date()): number {
+    return this.isDiscountActiveAt(at) ? this.discountPriceMinor! : this.priceMinor;
+  }
 }

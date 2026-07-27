@@ -5,6 +5,7 @@ import {
   ArrayUnique,
   IsArray,
   IsBoolean,
+  IsDateString,
   IsInt,
   IsLatitude,
   IsLongitude,
@@ -60,6 +61,13 @@ export class CreateOutletDto {
   @IsUrl({ require_tld: false })
   @MaxLength(512)
   imageUrl?: string;
+
+  @ApiPropertyOptional({ example: "https://cdn.example.com/outlet-banner.jpg" })
+  @Transform(trim)
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  @MaxLength(512)
+  bannerUrl?: string;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()
@@ -228,6 +236,37 @@ export class CreateMenuItemDto {
   @IsInt()
   @Min(0)
   priceMinor!: number;
+
+  @ApiPropertyOptional({
+    example: 350000,
+    nullable: true,
+    description: "Promotional item price in minor units. Must be lower than priceMinor.",
+  })
+  @IsOptional()
+  @ValidateIf((_object, value) => value !== null)
+  @IsInt()
+  @Min(1)
+  discountPriceMinor?: number | null;
+
+  @ApiPropertyOptional({
+    example: "2026-07-27T08:00:00.000Z",
+    nullable: true,
+    description: "Optional instant when the item discount becomes active.",
+  })
+  @IsOptional()
+  @ValidateIf((_object, value) => value !== null)
+  @IsDateString()
+  discountStartsAt?: string | null;
+
+  @ApiPropertyOptional({
+    example: "2026-07-27T20:00:00.000Z",
+    nullable: true,
+    description: "Optional instant when the item discount stops being active.",
+  })
+  @IsOptional()
+  @ValidateIf((_object, value) => value !== null)
+  @IsDateString()
+  discountEndsAt?: string | null;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()

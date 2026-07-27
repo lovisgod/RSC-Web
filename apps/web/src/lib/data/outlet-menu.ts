@@ -25,6 +25,8 @@ export interface MenuItem {
   description: string;
   imageUrl: string | null;
   priceMinor: number;
+  originalPriceMinor: number;
+  isDiscountActive: boolean;
   isAvailable: boolean;
   image: string;
   bgColor: string;
@@ -76,7 +78,9 @@ export function toDisplayMenuItem(
     name: item.name,
     description: item.description ?? "",
     imageUrl: item.imageUrl,
-    priceMinor: item.priceMinor,
+    priceMinor: item.currentPriceMinor,
+    originalPriceMinor: item.priceMinor,
+    isDiscountActive: item.isDiscountActive,
     isAvailable: item.isAvailable,
     image: item.imageUrl ?? FOOD_EMOJIS[index % FOOD_EMOJIS.length]!,
     bgColor: BG_COLORS[index % BG_COLORS.length]!,
@@ -145,7 +149,7 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
     cuisines: outlet.cuisines,
     isOnline: outlet.isOnline ?? true,
     headerColor: outlet.headerColor,
-    image: outlet.image,
+    image: summary.bannerUrl ?? outlet.bannerImage ?? outlet.image,
     categories,
     items,
     ...computeOutletMetrics(summary.menuItems),

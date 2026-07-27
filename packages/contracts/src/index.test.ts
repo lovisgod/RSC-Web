@@ -184,6 +184,33 @@ describe("media contracts", () => {
   });
 });
 
+describe("menu item discounts", () => {
+  it("falls back to the regular price for older menu-item responses", () => {
+    const item = menuItemSchema.parse({
+      id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      categoryId: "35df7fe2-f6cd-483e-a0a2-b2331c4f4fb9",
+      name: "Jollof Rice",
+      description: null,
+      imageUrl: null,
+      priceMinor: 450000,
+      currency: "NGN",
+      isAvailable: true,
+      sortOrder: 0,
+      createdAt: "2026-07-27T08:00:00.000Z",
+      updatedAt: "2026-07-27T08:00:00.000Z",
+      deletedAt: null,
+    });
+
+    expect(item).toMatchObject({
+      priceMinor: 450000,
+      currentPriceMinor: 450000,
+      discountPriceMinor: null,
+      isDiscountActive: false,
+    });
+  });
+});
+
 describe("menu item rating contracts", () => {
   it("accepts one-to-five stars with an optional comment", () => {
     expect(rateMenuItemInputSchema.parse({ rating: 5, comment: "Loved it" })).toEqual({

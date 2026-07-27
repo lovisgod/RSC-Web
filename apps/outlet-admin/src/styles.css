@@ -27,6 +27,14 @@
 }
 
 :root {
+  /* Outlet operations brand tokens. Change only these values for a rebrand. */
+  --app-primary: #1e3160;
+  --app-primary-hover: #141f3d;
+  --app-primary-soft: #253972;
+  --app-secondary: #d4832a;
+  --app-secondary-hover: #b86e1a;
+  --app-secondary-soft: #e09a4a;
+
   font-family:
     Inter,
     ui-sans-serif,
@@ -38,6 +46,34 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+body {
+  color: var(--rsc-ink);
+  background: var(--rsc-surface);
+}
+
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-slate-50 {
+  background-color: var(--rsc-panel) !important;
+}
+
+[data-theme="dark"] .text-slate-900,
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-slate-700 {
+  color: var(--rsc-ink) !important;
+}
+
+[data-theme="dark"] .text-slate-400,
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-slate-600 {
+  color: var(--rsc-muted) !important;
+}
+
+[data-theme="dark"] .border-slate-100,
+[data-theme="dark"] .border-slate-200,
+[data-theme="dark"] .border-slate-300 {
+  border-color: var(--rsc-line) !important;
 }
 
 html,

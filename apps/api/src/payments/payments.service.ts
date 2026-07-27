@@ -1141,7 +1141,7 @@ export class PaymentsService {
         (sum, modifier) => sum + modifier.priceDeltaMinor,
         0,
       );
-      const unitPriceMinor = item.priceMinor + modifierTotalMinor;
+      const unitPriceMinor = item.getCurrentPriceMinor() + modifierTotalMinor;
 
       lines.push({
         outletId: item.outletId,

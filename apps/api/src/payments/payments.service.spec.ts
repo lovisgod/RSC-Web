@@ -282,6 +282,37 @@ describe(PaymentsService.name, () => {
     expect(dataSource.transaction).not.toHaveBeenCalled();
   });
 
+  it("prices checkout lines with an active item-level discount", async () => {
+    menuItems.findBy.mockResolvedValueOnce([
+      Object.assign(new MenuItem(), {
+        id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+        outletId,
+        name: "Daily Special Rice",
+        priceMinor: 450000,
+        discountPriceMinor: 300000,
+        discountStartsAt: new Date(Date.now() - 60_000),
+        discountEndsAt: new Date(Date.now() + 60_000),
+        isAvailable: true,
+      }),
+    ]);
+    const pricingService = service as unknown as {
+      priceCart(input: {
+        items: Array<{ menuItemId: string; quantity: number }>;
+      }): Promise<Array<{ unitPriceMinor: number; lineTotalMinor: number }>>;
+    };
+
+    await expect(
+      pricingService.priceCart({
+        items: [{ menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9", quantity: 2 }],
+      }),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        unitPriceMinor: 300000,
+        lineTotalMinor: 600000,
+      }),
+    ]);
+  });
+
   it("uses platform default VAT when outlet VAT is unset for the provider payment amount", async () => {
     menuItems.findBy.mockResolvedValue([
       Object.assign(new MenuItem(), {

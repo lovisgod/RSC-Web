@@ -125,6 +125,7 @@ export class CatalogService {
         address: input.address ?? null,
         cuisineType: input.cuisineType,
         imageUrl: input.imageUrl ?? null,
+        bannerUrl: input.bannerUrl ?? null,
         isOnline: settlementSubaccountCode ? (input.isOnline ?? true) : false,
         vatBps: input.vatBps ?? 0,
         latitude: input.latitude ?? null,
@@ -163,6 +164,7 @@ export class CatalogService {
       description: input.description === undefined ? outlet.description : input.description,
       address: input.address === undefined ? outlet.address : input.address,
       imageUrl: input.imageUrl === undefined ? outlet.imageUrl : input.imageUrl,
+      bannerUrl: input.bannerUrl === undefined ? outlet.bannerUrl : input.bannerUrl,
     });
 
     if (settlementSubaccountCode !== undefined) {
@@ -289,6 +291,7 @@ export class CatalogService {
     await this.ensureCategoryInOutlet(input.categoryId, outletId);
     await this.ensureGroupsInOutlet(input.modifierGroupIds ?? [], outletId);
 
+    const discount = this.resolveDiscountFields(input, input.priceMinor);
     const item = await this.items.save(
       this.items.create({
         outletId,
@@ -298,6 +301,7 @@ export class CatalogService {
         imageUrl: input.imageUrl ?? null,
         deliveryTimeRange: input.deliveryTimeRange ?? null,
         priceMinor: input.priceMinor,
+        ...discount,
         currency: "NGN",
         isAvailable: input.isAvailable ?? true,
         sortOrder: input.sortOrder ?? 0,
@@ -341,8 +345,11 @@ export class CatalogService {
 
     const wasAvailable = item.isAvailable;
 
+    const discount = this.resolveDiscountFields(input, input.priceMinor ?? item.priceMinor, item);
+
     Object.assign(item, {
       ...input,
+      ...discount,
       description: input.description === undefined ? item.description : input.description,
       imageUrl: input.imageUrl === undefined ? item.imageUrl : input.imageUrl,
       deliveryTimeRange:
@@ -362,6 +369,24 @@ export class CatalogService {
     }
 
     return saved;
+  }
+
+  async uploadOutletBanner(
+    user: AuthenticatedUser,
+    id: string,
+    file: UploadedImageFile,
+  ): Promise<Outlet> {
+    await this.ensureOutletAccess(user, id);
+    const outlet = await this.requireOutlet(id);
+    const upload = await this.media.uploadImage({
+      file,
+      folder: "outlet-banners",
+      publicIdPrefix: outlet.id,
+    });
+
+    outlet.bannerUrl = upload.url;
+
+    return this.outlets.save(outlet);
   }
 
   async updateItemAvailability(
@@ -402,6 +427,48 @@ export class CatalogService {
     item.imageUrl = upload.url;
 
     return this.items.save(item);
+  }
+
+  private resolveDiscountFields(
+    input: Pick<CreateMenuItemDto, "discountPriceMinor" | "discountStartsAt" | "discountEndsAt">,
+    priceMinor: number,
+    existing?: MenuItem,
+  ): Pick<MenuItem, "discountPriceMinor" | "discountStartsAt" | "discountEndsAt"> {
+    if (input.discountPriceMinor === null) {
+      return { discountPriceMinor: null, discountStartsAt: null, discountEndsAt: null };
+    }
+
+    const discountPriceMinor =
+      input.discountPriceMinor === undefined
+        ? (existing?.discountPriceMinor ?? null)
+        : input.discountPriceMinor;
+    const discountStartsAt =
+      input.discountStartsAt === undefined
+        ? (existing?.discountStartsAt ?? null)
+        : input.discountStartsAt === null
+          ? null
+          : new Date(input.discountStartsAt);
+    const discountEndsAt =
+      input.discountEndsAt === undefined
+        ? (existing?.discountEndsAt ?? null)
+        : input.discountEndsAt === null
+          ? null
+          : new Date(input.discountEndsAt);
+
+    if (discountPriceMinor === null) {
+      if (discountStartsAt || discountEndsAt) {
+        throw new BadRequestException("Discount dates require a discount price");
+      }
+      return { discountPriceMinor: null, discountStartsAt: null, discountEndsAt: null };
+    }
+    if (discountPriceMinor >= priceMinor) {
+      throw new BadRequestException("Discount price must be lower than the regular price");
+    }
+    if (discountStartsAt && discountEndsAt && discountEndsAt <= discountStartsAt) {
+      throw new BadRequestException("Discount end time must be after its start time");
+    }
+
+    return { discountPriceMinor, discountStartsAt, discountEndsAt };
   }
 
   async rateItem(user: AuthenticatedUser, id: string, input: RateMenuItemDto): Promise<MenuItem> {

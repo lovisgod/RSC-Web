@@ -1,13 +1,10 @@
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { MenuItem } from "@rsc/contracts";
+import { DiscountPrice } from "@rsc/ui";
 import { useMenuItem } from "../hooks/use-menu-item";
 import { useDeleteMenuItem } from "../hooks/use-delete-menu-item";
 import { useToggleItemAvailability } from "../hooks/use-toggle-item-availability";
-
-function formatPrice(minor: number): string {
-  return `₦${(minor / 100).toLocaleString("en-NG", { minimumFractionDigits: 0 })}`;
-}
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -155,9 +152,13 @@ export function MenuItemDetail({
       {/* Detail rows */}
       <div className="flex flex-col gap-3">
         <DetailRow label="Price">
-          <span className="text-base font-bold text-orange-500">
-            {formatPrice(item.priceMinor)}
-          </span>
+          <DiscountPrice
+            className="text-base"
+            priceMinor={item.priceMinor}
+            currentPriceMinor={item.currentPriceMinor}
+            isDiscountActive={item.isDiscountActive}
+            showBadge
+          />
         </DetailRow>
 
         {categoryName && (

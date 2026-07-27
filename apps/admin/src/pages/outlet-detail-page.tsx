@@ -1,7 +1,19 @@
 import { Button, EmptyState } from "@rsc/ui";
 import Skeleton from "@mui/material/Skeleton";
-import { ArrowLeft, Check, Copy, Pencil, Store, Trash2, Users, Utensils, X } from "lucide-react";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  ImageUp,
+  Pencil,
+  Store,
+  Trash2,
+  Users,
+  Utensils,
+  X,
+} from "lucide-react";
+import { type ChangeEvent, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -12,7 +24,7 @@ import { useDeleteOutlet } from "../hooks/use-delete-outlet";
 import { useDeleteOutletAdmin } from "../hooks/use-delete-outlet-admin";
 import { useOutlet } from "../hooks/use-outlet";
 import { useOutletAdmins } from "../hooks/use-outlet-admins";
-import type { OutletAdminUser } from "../lib/api";
+import { type OutletAdminUser, uploadOutletBanner } from "../lib/api";
 
 function OutletAvatar({ imageUrl, name }: { imageUrl: string | null; name: string }) {
   const [imgFailed, setImgFailed] = useState(false);
@@ -202,6 +214,7 @@ export function OutletDetailPage() {
 
   const { data: outlet, isLoading } = useOutlet(id!);
   const { data: staffList, isLoading: isStaffLoading } = useOutletAdmins(id!);
+  const queryClient = useQueryClient();
 
   const [editOpen, setEditOpen] = useState(false);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -211,6 +224,19 @@ export function OutletDetailPage() {
 
   const { mutate: deleteOutlet, isPending: isDeleting } = useDeleteOutlet();
   const { mutate: removeStaff, isPending: isRemovingStaff } = useDeleteOutletAdmin(id!);
+  const bannerUpload = useMutation({
+    mutationFn: (file: File) => uploadOutletBanner(id!, file),
+    onSuccess: (updatedOutlet) => {
+      queryClient.setQueryData(["admin", "outlets", id], updatedOutlet);
+      void queryClient.invalidateQueries({ queryKey: ["admin", "outlets"] });
+    },
+  });
+
+  function handleBannerUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) bannerUpload.mutate(file);
+  }
 
   function handleDeleteConfirm() {
     if (!outlet) return;
@@ -285,48 +311,74 @@ export function OutletDetailPage() {
             </div>
           </div>
         ) : outlet ? (
-          <div className="outlet-detail-page__card panel">
-            <OutletAvatar imageUrl={outlet.imageUrl} name={outlet.name} />
-
-            <div className="outlet-detail__info">
-              {/* Name + status badge + edit/delete icons all in one row */}
-              <div className="outlet-detail__info-header">
-                <h2 className="outlet-detail__name">{outlet.name}</h2>
-                <span className={`outlet-status${outlet.isOnline ? "" : " outlet-status--closed"}`}>
-                  {outlet.isOnline ? "ONLINE & TRADING" : "REMOTELY CLOSED"}
-                </span>
-
-                <div className="outlet-detail__card-actions">
-                  <button
-                    type="button"
-                    className="outlet-icon-btn outlet-icon-btn--edit"
-                    aria-label="Edit outlet"
-                    onClick={() => setEditOpen(true)}
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className="outlet-icon-btn outlet-icon-btn--delete"
-                    aria-label="Delete outlet"
-                    disabled={isDeleting}
-                    onClick={() => setDeleteConfirmOpen(true)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </div>
-
-              <p className="outlet-detail__cuisine">{outlet.cuisineType}</p>
-
-              {outlet.description && <p className="outlet-detail__desc">{outlet.description}</p>}
-
-              <div className="outlet-detail__meta">
-                <MetaRow
-                  label="Settlement Subaccount Code"
-                  value={outlet.settlementSubaccountCode ?? "—"}
+          <div className="outlet-detail-shell panel">
+            <div
+              className={`outlet-detail__banner${outlet.bannerUrl ? "" : " outlet-detail__banner--empty"}`}
+              style={
+                outlet.bannerUrl ? { backgroundImage: `url("${outlet.bannerUrl}")` } : undefined
+              }
+            >
+              <label className="outlet-detail__banner-upload">
+                <ImageUp size={16} aria-hidden="true" />
+                <span>{bannerUpload.isPending ? "Uploading..." : "Change banner"}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={bannerUpload.isPending}
+                  onChange={handleBannerUpload}
                 />
-                <MetaRow label="Outlet ID" value={outlet.id} mono copyable />
+              </label>
+            </div>
+            {bannerUpload.isError && (
+              <p className="outlet-detail__banner-error" role="alert">
+                {bannerUpload.error.message}
+              </p>
+            )}
+            <div className="outlet-detail-page__card">
+              <OutletAvatar imageUrl={outlet.imageUrl} name={outlet.name} />
+
+              <div className="outlet-detail__info">
+                {/* Name + status badge + edit/delete icons all in one row */}
+                <div className="outlet-detail__info-header">
+                  <h2 className="outlet-detail__name">{outlet.name}</h2>
+                  <span
+                    className={`outlet-status${outlet.isOnline ? "" : " outlet-status--closed"}`}
+                  >
+                    {outlet.isOnline ? "ONLINE & TRADING" : "REMOTELY CLOSED"}
+                  </span>
+
+                  <div className="outlet-detail__card-actions">
+                    <button
+                      type="button"
+                      className="outlet-icon-btn outlet-icon-btn--edit"
+                      aria-label="Edit outlet"
+                      onClick={() => setEditOpen(true)}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      className="outlet-icon-btn outlet-icon-btn--delete"
+                      aria-label="Delete outlet"
+                      disabled={isDeleting}
+                      onClick={() => setDeleteConfirmOpen(true)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+
+                <p className="outlet-detail__cuisine">{outlet.cuisineType}</p>
+
+                {outlet.description && <p className="outlet-detail__desc">{outlet.description}</p>}
+
+                <div className="outlet-detail__meta">
+                  <MetaRow
+                    label="Settlement Subaccount Code"
+                    value={outlet.settlementSubaccountCode ?? "—"}
+                  />
+                  <MetaRow label="Outlet ID" value={outlet.id} mono copyable />
+                </div>
               </div>
             </div>
           </div>

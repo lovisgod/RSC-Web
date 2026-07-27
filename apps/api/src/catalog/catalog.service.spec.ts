@@ -409,6 +409,57 @@ describe(CatalogService.name, () => {
     expect(result.id).toBe(outletId);
   });
 
+  it("stores an optional scheduled menu-item discount", async () => {
+    const result = await service.createItem(adminUser, {
+      categoryId: "35df7fe2-f6cd-483e-a0a2-b2331c4f4fb9",
+      name: "Daily Special Rice",
+      priceMinor: 500000,
+      discountPriceMinor: 350000,
+      discountStartsAt: "2026-07-27T08:00:00.000Z",
+      discountEndsAt: "2026-07-27T20:00:00.000Z",
+    });
+
+    expect(result).toMatchObject({
+      priceMinor: 500000,
+      discountPriceMinor: 350000,
+      discountStartsAt: new Date("2026-07-27T08:00:00.000Z"),
+      discountEndsAt: new Date("2026-07-27T20:00:00.000Z"),
+    });
+  });
+
+  it("rejects a menu-item discount that is not lower than its regular price", async () => {
+    await expect(
+      service.createItem(adminUser, {
+        categoryId: "35df7fe2-f6cd-483e-a0a2-b2331c4f4fb9",
+        name: "Invalid Special",
+        priceMinor: 500000,
+        discountPriceMinor: 500000,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("uploads and assigns an outlet banner for the outlet admin", async () => {
+    const result = await service.uploadOutletBanner(adminUser, outletId, {
+      buffer: Buffer.from("banner"),
+      mimetype: "image/webp",
+      originalname: "banner.webp",
+      size: 6,
+    });
+
+    expect(media.uploadImage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        folder: "outlet-banners",
+        publicIdPrefix: outletId,
+      }),
+    );
+    expect(result.bannerUrl).toBe("https://res.cloudinary.com/rsc/image/upload/menu/item.jpg");
+    expect(outlets.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bannerUrl: "https://res.cloudinary.com/rsc/image/upload/menu/item.jpg",
+      }),
+    );
+  });
+
   it("prepends AI preparation suggestions when the provider returns valid JSON", async () => {
     const configuredSuggestion = Object.assign({} as PreparationSuggestion, {
       id: "c37fbf84-2e98-4e8a-b2d0-752ec86f1927",

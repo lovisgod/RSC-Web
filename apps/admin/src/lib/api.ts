@@ -227,6 +227,7 @@ export interface OutletBody {
   isOnline?: boolean;
   settlementSubaccountCode?: string | null;
   imageUrl?: string;
+  bannerUrl?: string;
 }
 
 export const listOutlets = (): Promise<OutletSummary[]> =>
@@ -242,6 +243,14 @@ export const updateOutlet = (id: string, body: Partial<OutletBody>): Promise<Out
   patchReq<unknown>(`/api/v1/outlets/${id}`, body).then((data) =>
     parseResponse(outletSummarySchema, data),
   );
+
+export const uploadOutletBanner = (outletId: string, file: File): Promise<OutletSummary> => {
+  const form = new FormData();
+  form.append("file", file);
+  return http
+    .post<Envelope<unknown>>(`/api/v1/outlets/${outletId}/banner`, form)
+    .then((response) => outletSummarySchema.parse(response.data.data));
+};
 
 export const setOutletSubaccountCode = (
   outletId: string,
@@ -376,6 +385,9 @@ export interface CreateMenuItemBody {
   description?: string;
   deliveryTimeRange?: string;
   priceMinor: number;
+  discountPriceMinor?: number | null;
+  discountStartsAt?: string | null;
+  discountEndsAt?: string | null;
   isAvailable: boolean;
   sortOrder?: number;
   modifierGroupIds?: string[];
