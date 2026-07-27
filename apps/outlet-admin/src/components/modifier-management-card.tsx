@@ -573,13 +573,13 @@ export function ModifierManagementCard({ outletId }: { outletId: string }) {
                             role="switch"
                             aria-checked={modifier.isAvailable}
                             onClick={() => toggleAvailability.mutate(modifier)}
-                            className={`h-5 w-9 rounded-full p-0.5 transition ${
+                            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-1 ${
                               modifier.isAvailable ? "bg-emerald-500" : "bg-slate-300"
                             }`}
                           >
                             <span
-                              className={`block h-5 w-5 rounded-full bg-white transition-transform ${
-                                modifier.isAvailable ? "translate-x-4" : "translate-x-0"
+                              className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                                modifier.isAvailable ? "translate-x-5" : "translate-x-0.5"
                               }`}
                             />
                             <span className="sr-only">
