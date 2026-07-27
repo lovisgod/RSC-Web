@@ -1,5 +1,5 @@
-import { formatNaira } from "@/src/lib/data/cart";
 import type { MenuItem } from "@/src/lib/data/outlet-menu";
+import { DiscountPrice } from "@rsc/ui";
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -41,9 +41,13 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
           )}
         </div>
         <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{item.description}</p>
-        <p className="text-sm font-bold mt-1.5" style={{ color: "var(--rsc-dark)" }}>
-          {formatNaira(item.priceMinor)}
-        </p>
+        <DiscountPrice
+          className="mt-1.5 text-sm"
+          priceMinor={item.originalPriceMinor}
+          currentPriceMinor={item.priceMinor}
+          isDiscountActive={item.isDiscountActive}
+          showBadge
+        />
       </div>
 
       {/* Add button */}

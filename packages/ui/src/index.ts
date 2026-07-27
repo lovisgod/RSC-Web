@@ -1,9 +1,11 @@
 export { Button } from "./button";
 export { Card } from "./card";
 export { ChangePasswordPanel } from "./change-password-panel";
+export { DiscountPrice } from "./discount-price";
 export { EmptyState } from "./empty-state";
 export { Input } from "./input";
 export { MetricCard } from "./metric-card";
 export { PageHeader } from "./page-header";
 export { RouteNotFound } from "./route-not-found";
+export { ThemeProvider, ThemeToggle, initializeTheme, useTheme, type Theme } from "./theme";
 export { formatMoney } from "./money";

@@ -15,7 +15,8 @@
     "clean": "rm -rf dist coverage"
   },
   "dependencies": {
-    "@rsc/contracts": "workspace:*"
+    "@rsc/contracts": "workspace:*",
+    "lucide-react": "1.21.0"
   },
   "peerDependencies": {
     "react": "^19.2.0"

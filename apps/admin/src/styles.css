@@ -1,4 +1,12 @@
 :root {
+  /* Central admin brand tokens. Change only these values for a rebrand. */
+  --app-primary: #1e3160;
+  --app-primary-hover: #141f3d;
+  --app-primary-soft: #253972;
+  --app-secondary: #d4832a;
+  --app-secondary-hover: #b86e1a;
+  --app-secondary-soft: #e09a4a;
+
   font-family:
     Inter,
     ui-sans-serif,
@@ -23,7 +31,46 @@
 body {
   min-width: 320px;
   min-height: 100vh;
-  background: #f5f6f2;
+  background: var(--rsc-surface);
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-menu-discount-fields {
+  padding: 1rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 8px;
+}
+
+.admin-menu-discount-fields > p {
+  margin: 0 0 0.8rem;
+  color: var(--rsc-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .admin-content,
+[data-theme="dark"] .admin-main,
+[data-theme="dark"] .page,
+[data-theme="dark"] .topbar {
+  color: var(--rsc-ink);
+  background-color: var(--rsc-surface);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .table-card {
+  color: var(--rsc-ink);
+  background-color: var(--rsc-panel);
+  border-color: var(--rsc-line);
 }
 
 button,
@@ -2483,6 +2530,57 @@ th {
   padding: 2rem;
 }
 
+.outlet-detail-shell {
+  overflow: hidden;
+}
+
+.outlet-detail__banner {
+  min-height: 180px;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  background-position: center;
+  background-size: cover;
+}
+
+.outlet-detail__banner--empty {
+  background: linear-gradient(135deg, var(--app-primary-soft), var(--rsc-surface));
+}
+
+.outlet-detail__banner-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 38px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--rsc-border);
+  border-radius: 6px;
+  background: var(--rsc-surface);
+  color: var(--rsc-text);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--rsc-shadow);
+}
+
+.outlet-detail__banner-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.outlet-detail__banner-error {
+  margin: 0;
+  padding: 0.65rem 1rem;
+  color: var(--rsc-danger);
+  background: color-mix(in srgb, var(--rsc-danger) 8%, var(--rsc-surface));
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .outlet-detail__avatar {
   width: 140px;
   height: 140px;
@@ -4242,10 +4340,18 @@ th {
 
 .auth-card {
   width: min(460px, 100%);
-  background: white;
+  color: var(--rsc-ink);
+  background: var(--rsc-panel);
   border-radius: var(--rsc-radius);
   padding: 2.5rem 2rem 2rem;
   box-shadow: 0 24px 80px rgb(0 0 0 / 35%);
+}
+
+.auth-theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
 }
 
 .auth-brand {
@@ -4275,7 +4381,7 @@ th {
 
 .auth-brand__name strong {
   font-size: 1rem;
-  color: var(--rsc-navy-dark);
+  color: var(--rsc-ink);
 }
 
 .auth-brand__name small {
@@ -4287,7 +4393,7 @@ th {
   margin: 0 0 0.3rem;
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--rsc-navy-dark);
+  color: var(--rsc-ink);
   letter-spacing: -0.03em;
 }
 
@@ -4391,6 +4497,13 @@ th {
 
 .auth-forgot-link:hover {
   text-decoration: underline;
+}
+
+[data-theme="dark"] .auth-card a,
+[data-theme="dark"] .otp-countdown,
+[data-theme="dark"] .otp-channel-tab--active,
+[data-theme="dark"] .otp-resend__btn {
+  color: var(--rsc-brand-light);
 }
 
 /* ── OTP input ──────────────────────────────── */

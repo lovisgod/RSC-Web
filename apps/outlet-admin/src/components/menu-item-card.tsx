@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { MenuItem } from "@rsc/contracts";
+import { DiscountPrice } from "@rsc/ui";
 import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import { useDeleteMenuItem } from "../hooks/use-delete-menu-item";
 import { useToggleItemAvailability } from "../hooks/use-toggle-item-availability";
@@ -12,10 +13,6 @@ interface MenuItemCardProps {
   dragRef?: (node: HTMLElement | null) => void;
   dragStyle?: React.CSSProperties;
   dragListeners?: React.HTMLAttributes<HTMLElement>;
-}
-
-function formatPrice(minor: number): string {
-  return `₦${(minor / 100).toLocaleString("en-NG", { minimumFractionDigits: 0 })}`;
 }
 
 export function MenuItemCard({
@@ -101,7 +98,12 @@ export function MenuItemCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
-          <p className="mt-0.5 text-xs font-bold text-orange-500">{formatPrice(item.priceMinor)}</p>
+          <DiscountPrice
+            className="mt-0.5 text-xs"
+            priceMinor={item.priceMinor}
+            currentPriceMinor={item.currentPriceMinor}
+            isDiscountActive={item.isDiscountActive}
+          />
         </div>
       </button>
 

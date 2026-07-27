@@ -1,5 +1,5 @@
 import Skeleton from "@mui/material/Skeleton";
-import { Button, EmptyState } from "@rsc/ui";
+import { Button, DiscountPrice, EmptyState } from "@rsc/ui";
 import {
   DndContext,
   PointerSensor,
@@ -65,6 +65,12 @@ const menuItemKey = (itemId: string | null) => ["admin", "menu-item", itemId] as
 const modifierGroupsKey = (outletId: string) => ["admin", "modifier-groups", outletId] as const;
 
 const EMPTY_ITEMS: MenuItem[] = [];
+
+function toLocalDateTime(value: string): string {
+  const date = new Date(value);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
 
 function formatPrice(minor: number): string {
   return `₦${(minor / 100).toLocaleString("en-NG", { minimumFractionDigits: 0 })}`;
@@ -247,7 +253,11 @@ function MenuItemCard({
         </span>
         <span className="admin-menu-item-copy">
           <strong>{item.name}</strong>
-          <small>{formatPrice(item.priceMinor)}</small>
+          <DiscountPrice
+            priceMinor={item.priceMinor}
+            currentPriceMinor={item.currentPriceMinor}
+            isDiscountActive={item.isDiscountActive}
+          />
         </span>
       </button>
       <div className="admin-menu-item-actions">
@@ -329,6 +339,15 @@ function MenuItemModal({
   const [description, setDescription] = useState(item?.description ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [price, setPrice] = useState(item ? String(item.priceMinor / 100) : "");
+  const [discountPrice, setDiscountPrice] = useState(
+    item?.discountPriceMinor ? String(item.discountPriceMinor / 100) : "",
+  );
+  const [discountStartsAt, setDiscountStartsAt] = useState(
+    item?.discountStartsAt ? toLocalDateTime(item.discountStartsAt) : "",
+  );
+  const [discountEndsAt, setDiscountEndsAt] = useState(
+    item?.discountEndsAt ? toLocalDateTime(item.discountEndsAt) : "",
+  );
   const [categoryId, setCategoryId] = useState(item?.categoryId ?? categories[0]?.id ?? "");
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
   const [isAvailable, setIsAvailable] = useState(item?.isAvailable ?? true);
@@ -337,8 +356,19 @@ function MenuItemModal({
   const save = useMutation({
     mutationFn: async () => {
       const priceMinor = Math.round(Number.parseFloat(price) * 100);
+      const discountPriceMinor = discountPrice
+        ? Math.round(Number.parseFloat(discountPrice) * 100)
+        : null;
       if (!name.trim() || !categoryId || !Number.isFinite(priceMinor) || priceMinor <= 0) {
         throw new Error("Enter an item name, category, and valid price.");
+      }
+      if (
+        discountPriceMinor !== null &&
+        (!Number.isFinite(discountPriceMinor) ||
+          discountPriceMinor <= 0 ||
+          discountPriceMinor >= priceMinor)
+      ) {
+        throw new Error("Discount price must be greater than zero and lower than regular price.");
       }
 
       const body: CreateMenuItemBody = {
@@ -348,6 +378,15 @@ function MenuItemModal({
         ...(description.trim() ? { description: description.trim() } : {}),
         ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
         priceMinor,
+        discountPriceMinor,
+        discountStartsAt:
+          discountPriceMinor !== null && discountStartsAt
+            ? new Date(discountStartsAt).toISOString()
+            : null,
+        discountEndsAt:
+          discountPriceMinor !== null && discountEndsAt
+            ? new Date(discountEndsAt).toISOString()
+            : null,
         isAvailable,
         sortOrder: item?.sortOrder ?? 0,
         modifierGroupIds,
@@ -438,6 +477,39 @@ function MenuItemModal({
                 required
               />
             </FormField>
+          </div>
+          <div className="admin-menu-discount-fields">
+            <p>Daily special</p>
+            <div className="admin-menu-form-grid">
+              <FormField
+                label="Discount price (₦)"
+                tooltip="Optional item-level special. This is separate from promo codes."
+              >
+                <input
+                  type="number"
+                  min="0"
+                  value={discountPrice}
+                  onChange={(event) => setDiscountPrice(event.target.value)}
+                  placeholder="Optional"
+                />
+              </FormField>
+              <FormField label="Starts">
+                <input
+                  type="datetime-local"
+                  value={discountStartsAt}
+                  onChange={(event) => setDiscountStartsAt(event.target.value)}
+                  disabled={!discountPrice}
+                />
+              </FormField>
+              <FormField label="Ends">
+                <input
+                  type="datetime-local"
+                  value={discountEndsAt}
+                  onChange={(event) => setDiscountEndsAt(event.target.value)}
+                  disabled={!discountPrice}
+                />
+              </FormField>
+            </div>
           </div>
           <div className="admin-menu-form-grid">
             <FormField label="Category *">
@@ -595,7 +667,14 @@ function MenuItemDetail({
         {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <span>🍽️</span>}
       </div>
       <div className="admin-menu-detail-rows">
-        <DetailRow label="Price">{formatPrice(item.priceMinor)}</DetailRow>
+        <DetailRow label="Price">
+          <DiscountPrice
+            priceMinor={item.priceMinor}
+            currentPriceMinor={item.currentPriceMinor}
+            isDiscountActive={item.isDiscountActive}
+            showBadge
+          />
+        </DetailRow>
         {categoryName && <DetailRow label="Category">{categoryName}</DetailRow>}
         {item.description && <DetailRow label="Description">{item.description}</DetailRow>}
         <DetailRow label="Sort Order">{item.sortOrder}</DetailRow>

@@ -1,7 +1,7 @@
 import { Loader2 } from "lucide-react";
 
-import { formatNaira } from "@/src/lib/data/cart";
 import type { MenuItemSummary } from "@rsc/contracts";
+import { DiscountPrice } from "@rsc/ui";
 
 const FOOD_EMOJIS = ["🍲", "🥗", "🍛", "🍜", "🥘", "🍱", "🍖", "🍗", "🥩", "🍝"];
 const BG_COLORS = [
@@ -85,9 +85,13 @@ export function MenuSearchItemCard({
         )}
 
         <div className="flex items-center justify-between mt-2">
-          <span className="text-sm font-bold" style={{ color: "var(--rsc-dark)" }}>
-            {formatNaira(item.priceMinor)}
-          </span>
+          <DiscountPrice
+            className="text-sm"
+            priceMinor={item.priceMinor}
+            currentPriceMinor={item.currentPriceMinor}
+            isDiscountActive={item.isDiscountActive}
+            showBadge
+          />
           <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600">
             {loading ? (
               <>

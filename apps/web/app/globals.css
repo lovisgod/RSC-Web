@@ -4,3 +4,66 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* Customer app brand tokens. Change only these values for a rebrand. */
+  --app-primary: #1e3160;
+  --app-primary-hover: #141f3d;
+  --app-primary-soft: #253972;
+  --app-secondary: #d4832a;
+  --app-secondary-hover: #b86e1a;
+  --app-secondary-soft: #e09a4a;
+}
+
+body {
+  color: var(--rsc-ink);
+  background: var(--rsc-surface);
+}
+
+.rsc-global-theme-toggle {
+  position: fixed;
+  z-index: 70;
+  top: 1rem;
+  right: 1rem;
+  box-shadow: 0 4px 18px rgb(0 0 0 / 10%);
+}
+
+@media (max-width: 640px) {
+  .rsc-global-theme-toggle {
+    top: 4.5rem;
+    right: 0.75rem;
+  }
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: var(--rsc-panel) !important;
+}
+
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-slate-50 {
+  background-color: var(--rsc-surface) !important;
+}
+
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-slate-900,
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-slate-800 {
+  color: var(--rsc-ink) !important;
+}
+
+[data-theme="dark"] .text-gray-400,
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-slate-400,
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-slate-600 {
+  color: var(--rsc-muted) !important;
+}
+
+[data-theme="dark"] .border-gray-100,
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-slate-100,
+[data-theme="dark"] .border-slate-200,
+[data-theme="dark"] .border-slate-300 {
+  border-color: var(--rsc-line) !important;
+}

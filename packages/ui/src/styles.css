@@ -1,4 +1,14 @@
 :root {
+  color-scheme: light;
+
+  /* App-owned brand aliases. Override --app-* once in each app stylesheet. */
+  --app-primary: #1e3160;
+  --app-primary-hover: #141f3d;
+  --app-primary-soft: #253972;
+  --app-secondary: #d4832a;
+  --app-secondary-hover: #b86e1a;
+  --app-secondary-soft: #e09a4a;
+
   /* ── Neutrals ─────────────────────────────────────────── */
   --rsc-ink: #171b17;
   --rsc-muted: #667064;
@@ -11,18 +21,30 @@
   --rsc-shadow: 0 18px 60px rgb(30 49 96 / 10%);
 
   /* ── Navy scale ───────────────────────────────────────── */
-  --rsc-main: #1e3160; /* Primary Navy  — login buttons, headings, primary actions */
-  --rsc-navy-light: #253972; /* Navy Light    — secondary surfaces, accents              */
-  --rsc-navy-dark: #141f3d; /* Navy Dark     — dark backgrounds, pressed states         */
+  --rsc-main: var(--app-primary); /* Primary — headings and primary actions */
+  --rsc-navy-light: var(--app-primary-soft);
+  --rsc-navy-dark: var(--app-primary-hover);
 
   /* ── Orange / Brand scale ─────────────────────────────── */
-  --rsc-brand: #d4832a; /* Primary Orange — CTAs, rating stars, active nav          */
-  --rsc-brand-light: #e09a4a; /* Orange Light   — hover states                            */
-  --rsc-brand-strong: #b86e1a; /* Orange Dark    — pressed states, darker accents           */
+  --rsc-brand: var(--app-secondary);
+  --rsc-brand-light: var(--app-secondary-soft);
+  --rsc-brand-strong: var(--app-secondary-hover);
 
   /* ── Legacy aliases (kept for backwards compat) ──────── */
   --rsc-dark: var(--rsc-brand); /* was orange-ish; now maps to brand orange     */
   --rsc-accent: var(--rsc-brand-light); /* was yellow; maps to orange-light             */
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --rsc-ink: #f4f6f3;
+  --rsc-muted: #aeb7ad;
+  --rsc-surface: #111512;
+  --rsc-panel: #1a201b;
+  --rsc-line: #343d35;
+  --rsc-danger: #f08070;
+  --rsc-success: #50c982;
+  --rsc-shadow: 0 18px 60px rgb(0 0 0 / 28%);
 }
 
 * {
@@ -33,6 +55,60 @@ body {
   margin: 0;
   color: var(--rsc-ink);
   background: var(--rsc-surface);
+}
+
+.rsc-theme-toggle {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--rsc-line);
+  border-radius: 8px;
+  color: var(--rsc-ink);
+  background: var(--rsc-panel);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.rsc-theme-toggle:hover {
+  color: var(--rsc-main);
+  border-color: var(--rsc-main);
+}
+
+.rsc-theme-toggle:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--rsc-main) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.rsc-discount-price {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  color: var(--rsc-brand-strong);
+  font-weight: 700;
+}
+
+.rsc-discount-price__original {
+  color: var(--rsc-muted);
+  font-size: 0.82em;
+  font-weight: 500;
+  text-decoration: line-through;
+}
+
+.rsc-discount-price__badge {
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  color: #ffffff;
+  background: var(--rsc-success);
+  font-size: 0.68em;
+  line-height: 1.3;
+  text-transform: uppercase;
 }
 
 button,

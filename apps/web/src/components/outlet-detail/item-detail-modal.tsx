@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@rsc/ui";
+import { DiscountPrice } from "@rsc/ui";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -215,9 +216,13 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
           {/* Name + price */}
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-xl font-bold text-gray-900">{item.name}</h2>
-            <span className="text-xl font-bold flex-shrink-0" style={{ color: "var(--rsc-dark)" }}>
-              {formatNaira(item.priceMinor)}
-            </span>
+            <DiscountPrice
+              className="flex-shrink-0 text-xl"
+              priceMinor={item.originalPriceMinor}
+              currentPriceMinor={item.priceMinor}
+              isDiscountActive={item.isDiscountActive}
+              showBadge
+            />
           </div>
 
           {item.description && <p className="text-sm text-gray-500">{item.description}</p>}

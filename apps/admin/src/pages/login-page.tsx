@@ -1,4 +1,4 @@
-import { Button, Input } from "@rsc/ui";
+import { Button, Input, ThemeToggle } from "@rsc/ui";
 import { nigerianPhoneNumberSchema } from "@rsc/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -60,6 +60,7 @@ export function LoginPage() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle className="auth-theme-toggle" />
       <div className="auth-card">
         <div className="auth-brand">
           <span className="auth-brand__mark">R</span>

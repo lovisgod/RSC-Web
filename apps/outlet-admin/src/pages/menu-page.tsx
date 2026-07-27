@@ -28,6 +28,12 @@ import { toastBus } from "../lib/toast-bus";
 
 const EMPTY_MENU_ITEMS: MenuItem[] = [];
 
+function toLocalDateTime(value: string): string {
+  const date = new Date(value);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
 // ─── Sortable wrapper ─────────────────────────────────────────────────────────
 
 function SortableMenuItemCard({
@@ -119,6 +125,9 @@ function AddItemModal({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
   const [price, setPrice] = useState("");
+  const [discountPrice, setDiscountPrice] = useState("");
+  const [discountStartsAt, setDiscountStartsAt] = useState("");
+  const [discountEndsAt, setDiscountEndsAt] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [isAvailable, setIsAvailable] = useState(true);
   const [selectedModifierGroupIds, setSelectedModifierGroupIds] = useState<string[]>([]);
@@ -138,7 +147,17 @@ function AddItemModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const priceMinor = Math.round(parseFloat(price) * 100);
+    const discountPriceMinor = discountPrice ? Math.round(parseFloat(discountPrice) * 100) : null;
     if (!name.trim() || isNaN(priceMinor) || priceMinor <= 0 || !categoryId) {
+      triggerShake();
+      return;
+    }
+    if (
+      discountPriceMinor !== null &&
+      (!Number.isFinite(discountPriceMinor) ||
+        discountPriceMinor <= 0 ||
+        discountPriceMinor >= priceMinor)
+    ) {
       triggerShake();
       return;
     }
@@ -151,6 +170,17 @@ function AddItemModal({
           ...(description.trim() ? { description: description.trim() } : {}),
           ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
           priceMinor,
+          ...(discountPriceMinor !== null
+            ? {
+                discountPriceMinor,
+                ...(discountStartsAt
+                  ? { discountStartsAt: new Date(discountStartsAt).toISOString() }
+                  : {}),
+                ...(discountEndsAt
+                  ? { discountEndsAt: new Date(discountEndsAt).toISOString() }
+                  : {}),
+              }
+            : {}),
           isAvailable,
           sortOrder: 0,
           ...(selectedModifierGroupIds.length > 0
@@ -257,6 +287,42 @@ function AddItemModal({
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               />
             </FormField>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+              Daily special
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <FormField label="Discount price (₦)">
+                <input
+                  type="number"
+                  min="0"
+                  value={discountPrice}
+                  onChange={(e) => setDiscountPrice(e.target.value)}
+                  placeholder="Optional"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm"
+                />
+              </FormField>
+              <FormField label="Starts">
+                <input
+                  type="datetime-local"
+                  value={discountStartsAt}
+                  onChange={(e) => setDiscountStartsAt(e.target.value)}
+                  disabled={!discountPrice}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm disabled:opacity-50"
+                />
+              </FormField>
+              <FormField label="Ends">
+                <input
+                  type="datetime-local"
+                  value={discountEndsAt}
+                  onChange={(e) => setDiscountEndsAt(e.target.value)}
+                  disabled={!discountPrice}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm disabled:opacity-50"
+                />
+              </FormField>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -375,6 +441,15 @@ function EditItemModal({
   const [description, setDescription] = useState(item.description ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [price, setPrice] = useState(String(item.priceMinor / 100));
+  const [discountPrice, setDiscountPrice] = useState(
+    item.discountPriceMinor ? String(item.discountPriceMinor / 100) : "",
+  );
+  const [discountStartsAt, setDiscountStartsAt] = useState(
+    item.discountStartsAt ? toLocalDateTime(item.discountStartsAt) : "",
+  );
+  const [discountEndsAt, setDiscountEndsAt] = useState(
+    item.discountEndsAt ? toLocalDateTime(item.discountEndsAt) : "",
+  );
   const [categoryId, setCategoryId] = useState(item.categoryId);
   const [isAvailable, setIsAvailable] = useState(item.isAvailable);
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
@@ -396,7 +471,17 @@ function EditItemModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const priceMinor = Math.round(parseFloat(price) * 100);
+    const discountPriceMinor = discountPrice ? Math.round(parseFloat(discountPrice) * 100) : null;
     if (!name.trim() || isNaN(priceMinor) || priceMinor <= 0 || !categoryId) {
+      triggerShake();
+      return;
+    }
+    if (
+      discountPriceMinor !== null &&
+      (!Number.isFinite(discountPriceMinor) ||
+        discountPriceMinor <= 0 ||
+        discountPriceMinor >= priceMinor)
+    ) {
       triggerShake();
       return;
     }
@@ -411,6 +496,15 @@ function EditItemModal({
           ...(item.imageUrl ? { imageUrl: item.imageUrl } : {}),
           ...(deliveryTimeRange.trim() ? { deliveryTimeRange: deliveryTimeRange.trim() } : {}),
           priceMinor,
+          discountPriceMinor,
+          discountStartsAt:
+            discountPriceMinor !== null && discountStartsAt
+              ? new Date(discountStartsAt).toISOString()
+              : null,
+          discountEndsAt:
+            discountPriceMinor !== null && discountEndsAt
+              ? new Date(discountEndsAt).toISOString()
+              : null,
           isAvailable,
           sortOrder: item.sortOrder,
           modifierGroupIds: selectedModifierGroupIds,
@@ -521,6 +615,42 @@ function EditItemModal({
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               />
             </FormField>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+              Daily special
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <FormField label="Discount price (₦)">
+                <input
+                  type="number"
+                  min="0"
+                  value={discountPrice}
+                  onChange={(e) => setDiscountPrice(e.target.value)}
+                  placeholder="Optional"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm"
+                />
+              </FormField>
+              <FormField label="Starts">
+                <input
+                  type="datetime-local"
+                  value={discountStartsAt}
+                  onChange={(e) => setDiscountStartsAt(e.target.value)}
+                  disabled={!discountPrice}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm disabled:opacity-50"
+                />
+              </FormField>
+              <FormField label="Ends">
+                <input
+                  type="datetime-local"
+                  value={discountEndsAt}
+                  onChange={(e) => setDiscountEndsAt(e.target.value)}
+                  disabled={!discountPrice}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm disabled:opacity-50"
+                />
+              </FormField>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

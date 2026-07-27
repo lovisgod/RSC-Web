@@ -32,6 +32,9 @@ export class Outlet {
   @Column({ name: "image_url", type: "varchar", length: 512, nullable: true })
   imageUrl!: string | null;
 
+  @Column({ name: "banner_url", type: "varchar", length: 512, nullable: true })
+  bannerUrl!: string | null;
+
   @Column({ name: "is_online", type: "boolean", default: true })
   isOnline!: boolean;
 

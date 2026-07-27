@@ -100,6 +100,14 @@ export const getProfile = async (): Promise<UserProfile> =>
 export const getOutletById = (outletId: string): Promise<OutletSummary> =>
   get<unknown>(`/api/v1/outlets/${outletId}`).then((data) => outletSummarySchema.parse(data));
 
+export const uploadOutletBanner = (outletId: string, file: File): Promise<OutletSummary> => {
+  const form = new FormData();
+  form.append("file", file);
+  return http
+    .post<Envelope<unknown>>(`/api/v1/outlets/${outletId}/banner`, form)
+    .then((response) => outletSummarySchema.parse(response.data.data));
+};
+
 export const toggleOutletOnlineStatus = (
   outletId: string,
   body: { isOnline: boolean },
@@ -149,6 +157,9 @@ export interface CreateMenuItemBody {
   description?: string;
   deliveryTimeRange?: string;
   priceMinor: number;
+  discountPriceMinor?: number | null;
+  discountStartsAt?: string | null;
+  discountEndsAt?: string | null;
   isAvailable: boolean;
   sortOrder?: number;
   modifierGroupIds?: string[];

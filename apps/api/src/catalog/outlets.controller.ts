@@ -1,5 +1,18 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
 import { AuthGuard } from "../auth/auth.guard";
@@ -7,6 +20,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import type { UploadedImageFile } from "../media/media.service";
 import { CatalogService } from "./catalog.service";
 import {
   CreateOutletDto,
@@ -61,6 +75,33 @@ export class OutletsController {
   @ApiMessage("Outlet online status updated successfully")
   updateOnlineStatus(@Param("id") id: string, @Body() input: UpdateOutletOnlineStatusDto) {
     return this.catalog.updateOutletOnlineStatus(id, input);
+  }
+
+  @Post(":id/banner")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @UseInterceptors(FileInterceptor("file"))
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["file"],
+      properties: { file: { type: "string", format: "binary" } },
+    },
+  })
+  @ApiOperation({
+    summary: "Upload an outlet banner",
+    description:
+      "Uploads and assigns a wide banner image. Outlet admins may only update their own outlet.",
+  })
+  @ApiMessage("Outlet banner uploaded successfully")
+  uploadBanner(
+    @Req() request: AuthenticatedRequest,
+    @Param("id") id: string,
+    @UploadedFile() file: UploadedImageFile,
+  ) {
+    return this.catalog.uploadOutletBanner(request.user!, id, file);
   }
 
   @Post(":id/rating")

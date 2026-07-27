@@ -1,4 +1,5 @@
 import { ChangePasswordPanel } from "@rsc/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   KeyRound,
   ShieldCheck,
@@ -8,21 +9,37 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  ImageUp,
 } from "lucide-react";
-import { useState } from "react";
+import { type ChangeEvent, useState } from "react";
 
 import { useChangePassword } from "../hooks/use-change-password";
 import { useAuth } from "../hooks/use-auth";
 import { useOutletInfo } from "../hooks/use-outlet-info";
+import { uploadOutletBanner } from "../lib/api";
+import { outletAdminKeys } from "../lib/query-keys";
 
 export function SettingsPage() {
   const { user } = useAuth();
   const outletId = user?.outletId || "";
 
   const { data: outlet, isLoading: isLoadingOutlet } = useOutletInfo(outletId);
+  const queryClient = useQueryClient();
+  const bannerUpload = useMutation({
+    mutationFn: (file: File) => uploadOutletBanner(outletId, file),
+    onSuccess: (updatedOutlet) => {
+      queryClient.setQueryData(outletAdminKeys.outlet.detail(outletId), updatedOutlet);
+    },
+  });
 
   const changePassword = useChangePassword();
   const [passwordResetSignal, setPasswordResetSignal] = useState(0);
+
+  function handleBannerUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) bannerUpload.mutate(file);
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
@@ -53,6 +70,40 @@ export function SettingsPage() {
           })
         }
       />
+
+      {outletId && (
+        <section className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div
+            className="flex min-h-48 items-end justify-end bg-slate-100 bg-cover bg-center p-4"
+            style={
+              outlet?.bannerUrl ? { backgroundImage: `url("${outlet.bannerUrl}")` } : undefined
+            }
+          >
+            <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 shadow-sm">
+              <ImageUp size={17} aria-hidden="true" />
+              {bannerUpload.isPending ? "Uploading..." : "Change banner"}
+              <input
+                className="sr-only"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={bannerUpload.isPending}
+                onChange={handleBannerUpload}
+              />
+            </label>
+          </div>
+          <div className="border-t border-slate-100 p-5">
+            <h2 className="text-base font-bold text-slate-900">Outlet banner</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              This image appears at the top of the customer outlet page.
+            </p>
+            {bannerUpload.isError && (
+              <p className="mt-2 text-sm font-semibold text-red-600" role="alert">
+                {bannerUpload.error.message}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
 
       {outletId && (
         <section className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
