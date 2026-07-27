@@ -254,32 +254,25 @@ export class AuthService {
     }
   }
 
-  async verifyUser(input: VerifyUserDto): Promise<UserVerificationResult> {
-    const identity =
-      input.channel === "phone"
-        ? normalizeNigerianPhoneNumber(input.phone ?? "")
-        : (input.email ?? "").trim().toLowerCase();
-    if (!(await this.phoneOtp.consumeRateLimit("verify-user", identity, 10, 10 * 60))) {
+  async verifyUser(input: Pick<VerifyUserDto, "code">): Promise<UserVerificationResult> {
+    if (!(await this.phoneOtp.consumeRateLimit("verify-user", input.code, 10, 10 * 60))) {
       throw new HttpException(
         "Too many verification attempts. Try again later",
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
-    const customer =
-      input.channel === "phone"
-        ? await this.findCustomerByPhone(input.phone)
-        : await this.findCustomerByEmail(input.email);
-
-    if (!customer || customer.status === CustomerStatus.SUSPENDED) {
+    const verification = await this.phoneOtp.verifyRegistrationCode(input.code);
+    if (verification.result !== "VERIFIED") {
       throw new UnauthorizedException("Invalid or expired verification code");
     }
 
-    const channel = input.channel;
-    const verification = await this.phoneOtp.verifyRegistration(customer.id, channel, input.code);
+    const customer = await this.customers.findOneBy({ id: verification.customerId });
+    const channel = verification.channel;
 
     if (
-      verification !== "VERIFIED" ||
+      !customer ||
+      customer.status === CustomerStatus.SUSPENDED ||
       (channel === "phone" && customer.phoneVerifiedAt) ||
       (channel === "email" && customer.emailVerifiedAt)
     ) {
