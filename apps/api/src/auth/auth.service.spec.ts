@@ -545,13 +545,9 @@ describe(AuthService.name, () => {
     });
     customers.findOneBy.mockResolvedValue(customer);
 
-    const result = await service.verifyUser({
-      channel: "phone",
-      phone: "08031234567",
-      code: "482901",
-    });
+    const result = await service.verifyUser({ code: "482901" });
 
-    expect(phoneOtp.verifyRegistration).toHaveBeenCalledWith(customerId, "phone", "482901");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("482901");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -570,13 +566,14 @@ describe(AuthService.name, () => {
       emailVerifiedAt: null,
     });
     customers.findOneBy.mockResolvedValue(customer);
-    const result = await service.verifyUser({
+    phoneOtp.verifyRegistrationCode.mockResolvedValueOnce({
+      result: "VERIFIED",
+      customerId,
       channel: "email",
-      email: "ada@example.com",
-      code: "193847",
     });
+    const result = await service.verifyUser({ code: "193847" });
 
-    expect(phoneOtp.verifyRegistration).toHaveBeenCalledWith(customerId, "email", "193847");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("193847");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -596,13 +593,9 @@ describe(AuthService.name, () => {
     });
     customers.findOneBy.mockResolvedValue(customer);
 
-    const result = await service.verifyUser({
-      channel: "phone",
-      phone: "08031234567",
-      code: "482901",
-    });
+    const result = await service.verifyUser({ code: "482901" });
 
-    expect(phoneOtp.verifyRegistration).toHaveBeenCalledWith(customerId, "phone", "482901");
+    expect(phoneOtp.verifyRegistrationCode).toHaveBeenCalledWith("482901");
     const savedCustomer = customers.save.mock.calls.at(-1)?.[0] as Customer | undefined;
 
     expect(savedCustomer?.status).toBe(CustomerStatus.ACTIVE);
@@ -619,15 +612,11 @@ describe(AuthService.name, () => {
         status: CustomerStatus.UNVERIFIED,
       }),
     );
-    phoneOtp.verifyRegistration.mockResolvedValue(result);
+    phoneOtp.verifyRegistrationCode.mockResolvedValue({ result });
 
-    await expect(
-      service.verifyUser({
-        channel: "phone",
-        phone: "08031234567",
-        code: "000000",
-      }),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service.verifyUser({ code: "000000" })).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
     expect(customers.save).not.toHaveBeenCalled();
   });
 });
