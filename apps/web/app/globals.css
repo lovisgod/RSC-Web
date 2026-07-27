@@ -23,15 +23,15 @@ body {
 .rsc-global-theme-toggle {
   position: fixed;
   z-index: 70;
-  top: 1rem;
-  right: 1rem;
-  box-shadow: 0 4px 18px rgb(0 0 0 / 10%);
+  bottom: 1.5rem;
+  right: 1.5rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 22%);
 }
 
 @media (max-width: 640px) {
   .rsc-global-theme-toggle {
-    top: 4.5rem;
-    right: 0.75rem;
+    bottom: 4.5rem;
+    right: 1rem;
   }
 }
 
@@ -44,10 +44,21 @@ body {
   background-color: var(--rsc-surface) !important;
 }
 
+[data-theme="dark"] .bg-gray-100,
+[data-theme="dark"] .bg-slate-100,
+[data-theme="dark"] .bg-gray-200,
+[data-theme="dark"] .bg-slate-200,
+[data-theme="dark"] .bg-gray-300,
+[data-theme="dark"] .bg-slate-300 {
+  background-color: color-mix(in srgb, var(--rsc-panel) 80%, var(--rsc-line)) !important;
+}
+
 [data-theme="dark"] .text-gray-900,
 [data-theme="dark"] .text-slate-900,
 [data-theme="dark"] .text-gray-800,
-[data-theme="dark"] .text-slate-800 {
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-slate-700 {
   color: var(--rsc-ink) !important;
 }
 

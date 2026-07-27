@@ -60,6 +60,13 @@ body {
 [data-theme="dark"] .topbar {
   color: var(--rsc-ink);
   background-color: var(--rsc-surface);
+  border-bottom-color: var(--rsc-line);
+}
+
+[data-theme="dark"] .sidebar {
+  color: rgb(244 246 243 / 85%);
+  background-color: #0d1424;
+  border-right: 1px solid var(--rsc-line);
 }
 
 [data-theme="dark"] input,
@@ -67,10 +74,30 @@ body {
 [data-theme="dark"] textarea,
 [data-theme="dark"] .modal,
 [data-theme="dark"] .panel,
-[data-theme="dark"] .table-card {
+[data-theme="dark"] .table-card,
+[data-theme="dark"] .admin-settlement-settings,
+[data-theme="dark"] .owner-backups-toggle,
+[data-theme="dark"] .owner-backups-summary > div {
   color: var(--rsc-ink);
   background-color: var(--rsc-panel);
   border-color: var(--rsc-line);
+}
+
+[data-theme="dark"] .admin-settlement-field input,
+[data-theme="dark"] .admin-settlement-field select {
+  color: var(--rsc-ink);
+  background-color: var(--rsc-panel);
+  border-color: var(--rsc-line);
+}
+
+[data-theme="dark"] .admin-settlement-settings__head {
+  background-color: color-mix(in srgb, var(--rsc-panel) 85%, var(--rsc-surface));
+  border-bottom-color: var(--rsc-line);
+}
+
+[data-theme="dark"] .admin-settlement-settings__icon {
+  background-color: color-mix(in srgb, var(--rsc-main) 20%, transparent);
+  color: var(--rsc-main);
 }
 
 button,

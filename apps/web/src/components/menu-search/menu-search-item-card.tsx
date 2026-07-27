@@ -62,10 +62,10 @@ export function MenuSearchItemCard({
       <div className="flex-1 min-w-0">
         {/* Kitchen badge */}
         <span
-          className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1"
+          className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1 border border-[color-mix(in_srgb,var(--rsc-main)_20%,transparent)]"
           style={{
-            backgroundColor: "color-mix(in srgb, var(--rsc-main) 12%, white)",
-            color: "var(--rsc-dark)",
+            backgroundColor: "color-mix(in srgb, var(--rsc-main) 16%, var(--rsc-panel))",
+            color: "var(--rsc-brand)",
           }}
         >
           📍 {outletName}
@@ -92,7 +92,7 @@ export function MenuSearchItemCard({
             isDiscountActive={item.isDiscountActive}
             showBadge
           />
-          <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600">
+          <span className="flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--rsc-panel)_85%,var(--rsc-line))] border border-[var(--rsc-line)] px-3 py-1.5 text-xs font-semibold text-[var(--rsc-ink)] shadow-xs transition-all group-hover:bg-[var(--rsc-brand)] group-hover:text-white group-hover:border-[var(--rsc-brand)]">
             {loading ? (
               <>
                 <Loader2 className="w-3 h-3 animate-spin" />
