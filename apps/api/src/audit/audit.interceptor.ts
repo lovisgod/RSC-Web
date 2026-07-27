@@ -13,6 +13,7 @@ import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { AuditService } from "./audit.service";
 
 const MUTATING_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
+const HIGH_FREQUENCY_PATHS = new Set(["/api/v1/riders/locations"]);
 const SENSITIVE_KEYS = new Set([
   "accessToken",
   "access_token",
@@ -61,6 +62,11 @@ export class AuditInterceptor implements NestInterceptor {
     const method = request.method.toUpperCase();
 
     if (!MUTATING_METHODS.has(method)) {
+      return next.handle();
+    }
+
+    const path = normalizePath(request.originalUrl ?? request.url);
+    if (HIGH_FREQUENCY_PATHS.has(path)) {
       return next.handle();
     }
 

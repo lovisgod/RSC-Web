@@ -264,14 +264,10 @@ export class MomentPaymentAdapter implements PaymentAdapter {
   }
 
   async provisionSubaccount(input: ProvisionSubaccountInput): Promise<ProvisionSubaccountResult> {
-    await Promise.resolve();
-    // Subaccounts are managed via Moment's dashboard UI.
-    // Return a mocked subaccount code to allow settings onboarding flow to proceed if called.
-    const mockCode = `moment_sub_${Math.random().toString(36).substring(2, 10)}`;
-    return {
-      subaccountCode: mockCode,
-      providerResponse: { info: "Provisioned via dashboard UI mock fallback", input },
-    };
+    await Promise.resolve(input);
+    throw new BadRequestException(
+      "Moment settlement accounts must be provisioned and verified by Moment before outlet onboarding",
+    );
   }
 
   async refund(): Promise<RefundProviderPaymentResult> {

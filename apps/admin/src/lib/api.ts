@@ -125,28 +125,11 @@ function redirectOnUnauthorized(error: AxiosError) {
   window.location.replace("/login");
 }
 
-function redirectOnServerError(error: AxiosError) {
-  if (
-    (error.response?.status ?? 0) < 500 ||
-    typeof window === "undefined" ||
-    isRedirectingToLogin ||
-    window.location.pathname === "/login" ||
-    !authStore.isAuthenticated()
-  ) {
-    return;
-  }
-
-  isRedirectingToLogin = true;
-  authStore.setUser(null);
-  window.location.replace("/login");
-}
-
 // Unwrap API errors into plain Error so TanStack mutation.error is always Error
 http.interceptors.response.use(
   (res) => res,
   (err: AxiosError<{ message?: string }>) => {
     redirectOnUnauthorized(err);
-    redirectOnServerError(err);
     throw new Error(
       (err.response?.status ?? 0) >= 500
         ? SERVER_ERROR_MESSAGE

@@ -71,7 +71,7 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({ description: "OTP is incorrect, expired, or already consumed" })
   verifyUser(@Body() input: VerifyUserDto): Promise<UserVerificationDataDto> {
-    return this.authService.verifyUser({ code: input.code });
+    return this.authService.verifyUser(input);
   }
 
   @Post("resend-verification-code")

@@ -60,13 +60,22 @@ import { MomentPaymentAdapter } from "./moment-payment.adapter";
       ) => {
         const payments = configService.get("payments", { infer: true });
 
-        if (payments.provider === "paystack" && payments.paystack.secretKey) {
-          return paystack;
+        switch (payments.provider) {
+          case "paystack":
+            if (!payments.paystack.secretKey) {
+              throw new Error("PAYSTACK_SECRET_KEY is required for the Paystack payment provider");
+            }
+            return paystack;
+          case "moment":
+            if (!payments.moment.secretKey || !payments.moment.webhookSecret) {
+              throw new Error(
+                "MOMENT_SECRET_KEY and MOMENT_WEBHOOK_SECRET are required for the Moment payment provider",
+              );
+            }
+            return moment;
+          case "local":
+            return local;
         }
-        if (payments.provider === "moment" && payments.moment.secretKey) {
-          return moment;
-        }
-        return local;
       },
     },
   ],

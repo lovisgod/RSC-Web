@@ -1,8 +1,10 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
 import type { UserRole } from "../auth/user-role.enum";
+import type { ApplicationConfig } from "../config/configuration";
 import { AuditLog } from "./audit-log.entity";
 import type { AuditLogQueryDto } from "./dto/audit-log-query.dto";
 
@@ -33,10 +35,27 @@ export interface AuditLogListResult {
 }
 
 @Injectable()
-export class AuditService {
+export class AuditService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(AuditService.name);
+  private readonly retentionDays: number;
+  private retentionTimer?: NodeJS.Timeout;
 
-  constructor(@InjectRepository(AuditLog) private readonly auditLogs: Repository<AuditLog>) {}
+  constructor(
+    @InjectRepository(AuditLog) private readonly auditLogs: Repository<AuditLog>,
+    configService: ConfigService<ApplicationConfig, true>,
+  ) {
+    this.retentionDays = configService.get("audit.retentionDays", { infer: true });
+  }
+
+  onModuleInit(): void {
+    void this.pruneExpired();
+    this.retentionTimer = setInterval(() => void this.pruneExpired(), 24 * 60 * 60 * 1_000);
+    this.retentionTimer.unref();
+  }
+
+  onModuleDestroy(): void {
+    if (this.retentionTimer) clearInterval(this.retentionTimer);
+  }
 
   async record(input: CreateAuditLogInput): Promise<void> {
     try {
@@ -91,6 +110,26 @@ export class AuditService {
       offset,
       ...paginationMeta(total, limit, offset),
     };
+  }
+
+  private async pruneExpired(): Promise<void> {
+    try {
+      await this.auditLogs.query(
+        `
+          WITH cleanup_lock AS (
+            SELECT pg_try_advisory_xact_lock(741852963) AS acquired
+          )
+          DELETE FROM audit_logs
+          WHERE created_at < NOW() - ($1 * INTERVAL '1 day')
+            AND (SELECT acquired FROM cleanup_lock)
+        `,
+        [this.retentionDays],
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to prune audit logs: ${error instanceof Error ? error.message : "unknown error"}`,
+      );
+    }
   }
 }
 
