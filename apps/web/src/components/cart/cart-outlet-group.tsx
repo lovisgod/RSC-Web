@@ -50,7 +50,7 @@ export function CartOutletGroupCard({ group }: { group: CartOutletGroup }) {
                   {item.notes && (
                     <p className="text-xs text-gray-400 mt-0.5 truncate">{item.notes}</p>
                   )}
-                  <p className="text-sm font-bold mt-1" style={{ color: "var(--rsc-dark)" }}>
+                  <p className="text-sm font-bold mt-1" style={{ color: "var(--rsc-brand)" }}>
                     {formatNaira(item.unitPriceMinor * item.quantity)}
                   </p>
                 </div>

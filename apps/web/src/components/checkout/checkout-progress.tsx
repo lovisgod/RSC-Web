@@ -18,7 +18,7 @@ export function CheckoutProgress({ current }: { current: number }) {
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={
                   done
-                    ? { backgroundColor: "var(--rsc-dark)", color: "white" }
+                    ? { backgroundColor: "var(--rsc-brand)", color: "white" }
                     : active
                       ? {
                           backgroundColor: "var(--rsc-main)",
@@ -37,7 +37,7 @@ export function CheckoutProgress({ current }: { current: number }) {
                   active
                     ? { color: "var(--rsc-main)" }
                     : done
-                      ? { color: "var(--rsc-dark)" }
+                      ? { color: "var(--rsc-brand)" }
                       : { color: "#9ca3af" }
                 }
               >
@@ -52,7 +52,7 @@ export function CheckoutProgress({ current }: { current: number }) {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: done ? "100%" : "0%",
-                    backgroundColor: "var(--rsc-dark)",
+                    backgroundColor: "var(--rsc-brand)",
                   }}
                 />
               </div>

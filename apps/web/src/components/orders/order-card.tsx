@@ -203,7 +203,7 @@ function OrderDetailsContent({
                 <div className="py-3" key={item.id}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 gap-3">
-                      <span className="mt-0.5 inline-flex h-8 min-w-8 items-center justify-center rounded-xl bg-orange-50 px-2 text-sm font-black text-[var(--rsc-main)]">
+                      <span className="mt-0.5 inline-flex h-8 min-w-8 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)] px-2 text-sm font-black text-[var(--rsc-main)]">
                         {item.quantity}×
                       </span>
                       <div className="min-w-0">
@@ -220,7 +220,7 @@ function OrderDetailsContent({
                           </p>
                         )}
                         {item.customerNote && (
-                          <p className="mt-2 rounded-xl bg-orange-50 px-3 py-2 text-sm text-orange-800">
+                          <p className="mt-2 rounded-xl bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)] px-3 py-2 text-sm text-[var(--rsc-brand-strong)]">
                             Note: {item.customerNote}
                           </p>
                         )}

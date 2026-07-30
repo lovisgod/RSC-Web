@@ -33,7 +33,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
         {outlet.tag && (
           <span
             className="absolute top-2 left-2 text-xs font-semibold text-white px-2.5 py-0.5 rounded-full z-10"
-            style={{ backgroundColor: "var(--rsc-dark)" }}
+            style={{ backgroundColor: "var(--rsc-brand)" }}
           >
             {outlet.tag}
           </span>
@@ -56,7 +56,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
         <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
           <span
             className="inline-flex items-center gap-1 justify-self-start font-semibold"
-            style={{ color: "var(--rsc-dark)" }}
+            style={{ color: "var(--rsc-brand)" }}
           >
             <StarIcon className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
             {rating}
@@ -69,7 +69,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
 
           <span
             className="justify-self-end text-xs font-semibold sm:text-sm"
-            style={{ color: "var(--rsc-dark)" }}
+            style={{ color: "var(--rsc-brand)" }}
           >
             {isOffline ? "Offline" : "Order Now"}
           </span>
@@ -106,7 +106,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
           {outlet.tag && (
             <span
               className="absolute top-2 left-2 text-xs font-semibold text-white px-2.5 py-0.5 rounded-full z-10"
-              style={{ backgroundColor: "var(--rsc-dark)" }}
+              style={{ backgroundColor: "var(--rsc-brand)" }}
             >
               {outlet.tag}
             </span>
@@ -129,7 +129,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
           <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
             <span
               className="inline-flex items-center gap-1 justify-self-start font-semibold"
-              style={{ color: "var(--rsc-dark)" }}
+              style={{ color: "var(--rsc-brand)" }}
             >
               <StarIcon className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
               {rating}
@@ -142,7 +142,7 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
 
             <span
               className="justify-self-end text-xs font-semibold sm:text-sm"
-              style={{ color: "var(--rsc-dark)" }}
+              style={{ color: "var(--rsc-brand)" }}
             >
               Order Now
             </span>

@@ -50,7 +50,7 @@ export function CartView() {
           <Link
             href="/outlets"
             className="text-sm font-semibold hover:underline"
-            style={{ color: "var(--rsc-dark)" }}
+            style={{ color: "var(--rsc-brand)" }}
           >
             Browse kitchens
           </Link>

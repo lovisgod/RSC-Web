@@ -31,10 +31,10 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   PENDING_PAYMENT: { label: "Pending payment", color: "#fff", bg: "var(--rsc-danger)" },
   CONFIRMED: { label: "Confirmed", color: "#fff", bg: "var(--rsc-navy-light)" },
   PREPARING: { label: "Preparing", color: "#fff", bg: "var(--rsc-navy-light)" },
-  PARTIALLY_READY: { label: "Partially ready", color: "#fff", bg: "var(--rsc-dark)" },
+  PARTIALLY_READY: { label: "Partially ready", color: "#fff", bg: "var(--rsc-brand)" },
   PARTIALLY_FULFILLED: { label: "Partially fulfilled", color: "#fff", bg: "var(--rsc-danger)" },
   READY: { label: "Ready for pickup", color: "#fff", bg: "var(--rsc-success)" },
-  OUT_FOR_DELIVERY: { label: "Out for delivery", color: "#fff", bg: "var(--rsc-dark)" },
+  OUT_FOR_DELIVERY: { label: "Out for delivery", color: "#fff", bg: "var(--rsc-brand)" },
   DELIVERED: { label: "Delivered", color: "#fff", bg: "var(--rsc-main)" },
   CANCELLED: { label: "Cancelled", color: "#fff", bg: "#6b7280" },
 };
