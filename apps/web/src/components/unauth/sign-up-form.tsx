@@ -70,7 +70,10 @@ export function SignUpForm() {
       className="w-full max-w-sm space-y-6"
     >
       <div className="flex flex-col items-center justify-center gap-1 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+        <h1
+          onClick={() => window.location.replace("/")}
+          className="text-3xl font-bold tracking-tight text-gray-900 cursor-pointer"
+        >
           <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
           <span style={{ color: "var(--rsc-brand)" }}>Food</span>
         </h1>

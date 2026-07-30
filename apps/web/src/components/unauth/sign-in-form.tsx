@@ -71,7 +71,10 @@ export function SignInForm() {
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
       className="w-full max-w-sm space-y-6"
     >
-      <div className="flex flex-col items-center justify-center gap-1 text-center">
+      <div
+        onClick={() => window.location.replace("/")}
+        className="flex flex-col items-center justify-center gap-1 text-center cursor-pointer"
+      >
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
           <span style={{ color: "var(--rsc-brand)" }}>Food</span>

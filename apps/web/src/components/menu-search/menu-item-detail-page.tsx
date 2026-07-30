@@ -33,12 +33,7 @@ export function MenuItemDetailPage({ id }: { id: string }) {
   const resolved = findMenuItem(outlets, id);
 
   function closeDetails() {
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
-
-    router.push("/menu");
+    router.replace("/menu");
   }
 
   if (isPending) {
