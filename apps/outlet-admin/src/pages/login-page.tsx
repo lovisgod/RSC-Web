@@ -1,5 +1,4 @@
 import { nigerianPhoneNumberSchema } from "@rsc/contracts";
-import { ThemeToggle } from "@rsc/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -60,7 +59,7 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-900 p-4">
-      <ThemeToggle className="fixed right-4 top-4 z-10" />
+      {/* <ThemeToggle className="fixed right-4 top-4 z-10" /> */}
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
         <div className="mb-8 flex items-center gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-500 text-lg font-black text-white">
