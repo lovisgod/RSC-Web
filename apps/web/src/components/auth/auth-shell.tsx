@@ -39,7 +39,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
   }, [isSignedIn]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--rsc-surface)]">
+    <div className="flex h-screen overflow-hidden bg-[var(--rsc-page-background)]">
       <SideNav />
       <main className="h-screen flex-1 overflow-x-hidden overflow-y-auto pb-20 md:pb-0">
         {children}

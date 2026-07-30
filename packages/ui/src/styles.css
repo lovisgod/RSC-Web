@@ -27,6 +27,13 @@
   --rsc-auth-aside: var(--rsc-main);
   --rsc-auth-aside-ink: #ffffff;
   --rsc-auth-aside-muted: rgb(255 255 255 / 68%);
+  --rsc-sidebar-bg: var(--rsc-main);
+  --rsc-sidebar-border: color-mix(in srgb, white 12%, transparent);
+  --rsc-sidebar-ink: #ffffff;
+  --rsc-sidebar-muted: rgb(255 255 255 / 58%);
+  --rsc-sidebar-active-bg: rgb(255 255 255 / 16%);
+  --rsc-sidebar-hover-bg: rgb(255 255 255 / 10%);
+  --rsc-bottom-nav-bg: var(--rsc-surface);
 
   /* ── Navy scale ───────────────────────────────────────── */
   --rsc-main: var(--app-primary); /* Primary — headings and primary actions */
@@ -63,6 +70,13 @@
   --rsc-auth-aside: var(--rsc-shell);
   --rsc-auth-aside-ink: var(--rsc-ink);
   --rsc-auth-aside-muted: var(--rsc-muted);
+  --rsc-sidebar-bg: #0f1712;
+  --rsc-sidebar-border: color-mix(in srgb, var(--rsc-brand) 16%, transparent);
+  --rsc-sidebar-ink: #f5f7f2;
+  --rsc-sidebar-muted: #9ba79f;
+  --rsc-sidebar-active-bg: color-mix(in srgb, var(--rsc-main) 42%, transparent);
+  --rsc-sidebar-hover-bg: color-mix(in srgb, var(--rsc-main) 22%, transparent);
+  --rsc-bottom-nav-bg: #0f1712;
 
   /* Dark mode brand overrides */
   --rsc-main: #14883a;
