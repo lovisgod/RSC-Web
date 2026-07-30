@@ -17,6 +17,7 @@ import { ResendEmailSender } from "./email/resend-email.sender";
 import { SmtpEmailSender } from "./email/smtp-email.sender";
 import { PhoneOtpService } from "./otp/phone-otp.service";
 import { NoopSmsSender } from "./sms/noop-sms.sender";
+import { SlingSmsSender } from "./sms/sling-sms.sender";
 import { SMS_SENDER } from "./sms/sms-sender";
 import { TermiiSmsSender } from "./sms/termii-sms.sender";
 import { RolesGuard } from "./roles.guard";
@@ -35,6 +36,7 @@ import { RolesGuard } from "./roles.guard";
     ResendEmailSender,
     SmtpEmailSender,
     NoopSmsSender,
+    SlingSmsSender,
     TermiiSmsSender,
     {
       provide: EMAIL_SENDER,
@@ -60,12 +62,21 @@ import { RolesGuard } from "./roles.guard";
     },
     {
       provide: SMS_SENDER,
-      inject: [ConfigService, NoopSmsSender, TermiiSmsSender],
+      inject: [ConfigService, NoopSmsSender, SlingSmsSender, TermiiSmsSender],
       useFactory: (
         configService: ConfigService<ApplicationConfig, true>,
         noop: NoopSmsSender,
+        sling: SlingSmsSender,
         termii: TermiiSmsSender,
-      ) => (configService.get("sms.provider", { infer: true }) === "termii" ? termii : noop),
+      ) => {
+        const provider = configService.get("sms.provider", { infer: true });
+
+        if (provider === "sling") {
+          return sling;
+        }
+
+        return provider === "termii" ? termii : noop;
+      },
     },
   ],
   exports: [
