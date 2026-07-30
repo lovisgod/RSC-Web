@@ -22,6 +22,29 @@ body {
   background: var(--rsc-page-background);
 }
 
+.rsc-brand-logo {
+  position: relative;
+  display: inline-block;
+  aspect-ratio: 600 / 340;
+  flex-shrink: 0;
+}
+
+.rsc-brand-logo__image {
+  object-fit: contain;
+}
+
+.rsc-brand-logo__image--dark {
+  display: none;
+}
+
+[data-theme="dark"] .rsc-brand-logo__image--light {
+  display: none;
+}
+
+[data-theme="dark"] .rsc-brand-logo__image--dark {
+  display: block;
+}
+
 .rsc-global-theme-toggle {
   position: fixed;
   z-index: 70;

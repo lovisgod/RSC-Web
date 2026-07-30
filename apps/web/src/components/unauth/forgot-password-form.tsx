@@ -12,6 +12,7 @@ import { forgotPasswordSchema, type ForgotPasswordFormData } from "@/src/lib/sch
 import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { inputClass, labelClass } from "@/src/lib/form-styles";
+import { BrandLogo } from "@/src/components/shared/brand-logo";
 
 export function ForgotPasswordForm() {
   const router = useRouter();
@@ -36,10 +37,7 @@ export function ForgotPasswordForm() {
       className="w-full max-w-sm space-y-6"
     >
       <div className="flex flex-col items-center justify-center gap-1 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
-          <span style={{ color: "var(--rsc-brand)" }}>Food</span>
-        </h1>
+        <BrandLogo className="w-36" priority />
         <p className="text-sm text-gray-500">
           Enter your phone or email and we&apos;ll send a reset code.
         </p>
