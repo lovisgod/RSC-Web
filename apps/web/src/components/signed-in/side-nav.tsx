@@ -40,15 +40,17 @@ export function SideNav() {
   return (
     <aside
       className="hidden h-screen w-60 flex-shrink-0 flex-col md:flex"
-      style={{ backgroundColor: "var(--rsc-main)" }}
+      style={{ backgroundColor: "var(--rsc-sidebar-bg)" }}
     >
       {/* Brand */}
-      <div className="px-6 py-6 border-b border-white/10">
+      <div className="border-b px-6 py-6" style={{ borderColor: "var(--rsc-sidebar-border)" }}>
         <Link href="/outlets" className="font-bold text-xl leading-none">
-          <span className="text-white">RSC</span>
+          <span style={{ color: "var(--rsc-sidebar-ink)" }}>RSC</span>
           <span style={{ color: "var(--rsc-brand)" }}> Food</span>
         </Link>
-        <p className="text-white/40 text-xs mt-1">Your kitchen companion</p>
+        <p className="mt-1 text-xs" style={{ color: "var(--rsc-sidebar-muted)" }}>
+          Your kitchen companion
+        </p>
       </div>
 
       {/* Nav items */}
@@ -60,11 +62,22 @@ export function SideNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors relative ${
-                isActive
-                  ? "bg-white/15 text-white"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }`}
+              className="relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors"
+              style={{
+                backgroundColor: isActive ? "var(--rsc-sidebar-active-bg)" : "transparent",
+                color: isActive ? "var(--rsc-sidebar-ink)" : "var(--rsc-sidebar-muted)",
+              }}
+              onMouseEnter={(event) => {
+                if (!isActive)
+                  event.currentTarget.style.backgroundColor = "var(--rsc-sidebar-hover-bg)";
+                event.currentTarget.style.color = "var(--rsc-sidebar-ink)";
+              }}
+              onMouseLeave={(event) => {
+                if (!isActive) event.currentTarget.style.backgroundColor = "transparent";
+                event.currentTarget.style.color = isActive
+                  ? "var(--rsc-sidebar-ink)"
+                  : "var(--rsc-sidebar-muted)";
+              }}
             >
               {item.icon.startsWith("/") ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -97,12 +110,21 @@ export function SideNav() {
       </nav>
 
       {isSignedIn && (
-        <div className="px-3 py-5 border-t border-white/10">
+        <div className="border-t px-3 py-5" style={{ borderColor: "var(--rsc-sidebar-border)" }}>
           <button
             type="button"
             onClick={handleLogout}
             aria-label="Sign out"
-            className="flex items-center gap-3 px-3 py-3 w-full rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors"
+            style={{ color: "var(--rsc-sidebar-muted)" }}
+            onMouseEnter={(event) => {
+              event.currentTarget.style.backgroundColor = "var(--rsc-sidebar-hover-bg)";
+              event.currentTarget.style.color = "var(--rsc-sidebar-ink)";
+            }}
+            onMouseLeave={(event) => {
+              event.currentTarget.style.backgroundColor = "transparent";
+              event.currentTarget.style.color = "var(--rsc-sidebar-muted)";
+            }}
           >
             <LogOut className="h-5 w-5" aria-hidden="true" />
             <span>Logout</span>
