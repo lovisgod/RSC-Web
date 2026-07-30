@@ -234,22 +234,23 @@ pnpm --filter @rsc/api seed:super-admin
 Inside a built production container, run `node dist/src/auth/seed-super-admin.js`
 with the same environment variables.
 
-Termii delivery uses `POST {TERMII_BASE_URL}/api/sms/send` with an approved
-sender ID. Set:
+Sling delivery uses `POST {SLING_BASE_URL}/send-sms` with bearer-token
+authentication and an approved sender ID. Set:
 
 ```dotenv
-SMS_PROVIDER=termii
-TERMII_BASE_URL=https://v3.api.termii.com
-TERMII_API_KEY=replace-with-dashboard-api-key
-TERMII_SENDER_ID=RSCApp
-TERMII_CHANNEL=dnd
+SMS_PROVIDER=sling
+SLING_BASE_URL=https://app.sling.com.ng/api/v1
+SLING_API_TOKEN=replace-with-dashboard-api-token
+SLING_SENDER_ID=RSCApp
+SLING_MESSAGE_TYPE=transactional
+SLING_TIMEOUT_MS=10000
 ```
 
-The exact regional base URL comes from the Termii dashboard. `dnd` is the
-recommended transactional route for Nigerian recipients when the sender ID is
-approved for that route.
+Copy the API token from Sling's **Account > API** page and register the sender
+ID before deployment. `transactional` is the appropriate route for OTPs,
+password resets, delivery alerts, and other time-sensitive account messages.
 
-After configuring Termii, register with a Nigerian number you can receive SMS
+After configuring Sling, register with a Nigerian number you can receive SMS
 on:
 
 ```bash

@@ -64,4 +64,47 @@ describe("environment configuration", () => {
       }),
     ).toThrow(/PAYMENT_PROVIDER must be paystack or moment/);
   });
+
+  it("accepts Sling as the SMS provider when its credentials are present", () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        SMS_PROVIDER: "sling",
+        SLING_API_TOKEN: "sling-api-token",
+        SLING_SENDER_ID: "RSCApp",
+      }),
+    ).not.toThrow();
+  });
+
+  it("requires a Sling token and sender ID when Sling is selected", () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        SMS_PROVIDER: "sling",
+      }),
+    ).toThrow(/SLING_API_TOKEN/);
+  });
+
+  it("maps Sling environment values into application configuration", () => {
+    process.env = {
+      ...originalEnvironment,
+      SMS_PROVIDER: "sling",
+      SLING_BASE_URL: "https://app.sling.com.ng/api/v1/",
+      SLING_API_TOKEN: "sling-api-token",
+      SLING_SENDER_ID: "RSCApp",
+      SLING_MESSAGE_TYPE: "transactional",
+      SLING_TIMEOUT_MS: "7000",
+    };
+
+    expect(configuration().sms).toMatchObject({
+      provider: "sling",
+      sling: {
+        baseUrl: "https://app.sling.com.ng/api/v1",
+        apiToken: "sling-api-token",
+        senderId: "RSCApp",
+        type: "transactional",
+        timeoutMs: 7_000,
+      },
+    });
+  });
 });

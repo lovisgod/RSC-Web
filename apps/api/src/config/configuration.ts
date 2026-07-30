@@ -27,7 +27,14 @@ export interface ApplicationConfig {
     adminInactivityTimeoutSeconds: number;
   };
   sms: {
-    provider: "noop" | "termii";
+    provider: "noop" | "sling" | "termii";
+    sling: {
+      baseUrl: string;
+      apiToken: string;
+      senderId: string;
+      type: "transactional" | "promotional";
+      timeoutMs: number;
+    };
     termii: {
       baseUrl: string;
       apiKey: string;
@@ -161,7 +168,22 @@ export default function configuration(): ApplicationConfig {
       adminInactivityTimeoutSeconds: Number(process.env.ADMIN_INACTIVITY_TIMEOUT_SECONDS ?? 1_800),
     },
     sms: {
-      provider: process.env.SMS_PROVIDER === "termii" ? "termii" : "noop",
+      provider:
+        process.env.SMS_PROVIDER === "sling"
+          ? "sling"
+          : process.env.SMS_PROVIDER === "termii"
+            ? "termii"
+            : "noop",
+      sling: {
+        baseUrl: (process.env.SLING_BASE_URL ?? "https://app.sling.com.ng/api/v1").replace(
+          /\/$/,
+          "",
+        ),
+        apiToken: process.env.SLING_API_TOKEN ?? "",
+        senderId: process.env.SLING_SENDER_ID ?? "",
+        type: process.env.SLING_MESSAGE_TYPE === "promotional" ? "promotional" : "transactional",
+        timeoutMs: Number(process.env.SLING_TIMEOUT_MS ?? 10_000),
+      },
       termii: {
         baseUrl: (process.env.TERMII_BASE_URL ?? "https://v3.api.termii.com").replace(/\/$/, ""),
         apiKey: process.env.TERMII_API_KEY ?? "",

@@ -20,7 +20,12 @@ export interface Environment {
   ACCESS_TOKEN_TTL_SECONDS: number;
   REFRESH_TOKEN_TTL_SECONDS: number;
   ADMIN_INACTIVITY_TIMEOUT_SECONDS: number;
-  SMS_PROVIDER: "noop" | "termii";
+  SMS_PROVIDER: "noop" | "sling" | "termii";
+  SLING_BASE_URL: string;
+  SLING_API_TOKEN?: string;
+  SLING_SENDER_ID?: string;
+  SLING_MESSAGE_TYPE: "transactional" | "promotional";
+  SLING_TIMEOUT_MS: number;
   TERMII_BASE_URL: string;
   TERMII_API_KEY?: string;
   TERMII_SENDER_ID?: string;
@@ -109,7 +114,22 @@ const environmentSchema = Joi.object<Environment>({
   ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).default(900),
   REFRESH_TOKEN_TTL_SECONDS: Joi.number().integer().min(3_600).default(604_800),
   ADMIN_INACTIVITY_TIMEOUT_SECONDS: Joi.number().integer().min(60).default(1_800),
-  SMS_PROVIDER: Joi.string().valid("noop", "termii").default("noop"),
+  SMS_PROVIDER: Joi.string().valid("noop", "sling", "termii").default("noop"),
+  SLING_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://app.sling.com.ng/api/v1"),
+  SLING_API_TOKEN: Joi.when("SMS_PROVIDER", {
+    is: "sling",
+    then: Joi.string().min(10).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  SLING_SENDER_ID: Joi.when("SMS_PROVIDER", {
+    is: "sling",
+    then: Joi.string().min(3).max(11).required(),
+    otherwise: Joi.string().optional().allow(""),
+  }),
+  SLING_MESSAGE_TYPE: Joi.string().valid("transactional", "promotional").default("transactional"),
+  SLING_TIMEOUT_MS: Joi.number().integer().min(1_000).max(30_000).default(10_000),
   TERMII_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
     .default("https://v3.api.termii.com"),

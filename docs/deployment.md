@@ -151,12 +151,12 @@ JWT_SECRET=replace-with-output-of-openssl-rand-hex-32
 ACCESS_TOKEN_TTL_SECONDS=900
 REFRESH_TOKEN_TTL_SECONDS=604800
 ADMIN_INACTIVITY_TIMEOUT_SECONDS=1800
-SMS_PROVIDER=termii
-TERMII_BASE_URL=https://v3.api.termii.com
-TERMII_API_KEY=replace-with-termii-dashboard-key
-TERMII_SENDER_ID=RSCApp
-TERMII_CHANNEL=dnd
-TERMII_TIMEOUT_MS=10000
+SMS_PROVIDER=sling
+SLING_BASE_URL=https://app.sling.com.ng/api/v1
+SLING_API_TOKEN=replace-with-sling-dashboard-token
+SLING_SENDER_ID=RSCApp
+SLING_MESSAGE_TYPE=transactional
+SLING_TIMEOUT_MS=10000
 EMAIL_PROVIDER=smtp
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -187,10 +187,10 @@ After deploying auth/session changes, confirm `JWT_SECRET` and the token TTL
 variables are present in the Compose service Environment tab and redeploy. The
 Dokploy Compose file passes them through to both `api` and `api-migrate`.
 
-`PII_ENCRYPTION_KEY`, both peppers, and `TERMII_API_KEY` are also server-only
-secrets. Use the regional Termii base URL shown in the Termii dashboard and an
-approved transactional sender ID. Keep `SMS_PROVIDER=noop` only when real SMS
-delivery is intentionally disabled.
+`PII_ENCRYPTION_KEY`, both peppers, and `SLING_API_TOKEN` are also server-only
+secrets. Register the sender ID in Sling and use the transactional route for
+OTPs and account alerts. Keep `SMS_PROVIDER=noop` only when real SMS delivery
+is intentionally disabled.
 
 Do not put payment keys, database passwords, JWT secrets, or other server
 credentials into browser-prefixed variables.
