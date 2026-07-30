@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   Wallet,
 } from "lucide-react";
-import { RouteNotFound, ThemeToggle } from "@rsc/ui";
+import { RouteNotFound } from "@rsc/ui";
 import { useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -302,7 +302,7 @@ function AdminShell() {
             <span className="topbar-title">{pageTitle}</span>
           </div>
           <div className="topbar__actions">
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
             <span className="topbar-clock">{clock}</span>
           </div>
         </header>
