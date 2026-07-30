@@ -343,7 +343,7 @@ function ProfileHeader() {
           aria-label={profile?.avatarUrl ? "Change profile image" : "Add profile image"}
           className="group/avatar relative mb-3 h-20 w-20 overflow-hidden rounded-full text-2xl font-bold text-white ring-2 ring-white/20 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 disabled:cursor-wait"
           style={{
-            backgroundColor: "var(--rsc-dark)",
+            backgroundColor: "var(--rsc-brand)",
             ...(profile?.avatarUrl
               ? {
                   backgroundImage: `url("${profile.avatarUrl}")`,
@@ -414,7 +414,7 @@ function ProfileHeader() {
               onClick={() => setEditing(true)}
               disabled={isPending}
               className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-              style={{ backgroundColor: "var(--rsc-dark)" }}
+              style={{ backgroundColor: "var(--rsc-brand)" }}
             >
               ✏️ Edit Profile
             </button>

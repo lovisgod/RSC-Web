@@ -46,7 +46,7 @@ export function SideNav() {
       <div className="px-6 py-6 border-b border-white/10">
         <Link href="/outlets" className="font-bold text-xl leading-none">
           <span className="text-white">RSC</span>
-          <span style={{ color: "var(--rsc-dark)" }}> Food</span>
+          <span style={{ color: "var(--rsc-brand)" }}> Food</span>
         </Link>
         <p className="text-white/40 text-xs mt-1">Your kitchen companion</p>
       </div>
@@ -78,7 +78,7 @@ export function SideNav() {
               {item.label === "Cart" && itemCount > 0 && (
                 <span
                   className="ml-auto min-w-[20px] h-5 flex items-center justify-center rounded-full text-[10px] font-bold text-white px-1"
-                  style={{ backgroundColor: "var(--rsc-dark)" }}
+                  style={{ backgroundColor: "var(--rsc-brand)" }}
                 >
                   {itemCount}
                 </span>
@@ -88,7 +88,7 @@ export function SideNav() {
               {isActive && (
                 <span
                   className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full"
-                  style={{ backgroundColor: "var(--rsc-dark)" }}
+                  style={{ backgroundColor: "var(--rsc-brand)" }}
                 />
               )}
             </Link>

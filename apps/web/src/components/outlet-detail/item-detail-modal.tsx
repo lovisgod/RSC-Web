@@ -37,7 +37,7 @@ function ModifierGroupSection({
           className="text-xs font-semibold px-2 py-0.5 rounded-full"
           style={
             group.isRequired
-              ? { backgroundColor: "var(--rsc-dark)", color: "#fff" }
+              ? { backgroundColor: "var(--rsc-brand)", color: "#fff" }
               : { backgroundColor: "#e5e7eb", color: "#6b7280" }
           }
         >
@@ -262,14 +262,14 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
               />
 
               {isPreparationFocused && visiblePreparationSuggestions.length > 0 && (
-                <div className="border-t border-orange-100 bg-white">
+                <div className="border-t border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-white">
                   {visiblePreparationSuggestions.map((suggestion) => (
                     <button
                       key={suggestion.id}
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => applyPreparationSuggestion(suggestion.text)}
-                      className="block w-full border-t border-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700 first:border-t-0 hover:bg-orange-50 hover:text-orange-700"
+                      className="block w-full border-t border-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700 first:border-t-0 hover:bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)] hover:text-[var(--rsc-brand-strong)]"
                     >
                       {suggestion.text}
                     </button>
@@ -289,7 +289,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
                 type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg font-bold transition-colors"
-                style={{ borderColor: "var(--rsc-dark)", color: "var(--rsc-dark)" }}
+                style={{ borderColor: "var(--rsc-brand)", color: "var(--rsc-brand)" }}
               >
                 −
               </button>
@@ -298,7 +298,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
                 type="button"
                 onClick={() => setQuantity((q) => q + 1)}
                 className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg font-bold transition-colors"
-                style={{ borderColor: "var(--rsc-dark)", color: "var(--rsc-dark)" }}
+                style={{ borderColor: "var(--rsc-brand)", color: "var(--rsc-brand)" }}
               >
                 +
               </button>

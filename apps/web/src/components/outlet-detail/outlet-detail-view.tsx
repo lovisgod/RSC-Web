@@ -60,7 +60,7 @@ export function OutletDetailView({ id }: { id: string }) {
           type="button"
           onClick={() => router.push("/outlets")}
           className="text-sm font-semibold hover:underline mt-1"
-          style={{ color: "var(--rsc-dark)" }}
+          style={{ color: "var(--rsc-brand)" }}
         >
           Back to kitchens
         </button>
@@ -124,7 +124,7 @@ export function OutletDetailView({ id }: { id: string }) {
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
               <span
                 className="inline-flex items-center gap-1 font-semibold"
-                style={{ color: "var(--rsc-dark)" }}
+                style={{ color: "var(--rsc-brand)" }}
               >
                 <Star className="h-5 w-5 fill-current" aria-hidden="true" />
                 {rating}
@@ -153,9 +153,9 @@ export function OutletDetailView({ id }: { id: string }) {
                 type="button"
                 onClick={() => setActiveCategory(cat.id)}
                 className={`flex-shrink-0 pb-2 px-1 text-sm font-semibold transition-colors border-b-2 ${
-                  active ? "border-[var(--rsc-dark)]" : "border-transparent text-gray-400"
+                  active ? "border-[var(--rsc-brand)]" : "border-transparent text-gray-400"
                 }`}
-                style={active ? { color: "var(--rsc-dark)" } : {}}
+                style={active ? { color: "var(--rsc-brand)" } : {}}
               >
                 {cat.name}
               </button>

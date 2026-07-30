@@ -45,7 +45,7 @@ export function BottomNav() {
             {item.href === "/cart" && itemCount > 0 && (
               <span
                 className="absolute top-1.5 right-1.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[10px] font-bold text-white px-0.5"
-                style={{ backgroundColor: "var(--rsc-dark)" }}
+                style={{ backgroundColor: "var(--rsc-brand)" }}
               >
                 {itemCount}
               </span>
@@ -54,7 +54,7 @@ export function BottomNav() {
             {isActive && (
               <span
                 className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full"
-                style={{ backgroundColor: "var(--rsc-dark)" }}
+                style={{ backgroundColor: "var(--rsc-brand)" }}
               />
             )}
           </Link>

@@ -27,7 +27,7 @@ export interface Outlet {
 
 // Deterministic palette — each outlet gets a consistent colour/image fallback
 const PALETTE = [
-  { headerColor: "#1e3160", image: "/images/images/fire_1f525.png" },
+  { headerColor: "var(--rsc-main)", image: "/images/images/fire_1f525.png" },
   { headerColor: "#2D5A27", image: "/images/images/steaming-bowl_1f35c.png" },
   { headerColor: "#8B1A1A", image: "/images/images/hot-pepper_1f336-fe0f.png" },
   { headerColor: "#6B21A8", image: "/images/images/shortcake_1f370.png" },

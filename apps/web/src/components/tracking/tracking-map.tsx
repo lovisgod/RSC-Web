@@ -72,6 +72,8 @@ declare global {
 
 const GOOGLE_MAPS_SCRIPT_ID = "rsc-google-maps-script";
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+const RIDER_MARKER_COLOR = "#ff8200";
+const CUSTOMER_MARKER_COLOR = "#14883a";
 
 function loadGoogleMaps(apiKey: string): Promise<GoogleMapsNamespace> {
   if (window.google?.maps) {
@@ -183,7 +185,7 @@ export default function TrackingMap({ riderLocation, customerLatLng }: TrackingM
 
         if (!riderMarkerRef.current) {
           riderMarkerRef.current = new google.maps.Marker({
-            icon: markerIcon(google, "#d4832a"),
+            icon: markerIcon(google, RIDER_MARKER_COLOR),
             map: mapRef.current,
             position: riderPosition,
             title: "Rider location",
@@ -195,7 +197,7 @@ export default function TrackingMap({ riderLocation, customerLatLng }: TrackingM
         if (customerPosition) {
           if (!customerMarkerRef.current) {
             customerMarkerRef.current = new google.maps.Marker({
-              icon: markerIcon(google, "#1e3160"),
+              icon: markerIcon(google, CUSTOMER_MARKER_COLOR),
               map: mapRef.current,
               position: customerPosition,
               title: "Delivery destination",

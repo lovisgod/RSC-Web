@@ -65,7 +65,7 @@ export function OtpVerificationForm() {
   //       <a
   //         href="/sign-up"
   //         className="inline-block mt-2 text-sm font-semibold hover:underline"
-  //         style={{ color: "var(--rsc-dark)" }}
+  //         style={{ color: "var(--rsc-brand)" }}
   //       >
   //         Back to sign up
   //       </a>
@@ -81,7 +81,7 @@ export function OtpVerificationForm() {
       <div className="flex flex-col items-center justify-center gap-1 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
-          <span style={{ color: "var(--rsc-dark)" }}>Food</span>
+          <span style={{ color: "var(--rsc-brand)" }}>Food</span>
         </h1>
         <p className="text-sm text-gray-500">
           Enter the 6-digit OTP sent to <span className="font-medium text-gray-700">{email}</span>.
@@ -124,7 +124,7 @@ export function OtpVerificationForm() {
             onClick={() => resendMutation.mutate()}
             disabled={resendMutation.isPending}
             className="font-semibold hover:underline disabled:opacity-50"
-            style={{ color: "var(--rsc-dark)" }}
+            style={{ color: "var(--rsc-brand)" }}
           >
             {resendMutation.isPending ? "Sending…" : "Resend code"}
           </button>

@@ -38,7 +38,7 @@ export function ForgotPasswordForm() {
       <div className="flex flex-col items-center justify-center gap-1 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
-          <span style={{ color: "var(--rsc-dark)" }}>Food</span>
+          <span style={{ color: "var(--rsc-brand)" }}>Food</span>
         </h1>
         <p className="text-sm text-gray-500">
           Enter your phone or email and we&apos;ll send a reset code.
@@ -72,7 +72,7 @@ export function ForgotPasswordForm() {
         <Link
           href="/sign-in"
           className="font-semibold hover:underline"
-          style={{ color: "var(--rsc-dark)" }}
+          style={{ color: "var(--rsc-brand)" }}
         >
           Return to sign in
         </Link>

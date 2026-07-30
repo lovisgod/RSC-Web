@@ -64,7 +64,7 @@ function NoActiveOrder() {
         <Link
           href="/menu"
           className="text-sm font-semibold hover:underline"
-          style={{ color: "var(--rsc-dark)" }}
+          style={{ color: "var(--rsc-brand)" }}
         >
           Browse Outlets
         </Link>
@@ -217,12 +217,12 @@ function KitchenBreakdown({
                     ? "#fee2e2"
                     : normalizedStatus === "READY"
                       ? "color-mix(in srgb, var(--rsc-main) 12%, white)"
-                      : "color-mix(in srgb, var(--rsc-dark) 12%, white)",
+                      : "color-mix(in srgb, var(--rsc-brand) 12%, white)",
                   color: unavailable
                     ? "var(--rsc-danger)"
                     : normalizedStatus === "READY"
                       ? "var(--rsc-main)"
-                      : "var(--rsc-dark)",
+                      : "var(--rsc-brand)",
                 }}
               >
                 {SUB_ORDER_LABELS[normalizedStatus] ??
@@ -397,7 +397,7 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
             <RiderMapState orderId={order.id} customerLatLng={customerLatLng} />
           ) : (
             <Card className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-[var(--rsc-dark)]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)] text-[var(--rsc-brand)]">
                 <Bike className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>

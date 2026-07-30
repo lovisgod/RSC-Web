@@ -74,9 +74,11 @@ export function SignInForm() {
       <div className="flex flex-col items-center justify-center gap-1 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
-          <span style={{ color: "var(--rsc-dark)" }}>Food</span>
+          <span style={{ color: "var(--rsc-brand)" }}>Food</span>
         </h1>
-        <p className="text-sm text-gray-500">Welcome back! Log in to order delicious meals.</p>
+        <p className="text-sm text-[var(--rsc-muted)]">
+          Welcome back! Log in to order delicious meals.
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -121,7 +123,7 @@ export function SignInForm() {
         <Link
           href="/sign-up"
           className="font-semibold hover:underline"
-          style={{ color: "var(--rsc-dark)" }}
+          style={{ color: "var(--rsc-brand)" }}
         >
           Register
         </Link>

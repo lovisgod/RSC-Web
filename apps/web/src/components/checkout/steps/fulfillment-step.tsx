@@ -35,7 +35,7 @@ function SectionLabel({ icon, text }: { icon: string; text: string }) {
       )}
       <span
         className="text-xs font-bold uppercase tracking-widest"
-        style={{ color: "var(--rsc-dark)" }}
+        style={{ color: "var(--rsc-brand)" }}
       >
         {text}
       </span>
@@ -630,22 +630,22 @@ export function FulfillmentStep({
           )}
           <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200">
             <span>Grand Total</span>
-            <span style={{ color: "var(--rsc-dark)" }}>{formatNaira(grandTotal)}</span>
+            <span style={{ color: "var(--rsc-brand)" }}>{formatNaira(grandTotal)}</span>
           </div>
         </div>
       </div>
 
       {/* CTA */}
       <div className="space-y-2">
-        <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-3">
+        <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color-mix(in_srgb,var(--rsc-brand)_8%,white)] p-3">
           <label htmlFor="promo-code" className="flex items-center gap-2 text-xs font-bold">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-[var(--rsc-main)]">
               <Tag className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="uppercase tracking-[0.18em] text-gray-500">Promo code</span>
           </label>
-          <div className="mt-2 flex overflow-hidden rounded-xl border border-orange-100 bg-white shadow-sm focus-within:border-[var(--rsc-main)]">
-            <span className="flex items-center border-r border-orange-100 bg-orange-50 px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
+          <div className="mt-2 flex overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-white shadow-sm focus-within:border-[var(--rsc-main)]">
+            <span className="flex items-center border-r border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color-mix(in_srgb,var(--rsc-brand)_8%,white)] px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
               Code
             </span>
             <input
