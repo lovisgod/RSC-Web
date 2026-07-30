@@ -9,7 +9,7 @@ export default function UnauthLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen flex-col bg-[var(--rsc-page-background)] md:items-center md:justify-center md:p-8">
         <div className="flex min-h-screen w-full overflow-hidden bg-[var(--rsc-shell)] md:min-h-0 md:max-w-4xl md:rounded-3xl md:shadow-sm">
           {/* ── Left panel (desktop only) ── */}
-          <div
+          {/* <div
             className="hidden md:flex w-[42%] flex-col p-6"
             style={{ backgroundColor: "var(--rsc-auth-aside)" }}
           >
@@ -30,7 +30,7 @@ export default function UnauthLayout({ children }: { children: ReactNode }) {
                 tracking.
               </p>
             </div>
-          </div>
+          </div> */}
 
           {/* ── Right panel — form injected here ── */}
           <div className="flex min-h-screen flex-1 items-center justify-center px-6 py-10 md:min-h-0 md:p-10">
