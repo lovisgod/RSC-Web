@@ -8,6 +8,7 @@ import { cartItemCount } from "@/src/lib/data/cart";
 import { useCartStore } from "@/src/stores/cart-store";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { apiClient } from "@/src/lib/api";
+import { BrandLogo } from "@/src/components/shared/brand-logo";
 
 const navItems = [
   { href: "/outlets", icon: "/icons/png/house_1f3e0.png", label: "Home" },
@@ -43,12 +44,11 @@ export function SideNav() {
       style={{ backgroundColor: "var(--rsc-sidebar-bg)" }}
     >
       {/* Brand */}
-      <div className="border-b px-6 py-6" style={{ borderColor: "var(--rsc-sidebar-border)" }}>
-        <Link href="/outlets" className="font-bold text-xl leading-none">
-          <span style={{ color: "var(--rsc-sidebar-ink)" }}>RSC</span>
-          <span style={{ color: "var(--rsc-brand)" }}> Food</span>
+      <div className="border-b px-6 py-4" style={{ borderColor: "var(--rsc-sidebar-border)" }}>
+        <Link href="/outlets" className="inline-flex" aria-label="RSC Food home">
+          <BrandLogo className="w-28" priority />
         </Link>
-        <p className="mt-1 text-xs" style={{ color: "var(--rsc-sidebar-muted)" }}>
+        <p className="text-xs" style={{ color: "var(--rsc-sidebar-muted)" }}>
           Your kitchen companion
         </p>
       </div>

@@ -17,6 +17,7 @@ import { inputClass, labelClass } from "@/src/lib/form-styles";
 import { PasswordInput } from "@/src/components/shared/password-input";
 import { AUTH_REDIRECT_KEY } from "@/src/components/auth/auth-guard";
 import { useCartStore } from "@/src/stores/cart-store";
+import { BrandLogo } from "@/src/components/shared/brand-logo";
 
 export function SignInForm() {
   const searchParams = useSearchParams();
@@ -71,14 +72,14 @@ export function SignInForm() {
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
       className="w-full max-w-sm space-y-6"
     >
-      <div
-        onClick={() => window.location.replace("/")}
-        className="flex flex-col items-center justify-center gap-1 text-center cursor-pointer"
-      >
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
-          <span style={{ color: "var(--rsc-brand)" }}>Food</span>
-        </h1>
+      <div className="flex flex-col items-center justify-center gap-1 text-center">
+        <button
+          type="button"
+          onClick={() => window.location.replace("/")}
+          aria-label="Go to RSC Food home"
+        >
+          <BrandLogo className="w-36" priority />
+        </button>
         <p className="text-sm text-[var(--rsc-muted)]">
           Welcome back! Log in to order delicious meals.
         </p>

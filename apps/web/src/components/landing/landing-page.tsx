@@ -12,6 +12,7 @@ import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
 import { usePromoNotifications } from "@/src/hooks/use-notifications";
 import { formatNaira } from "@/src/lib/data/cart";
 import { formatOutletRating, toDisplayOutlet } from "@/src/lib/data/outlets";
+import { BrandLogo } from "@/src/components/shared/brand-logo";
 
 const steps = [
   {
@@ -99,7 +100,7 @@ export function LandingPage() {
     <main className="landing-shell">
       <header className="landing-header" aria-label="RSC Foods landing navigation">
         <Link className="landing-brand" href="/" aria-label="RSC Foods home">
-          <span>RSC</span> Food
+          <BrandLogo className="w-24 sm:w-28" priority />
         </Link>
 
         <nav className="landing-header__nav" aria-label="Primary navigation">

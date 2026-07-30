@@ -13,6 +13,7 @@ import { apiClient } from "@/src/lib/api";
 import { getMutationErrorMessage } from "@/src/lib/api-error";
 import { inputClass, labelClass } from "@/src/lib/form-styles";
 import { PasswordInput } from "@/src/components/shared/password-input";
+import { BrandLogo } from "@/src/components/shared/brand-logo";
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -46,10 +47,7 @@ export function ResetPasswordForm() {
       className="w-full max-w-sm space-y-6"
     >
       <div className="flex flex-col items-center justify-center gap-1 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          <span style={{ color: "var(--rsc-main)" }}>RSC</span>{" "}
-          <span style={{ color: "var(--rsc-brand)" }}>Food</span>
-        </h1>
+        <BrandLogo className="w-36" priority />
         <p className="text-sm text-gray-500">
           Enter the reset code sent to you and your new password.
         </p>
