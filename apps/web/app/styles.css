@@ -1423,7 +1423,12 @@ body {
 }
 
 @media (max-width: 768px) {
-  .landing-header__nav {
+  .landing-header {
+    padding: 0.6rem 1rem;
+  }
+
+  .landing-header__nav,
+  .landing-header__cta {
     display: none;
   }
 
