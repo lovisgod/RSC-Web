@@ -1186,7 +1186,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  max-width: 860px;
+  width: 100%;
 }
 
 .landing-faq-item {
