@@ -12,6 +12,7 @@ import {
   Settings,
   Store,
   SlidersHorizontal,
+  Users,
   Wallet,
 } from "lucide-react";
 import { RouteNotFound } from "@rsc/ui";
@@ -40,6 +41,7 @@ import { ResetPasswordPage } from "./pages/reset-password-page";
 import { RiderReportsPage } from "./pages/rider-reports-page";
 import { RefundsPage } from "./pages/refunds-page";
 import { SettingsPage } from "./pages/settings-page";
+import { UsersPage } from "./pages/users-page";
 import { VerifyPage } from "./pages/verify-page";
 
 const navigation = [
@@ -53,6 +55,7 @@ const navigation = [
       { label: "Platform Control", to: "/platform-control", icon: Settings },
     ],
   },
+  { label: "Users", to: "/users", icon: Users },
   { label: "Rider Reports", to: "/riders", icon: Bike },
   {
     label: "Financial Reconciliation",
@@ -71,6 +74,7 @@ const routeTitles: Record<string, string> = {
   "/orders": "Platform Orders Feed",
   "/outlets": "Outlet Management",
   "/platform-control": "Platform Control",
+  "/users": "Platform Users",
   "/riders": "Rider Performance Reports",
   "/finance": "Reconciliation & Payouts Ledger",
   "/finance/refunds": "Refund Operation",
@@ -313,6 +317,7 @@ function AdminShell() {
             <Route path="/orders" element={<OrdersFeedPage />} />
             <Route path="/outlets" element={<OutletControlPage view="outlets" />} />
             <Route path="/platform-control" element={<OutletControlPage view="platform" />} />
+            <Route path="/users" element={<UsersPage />} />
             <Route path="/outlets/:id" element={<OutletDetailPage />} />
             <Route path="/riders" element={<RiderReportsPage />} />
             <Route path="/finance" element={<FinancialReconciliationPage />} />

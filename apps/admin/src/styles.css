@@ -6258,6 +6258,47 @@ th {
   display: block;
 }
 
+.users-filters {
+  margin-bottom: 1rem;
+}
+
+.users-search {
+  width: min(420px, 100%);
+}
+
+.users-table {
+  min-width: 1120px;
+}
+
+.users-verification {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.users-chip {
+  display: inline-flex !important;
+  min-height: 24px;
+  align-items: center;
+  border: 1px solid var(--rsc-border);
+  border-radius: 999px;
+  padding: 0 0.55rem;
+  color: var(--rsc-muted);
+  background: color-mix(in srgb, var(--rsc-panel) 68%, white);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.users-chip--ok {
+  border-color: color-mix(in srgb, var(--rsc-green) 38%, white);
+  color: var(--rsc-green);
+  background: color-mix(in srgb, var(--rsc-green) 10%, white);
+}
+
+.users-empty {
+  min-height: 220px;
+}
+
 .audit-table small {
   max-width: 260px;
   overflow: hidden;

@@ -24,6 +24,7 @@ import { SMS_SENDER, type SmsSender } from "../auth/sms/sms-sender";
 import { isOperationalAdminRole, isPlatformAdminRole, UserRole } from "../auth/user-role.enum";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { MediaService, type UploadedImageFile } from "../media/media.service";
+import { MasterOrder } from "../orders/master-order.entity";
 import type { OutletAdminQueryDto } from "./dto/outlet-admin-query.dto";
 import type { CreateRiderDto, UpdateRiderDto } from "./dto/rider.dto";
 import type { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
@@ -84,6 +85,49 @@ export interface OutletAdminResult {
   updatedAt: string;
 }
 
+export interface PlatformUserResult {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: CustomerStatus;
+  role: UserRole.CUSTOMER;
+  avatarUrl: string | null;
+  emailVerifiedAt: string | null;
+  phoneVerifiedAt: string | null;
+  hasDeviceToken: boolean;
+  orderCount: number;
+  totalSpendMinor: number;
+  lastOrderAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformUserListResult {
+  users: PlatformUserResult[];
+  total: number;
+  limit: number;
+  offset: number;
+  next: number | null;
+  previous: number | null;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+interface PlatformUserListQuery {
+  page?: number;
+  limit?: number;
+  status?: CustomerStatus;
+  q?: string;
+}
+
+interface OrderAggregateRow {
+  customer_id: string;
+  order_count: number | string;
+  total_spend_minor: number | string | null;
+  last_order_at: Date | string | null;
+}
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -91,6 +135,8 @@ export class UsersService {
   constructor(
     @InjectRepository(Customer)
     private readonly users: Repository<Customer>,
+    @InjectRepository(MasterOrder)
+    private readonly masterOrders: Repository<MasterOrder>,
     private readonly piiCrypto: PiiCryptoService,
     private readonly phoneOtp: PhoneOtpService,
     @Inject(SMS_SENDER) private readonly smsSender: SmsSender,
@@ -533,6 +579,55 @@ export class UsersService {
     return { deleted: true };
   }
 
+  async listPlatformUsers(
+    actor: AuthenticatedUser,
+    query: PlatformUserListQuery = {},
+  ): Promise<PlatformUserListResult> {
+    if (!isPlatformAdminRole(actor.role)) {
+      throw new ForbiddenException("Only super admins can list platform users");
+    }
+
+    const limit = Math.min(Math.max(Number(query.limit ?? 25), 1), 100);
+    const page = Math.max(Number(query.page ?? 1), 1);
+    const offset = (page - 1) * limit;
+    const search = query.q?.trim();
+
+    const usersQuery = this.users
+      .createQueryBuilder("user")
+      .where("user.role = :role", { role: UserRole.CUSTOMER });
+
+    if (query.status) {
+      usersQuery.andWhere("user.status = :status", { status: query.status });
+    }
+
+    if (search) {
+      usersQuery.andWhere("(user.name ILIKE :search OR CAST(user.id AS text) ILIKE :search)", {
+        search: `%${search}%`,
+      });
+    }
+
+    const [users, total] = await usersQuery
+      .orderBy("user.createdAt", "DESC")
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
+
+    const aggregates = await this.loadOrderAggregates(users.map((user) => user.id));
+    const next = offset + limit < total ? page + 1 : null;
+    const previous = page > 1 ? page - 1 : null;
+
+    return {
+      users: users.map((user) => this.toPlatformUser(user, aggregates.get(user.id))),
+      total,
+      limit,
+      offset,
+      next,
+      previous,
+      hasNext: next !== null,
+      hasPrevious: previous !== null,
+    };
+  }
+
   private async requireUser(id: string): Promise<Customer> {
     const user = await this.users.findOneBy({ id });
 
@@ -612,6 +707,54 @@ export class UsersService {
       email: this.piiCrypto.decrypt(user.emailEncrypted),
       phone: this.piiCrypto.decrypt(user.phoneEncrypted),
       status: user.status,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
+  }
+
+  private async loadOrderAggregates(userIds: string[]): Promise<Map<string, OrderAggregateRow>> {
+    if (userIds.length === 0) {
+      return new Map();
+    }
+
+    const rows = (await this.masterOrders.query(
+      `
+        SELECT
+          customer_id,
+          COUNT(*)::integer AS order_count,
+          COALESCE(SUM(total_minor), 0)::integer AS total_spend_minor,
+          MAX(created_at) AS last_order_at
+        FROM master_orders
+        WHERE deleted_at IS NULL
+          AND customer_id = ANY($1::uuid[])
+        GROUP BY customer_id
+      `,
+      [userIds],
+    )) as OrderAggregateRow[];
+
+    return new Map(rows.map((row) => [row.customer_id, row]));
+  }
+
+  private toPlatformUser(
+    user: Customer,
+    aggregate: OrderAggregateRow | undefined,
+  ): PlatformUserResult {
+    return {
+      id: user.id,
+      name: user.name,
+      email: this.piiCrypto.decrypt(user.emailEncrypted),
+      phone: this.piiCrypto.decrypt(user.phoneEncrypted),
+      status: user.status,
+      role: UserRole.CUSTOMER,
+      avatarUrl: user.avatarUrl,
+      emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
+      phoneVerifiedAt: user.phoneVerifiedAt?.toISOString() ?? null,
+      hasDeviceToken: Boolean(user.fcmToken),
+      orderCount: Number(aggregate?.order_count ?? 0),
+      totalSpendMinor: Number(aggregate?.total_spend_minor ?? 0),
+      lastOrderAt: aggregate?.last_order_at
+        ? new Date(aggregate.last_order_at).toISOString()
+        : null,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };

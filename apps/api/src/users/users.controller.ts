@@ -36,6 +36,7 @@ import { clearAuthCookies, readCookie } from "../auth/cookies";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
+import { CustomerStatus } from "../auth/customer-status.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
 import type { UploadedImageFile } from "../media/media.service";
 import { UpdateProfileDto, VerifyProfileChangeDto } from "./dto/profile.dto";
@@ -232,6 +233,30 @@ export class UsersController {
   })
   deleteOutletAdmin(@Req() request: AuthenticatedRequest, @Param("id") id: string) {
     return this.users.deleteOutletAdmin(request.user!, id);
+  }
+
+  @Get("customers")
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiMessage("Platform users retrieved")
+  @ApiOperation({
+    summary: "List customer users",
+    description:
+      "Super-admin endpoint for viewing end users with contact, verification, notification, and order activity fields.",
+  })
+  listCustomers(
+    @Req() request: AuthenticatedRequest,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
+    @Query("status") status?: CustomerStatus,
+    @Query("q") q?: string,
+  ) {
+    return this.users.listPlatformUsers(request.user!, {
+      ...(page ? { page: Number(page) } : {}),
+      ...(limit ? { limit: Number(limit) } : {}),
+      ...(status ? { status } : {}),
+      ...(q ? { q } : {}),
+    });
   }
 
   @Delete(":id")

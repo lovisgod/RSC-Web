@@ -350,6 +350,7 @@ export class AuthService {
 
     if (input.channel === "phone") {
       const phone = this.piiCrypto.decrypt(customer.phoneEncrypted);
+      const email = this.piiCrypto.decrypt(customer.emailEncrypted);
 
       await this.phoneOtp.revoke(customer.id);
       await this.phoneOtp.storeRegistrationPhone(customer.id, code);
@@ -361,8 +362,22 @@ export class AuthService {
           expiresInMinutes: OTP_TTL_SECONDS / 60,
         });
       } catch (error) {
-        await this.phoneOtp.revoke(customer.id);
-        throw error;
+        try {
+          await this.emailSender.sendWelcomeVerification({
+            email,
+            name: customer.name,
+            code,
+            expiresInMinutes: OTP_TTL_SECONDS / 60,
+          });
+          this.logger.warn(
+            `Phone verification resend SMS failed; sent the phone code by email instead: ${this.describeDispatchError(
+              error,
+            )}`,
+          );
+        } catch (emailError) {
+          await this.phoneOtp.revoke(customer.id);
+          throw emailError;
+        }
       }
     } else {
       const email = this.piiCrypto.decrypt(customer.emailEncrypted);

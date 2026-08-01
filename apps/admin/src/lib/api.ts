@@ -19,6 +19,8 @@ import {
   outletSettlementSummarySchema,
   notificationCampaignSchema,
   paginatedAuditLogsSchema,
+  platformUserListQuerySchema,
+  platformUserListSchema,
   updateDatabaseBackupSettingsInputSchema,
   promoSchema,
   paymentRefundSchema,
@@ -63,6 +65,8 @@ import {
   type OutletSummary,
   type OutletSettlementSummary,
   type PaginatedAuditLogs,
+  type PlatformUserList,
+  type PlatformUserListQuery,
   type PaymentRefund,
   type RefundRequestList,
   type RefundRequestListQuery,
@@ -559,6 +563,22 @@ export const listOutletAdmins = (outletId?: string): Promise<OutletAdminUser[]> 
 
 export const deleteOutletAdmin = (id: string): Promise<void> =>
   http.delete(`/api/v1/users/outlet-admins/${id}`).then(() => undefined);
+
+function platformUserQueryString(input: PlatformUserListQuery = {}): string {
+  const query = platformUserListQuerySchema.parse(input);
+  const params = new URLSearchParams();
+  if (query.page !== undefined) params.set("page", String(query.page));
+  if (query.limit !== undefined) params.set("limit", String(query.limit));
+  if (query.status) params.set("status", query.status);
+  if (query.q) params.set("q", query.q);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export const listPlatformUsers = (input: PlatformUserListQuery = {}): Promise<PlatformUserList> =>
+  get<unknown>(`/api/v1/users/customers${platformUserQueryString(input)}`).then((data) =>
+    platformUserListSchema.parse(data),
+  );
 
 // ─── Audit logs ──────────────────────────────────────────────────────────────
 

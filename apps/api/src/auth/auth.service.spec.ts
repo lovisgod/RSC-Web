@@ -391,6 +391,7 @@ describe(AuthService.name, () => {
       status: CustomerStatus.UNVERIFIED,
       phoneHash: "hash:2348031234567",
       phoneEncrypted: "encrypted:2348031234567",
+      emailEncrypted: "encrypted:ada@example.com",
       phoneVerifiedAt: null,
     });
     customers.findOneBy.mockResolvedValue(customer);
@@ -411,6 +412,37 @@ describe(AuthService.name, () => {
       code: "482901",
       expiresInMinutes: 10,
     });
+  });
+
+  it("emails the phone verification resend code when SMS delivery fails", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.UNVERIFIED,
+      phoneHash: "hash:2348031234567",
+      phoneEncrypted: "encrypted:2348031234567",
+      emailEncrypted: "encrypted:ada@example.com",
+      phoneVerifiedAt: null,
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+    smsSender.sendPhoneVerification.mockRejectedValue(
+      new BadGatewayException("Unable to send verification code"),
+    );
+
+    const result = await service.resendVerificationCode({
+      channel: "phone",
+      phone: "08031234567",
+    });
+
+    expect(result).toEqual({ sent: true, channel: "phone", otpExpiresInSeconds: 600 });
+    expect(phoneOtp.storeRegistrationPhone).toHaveBeenCalledWith(customerId, "482901");
+    expect(emailSender.sendWelcomeVerification).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      name: "Ada Okafor",
+      code: "482901",
+      expiresInMinutes: 10,
+    });
+    expect(phoneOtp.revoke).toHaveBeenCalledTimes(1);
   });
 
   it("resends an email verification code and invalidates the previous code first", async () => {
