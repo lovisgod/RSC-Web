@@ -9,6 +9,7 @@ import type { EmailSender } from "../auth/email/email-sender";
 import type { PhoneOtpService } from "../auth/otp/phone-otp.service";
 import type { SmsSender } from "../auth/sms/sms-sender";
 import type { MediaService } from "../media/media.service";
+import type { MasterOrder } from "../orders/master-order.entity";
 import { UsersService } from "./users.service";
 
 describe(UsersService.name, () => {
@@ -37,6 +38,10 @@ describe(UsersService.name, () => {
     findOneBy: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
     softRemove: ReturnType<typeof vi.fn>;
+    createQueryBuilder: ReturnType<typeof vi.fn>;
+  };
+  let masterOrders: {
+    query: ReturnType<typeof vi.fn>;
   };
   let emailSender: {
     sendTemporaryPassword: ReturnType<typeof vi.fn>;
@@ -64,6 +69,10 @@ describe(UsersService.name, () => {
         ),
       ),
       softRemove: vi.fn().mockResolvedValue(admin),
+      createQueryBuilder: vi.fn(),
+    };
+    masterOrders = {
+      query: vi.fn().mockResolvedValue([]),
     };
     const piiCrypto = {
       decrypt: vi.fn((value: string) => value.replace(/^encrypted:/, "")),
@@ -81,6 +90,7 @@ describe(UsersService.name, () => {
 
     service = new UsersService(
       users as unknown as Repository<Customer>,
+      masterOrders as unknown as Repository<MasterOrder>,
       piiCrypto as unknown as PiiCryptoService,
       phoneOtp as unknown as PhoneOtpService,
       {} as SmsSender,
@@ -108,6 +118,85 @@ describe(UsersService.name, () => {
       where: { role: UserRole.ADMIN },
       order: { createdAt: "DESC" },
     });
+  });
+
+  it("lists platform customer users with order activity for super admins", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      name: "Ada Customer",
+      role: UserRole.CUSTOMER,
+      status: CustomerStatus.ACTIVE,
+      avatarUrl: null,
+      emailEncrypted: "encrypted:ada@example.com",
+      phoneEncrypted: "encrypted:+2348031234567",
+      emailVerifiedAt: new Date("2026-07-02T08:30:00.000Z"),
+      phoneVerifiedAt: null,
+      fcmToken: "fcm-token",
+      createdAt: new Date("2026-07-01T08:00:00.000Z"),
+      updatedAt: new Date("2026-07-02T09:00:00.000Z"),
+    });
+    const builder = {
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      skip: vi.fn().mockReturnThis(),
+      take: vi.fn().mockReturnThis(),
+      getManyAndCount: vi.fn().mockResolvedValue([[customer], 1]),
+    };
+    users.createQueryBuilder.mockReturnValue(builder);
+    masterOrders.query.mockResolvedValue([
+      {
+        customer_id: customer.id,
+        order_count: 3,
+        total_spend_minor: 185000,
+        last_order_at: new Date("2026-07-30T12:00:00.000Z"),
+      },
+    ]);
+
+    await expect(
+      service.listPlatformUsers(superAdmin, {
+        page: 1,
+        limit: 25,
+        status: CustomerStatus.ACTIVE,
+        q: "Ada",
+      }),
+    ).resolves.toEqual({
+      users: [
+        {
+          id: customer.id,
+          name: "Ada Customer",
+          email: "ada@example.com",
+          phone: "+2348031234567",
+          status: CustomerStatus.ACTIVE,
+          role: UserRole.CUSTOMER,
+          avatarUrl: null,
+          emailVerifiedAt: "2026-07-02T08:30:00.000Z",
+          phoneVerifiedAt: null,
+          hasDeviceToken: true,
+          orderCount: 3,
+          totalSpendMinor: 185000,
+          lastOrderAt: "2026-07-30T12:00:00.000Z",
+          createdAt: "2026-07-01T08:00:00.000Z",
+          updatedAt: "2026-07-02T09:00:00.000Z",
+        },
+      ],
+      total: 1,
+      limit: 25,
+      offset: 0,
+      next: null,
+      previous: null,
+      hasNext: false,
+      hasPrevious: false,
+    });
+    expect(builder.where).toHaveBeenCalledWith("user.role = :role", {
+      role: UserRole.CUSTOMER,
+    });
+    expect(builder.andWhere).toHaveBeenCalledWith("user.status = :status", {
+      status: CustomerStatus.ACTIVE,
+    });
+    expect(masterOrders.query).toHaveBeenCalledWith(expect.stringContaining("master_orders"), [
+      [customer.id],
+    ]);
   });
 
   it("returns the uploaded avatar URL on the active user's profile", async () => {

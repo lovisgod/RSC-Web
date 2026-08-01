@@ -284,6 +284,44 @@ export const outletAdminSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
+export const platformUserSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  email: z.email(),
+  phone: z.string().min(1),
+  status: customerStatusSchema,
+  role: z.literal("CUSTOMER"),
+  avatarUrl: z.url().nullable(),
+  emailVerifiedAt: z.iso.datetime().nullable(),
+  phoneVerifiedAt: z.iso.datetime().nullable(),
+  hasDeviceToken: z.boolean(),
+  orderCount: z.int().nonnegative(),
+  totalSpendMinor: z.int().nonnegative(),
+  lastOrderAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const platformUserListSchema = z.object({
+  users: z.array(platformUserSchema),
+  total: z.int().nonnegative(),
+  limit: z.int().min(1).max(100),
+  offset: z.int().nonnegative(),
+  next: z.int().positive().nullable(),
+  previous: z.int().positive().nullable(),
+  hasNext: z.boolean(),
+  hasPrevious: z.boolean(),
+});
+
+export const platformUserListQuerySchema = z
+  .object({
+    page: z.int().positive().optional(),
+    limit: z.int().min(1).max(100).optional(),
+    status: customerStatusSchema.optional(),
+    q: z.string().trim().min(1).optional(),
+  })
+  .strict();
+
 export const resendVerificationCodeInputSchema = z.discriminatedUnion("channel", [
   z
     .object({
@@ -1290,6 +1328,9 @@ export type RiderAdmin = z.infer<typeof riderAdminSchema>;
 export type UpdateRiderInput = z.infer<typeof updateRiderInputSchema>;
 
 export type OutletAdmin = z.infer<typeof outletAdminSchema>;
+export type PlatformUser = z.infer<typeof platformUserSchema>;
+export type PlatformUserList = z.infer<typeof platformUserListSchema>;
+export type PlatformUserListQuery = z.infer<typeof platformUserListQuerySchema>;
 export type ResendVerificationCodeInput = z.infer<typeof resendVerificationCodeInputSchema>;
 export type ResendVerificationCodeResult = z.infer<typeof resendVerificationCodeResultSchema>;
 export type OutletSummary = z.infer<typeof outletSummarySchema>;
