@@ -335,7 +335,9 @@ function AppShell() {
           </button>
           <div className="min-w-0">
             <p className="m-0 truncate text-sm font-bold text-[var(--rsc-panel)]">{pageTitle}</p>
-            <p className="m-0 mt-0.5 hidden text-[11px] text-white/45 sm:block">RSC Outlet Admin</p>
+            <p className="m-0 mt-0.5 hidden text-[11px] text-white/45 sm:block">
+              DineOut Outlet Admin
+            </p>
           </div>
           <InstallAppButton />
           {/* <ThemeToggle className="ml-auto" /> */}

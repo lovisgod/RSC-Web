@@ -66,7 +66,7 @@ export function LoginPage() {
             R
           </div>
           <div>
-            <p className="text-sm font-bold leading-tight text-slate-900">RSC Outlet Admin</p>
+            <p className="text-sm font-bold leading-tight text-slate-900">DineOut Outlet Admin</p>
             <p className="text-xs text-slate-500">Staff sign-in</p>
           </div>
         </div>

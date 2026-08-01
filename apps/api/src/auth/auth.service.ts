@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -81,6 +82,8 @@ export interface PasswordChangeResult {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(Customer)
     private readonly customers: Repository<Customer>,
@@ -143,24 +146,32 @@ export class AuthService {
     await this.phoneOtp.storeRegistrationPhone(savedCustomer.id, phoneCode);
     await this.phoneOtp.storeRegistrationEmail(savedCustomer.id, emailCode);
 
-    try {
-      await Promise.all([
-        this.smsSender.sendPhoneVerification({
-          phone,
-          code: phoneCode,
-          expiresInMinutes: OTP_TTL_SECONDS / 60,
-        }),
-        this.emailSender.sendWelcomeVerification({
-          email,
-          name: savedCustomer.name,
-          code: emailCode,
-          expiresInMinutes: OTP_TTL_SECONDS / 60,
-        }),
-      ]);
-    } catch (error) {
+    const [smsResult, emailResult] = await Promise.allSettled([
+      this.smsSender.sendPhoneVerification({
+        phone,
+        code: phoneCode,
+        expiresInMinutes: OTP_TTL_SECONDS / 60,
+      }),
+      this.emailSender.sendWelcomeVerification({
+        email,
+        name: savedCustomer.name,
+        code: emailCode,
+        expiresInMinutes: OTP_TTL_SECONDS / 60,
+      }),
+    ]);
+
+    if (emailResult.status === "rejected") {
       await this.phoneOtp.revoke(savedCustomer.id);
       await this.phoneOtp.revokeEmail(savedCustomer.id);
-      throw error;
+      throw emailResult.reason;
+    }
+
+    if (smsResult.status === "rejected") {
+      this.logger.warn(
+        `Phone verification SMS failed; continuing because email verification was sent: ${this.describeDispatchError(
+          smsResult.reason,
+        )}`,
+      );
     }
 
     return {
@@ -418,23 +429,31 @@ export class AuthService {
       this.phoneOtp.storePasswordResetEmail(customer.id, emailCode),
     ]);
 
-    try {
-      await Promise.all([
-        this.smsSender.sendPasswordReset({
-          phone,
-          code: phoneCode,
-          expiresInMinutes: OTP_TTL_SECONDS / 60,
-        }),
-        this.emailSender.sendPasswordReset({
-          email,
-          name: customer.name,
-          code: emailCode,
-          expiresInMinutes: OTP_TTL_SECONDS / 60,
-        }),
-      ]);
-    } catch (error) {
+    const [smsResult, emailResult] = await Promise.allSettled([
+      this.smsSender.sendPasswordReset({
+        phone,
+        code: phoneCode,
+        expiresInMinutes: OTP_TTL_SECONDS / 60,
+      }),
+      this.emailSender.sendPasswordReset({
+        email,
+        name: customer.name,
+        code: emailCode,
+        expiresInMinutes: OTP_TTL_SECONDS / 60,
+      }),
+    ]);
+
+    if (emailResult.status === "rejected") {
       await this.phoneOtp.revokePasswordReset(customer.id);
-      throw error;
+      throw emailResult.reason;
+    }
+
+    if (smsResult.status === "rejected") {
+      this.logger.warn(
+        `Password reset SMS failed; continuing because email reset was sent: ${this.describeDispatchError(
+          smsResult.reason,
+        )}`,
+      );
     }
 
     return { sent: true, otpExpiresInSeconds: OTP_TTL_SECONDS };
@@ -533,6 +552,14 @@ export class AuthService {
       "code" in driverError &&
       driverError.code === "23505"
     );
+  }
+
+  private describeDispatchError(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return "Unknown error";
   }
 }
 

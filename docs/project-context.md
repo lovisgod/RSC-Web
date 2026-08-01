@@ -3,7 +3,7 @@
 ## Product
 
 RSC is a multi-outlet food ordering platform for the Nigerian market. A customer
-can browse dishes from several RSC outlets, combine them in one cart, complete a
+can browse dishes from several DineOut outlets, combine them in one cart, complete a
 single checkout, and track fulfillment. Internally, the platform splits the
 customer's master order into one sub-order per outlet.
 
