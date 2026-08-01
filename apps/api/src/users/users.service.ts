@@ -717,7 +717,7 @@ export class UsersService {
       return new Map();
     }
 
-    const rows = (await this.masterOrders.query(
+    const rows = await this.masterOrders.query<OrderAggregateRow[]>(
       `
         SELECT
           customer_id,
@@ -730,7 +730,7 @@ export class UsersService {
         GROUP BY customer_id
       `,
       [userIds],
-    )) as OrderAggregateRow[];
+    );
 
     return new Map(rows.map((row) => [row.customer_id, row]));
   }
