@@ -290,6 +290,54 @@ describe(AuthService.name, () => {
     });
   });
 
+  it("continues password reset when SMS delivery fails after email is sent", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.ACTIVE,
+      emailHash: "hash:ada@example.com",
+      phoneEncrypted: "encrypted:2348031234567",
+      emailEncrypted: "encrypted:ada@example.com",
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+    smsSender.sendPasswordReset.mockRejectedValue(
+      new BadGatewayException("Unable to send verification code"),
+    );
+
+    const result = await service.forgotPassword({ identifier: "ADA@EXAMPLE.COM" });
+
+    expect(result).toEqual({ sent: true, otpExpiresInSeconds: 600 });
+    expect(emailSender.sendPasswordReset).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      name: "Ada Okafor",
+      code: "193847",
+      expiresInMinutes: 10,
+    });
+    expect(phoneOtp.revokePasswordReset).not.toHaveBeenCalled();
+  });
+
+  it("revokes password reset OTPs when email delivery fails", async () => {
+    const customer = Object.assign(new Customer(), {
+      id: customerId,
+      name: "Ada Okafor",
+      status: CustomerStatus.ACTIVE,
+      emailHash: "hash:ada@example.com",
+      phoneEncrypted: "encrypted:2348031234567",
+      emailEncrypted: "encrypted:ada@example.com",
+      passwordHash: await hashPasswordForTest("SecureP@ss1"),
+    });
+    customers.findOneBy.mockResolvedValue(customer);
+    emailSender.sendPasswordReset.mockRejectedValue(
+      new BadGatewayException("Unable to send email verification code"),
+    );
+
+    await expect(service.forgotPassword({ identifier: "ADA@EXAMPLE.COM" })).rejects.toBeInstanceOf(
+      BadGatewayException,
+    );
+    expect(phoneOtp.revokePasswordReset).toHaveBeenCalledWith(customerId);
+  });
+
   it("resets a password after a phone reset OTP verifies", async () => {
     const customer = Object.assign(new Customer(), {
       id: customerId,
@@ -503,21 +551,32 @@ describe(AuthService.name, () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it("revokes OTPs when Termii delivery fails", async () => {
+  it("continues registration when SMS delivery fails after email is sent", async () => {
     smsSender.sendPhoneVerification.mockRejectedValue(
       new BadGatewayException("Unable to send verification code"),
     );
 
-    await expect(
-      service.register({
-        name: "Ada Okafor",
-        phone: "08031234567",
-        email: "ada@example.com",
-        password: "SecureP@ss1",
-      }),
-    ).rejects.toBeInstanceOf(BadGatewayException);
-    expect(phoneOtp.revoke).toHaveBeenCalledWith(customerId);
-    expect(phoneOtp.revokeEmail).toHaveBeenCalledWith(customerId);
+    const result = await service.register({
+      name: "Ada Okafor",
+      phone: "08031234567",
+      email: "ada@example.com",
+      password: "SecureP@ss1",
+    });
+
+    expect(result).toEqual({
+      customerId,
+      status: CustomerStatus.UNVERIFIED,
+      otpExpiresInSeconds: 600,
+      verificationChannels: { email: false, phone: false },
+    });
+    expect(emailSender.sendWelcomeVerification).toHaveBeenCalledWith({
+      email: "ada@example.com",
+      name: "Ada Okafor",
+      code: "193847",
+      expiresInMinutes: 10,
+    });
+    expect(phoneOtp.revoke).not.toHaveBeenCalled();
+    expect(phoneOtp.revokeEmail).not.toHaveBeenCalled();
   });
 
   it("revokes OTPs when Resend delivery fails", async () => {
