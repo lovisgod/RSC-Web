@@ -76,7 +76,7 @@ export function SignInForm() {
         <button
           type="button"
           onClick={() => window.location.replace("/")}
-          aria-label="Go to RSC Food home"
+          aria-label="Go to DineOut NG home"
         >
           <BrandLogo className="w-36" priority />
         </button>
