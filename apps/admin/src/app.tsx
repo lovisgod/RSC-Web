@@ -241,7 +241,7 @@ function AdminShell() {
       {/* Desktop sidebar */}
       <aside className="sidebar">
         <div className="admin-brand">
-          <span className="admin-brand__mark">R</span>
+          <span className="admin-brand__mark">D</span>
           <span>
             <strong>DineOut NG</strong>
             <small>Central operations</small>

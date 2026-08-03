@@ -28,12 +28,12 @@
 
 :root {
   /* Outlet operations brand tokens. Change only these values for a rebrand. */
-  --app-primary: #1e3160;
-  --app-primary-hover: #141f3d;
-  --app-primary-soft: #253972;
-  --app-secondary: #d4832a;
-  --app-secondary-hover: #b86e1a;
-  --app-secondary-soft: #e09a4a;
+  --app-primary: #0b4f2d;
+  --app-primary-hover: #06391f;
+  --app-primary-soft: #245996;
+  --app-secondary: #14883a;
+  --app-secondary-hover: #0f6d30;
+  --app-secondary-soft: #2aa856;
 
   font-family:
     Inter,
