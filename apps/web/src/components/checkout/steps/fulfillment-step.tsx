@@ -411,10 +411,10 @@ export function FulfillmentStep({
             </button>
           </div>
 
-          <div className="bg-blue-50 rounded-2xl p-4 space-y-3">
+          <div className="rounded-2xl p-4 space-y-3 border border-[color:color-mix(in_srgb,var(--rsc-main)_15%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))]">
             {/* No-default hint */}
             {showNoDefaultHint && !defaultAddress && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-700">
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-600">
                 Type your address below — once verified it will be saved as your default.
               </div>
             )}
@@ -422,12 +422,12 @@ export function FulfillmentStep({
             {/* Address combobox */}
             <div className="relative">
               <div
-                className={`flex items-center gap-3 bg-white rounded-xl px-4 py-3 border transition-colors ${
+                className={`flex items-center gap-3 bg-[var(--rsc-panel)] rounded-xl px-4 py-3 border transition-colors ${
                   isValidated
                     ? "border-green-400"
                     : locationError
                       ? "border-red-300"
-                      : "border-transparent focus-within:border-[var(--rsc-main)]"
+                      : "border-[var(--rsc-line)] focus-within:border-[var(--rsc-main)]"
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -442,7 +442,7 @@ export function FulfillmentStep({
                   onFocus={handleInputFocus}
                   onBlur={handleInputBlur}
                   placeholder="e.g. 8 Abiola Sanusi Street, off Admiralty Way"
-                  className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                  className="flex-1 text-sm bg-transparent focus:outline-none text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)]"
                 />
                 {isValidating && (
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400 flex-shrink-0" />
@@ -457,15 +457,15 @@ export function FulfillmentStep({
                 (filteredAddresses.length > 0 || addressSuggestions.suggestions.length > 0) && (
                   <div
                     onMouseDown={handleDropdownMouseDown}
-                    className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
+                    className="absolute z-20 top-full left-0 right-0 mt-1 bg-[var(--rsc-panel)] border border-[var(--rsc-line)] rounded-xl shadow-lg overflow-hidden"
                   >
                     {filteredAddresses.map((addr) => (
                       <button
                         key={addr.id}
                         type="button"
                         onClick={() => selectSavedAddress(addr)}
-                        className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${
-                          selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/5" : ""
+                        className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] transition-colors border-b border-[var(--rsc-line)] last:border-0 ${
+                          selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/10" : ""
                         }`}
                       >
                         <span className="mt-0.5 flex-shrink-0 text-gray-400">
@@ -481,10 +481,10 @@ export function FulfillmentStep({
                           )}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
+                          <p className="text-sm font-semibold text-[var(--rsc-ink)] truncate">
                             {addr.label}
                           </p>
-                          <p className="text-xs text-gray-400 truncate">
+                          <p className="text-xs text-[var(--rsc-muted)] truncate">
                             {addr.addressLine}, {addr.city}
                           </p>
                         </div>
@@ -495,7 +495,7 @@ export function FulfillmentStep({
                         key={`${suggestion.provider}:${suggestion.id}`}
                         type="button"
                         onClick={() => void selectAddressSuggestion(suggestion)}
-                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] transition-colors border-b border-[var(--rsc-line)] last:border-0"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -504,10 +504,10 @@ export function FulfillmentStep({
                           className="w-5 h-5 object-contain mt-0.5 flex-shrink-0"
                         />
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
+                          <p className="text-sm font-semibold text-[var(--rsc-ink)] truncate">
                             {suggestion.description}
                           </p>
-                          <p className="text-xs text-gray-400 truncate">
+                          <p className="text-xs text-[var(--rsc-muted)] truncate">
                             {suggestion.provider === "google"
                               ? "Google exact address"
                               : "Address match"}
@@ -521,20 +521,20 @@ export function FulfillmentStep({
 
             {/* Validation success */}
             {isValidated && zone && (
-              <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
+                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-green-800">Deliverable</p>
-                  <p className="text-xs text-green-600 mt-0.5">{zone.name} zone</p>
+                  <p className="text-sm font-semibold text-green-600">Deliverable</p>
+                  <p className="text-xs text-green-500 mt-0.5">{zone.name} zone</p>
                 </div>
               </div>
             )}
 
             {/* Validation error */}
             {locationError && (
-              <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+              <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
                 <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-red-600 leading-relaxed">{locationError}</p>
+                <p className="text-xs text-red-500 leading-relaxed">{locationError}</p>
               </div>
             )}
 
@@ -561,12 +561,12 @@ export function FulfillmentStep({
                 }}
                 className="w-5 h-5 rounded border-gray-300 accent-[var(--rsc-main)]"
               />
-              <span className="text-sm text-gray-600">Order on behalf of some else</span>
+              <span className="text-sm text-[var(--rsc-ink)]">Order on behalf of some else</span>
             </label>
 
             {onBehalf && (
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500">
+                <label className="text-xs font-semibold text-[var(--rsc-muted)]">
                   Recipient phone number
                 </label>
                 <input
@@ -591,7 +591,7 @@ export function FulfillmentStep({
                   }}
                   placeholder="08031234567"
                   aria-invalid={Boolean(recipientPhoneError)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] text-sm text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] focus:border-[var(--rsc-main)] focus:outline-none"
                 />
                 {recipientPhoneError && (
                   <p className="text-xs text-red-500">{recipientPhoneError}</p>
@@ -637,15 +637,15 @@ export function FulfillmentStep({
 
       {/* CTA */}
       <div className="space-y-2">
-        <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color-mix(in_srgb,var(--rsc-brand)_8%,white)] p-3">
+        <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] p-3">
           <label htmlFor="promo-code" className="flex items-center gap-2 text-xs font-bold">
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-[var(--rsc-main)]">
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--rsc-panel)] border border-[var(--rsc-line)] text-[var(--rsc-main)]">
               <Tag className="h-5 w-5" aria-hidden="true" />
             </span>
-            <span className="uppercase tracking-[0.18em] text-gray-500">Promo code</span>
+            <span className="uppercase tracking-[0.18em] text-[var(--rsc-muted)]">Promo code</span>
           </label>
-          <div className="mt-2 flex overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-white shadow-sm focus-within:border-[var(--rsc-main)]">
-            <span className="flex items-center border-r border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color-mix(in_srgb,var(--rsc-brand)_8%,white)] px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
+          <div className="mt-2 flex overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[var(--rsc-panel)] shadow-sm focus-within:border-[var(--rsc-main)]">
+            <span className="flex items-center border-r border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
               Code
             </span>
             <input
@@ -654,10 +654,10 @@ export function FulfillmentStep({
               value={promoCode}
               onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
               placeholder="WEEKEND20"
-              className="min-w-0 flex-1 px-3 py-3 text-sm font-bold uppercase tracking-[0.14em] text-gray-800 placeholder:font-semibold placeholder:text-gray-300 focus:outline-none"
+              className="min-w-0 flex-1 px-3 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[var(--rsc-ink)] placeholder:font-semibold placeholder:text-[var(--rsc-muted)] bg-transparent focus:outline-none"
             />
           </div>
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-xs text-[var(--rsc-muted)]">
             Have an offer? Enter the code before continuing to payment.
           </p>
         </div>

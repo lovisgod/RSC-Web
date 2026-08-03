@@ -29,6 +29,7 @@ import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
 import { usePromoNotifications } from "@/src/hooks/use-notifications";
 import { formatNaira } from "@/src/lib/data/cart";
 import { formatOutletRating, toDisplayOutlet } from "@/src/lib/data/outlets";
+import { useAuthStore } from "@/src/stores/auth-store";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
 
 const steps = [
@@ -138,7 +139,14 @@ export function LandingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [mounted, setMounted] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isSignedIn = useAuthStore((s) => s.isSignedIn);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const outletsQuery = useQuery(OUTLETS_QUERY);
   const promosQuery = usePromoNotifications();
@@ -223,9 +231,11 @@ export function LandingPage() {
         </nav>
 
         <div className="landing-header__actions">
-          <Link href="/sign-in" className="landing-sign-in">
-            Sign in
-          </Link>
+          {(!mounted || !isSignedIn) && (
+            <Link href="/sign-in" className="landing-sign-in">
+              Sign in
+            </Link>
+          )}
           <Link href="/outlets" className="landing-header__cta">
             Order Now
           </Link>
