@@ -14,7 +14,7 @@ export default function OutletsPage() {
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "var(--rsc-main)" }}>
-            RSC Food Kitchens
+            DineOut NG Kitchens
           </h1>
           <p className="mt-0.5 text-sm text-gray-400">
             Browse, add to cart, and order — all in one checkout.

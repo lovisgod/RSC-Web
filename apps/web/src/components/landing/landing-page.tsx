@@ -91,7 +91,7 @@ const faqItems = [
   {
     question: "Can I really order from multiple DineOut NG kitchens in one transaction?",
     answer:
-      "Yes! RSC Foods allows you to add items from different kitchens into a single cart and check out once. Our smart dispatch system coordinates preparation so everything arrives together.",
+      "Yes! DineOut NG allows you to add items from different kitchens into a single cart and check out once. Our smart dispatch system coordinates preparation so everything arrives together.",
   },
   {
     question: "How does delivery pricing work for multi-kitchen orders?",
@@ -547,7 +547,7 @@ export function LandingPage() {
         )}
       </section>
 
-      {/* How One RSC Order Works (3 Steps) */}
+      {/* How One DineOut Order Works (3 Steps) */}
       <section
         className="landing-section landing-steps-section"
         id="how-it-works"
@@ -555,10 +555,10 @@ export function LandingPage() {
       >
         <div className="landing-steps-section__header">
           <span className="landing-eyebrow">SIMPLE 3-STEP PROCESS</span>
-          <h2 id="landing-steps-title">How one RSC order works</h2>
+          <h2 id="landing-steps-title">How one DineOut NG order works</h2>
           <p>
             Ordering from multiple kitchens used to mean multiple delivery fees and separate app
-            checkouts. RSC Foods simplifies everything into 3 steps.
+            checkouts. DineOut NG simplifies everything into 3 steps.
           </p>
         </div>
 
@@ -636,9 +636,9 @@ export function LandingPage() {
             <span className="landing-eyebrow">BUILT FOR REAL FOODIES</span>
             <h2>Cooked fresh at specialized DineOut NG kitchens. Delivered as one.</h2>
             <p>
-              Whether it&apos;s a quick lunch at your desk or a weekend feast with family, RSC Foods
-              brings together the finest kitchens under one umbrella. Enjoy total freedom of choice
-              without the hassle of separate checkouts.
+              Whether it&apos;s a quick lunch at your desk or a weekend feast with family, DineOut
+              NG brings together the finest kitchens under one umbrella. Enjoy total freedom of
+              choice without the hassle of separate checkouts.
             </p>
             <div className="landing-narrative-card__actions">
               <Link href="/outlets" className="landing-narrative-btn">
@@ -715,11 +715,11 @@ export function LandingPage() {
           <div className="landing-footer__col landing-footer__col--brand">
             <BrandLogo className="w-32" priority />
             <p className="landing-footer__tagline">
-              One app. Many kitchens. Single checkout. The smartest way to order food across RSC
-              kitchens in Nigeria.
+              One app. Many kitchens. Single checkout. The smartest way to order food across DineOut
+              NG kitchens in Nigeria.
             </p>
             <p className="landing-footer__copyright">
-              © {new Date().getFullYear()} RSC Group Ltd. All rights reserved.
+              © {new Date().getFullYear()} DineOut Group Ltd. All rights reserved.
             </p>
           </div>
 
@@ -772,7 +772,7 @@ export function LandingPage() {
                 <span className="text-gray-400 text-sm">Privacy & Terms</span>
               </li>
               <li>
-                <span className="text-gray-400 text-sm">RSC Partner Outlets</span>
+                <span className="text-gray-400 text-sm">DineOut NG Partner Outlets</span>
               </li>
             </ul>
           </div>

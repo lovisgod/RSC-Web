@@ -74,7 +74,7 @@ export function SignUpForm() {
         <button
           type="button"
           onClick={() => window.location.replace("/")}
-          aria-label="Go to RSC Food home"
+          aria-label="Go to DineOut Food home"
         >
           <BrandLogo className="w-36" priority />
         </button>
