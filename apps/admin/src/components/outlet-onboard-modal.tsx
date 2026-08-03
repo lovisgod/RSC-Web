@@ -58,10 +58,13 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
   const [form, setForm] = useState<FormState>(() => getInitialForm(outlet));
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(outlet?.imageUrl ?? null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(outlet?.bannerUrl ?? null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const hasSettlementSubaccount = form.settlementSubaccountCode.trim().length > 0;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
   // Seed form when modal opens (add → empty, edit → outlet data)
@@ -75,11 +78,19 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
   } = useMutation({
     mutationFn: async () => {
       let resolvedImageUrl: string | undefined;
+      let resolvedBannerUrl: string | undefined;
 
       if (imageFile) {
         setUploadStep(true);
         const { url } = await uploadImage(imageFile);
         resolvedImageUrl = url;
+        setUploadStep(false);
+      }
+
+      if (bannerFile) {
+        setUploadStep(true);
+        const { url } = await uploadImage(bannerFile);
+        resolvedBannerUrl = url;
         setUploadStep(false);
       }
 
@@ -90,6 +101,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
         isOnline: hasSettlementSubaccount && form.isOnline,
         settlementSubaccountCode: form.settlementSubaccountCode.trim() || null,
         ...(resolvedImageUrl !== undefined && { imageUrl: resolvedImageUrl }),
+        ...(resolvedBannerUrl !== undefined && { bannerUrl: resolvedBannerUrl }),
       };
 
       return isEditMode ? updateOutlet(outlet!.id, body) : createOutlet(body);
@@ -132,6 +144,15 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function handleBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBannerFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setBannerPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
   }
 
@@ -190,36 +211,86 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
         {/* ── Form ── */}
         <form className="modal__body" onSubmit={handleSubmit} noValidate>
           {/* Image upload / replace */}
-          <div>
-            <input
-              ref={fileInputRef}
-              id="outlet-image"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="sr-only"
-              onChange={handleImageChange}
-            />
-            <div
-              className={`outlet-image-drop${imagePreview ? " outlet-image-drop--filled" : ""}`}
-              role="button"
-              tabIndex={0}
-              aria-label={isEditMode ? "Replace outlet image" : "Upload outlet image"}
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
-            >
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Outlet preview"
-                  className="outlet-image-drop__preview"
-                />
-              ) : (
-                <span className="outlet-image-drop__placeholder">
-                  <Upload size={26} />
-                  <span>Click to upload outlet photo</span>
-                  <small>JPG · PNG · WEBP</small>
-                </span>
-              )}
+          <div className="outlet-media-grid">
+            <div>
+              <label className="field-label" htmlFor="outlet-image">
+                Outlet photo
+              </label>
+              <input
+                ref={fileInputRef}
+                id="outlet-image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={handleImageChange}
+              />
+              <div
+                className={`outlet-image-drop${imagePreview ? " outlet-image-drop--filled" : ""}`}
+                role="button"
+                tabIndex={0}
+                aria-label={isEditMode ? "Replace outlet image" : "Upload outlet image"}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+              >
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Outlet preview"
+                    className="outlet-image-drop__preview"
+                  />
+                ) : (
+                  <span className="outlet-image-drop__placeholder">
+                    <Upload size={26} />
+                    <span>Click to upload outlet photo</span>
+                    <small>JPG · PNG · WEBP</small>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="field-label" htmlFor="outlet-banner">
+                Outlet side-nav banner
+              </label>
+              <input
+                ref={bannerInputRef}
+                id="outlet-banner"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={handleBannerChange}
+              />
+              <div
+                className={`outlet-image-drop outlet-image-drop--banner${bannerPreview ? " outlet-image-drop--filled" : ""}`}
+                role="button"
+                tabIndex={0}
+                aria-label={isEditMode ? "Replace outlet banner" : "Upload outlet banner"}
+                onClick={() => bannerInputRef.current?.click()}
+                onKeyDown={(e) => e.key === "Enter" && bannerInputRef.current?.click()}
+              >
+                {bannerPreview ? (
+                  <>
+                    <img
+                      src={bannerPreview}
+                      alt="Outlet side-nav banner preview"
+                      className="outlet-image-drop__preview"
+                    />
+                    <span className="outlet-image-drop__replace-hint">
+                      <Upload size={16} />
+                      Replace banner
+                    </span>
+                  </>
+                ) : (
+                  <span className="outlet-image-drop__placeholder">
+                    <Upload size={26} />
+                    <span>Upload side-nav banner</span>
+                    <small>Wide image works best</small>
+                  </span>
+                )}
+              </div>
+              <span className="field-hint">
+                This banner brands the outlet-admin side navigation for that outlet.
+              </span>
             </div>
           </div>
 
@@ -332,7 +403,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
             <Button tone="navy" type="submit" disabled={isPending}>
               {isPending
                 ? uploadStep
-                  ? "Uploading image…"
+                  ? "Uploading media…"
                   : isEditMode
                     ? "Saving…"
                     : "Onboarding…"

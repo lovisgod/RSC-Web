@@ -7,7 +7,7 @@ interface BrandLogoProps {
 
 export function BrandLogo({ className = "", priority = false }: BrandLogoProps) {
   return (
-    <span role="img" aria-label="RSC Food" className={`rsc-brand-logo ${className}`.trim()}>
+    <span role="img" aria-label="DineOut NG" className={`rsc-brand-logo ${className}`.trim()}>
       <Image
         src="/assets/logo.png"
         alt=""

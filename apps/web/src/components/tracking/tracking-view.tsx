@@ -74,20 +74,25 @@ function NoActiveOrder() {
 }
 
 function TrackingPageSkeleton() {
+  const skeletonClass =
+    "animate-pulse rounded-full bg-[color-mix(in_srgb,var(--rsc-main)_9%,var(--rsc-panel))]";
+  const skeletonBlockClass =
+    "animate-pulse rounded-xl bg-[color-mix(in_srgb,var(--rsc-main)_9%,var(--rsc-panel))]";
+
   return (
     <div className="space-y-3" aria-label="Loading active orders">
-      <Card className="overflow-hidden border-gray-100 shadow-[0_12px_30px_rgba(30,49,96,0.07)]">
+      <Card className="overflow-hidden border-[var(--rsc-line)] bg-[var(--rsc-panel)] shadow-[0_12px_30px_rgba(30,49,96,0.07)]">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-4 w-28 animate-pulse rounded-full bg-gray-200" />
-            <div className="h-3 w-44 animate-pulse rounded-full bg-gray-100" />
-            <div className="h-9 w-40 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)]" />
+            <div className={`h-4 w-28 ${skeletonClass}`} />
+            <div className={`h-3 w-44 ${skeletonClass}`} />
+            <div className="h-9 w-40 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--rsc-brand)_10%,var(--rsc-panel))]" />
           </div>
-          <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-gray-100" />
+          <div className={`h-8 w-8 shrink-0 ${skeletonClass}`} />
         </div>
       </Card>
 
-      <Card className="overflow-hidden border-t-4 border-t-[var(--rsc-brand)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--rsc-main)_92%,white)_0%,var(--rsc-main)_100%)] shadow-[0_18px_45px_rgba(30,49,96,0.14)]">
+      <Card className="overflow-hidden border-t-4 border-t-[var(--rsc-brand)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--rsc-main)_92%,var(--rsc-panel))_0%,var(--rsc-main)_100%)] shadow-[0_18px_45px_rgba(30,49,96,0.14)]">
         <div className="space-y-3">
           <div className="h-3 w-28 animate-pulse rounded-full bg-white/25" />
           <div className="h-6 w-36 animate-pulse rounded-full bg-white/35" />
@@ -95,37 +100,40 @@ function TrackingPageSkeleton() {
         </div>
       </Card>
 
-      <Card className="space-y-4 border-gray-100 shadow-[0_12px_32px_rgba(30,49,96,0.06)]">
+      <Card className="space-y-4 border-[var(--rsc-line)] bg-[var(--rsc-panel)] shadow-[0_12px_32px_rgba(30,49,96,0.06)]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 animate-pulse rounded-full bg-[color-mix(in_srgb,var(--rsc-main)_10%,white)]" />
+            <div className="h-9 w-9 animate-pulse rounded-full bg-[color-mix(in_srgb,var(--rsc-main)_10%,var(--rsc-panel))]" />
             <div className="space-y-2">
-              <div className="h-4 w-32 animate-pulse rounded-full bg-gray-200" />
-              <div className="h-3 w-40 animate-pulse rounded-full bg-gray-100" />
+              <div className={`h-4 w-32 ${skeletonClass}`} />
+              <div className={`h-3 w-40 ${skeletonClass}`} />
             </div>
           </div>
-          <div className="h-7 w-16 animate-pulse rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)]" />
+          <div className="h-7 w-16 animate-pulse rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_10%,var(--rsc-panel))]" />
         </div>
 
-        <div className="rounded-2xl border border-gray-100 p-4">
-          <div className="mb-4 flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
+        <div className="rounded-2xl border border-[var(--rsc-line)] p-4">
+          <div className="mb-4 flex items-center justify-between gap-3 border-b border-[var(--rsc-line)] pb-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 animate-pulse rounded-xl bg-gray-100" />
+              <div className={`h-10 w-10 ${skeletonBlockClass}`} />
               <div className="space-y-2">
-                <div className="h-4 w-36 animate-pulse rounded-full bg-gray-200" />
-                <div className="h-3 w-20 animate-pulse rounded-full bg-gray-100" />
+                <div className={`h-4 w-36 ${skeletonClass}`} />
+                <div className={`h-3 w-20 ${skeletonClass}`} />
               </div>
             </div>
-            <div className="h-7 w-20 animate-pulse rounded-full bg-gray-100" />
+            <div className={`h-7 w-20 ${skeletonClass}`} />
           </div>
 
           <div className="space-y-2">
             {[1, 2].map((item) => (
-              <div key={item} className="flex gap-3 rounded-xl border border-gray-100 px-3 py-3">
-                <div className="h-7 w-7 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)]" />
+              <div
+                key={item}
+                className="flex gap-3 rounded-xl border border-[var(--rsc-line)] px-3 py-3"
+              >
+                <div className="h-7 w-7 animate-pulse rounded-lg bg-[color-mix(in_srgb,var(--rsc-brand)_10%,var(--rsc-panel))]" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-40 animate-pulse rounded-full bg-gray-200" />
-                  <div className="h-3 w-28 animate-pulse rounded-full bg-gray-100" />
+                  <div className={`h-4 w-40 ${skeletonClass}`} />
+                  <div className={`h-3 w-28 ${skeletonClass}`} />
                 </div>
               </div>
             ))}
@@ -149,7 +157,7 @@ function KitchenBreakdown({
   if (subOrders.length === 0) {
     return (
       <Card>
-        <p className="text-sm text-gray-500">Kitchen details are not available yet.</p>
+        <p className="text-sm text-[var(--rsc-muted)]">Kitchen details are not available yet.</p>
       </Card>
     );
   }
@@ -158,15 +166,15 @@ function KitchenBreakdown({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--rsc-main)_10%,white)] text-[var(--rsc-main)]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--rsc-main)_12%,var(--rsc-panel))] text-[var(--rsc-main)]">
             <Store className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-sm font-bold text-gray-900">Outlet breakdown</p>
-            <p className="text-xs text-gray-500">Track each outlet separately</p>
+            <p className="text-sm font-bold text-[var(--rsc-ink)]">Outlet breakdown</p>
+            <p className="text-xs text-[var(--rsc-muted)]">Track each outlet separately</p>
           </div>
         </div>
-        <span className="rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_12%,white)] px-2.5 py-1 text-xs font-semibold text-[var(--rsc-brand-strong)]">
+        <span className="rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_14%,var(--rsc-panel))] px-2.5 py-1 text-xs font-semibold text-[var(--rsc-brand-strong)]">
           {subOrders.length} {subOrders.length === 1 ? "outlet" : "outlets"}
         </span>
       </div>
@@ -187,27 +195,29 @@ function KitchenBreakdown({
             key={subOrder.id}
             className={
               unavailable
-                ? "overflow-hidden border-red-200 bg-red-50/40 shadow-[0_12px_30px_rgba(163,58,43,0.08)]"
-                : "overflow-hidden border-[color:color-mix(in_srgb,var(--rsc-main)_12%,white)] bg-[linear-gradient(145deg,white_0%,color-mix(in_srgb,var(--rsc-main)_3%,white)_100%)] shadow-[0_12px_30px_rgba(30,49,96,0.08)]"
+                ? "overflow-hidden border-red-200 bg-[color-mix(in_srgb,var(--rsc-danger)_8%,var(--rsc-panel))] shadow-[0_12px_30px_rgba(163,58,43,0.08)]"
+                : "overflow-hidden border-[color:color-mix(in_srgb,var(--rsc-main)_14%,var(--rsc-line))] bg-[linear-gradient(145deg,var(--rsc-panel)_0%,color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))_100%)] shadow-[0_12px_30px_rgba(30,49,96,0.08)]"
             }
           >
-            <div className="mb-4 flex items-start justify-between gap-3 border-b border-gray-100 pb-4">
+            <div className="mb-4 flex items-start justify-between gap-3 border-b border-[var(--rsc-line)] pb-4">
               <div className="flex min-w-0 items-center gap-2">
                 <span
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                   style={{
-                    background: "color-mix(in srgb, var(--rsc-main) 10%, white)",
+                    background: "color-mix(in srgb, var(--rsc-main) 12%, var(--rsc-panel))",
                     color: "var(--rsc-main)",
                   }}
                 >
                   <Store className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-gray-900">
+                  <p className="truncate text-sm font-semibold text-[var(--rsc-ink)]">
                     {outletNames.get(subOrder.outletId) ??
                       (outletsPending ? "Loading outlet…" : "Outlet unavailable")}
                   </p>
-                  <p className="text-xs text-gray-400">#{subOrder.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="text-xs text-[var(--rsc-muted)]">
+                    #{subOrder.id.slice(0, 8).toUpperCase()}
+                  </p>
                 </div>
               </div>
               <span
@@ -216,8 +226,8 @@ function KitchenBreakdown({
                   backgroundColor: unavailable
                     ? "#fee2e2"
                     : normalizedStatus === "READY"
-                      ? "color-mix(in srgb, var(--rsc-main) 12%, white)"
-                      : "color-mix(in srgb, var(--rsc-brand) 12%, white)",
+                      ? "color-mix(in srgb, var(--rsc-main) 12%, var(--rsc-panel))"
+                      : "color-mix(in srgb, var(--rsc-brand) 12%, var(--rsc-panel))",
                   color: unavailable
                     ? "var(--rsc-danger)"
                     : normalizedStatus === "READY"
@@ -231,11 +241,11 @@ function KitchenBreakdown({
             </div>
 
             {shouldShowPreparationTime && (
-              <div className="mb-4 rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,white)] px-3 py-2">
+              <div className="mb-4 rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] px-3 py-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--rsc-brand-strong)]">
                   Estimated preparation time
                 </p>
-                <p className="mt-0.5 text-sm font-bold text-gray-800">
+                <p className="mt-0.5 text-sm font-bold text-[var(--rsc-ink)]">
                   {preparationTimeMinutes} minutes
                 </p>
               </div>
@@ -246,15 +256,17 @@ function KitchenBreakdown({
                 {items.map((item) => (
                   <li
                     key={item.id}
-                    className="flex gap-3 rounded-xl border border-gray-100 bg-white/90 px-3 py-3 shadow-[0_3px_10px_rgba(30,49,96,0.04)]"
+                    className="flex gap-3 rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-3 py-3 shadow-[0_3px_10px_rgba(30,49,96,0.04)]"
                   >
-                    <span className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--rsc-brand)_12%,white)] px-1.5 text-xs font-bold text-[var(--rsc-brand-strong)]">
+                    <span className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--rsc-brand)_12%,var(--rsc-field-bg))] px-1.5 text-xs font-bold text-[var(--rsc-brand-strong)]">
                       {item.quantity}×
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-800">{item.itemNameSnapshot}</p>
+                      <p className="text-sm font-semibold text-[var(--rsc-field-ink)]">
+                        {item.itemNameSnapshot}
+                      </p>
                       {item.modifiersSnapshot.length > 0 && (
-                        <p className="mt-0.5 text-xs text-gray-500">
+                        <p className="mt-0.5 text-xs text-[color:color-mix(in_srgb,var(--rsc-field-ink)_50%,transparent)]">
                           {item.modifiersSnapshot.map((modifier) => modifier.name).join(", ")}
                         </p>
                       )}
@@ -263,7 +275,7 @@ function KitchenBreakdown({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[var(--rsc-muted)]">
                 Item details are not available for this kitchen.
               </p>
             )}
@@ -285,7 +297,7 @@ function RiderMapState({
 
   if (isLoading && !location) {
     return (
-      <div className="flex min-h-48 items-center justify-center rounded-xl bg-gray-50 text-sm text-gray-500">
+      <div className="flex min-h-48 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--rsc-main)_6%,var(--rsc-panel))] text-sm text-[var(--rsc-muted)]">
         Locating your rider…
       </div>
     );
@@ -293,10 +305,12 @@ function RiderMapState({
 
   if (!location) {
     return (
-      <div className="flex min-h-48 flex-col items-center justify-center rounded-xl bg-gray-50 px-6 text-center">
-        <Bike className="mb-2 h-6 w-6 text-gray-400" aria-hidden="true" />
-        <p className="text-sm font-semibold text-gray-700">Rider location is not available yet</p>
-        <p className="mt-1 text-xs text-gray-500">
+      <div className="flex min-h-48 flex-col items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--rsc-main)_6%,var(--rsc-panel))] px-6 text-center">
+        <Bike className="mb-2 h-6 w-6 text-[var(--rsc-muted)]" aria-hidden="true" />
+        <p className="text-sm font-semibold text-[var(--rsc-ink)]">
+          Rider location is not available yet
+        </p>
+        <p className="mt-1 text-xs text-[var(--rsc-muted)]">
           {isUnavailable
             ? "We could not load the latest location. Updates will retry automatically."
             : "The map will appear as soon as the rider shares a location."}
@@ -306,20 +320,20 @@ function RiderMapState({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-100 shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-[var(--rsc-line)] shadow-sm">
       <TrackingMap riderLocation={location} customerLatLng={customerLatLng} />
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 bg-white px-3 py-2">
-        <span className="flex items-center gap-1.5 text-xs text-gray-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 bg-[var(--rsc-panel)] px-3 py-2">
+        <span className="flex items-center gap-1.5 text-xs text-[var(--rsc-muted)]">
           <span className="h-2.5 w-2.5 rounded-full bg-[var(--rsc-brand)]" />
           Rider
         </span>
         {customerLatLng && (
-          <span className="flex items-center gap-1.5 text-xs text-gray-500">
+          <span className="flex items-center gap-1.5 text-xs text-[var(--rsc-muted)]">
             <span className="h-2.5 w-2.5 rounded-full bg-[var(--rsc-main)]" />
             Your location
           </span>
         )}
-        <span className="ml-auto flex items-center gap-1 text-xs text-gray-500">
+        <span className="ml-auto flex items-center gap-1 text-xs text-[var(--rsc-muted)]">
           {connection === "live" ? (
             <>
               <Wifi className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
@@ -343,21 +357,21 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
   if (isPending) {
     return (
       <div className="space-y-3 py-2" aria-label="Loading order details">
-        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
-        <div className="h-36 animate-pulse rounded-xl bg-gray-100" />
+        <div className="h-20 animate-pulse rounded-xl bg-[color-mix(in_srgb,var(--rsc-main)_8%,var(--rsc-panel))]" />
+        <div className="h-36 animate-pulse rounded-xl bg-[color-mix(in_srgb,var(--rsc-main)_8%,var(--rsc-panel))]" />
       </div>
     );
   }
 
   if (isError || !detail) {
     return (
-      <div className="rounded-xl bg-red-50 p-5 text-center">
+      <div className="rounded-xl bg-[color-mix(in_srgb,var(--rsc-danger)_10%,var(--rsc-panel))] p-5 text-center">
         <p className="text-sm font-semibold text-red-700">We could not load this order</p>
         <p className="mt-1 text-xs text-red-600">Check your connection and try again.</p>
         <button
           type="button"
           onClick={() => void refetch()}
-          className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700"
+          className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-200 bg-[var(--rsc-field-bg)] px-4 py-2 text-sm font-semibold text-red-700"
         >
           <RefreshCw className="h-5 w-5" aria-hidden="true" />
           Try again
@@ -396,13 +410,13 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
           {order.riderId ? (
             <RiderMapState orderId={order.id} customerLatLng={customerLatLng} />
           ) : (
-            <Card className="flex items-center gap-3">
+            <Card className="flex items-center gap-3 border-[var(--rsc-line)] bg-[var(--rsc-panel)]">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)] text-[var(--rsc-brand)]">
                 <Bike className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-gray-900">Assigning your rider</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm font-semibold text-[var(--rsc-ink)]">Assigning your rider</p>
+                <p className="text-xs text-[var(--rsc-muted)]">
                   Live map tracking will begin after rider assignment.
                 </p>
               </div>
@@ -413,27 +427,34 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
 
       <KitchenBreakdown subOrders={subOrders} lineItems={lineItems} />
 
-      <Card className="space-y-4 border-[color:color-mix(in_srgb,var(--rsc-main)_10%,white)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
+      <Card className="space-y-4 border-[color:color-mix(in_srgb,var(--rsc-main)_10%,var(--rsc-line))] bg-[var(--rsc-panel)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
         <div className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--rsc-main)_9%,white)] text-[var(--rsc-main)]">
             <MapPin className="h-5 w-5" aria-hidden="true" />
           </span>
-          <p className="text-sm font-bold text-gray-900">
+          <p className="text-sm font-bold text-[var(--rsc-ink)]">
             {order.deliveryMode === "TAKEOUT" ? "Collection details" : "Delivery details"}
           </p>
         </div>
         {order.deliveryAddress && (
           <div className="flex items-start gap-2.5">
-            <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
-            <p className="text-sm leading-relaxed text-gray-700">{order.deliveryAddress}</p>
+            <MapPin
+              className="mt-0.5 h-5 w-5 shrink-0 text-[var(--rsc-muted)]"
+              aria-hidden="true"
+            />
+            <p className="text-sm leading-relaxed text-[var(--rsc-muted)]">
+              {order.deliveryAddress}
+            </p>
           </div>
         )}
         {order.deliveryMode === "TAKEOUT" && (
-          <p className="text-sm text-gray-600">Collect each prepared order at its outlet.</p>
+          <p className="text-sm text-[var(--rsc-muted)]">
+            Collect each prepared order at its outlet.
+          </p>
         )}
       </Card>
 
-      <Card className="border-[color:color-mix(in_srgb,var(--rsc-main)_10%,white)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
+      <Card className="border-[color:color-mix(in_srgb,var(--rsc-main)_10%,var(--rsc-line))] bg-[var(--rsc-panel)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
         <OrderTimeline
           events={events}
           riderAssigned={order.riderId !== null}
@@ -474,23 +495,23 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
   const isReadyForPickup = normalizedStatus === "READY";
   const headerToneClass = isReadyForPickup
     ? isOpen
-      ? "border-l-[var(--rsc-success)] bg-[color-mix(in_srgb,var(--rsc-success)_14%,white)]"
-      : "border-l-[var(--rsc-success)] bg-[color-mix(in_srgb,var(--rsc-success)_8%,white)] hover:bg-[color-mix(in_srgb,var(--rsc-success)_12%,white)]"
+      ? "border-l-[var(--rsc-success)] bg-[color-mix(in_srgb,var(--rsc-success)_18%,var(--rsc-panel))]"
+      : "border-l-[var(--rsc-success)] bg-[color-mix(in_srgb,var(--rsc-success)_9%,var(--rsc-panel))] hover:bg-[color-mix(in_srgb,var(--rsc-success)_14%,var(--rsc-panel))]"
     : isOpen
-      ? "border-l-[var(--rsc-brand)] bg-[color-mix(in_srgb,var(--rsc-main)_4%,white)]"
-      : "border-l-transparent hover:bg-gray-50";
+      ? "border-l-[var(--rsc-brand)] bg-[color-mix(in_srgb,var(--rsc-main)_10%,var(--rsc-panel))]"
+      : "border-l-[color:color-mix(in_srgb,var(--rsc-main)_26%,transparent)] bg-[color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))] hover:bg-[color-mix(in_srgb,var(--rsc-main)_9%,var(--rsc-panel))]";
   const toggleToneClass = isReadyForPickup
     ? "bg-[var(--rsc-success)] text-white"
     : isOpen
       ? "bg-[var(--rsc-main)] text-white"
-      : "bg-gray-100 text-gray-500";
+      : "bg-[color-mix(in_srgb,var(--rsc-main)_8%,var(--rsc-panel))] text-[var(--rsc-muted)]";
 
   return (
     <div
-      className={`overflow-hidden rounded-2xl border bg-white transition-all duration-200 ${
+      className={`overflow-hidden rounded-2xl border bg-[var(--rsc-panel)] transition-all duration-200 ${
         isOpen
-          ? "border-[color:color-mix(in_srgb,var(--rsc-main)_22%,white)] shadow-[0_18px_50px_rgba(30,49,96,0.13)]"
-          : "border-gray-200 shadow-[0_6px_20px_rgba(30,49,96,0.06)] hover:border-[color:color-mix(in_srgb,var(--rsc-main)_16%,white)] hover:shadow-[0_12px_30px_rgba(30,49,96,0.10)]"
+          ? "border-[color:color-mix(in_srgb,var(--rsc-main)_22%,var(--rsc-line))] shadow-[0_18px_50px_rgba(30,49,96,0.13)]"
+          : "border-[var(--rsc-line)] shadow-[0_6px_20px_rgba(30,49,96,0.06)] hover:border-[color:color-mix(in_srgb,var(--rsc-main)_16%,var(--rsc-line))] hover:shadow-[0_12px_30px_rgba(30,49,96,0.10)]"
       }`}
     >
       <button
@@ -502,7 +523,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-bold text-gray-900">
+            <span className="text-sm font-bold text-[var(--rsc-ink)]">
               #{order.id.slice(0, 8).toUpperCase()}
             </span>
             <span
@@ -512,14 +533,14 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
               {status.label}
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-gray-400">
+          <p className="mt-0.5 text-xs text-[var(--rsc-muted)]">
             {formatNaira(order.totalMinor)} ·{" "}
             {order.deliveryMode === "DELIVERY" ? "Delivery" : "Takeout"} ·{" "}
             {formatDate(order.createdAt)}
           </p>
           {showHandoffCode && (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-lg border border-[color:color-mix(in_srgb,var(--rsc-brand)_22%,white)] bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)] px-2.5 py-1.5">
-              <span className="text-xs font-semibold text-gray-600">
+            <div className="mt-2 inline-flex items-center gap-2 rounded-lg border border-[color:color-mix(in_srgb,var(--rsc-brand)_28%,var(--rsc-line))] bg-[color-mix(in_srgb,var(--rsc-brand)_14%,var(--rsc-panel))] px-2.5 py-1.5 shadow-[0_8px_22px_color-mix(in_srgb,var(--rsc-brand)_10%,transparent)]">
+              <span className="text-xs font-semibold text-[var(--rsc-muted)]">
                 {order.deliveryMode === "DELIVERY" ? "Delivery code" : "Pickup code"}
               </span>
               <span className="font-mono text-sm font-bold tracking-wider text-[var(--rsc-main)]">
@@ -542,7 +563,7 @@ function AccordionOrderItem({ order, isOpen, onToggle }: AccordionItemProps) {
       {isOpen && (
         <div
           id={contentId}
-          className="border-t border-gray-100 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--rsc-main)_2%,white)_0%,white_34%)] px-4 pb-5 pt-5"
+          className="border-t border-[var(--rsc-line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--rsc-main)_3%,var(--rsc-panel))_0%,var(--rsc-panel)_34%)] px-4 pb-5 pt-5"
         >
           <OrderTrackingDetail orderId={order.id} />
         </div>
@@ -620,7 +641,9 @@ export function TrackingView({
   if (isError) {
     return (
       <div className="py-8 text-center">
-        <p className="text-sm font-semibold text-gray-800">We could not load your active orders.</p>
+        <p className="text-sm font-semibold text-[var(--rsc-ink)]">
+          We could not load your active orders.
+        </p>
         <button
           type="button"
           onClick={() => void refetch()}
@@ -648,8 +671,8 @@ export function TrackingView({
   return (
     <div className="space-y-3">
       {paymentReference && (
-        <Card className="border-[color:color-mix(in_srgb,var(--rsc-main)_16%,white)] bg-[color-mix(in_srgb,var(--rsc-main)_4%,white)]">
-          <p className="text-sm font-semibold text-gray-900">
+        <Card className="border-[color:color-mix(in_srgb,var(--rsc-main)_16%,var(--rsc-line))] bg-[color-mix(in_srgb,var(--rsc-main)_4%,var(--rsc-panel))]">
+          <p className="text-sm font-semibold text-[var(--rsc-ink)]">
             {paymentVerification.isPending
               ? "Confirming your payment..."
               : paymentVerification.isError
@@ -661,7 +684,7 @@ export function TrackingView({
         </Card>
       )}
       {activeOrders.length > 1 && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--rsc-muted)]">
           You have {activeOrders.length} active orders. Open one to see its live progress.
         </p>
       )}
