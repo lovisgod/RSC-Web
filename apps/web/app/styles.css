@@ -64,17 +64,8 @@ body {
 
 .landing-sign-in {
   justify-self: end;
-  display: inline-flex;
   min-height: 42px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--rsc-line);
-  border-radius: 999px;
-  padding: 0.55rem 1.1rem;
-  color: var(--rsc-ink);
-  background: color-mix(in srgb, var(--rsc-panel) 82%, transparent);
-  font-weight: 850;
-  box-shadow: 0 12px 34px rgb(0 0 0 / 6%);
+  padding-inline: 1.15rem;
 }
 
 .landing-hero {

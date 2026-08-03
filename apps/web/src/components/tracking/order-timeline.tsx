@@ -97,7 +97,7 @@ export function OrderTimeline({
 
   return (
     <div>
-      <p className="mb-4 text-sm font-semibold text-gray-700">Live order status</p>
+      <p className="mb-4 text-sm font-semibold text-[var(--rsc-main)]">Live order status</p>
       <div>
         {steps.map((step, index) => {
           const done = isDone(step);
@@ -110,9 +110,13 @@ export function OrderTimeline({
                 <span
                   className="mt-0.5 h-3 w-3 shrink-0 rounded-full"
                   style={{
-                    background: done ? "var(--rsc-main)" : "#d1d5db",
+                    background: active
+                      ? "var(--rsc-brand)"
+                      : done
+                        ? "var(--rsc-main)"
+                        : "color-mix(in srgb, var(--rsc-main) 14%, white)",
                     boxShadow: active
-                      ? "0 0 0 3px color-mix(in srgb, var(--rsc-main) 20%, transparent)"
+                      ? "0 0 0 4px color-mix(in srgb, var(--rsc-brand) 22%, transparent)"
                       : "none",
                   }}
                 />
@@ -120,7 +124,9 @@ export function OrderTimeline({
                   <span
                     className="h-7 w-0.5"
                     style={{
-                      background: done ? "var(--rsc-main)" : "#e5e7eb",
+                      background: done
+                        ? "var(--rsc-main)"
+                        : "color-mix(in srgb, var(--rsc-main) 12%, white)",
                     }}
                   />
                 )}
@@ -128,14 +134,21 @@ export function OrderTimeline({
               <div className="pb-2">
                 <p
                   className="text-sm leading-tight"
+                  aria-current={active ? "step" : undefined}
                   style={{
-                    color: done ? "#111827" : "#9ca3af",
-                    fontWeight: active ? 700 : done ? 500 : 400,
+                    color: active
+                      ? "var(--rsc-main)"
+                      : done
+                        ? "var(--rsc-ink)"
+                        : "color-mix(in srgb, var(--rsc-main) 42%, var(--rsc-muted))",
+                    fontWeight: active ? 800 : done ? 650 : 550,
                   }}
                 >
                   {step.label}
                 </p>
-                {time && <p className="mt-0.5 text-xs text-gray-400">{time}</p>}
+                {time && (
+                  <p className="mt-0.5 text-xs font-medium text-[var(--rsc-muted)]">{time}</p>
+                )}
               </div>
             </div>
           );

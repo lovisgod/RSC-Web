@@ -109,7 +109,7 @@ export function LandingPage() {
           <Link href="/cart">Cart</Link>
         </nav>
 
-        <Link href="/sign-in" className="landing-sign-in">
+        <Link href="/sign-in" className="landing-sign-in rsc-button rsc-button--primary">
           Sign in
         </Link>
       </header>
