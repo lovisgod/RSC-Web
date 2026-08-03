@@ -203,7 +203,7 @@ export function NotificationsPage() {
           </div>
 
           <div className="phone-preview" aria-label="Notification preview">
-            <span className="phone-preview__app">RSC</span>
+            <span className="phone-preview__app">DineOut NG</span>
             <strong>{title || "Campaign title"}</strong>
             <p>{body || "Campaign body appears here before it is scheduled."}</p>
             <small>{deepLink || "No deep link set"}</small>
