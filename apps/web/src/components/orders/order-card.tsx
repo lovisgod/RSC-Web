@@ -424,7 +424,7 @@ export function OrderCard({ order, variant = "completed", onViewDetails }: Order
     },
     onError: (err) => {
       if (err instanceof ApiError && err.status === 403) {
-        toast.error("Refunds must be processed by an RSC admin. Please contact support.");
+        toast.error("Refunds must be processed by a DineOut NG admin. Please contact support.");
         return;
       }
 

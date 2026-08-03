@@ -261,7 +261,7 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                   </div>
                   {/* <div className="order-modal__finance-row">
                     <span className="order-modal__finance-label">
-                      Platform Fee: <code>RSC_MAIN_WALLET</code>
+                      Platform Fee: <code>DINEOUT_NG_MAIN_WALLET</code>
                     </span>
                     <span className="order-modal__finance-commission">
                       Commission ({commPct}%): {fmt(sub.commissionMinor)}
@@ -276,7 +276,7 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
           {(order.vatMinor > 0 || order.deliveryFeeMinor > 0) && (
             <div className="order-modal__surplus-card">
               <div className="order-modal__surplus-head">
-                <span>RSC Platform Surpluses</span>
+                <span>Platform Surpluses</span>
                 <span>VAT + Delivery</span>
               </div>
               {order.vatMinor > 0 && (

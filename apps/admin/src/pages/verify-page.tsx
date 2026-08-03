@@ -100,7 +100,7 @@ export function VerifyPage() {
         <div className="auth-brand">
           <span className="auth-brand__mark">R</span>
           <span className="auth-brand__name">
-            <strong>RSC Central</strong>
+            <strong>DineOut NG Central</strong>
             <small>Operations dashboard</small>
           </span>
         </div>

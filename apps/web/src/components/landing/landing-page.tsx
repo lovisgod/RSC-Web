@@ -98,8 +98,8 @@ export function LandingPage() {
 
   return (
     <main className="landing-shell">
-      <header className="landing-header" aria-label="RSC Foods landing navigation">
-        <Link className="landing-brand" href="/" aria-label="RSC Foods home">
+      <header className="landing-header" aria-label="DineOut NG landing navigation">
+        <Link className="landing-brand" href="/" aria-label="DineOut NG home">
           <BrandLogo className="w-24 sm:w-28" priority />
         </Link>
 
@@ -109,7 +109,7 @@ export function LandingPage() {
           <Link href="/cart">Cart</Link>
         </nav>
 
-        <Link href="/sign-in" className="landing-sign-in">
+        <Link href="/sign-in" className="landing-sign-in rsc-button rsc-button--primary">
           Sign in
         </Link>
       </header>
@@ -127,7 +127,7 @@ export function LandingPage() {
 
         <div className="landing-hero__content">
           <p className="landing-eyebrow">One app. Many flavours. Endless choices.</p>
-          <h1>Dine across RSC kitchens in one clean order.</h1>
+          <h1>Dine across DineOut NG kitchens in one clean order.</h1>
           <p>
             Browse outlets, choose meals, apply promos, pay once, and track the full order without
             juggling separate kitchen checkouts.

@@ -315,7 +315,7 @@ export function FinancialReconciliationPage() {
                   <th>Settlement Subaccount</th>
                   <th>Completed Sub-Orders</th>
                   <th>Gross Volume</th>
-                  <th>RSC Commission</th>
+                  <th>DineOut NG Commission</th>
                   <th>Net Payable</th>
                   <th>Payout Status</th>
                   <th>Action</th>

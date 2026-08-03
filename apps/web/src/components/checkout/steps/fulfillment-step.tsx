@@ -403,7 +403,7 @@ export function FulfillmentStep({
               className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
                 defaultAddress
                   ? "border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5"
-                  : "border-gray-200 text-gray-400"
+                  : "border-[var(--rsc-line)] text-[var(--rsc-muted)]"
               }`}
             >
               <Star className="w-3 h-3" fill={defaultAddress ? "currentColor" : "none"} />
@@ -411,10 +411,10 @@ export function FulfillmentStep({
             </button>
           </div>
 
-          <div className="bg-blue-50 rounded-2xl p-4 space-y-3">
+          <div className="space-y-3 rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-main)_12%,var(--rsc-line))] bg-[color-mix(in_srgb,var(--rsc-main)_7%,var(--rsc-panel))] p-4 shadow-[0_18px_44px_color-mix(in_srgb,var(--rsc-main)_10%,transparent)]">
             {/* No-default hint */}
             {showNoDefaultHint && !defaultAddress && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-700">
+              <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_28%,var(--rsc-line))] bg-[color-mix(in_srgb,var(--rsc-brand)_12%,var(--rsc-panel))] px-4 py-3 text-xs font-medium text-[var(--rsc-ink)]">
                 Type your address below — once verified it will be saved as your default.
               </div>
             )}
@@ -422,7 +422,7 @@ export function FulfillmentStep({
             {/* Address combobox */}
             <div className="relative">
               <div
-                className={`flex items-center gap-3 bg-white rounded-xl px-4 py-3 border transition-colors ${
+                className={`flex items-center gap-3 rounded-xl border bg-[var(--rsc-field-bg)] px-4 py-3 shadow-sm transition-colors ${
                   isValidated
                     ? "border-green-400"
                     : locationError
@@ -442,7 +442,7 @@ export function FulfillmentStep({
                   onFocus={handleInputFocus}
                   onBlur={handleInputBlur}
                   placeholder="e.g. 8 Abiola Sanusi Street, off Admiralty Way"
-                  className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                  className="flex-1 bg-transparent text-sm font-medium text-[var(--rsc-field-ink)] placeholder:text-[color:color-mix(in_srgb,var(--rsc-field-ink)_46%,transparent)] focus:outline-none"
                 />
                 {isValidating && (
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400 flex-shrink-0" />
@@ -457,18 +457,20 @@ export function FulfillmentStep({
                 (filteredAddresses.length > 0 || addressSuggestions.suggestions.length > 0) && (
                   <div
                     onMouseDown={handleDropdownMouseDown}
-                    className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
+                    className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] shadow-lg"
                   >
                     {filteredAddresses.map((addr) => (
                       <button
                         key={addr.id}
                         type="button"
                         onClick={() => selectSavedAddress(addr)}
-                        className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${
-                          selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/5" : ""
+                        className={`flex w-full items-start gap-3 border-b border-[var(--rsc-line)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--rsc-main)_8%,var(--rsc-field-bg))] ${
+                          selectedSavedId === addr.id
+                            ? "bg-[color-mix(in_srgb,var(--rsc-main)_12%,var(--rsc-field-bg))]"
+                            : ""
                         }`}
                       >
-                        <span className="mt-0.5 flex-shrink-0 text-gray-400">
+                        <span className="mt-0.5 flex-shrink-0 text-[var(--rsc-muted)]">
                           {addr.isDefault ? (
                             <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
                           ) : (
@@ -481,10 +483,10 @@ export function FulfillmentStep({
                           )}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
+                          <p className="truncate text-sm font-semibold text-[var(--rsc-field-ink)]">
                             {addr.label}
                           </p>
-                          <p className="text-xs text-gray-400 truncate">
+                          <p className="truncate text-xs text-[color:color-mix(in_srgb,var(--rsc-field-ink)_48%,transparent)]">
                             {addr.addressLine}, {addr.city}
                           </p>
                         </div>
@@ -495,7 +497,7 @@ export function FulfillmentStep({
                         key={`${suggestion.provider}:${suggestion.id}`}
                         type="button"
                         onClick={() => void selectAddressSuggestion(suggestion)}
-                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                        className="flex w-full items-start gap-3 border-b border-[var(--rsc-line)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--rsc-main)_8%,var(--rsc-field-bg))]"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -504,10 +506,10 @@ export function FulfillmentStep({
                           className="w-5 h-5 object-contain mt-0.5 flex-shrink-0"
                         />
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
+                          <p className="truncate text-sm font-semibold text-[var(--rsc-field-ink)]">
                             {suggestion.description}
                           </p>
-                          <p className="text-xs text-gray-400 truncate">
+                          <p className="truncate text-xs text-[color:color-mix(in_srgb,var(--rsc-field-ink)_48%,transparent)]">
                             {suggestion.provider === "google"
                               ? "Google exact address"
                               : "Address match"}
@@ -540,13 +542,15 @@ export function FulfillmentStep({
 
             {/* Idle hint */}
             {!isValidated && !locationError && !isValidating && !addressText && (
-              <p className="text-xs text-center text-gray-400">
+              <p className="text-center text-xs font-medium text-[var(--rsc-muted)]">
                 Include your house number, street name and a nearby route, if needed.
               </p>
             )}
 
             {geocoding && (
-              <p className="text-xs text-center text-gray-400">Finding your address…</p>
+              <p className="text-center text-xs font-medium text-[var(--rsc-muted)]">
+                Finding your address…
+              </p>
             )}
 
             {/* On behalf checkbox */}
@@ -561,12 +565,14 @@ export function FulfillmentStep({
                 }}
                 className="w-5 h-5 rounded border-gray-300 accent-[var(--rsc-main)]"
               />
-              <span className="text-sm text-gray-600">Order on behalf of some else</span>
+              <span className="text-sm font-medium text-[var(--rsc-ink)]">
+                Order on behalf of someone else
+              </span>
             </label>
 
             {onBehalf && (
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500">
+                <label className="text-xs font-semibold text-[var(--rsc-muted)]">
                   Recipient phone number
                 </label>
                 <input
@@ -591,7 +597,7 @@ export function FulfillmentStep({
                   }}
                   placeholder="08031234567"
                   aria-invalid={Boolean(recipientPhoneError)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder:text-gray-400 focus:border-[var(--rsc-main)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-4 py-3 text-sm font-medium text-[var(--rsc-field-ink)] placeholder:text-[color:color-mix(in_srgb,var(--rsc-field-ink)_42%,transparent)] focus:border-[var(--rsc-main)] focus:outline-none"
                 />
                 {recipientPhoneError && (
                   <p className="text-xs text-red-500">{recipientPhoneError}</p>
@@ -637,15 +643,15 @@ export function FulfillmentStep({
 
       {/* CTA */}
       <div className="space-y-2">
-        <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color-mix(in_srgb,var(--rsc-brand)_8%,white)] p-3">
+        <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_22%,var(--rsc-line))] bg-[color-mix(in_srgb,var(--rsc-brand)_9%,var(--rsc-panel))] p-3 shadow-[0_18px_44px_color-mix(in_srgb,var(--rsc-brand)_10%,transparent)]">
           <label htmlFor="promo-code" className="flex items-center gap-2 text-xs font-bold">
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-[var(--rsc-main)]">
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--rsc-main)] text-white">
               <Tag className="h-5 w-5" aria-hidden="true" />
             </span>
-            <span className="uppercase tracking-[0.18em] text-gray-500">Promo code</span>
+            <span className="uppercase tracking-[0.18em] text-[var(--rsc-ink)]">Promo code</span>
           </label>
-          <div className="mt-2 flex overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-white shadow-sm focus-within:border-[var(--rsc-main)]">
-            <span className="flex items-center border-r border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,white)] bg-[color-mix(in_srgb,var(--rsc-brand)_8%,white)] px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
+          <div className="mt-2 flex overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_22%,var(--rsc-line))] bg-[var(--rsc-field-bg)] shadow-sm focus-within:border-[var(--rsc-main)]">
+            <span className="flex items-center border-r border-[color:color-mix(in_srgb,var(--rsc-brand)_22%,var(--rsc-line))] bg-[color-mix(in_srgb,var(--rsc-main)_9%,var(--rsc-field-bg))] px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
               Code
             </span>
             <input
@@ -654,10 +660,10 @@ export function FulfillmentStep({
               value={promoCode}
               onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
               placeholder="WEEKEND20"
-              className="min-w-0 flex-1 px-3 py-3 text-sm font-bold uppercase tracking-[0.14em] text-gray-800 placeholder:font-semibold placeholder:text-gray-300 focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[var(--rsc-field-ink)] placeholder:font-semibold placeholder:text-[color:color-mix(in_srgb,var(--rsc-field-ink)_34%,transparent)] focus:outline-none"
             />
           </div>
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-xs font-medium text-[var(--rsc-muted)]">
             Have an offer? Enter the code before continuing to payment.
           </p>
         </div>

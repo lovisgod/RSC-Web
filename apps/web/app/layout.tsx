@@ -20,10 +20,10 @@ const roboto = Roboto({
 
 export const metadata: Metadata = {
   title: {
-    default: "RSC Foods",
-    template: "RSC Foods | %s",
+    default: "DineOut NG",
+    template: "DineOut NG | %s",
   },
-  description: "Order across RSC Foods kitchens in one simple checkout.",
+  description: "Order across DineOut NG kitchens in one simple checkout.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
