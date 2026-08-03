@@ -1,7 +1,6 @@
 import "@rsc/ui/styles.css";
 import "./styles.css";
 
-import { initializeTheme, ThemeProvider } from "@rsc/ui";
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -33,7 +32,9 @@ if (!container) {
 }
 
 registerOutletServiceWorker();
-initializeTheme();
+
+document.documentElement.dataset.theme = "light";
+document.documentElement.style.colorScheme = "light";
 
 createRoot(container, {
   onRecoverableError(error, errorInfo) {
@@ -41,12 +42,10 @@ createRoot(container, {
   },
 }).render(
   <StrictMode>
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </QueryClientProvider>
   </StrictMode>,
 );

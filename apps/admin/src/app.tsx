@@ -83,7 +83,7 @@ const routeTitles: Record<string, string> = {
 function getPageTitle(pathname: string): string {
   if (routeTitles[pathname]) return routeTitles[pathname];
   if (pathname.startsWith("/outlets/")) return "Outlet Details";
-  return "RSC Central";
+  return "DineOut NG Central";
 }
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
@@ -241,9 +241,9 @@ function AdminShell() {
       {/* Desktop sidebar */}
       <aside className="sidebar">
         <div className="admin-brand">
-          <span className="admin-brand__mark">R</span>
+          <span className="admin-brand__mark">D</span>
           <span>
-            <strong>RSC</strong>
+            <strong>DineOut NG</strong>
             <small>Central operations</small>
           </span>
         </div>
@@ -266,9 +266,9 @@ function AdminShell() {
           <aside className="mobile-nav-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-nav-drawer__head">
               <div className="admin-brand" style={{ margin: 0 }}>
-                <span className="admin-brand__mark">R</span>
+                <span className="admin-brand__mark">D</span>
                 <span>
-                  <strong>RSC</strong>
+                  <strong>DineOut NG</strong>
                   <small>Central operations</small>
                 </span>
               </div>
@@ -325,7 +325,7 @@ function AdminShell() {
               path="*"
               element={
                 <RouteNotFound
-                  eyebrow="404 · RSC Central"
+                  eyebrow="404 · DineOut NG Central"
                   title="This admin route is not available"
                   description="The page may have moved, or this central operations workspace does not include that route."
                   primaryAction={{ label: "Go to live board", href: "/" }}
