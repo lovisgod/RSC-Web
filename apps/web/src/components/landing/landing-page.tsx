@@ -139,14 +139,12 @@ export function LandingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [mounted, setMounted] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const showSignIn = !hasHydrated || !isSignedIn;
 
   const outletsQuery = useQuery(OUTLETS_QUERY);
   const promosQuery = usePromoNotifications();
@@ -231,7 +229,7 @@ export function LandingPage() {
         </nav>
 
         <div className="landing-header__actions">
-          {(!mounted || !isSignedIn) && (
+          {showSignIn && (
             <Link href="/sign-in" className="landing-sign-in">
               Sign in
             </Link>
