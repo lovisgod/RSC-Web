@@ -37,7 +37,7 @@ const steps = [
     step: "01",
     title: "Pick kitchens",
     subtitle: "Explore live outlets",
-    copy: "Browse our network of live RSC kitchens. Discover specialized menus from authentic Nigerian local dishes to gourmet bites.",
+    copy: "Browse our network of live DineOut NG kitchens. Discover specialized menus from authentic Nigerian local dishes to gourmet bites.",
     icon: UtensilsIcon,
   },
   {
@@ -89,7 +89,7 @@ const categoryPills = [
 
 const faqItems = [
   {
-    question: "Can I really order from multiple RSC kitchens in one transaction?",
+    question: "Can I really order from multiple DineOut NG kitchens in one transaction?",
     answer:
       "Yes! RSC Foods allows you to add items from different kitchens into a single cart and check out once. Our smart dispatch system coordinates preparation so everything arrives together.",
   },
@@ -201,7 +201,7 @@ export function LandingPage() {
       {/* Top Banner Accent */}
       <div className="landing-top-banner" aria-label="Announcement">
         <span className="landing-top-banner__badge">NEW</span>
-        <span>Order across multiple RSC kitchens with one single checkout & delivery!</span>
+        <span>Order across multiple DineOut NG kitchens with one single checkout & delivery!</span>
         <Link href="#how-it-works" className="landing-top-banner__link">
           Learn how it works →
         </Link>
@@ -250,13 +250,13 @@ export function LandingPage() {
           </div>
 
           <h1>
-            Dine across <span className="landing-hero__highlight">RSC kitchens</span> in one clean
-            order.
+            Dine across <span className="landing-hero__highlight">DineOut NG kitchens</span> in one
+            clean order.
           </h1>
 
           <p className="landing-hero__description">
-            Craving Jollof from Kitchen A and Suya from Kitchen B? Combine dishes from any RSC
-            outlet into one cart, pay once, and track your feast in real time.
+            Want meals from different favorite outlets? Combine dishes from any DineOut NG kitchen
+            into a single checkout, pay once, and track your order live.
           </p>
 
           {/* Search Box & Dropdown */}
@@ -634,7 +634,7 @@ export function LandingPage() {
         <div className="landing-narrative-card">
           <div className="landing-narrative-card__content">
             <span className="landing-eyebrow">BUILT FOR REAL FOODIES</span>
-            <h2>Cooked fresh at specialized RSC kitchens. Delivered as one.</h2>
+            <h2>Cooked fresh at specialized DineOut NG kitchens. Delivered as one.</h2>
             <p>
               Whether it&apos;s a quick lunch at your desk or a weekend feast with family, RSC Foods
               brings together the finest kitchens under one umbrella. Enjoy total freedom of choice

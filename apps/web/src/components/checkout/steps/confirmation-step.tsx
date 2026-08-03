@@ -9,7 +9,7 @@ export function ConfirmationStep({ orderId }: { orderId: string }) {
       <div>
         <h2 className="text-3xl font-bold text-gray-900 mb-3">Order confirmed</h2>
         <p className="text-sm text-gray-500">
-          RSC kitchens received your order. Track each kitchen below.
+          DineOut NG kitchens received your order. Track each kitchen below.
         </p>
       </div>
 
