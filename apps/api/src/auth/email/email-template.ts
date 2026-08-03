@@ -39,7 +39,7 @@ export function renderEmailTemplate(input: EmailTemplateInput): string {
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 18px; overflow: hidden;">
                 <tr>
                   <td style="background: #172554; padding: 24px 32px;">
-                    <p style="margin: 0; color: #f97316; font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;">RSC</p>
+                    <p style="margin: 0; color: #f97316; font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;">DineOut NG</p>
                     <h1 style="margin: 8px 0 0; color: #ffffff; font-size: 24px; line-height: 1.25;">${escapeHtml(input.heading)}</h1>
                   </td>
                 </tr>

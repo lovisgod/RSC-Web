@@ -1,7 +1,7 @@
 {
   "name": "DineOut Outlet Admin",
   "short_name": "DineOut Outlet",
-  "description": "Outlet operations, kitchen queue, menu control, and POS-ready workflows for RSC Foods.",
+  "description": "Outlet operations, kitchen queue, menu control, and POS-ready workflows for DineOut NG.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
