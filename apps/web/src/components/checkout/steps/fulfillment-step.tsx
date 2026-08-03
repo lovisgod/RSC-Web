@@ -403,7 +403,7 @@ export function FulfillmentStep({
               className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
                 defaultAddress
                   ? "border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5"
-                  : "border-gray-200 text-gray-400"
+                  : "border-[var(--rsc-line)] text-[var(--rsc-muted)]"
               }`}
             >
               <Star className="w-3 h-3" fill={defaultAddress ? "currentColor" : "none"} />
@@ -411,10 +411,10 @@ export function FulfillmentStep({
             </button>
           </div>
 
-          <div className="rounded-2xl p-4 space-y-3 border border-[color:color-mix(in_srgb,var(--rsc-main)_15%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))]">
+          <div className="space-y-3 rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-main)_15%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))] p-4 shadow-sm">
             {/* No-default hint */}
             {showNoDefaultHint && !defaultAddress && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-600">
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs font-medium text-amber-600">
                 Type your address below — once verified it will be saved as your default.
               </div>
             )}
@@ -422,7 +422,7 @@ export function FulfillmentStep({
             {/* Address combobox */}
             <div className="relative">
               <div
-                className={`flex items-center gap-3 bg-[var(--rsc-panel)] rounded-xl px-4 py-3 border transition-colors ${
+                className={`flex items-center gap-3 rounded-xl border bg-[var(--rsc-panel)] px-4 py-3 shadow-sm transition-colors ${
                   isValidated
                     ? "border-green-400"
                     : locationError
@@ -442,7 +442,7 @@ export function FulfillmentStep({
                   onFocus={handleInputFocus}
                   onBlur={handleInputBlur}
                   placeholder="e.g. 8 Abiola Sanusi Street, off Admiralty Way"
-                  className="flex-1 text-sm bg-transparent focus:outline-none text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)]"
+                  className="flex-1 bg-transparent text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] focus:outline-none"
                 />
                 {isValidating && (
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400 flex-shrink-0" />
@@ -457,18 +457,18 @@ export function FulfillmentStep({
                 (filteredAddresses.length > 0 || addressSuggestions.suggestions.length > 0) && (
                   <div
                     onMouseDown={handleDropdownMouseDown}
-                    className="absolute z-20 top-full left-0 right-0 mt-1 bg-[var(--rsc-panel)] border border-[var(--rsc-line)] rounded-xl shadow-lg overflow-hidden"
+                    className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] shadow-lg"
                   >
                     {filteredAddresses.map((addr) => (
                       <button
                         key={addr.id}
                         type="button"
                         onClick={() => selectSavedAddress(addr)}
-                        className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] transition-colors border-b border-[var(--rsc-line)] last:border-0 ${
+                        className={`flex w-full items-start gap-3 border-b border-[var(--rsc-line)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] ${
                           selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/10" : ""
                         }`}
                       >
-                        <span className="mt-0.5 flex-shrink-0 text-gray-400">
+                        <span className="mt-0.5 flex-shrink-0 text-[var(--rsc-muted)]">
                           {addr.isDefault ? (
                             <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
                           ) : (
@@ -481,10 +481,10 @@ export function FulfillmentStep({
                           )}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-[var(--rsc-ink)] truncate">
+                          <p className="truncate text-sm font-semibold text-[var(--rsc-ink)]">
                             {addr.label}
                           </p>
-                          <p className="text-xs text-[var(--rsc-muted)] truncate">
+                          <p className="truncate text-xs text-[var(--rsc-muted)]">
                             {addr.addressLine}, {addr.city}
                           </p>
                         </div>
@@ -495,7 +495,7 @@ export function FulfillmentStep({
                         key={`${suggestion.provider}:${suggestion.id}`}
                         type="button"
                         onClick={() => void selectAddressSuggestion(suggestion)}
-                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] transition-colors border-b border-[var(--rsc-line)] last:border-0"
+                        className="flex w-full items-start gap-3 border-b border-[var(--rsc-line)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))]"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -504,10 +504,10 @@ export function FulfillmentStep({
                           className="w-5 h-5 object-contain mt-0.5 flex-shrink-0"
                         />
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-[var(--rsc-ink)] truncate">
+                          <p className="truncate text-sm font-semibold text-[var(--rsc-ink)]">
                             {suggestion.description}
                           </p>
-                          <p className="text-xs text-[var(--rsc-muted)] truncate">
+                          <p className="truncate text-xs text-[var(--rsc-muted)]">
                             {suggestion.provider === "google"
                               ? "Google exact address"
                               : "Address match"}
@@ -540,13 +540,15 @@ export function FulfillmentStep({
 
             {/* Idle hint */}
             {!isValidated && !locationError && !isValidating && !addressText && (
-              <p className="text-xs text-center text-gray-400">
+              <p className="text-center text-xs font-medium text-[var(--rsc-muted)]">
                 Include your house number, street name and a nearby route, if needed.
               </p>
             )}
 
             {geocoding && (
-              <p className="text-xs text-center text-gray-400">Finding your address…</p>
+              <p className="text-center text-xs font-medium text-[var(--rsc-muted)]">
+                Finding your address…
+              </p>
             )}
 
             {/* On behalf checkbox */}
@@ -561,7 +563,9 @@ export function FulfillmentStep({
                 }}
                 className="w-5 h-5 rounded border-gray-300 accent-[var(--rsc-main)]"
               />
-              <span className="text-sm text-[var(--rsc-ink)]">Order on behalf of some else</span>
+              <span className="text-sm font-medium text-[var(--rsc-ink)]">
+                Order on behalf of someone else
+              </span>
             </label>
 
             {onBehalf && (
@@ -591,7 +595,7 @@ export function FulfillmentStep({
                   }}
                   placeholder="08031234567"
                   aria-invalid={Boolean(recipientPhoneError)}
-                  className="w-full px-4 py-3 rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] text-sm text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] focus:border-[var(--rsc-main)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] px-4 py-3 text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] focus:border-[var(--rsc-main)] focus:outline-none"
                 />
                 {recipientPhoneError && (
                   <p className="text-xs text-red-500">{recipientPhoneError}</p>
@@ -637,7 +641,7 @@ export function FulfillmentStep({
 
       {/* CTA */}
       <div className="space-y-2">
-        <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] p-3">
+        <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] p-3 shadow-sm">
           <label htmlFor="promo-code" className="flex items-center gap-2 text-xs font-bold">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--rsc-panel)] border border-[var(--rsc-line)] text-[var(--rsc-main)]">
               <Tag className="h-5 w-5" aria-hidden="true" />
@@ -645,7 +649,7 @@ export function FulfillmentStep({
             <span className="uppercase tracking-[0.18em] text-[var(--rsc-muted)]">Promo code</span>
           </label>
           <div className="mt-2 flex overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[var(--rsc-panel)] shadow-sm focus-within:border-[var(--rsc-main)]">
-            <span className="flex items-center border-r border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
+            <span className="flex items-center border-r border-[color:color-mix(in_srgb,var(--rsc-brand)_18%,var(--rsc-line))] bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] px-3 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--rsc-main)]">
               Code
             </span>
             <input
@@ -654,10 +658,10 @@ export function FulfillmentStep({
               value={promoCode}
               onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
               placeholder="WEEKEND20"
-              className="min-w-0 flex-1 px-3 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[var(--rsc-ink)] placeholder:font-semibold placeholder:text-[var(--rsc-muted)] bg-transparent focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[var(--rsc-ink)] placeholder:font-semibold placeholder:text-[var(--rsc-muted)] focus:outline-none"
             />
           </div>
-          <p className="mt-2 text-xs text-[var(--rsc-muted)]">
+          <p className="mt-2 text-xs font-medium text-[var(--rsc-muted)]">
             Have an offer? Enter the code before continuing to payment.
           </p>
         </div>

@@ -115,7 +115,7 @@ export function SettingsPage() {
               <div>
                 <h2 className="text-base font-bold text-slate-900">Settlement Account</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  View the settlement configuration assigned to this outlet by RSC Admin.
+                  View the settlement configuration assigned to this outlet by DineOut NG Admin.
                 </p>
               </div>
             </div>
@@ -139,7 +139,7 @@ export function SettingsPage() {
                       </code>
                     </p>
                     <p className="mt-2 text-xs leading-5 text-emerald-700/80">
-                      Settlement details are managed centrally by RSC Admin.
+                      Settlement details are managed centrally by DineOut NG Admin.
                     </p>
                   </div>
                 </div>
@@ -153,8 +153,9 @@ export function SettingsPage() {
                   <div>
                     <h3 className="text-sm font-bold text-amber-900">Settlement setup pending</h3>
                     <p className="mt-1 text-xs text-amber-700 leading-5">
-                      RSC Admin has not linked a settlement subaccount to this outlet yet. The
-                      outlet will remain hidden from customers until the settlement code is added.
+                      DineOut NG Admin has not linked a settlement subaccount to this outlet yet.
+                      The outlet will remain hidden from customers until the settlement code is
+                      added.
                     </p>
                   </div>
                 </div>
