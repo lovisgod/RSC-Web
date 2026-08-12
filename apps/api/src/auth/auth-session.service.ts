@@ -25,6 +25,7 @@ interface TokenPayload {
 interface StoredSession {
   userId: string;
   role: UserRole;
+  outletId: string | null;
   refreshTokenId: string;
   lastActivityAt: number;
   expiresAt: number;
@@ -67,23 +68,13 @@ export class AuthSessionService {
     const now = nowSeconds();
     const expiresAt = now + this.refreshTtlSeconds;
 
-    const accessToken = this.signToken({
-      sub: user.id,
+    const tokens = this.issueTokens({
+      userId: user.id,
       role: user.role,
-      sid: sessionId,
-      jti: randomUUID(),
-      typ: "access",
-      iat: now,
-      exp: now + this.accessTtlSeconds,
-    });
-    const refreshToken = this.signToken({
-      sub: user.id,
-      role: user.role,
-      sid: sessionId,
-      jti: refreshTokenId,
-      typ: "refresh",
-      iat: now,
-      exp: expiresAt,
+      sessionId,
+      refreshTokenId,
+      now,
+      expiresAt,
     });
 
     await this.redis.set(
@@ -91,6 +82,7 @@ export class AuthSessionService {
       JSON.stringify({
         userId: user.id,
         role: user.role,
+        outletId: user.outletId,
         refreshTokenId,
         lastActivityAt: now,
         expiresAt,
@@ -100,14 +92,75 @@ export class AuthSessionService {
     );
 
     return {
-      accessToken,
-      refreshToken,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       accessTokenExpiresInSeconds: this.accessTtlSeconds,
       refreshTokenExpiresInSeconds: this.refreshTtlSeconds,
       user: {
         id: user.id,
         role: user.role,
         outletId: user.outletId,
+      },
+    };
+  }
+
+  async refreshSession(refreshToken: string): Promise<IssuedSession> {
+    const payload = this.verifyToken(refreshToken, "refresh");
+    const [isBlacklisted, session] = await Promise.all([
+      this.redis.exists(this.blacklistKey(payload.jti)),
+      this.getSession(payload.sid),
+    ]);
+
+    if (
+      isBlacklisted ||
+      !session ||
+      session.userId !== payload.sub ||
+      session.role !== payload.role ||
+      session.refreshTokenId !== payload.jti
+    ) {
+      throw new UnauthorizedException("Authentication required");
+    }
+
+    const now = nowSeconds();
+
+    if (
+      isOperationalAdminRole(session.role) &&
+      now - session.lastActivityAt > this.adminInactivityTimeoutSeconds
+    ) {
+      await this.redis.del(this.sessionKey(payload.sid));
+      throw new UnauthorizedException("Session expired");
+    }
+
+    const nextRefreshTokenId = randomUUID();
+    const expiresAt = now + this.refreshTtlSeconds;
+    const tokens = this.issueTokens({
+      userId: session.userId,
+      role: session.role,
+      sessionId: payload.sid,
+      refreshTokenId: nextRefreshTokenId,
+      now,
+      expiresAt,
+    });
+
+    await Promise.all([
+      this.redis.set(this.blacklistKey(payload.jti), "1", "EX", Math.max(payload.exp - now, 1)),
+      this.persistSession(payload.sid, {
+        ...session,
+        refreshTokenId: nextRefreshTokenId,
+        lastActivityAt: now,
+        expiresAt,
+      }),
+    ]);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      accessTokenExpiresInSeconds: this.accessTtlSeconds,
+      refreshTokenExpiresInSeconds: this.refreshTtlSeconds,
+      user: {
+        id: session.userId,
+        role: session.role,
+        outletId: session.outletId ?? null,
       },
     };
   }
@@ -193,6 +246,36 @@ export class AuthSessionService {
     const signature = this.sign(`${encodedHeader}.${encodedPayload}`);
 
     return `${encodedHeader}.${encodedPayload}.${signature}`;
+  }
+
+  private issueTokens(input: {
+    userId: string;
+    role: UserRole;
+    sessionId: string;
+    refreshTokenId: string;
+    now: number;
+    expiresAt: number;
+  }): { accessToken: string; refreshToken: string } {
+    return {
+      accessToken: this.signToken({
+        sub: input.userId,
+        role: input.role,
+        sid: input.sessionId,
+        jti: randomUUID(),
+        typ: "access",
+        iat: input.now,
+        exp: input.now + this.accessTtlSeconds,
+      }),
+      refreshToken: this.signToken({
+        sub: input.userId,
+        role: input.role,
+        sid: input.sessionId,
+        jti: input.refreshTokenId,
+        typ: "refresh",
+        iat: input.now,
+        exp: input.expiresAt,
+      }),
+    };
   }
 
   private verifyToken(token: string, expectedType: TokenType): TokenPayload {

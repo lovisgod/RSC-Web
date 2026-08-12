@@ -10,6 +10,7 @@ import {
   loginInputSchema,
   menuItemsPageSchema,
   loginResultSchema,
+  refreshSessionResultSchema,
   menuItemSchema,
   moneySchema,
   orderDetailSchema,
@@ -483,6 +484,17 @@ describe("customer registration contracts", () => {
           id: "2abf9577-027c-4936-83a8-e004fd56a46e",
           role: "CUSTOMER",
           outletId: null,
+        },
+        accessTokenExpiresInSeconds: 900,
+        refreshTokenExpiresInSeconds: 604800,
+      }),
+    ).toBeTruthy();
+    expect(
+      refreshSessionResultSchema.parse({
+        user: {
+          id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+          role: "ADMIN",
+          outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
         },
         accessTokenExpiresInSeconds: 900,
         refreshTokenExpiresInSeconds: 604800,

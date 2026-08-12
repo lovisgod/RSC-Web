@@ -180,6 +180,86 @@ describe("registration API client", () => {
     );
   });
 
+  it("refreshes and retries once when an authenticated request returns 401", async () => {
+    const requestFetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              errors: ["Authentication token is expired or invalid"],
+              path: "/api/v1/users/me",
+              requestId: "req_1",
+              timestamp: "2026-08-12T10:00:00.000Z",
+            },
+            message: "Authentication token is expired or invalid",
+            status: 401,
+          }),
+          { status: 401, headers: { "content-type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              user: {
+                id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+                role: "CUSTOMER",
+                outletId: null,
+              },
+              accessTokenExpiresInSeconds: 900,
+              refreshTokenExpiresInSeconds: 604800,
+            },
+            message: "Session refreshed",
+            status: 200,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+              name: "Ada Okafor",
+              role: "CUSTOMER",
+              outletId: null,
+              avatarUrl: null,
+              email: "ada@example.com",
+              phone: "+2348031234567",
+              verificationChannels: { email: true, phone: true },
+              pendingVerificationChannels: { email: false, phone: false },
+            },
+            message: "Profile retrieved",
+            status: 200,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      );
+    const onUnauthorized = vi.fn();
+    const client = createApiClient({
+      baseUrl: "https://api-dev.rscapp.xyz/",
+      fetch: requestFetch,
+      onUnauthorized,
+    });
+
+    await expect(client.getProfile()).resolves.toMatchObject({
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+    });
+
+    expect(requestFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://api-dev.rscapp.xyz/api/v1/auth/refresh",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(requestFetch).toHaveBeenNthCalledWith(
+      3,
+      "https://api-dev.rscapp.xyz/api/v1/users/me",
+      expect.any(Object),
+    );
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
   it("posts outlet admin creation to the versioned API", async () => {
     const requestFetch = vi.fn().mockResolvedValue(
       new Response(

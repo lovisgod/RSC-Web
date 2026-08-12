@@ -249,37 +249,54 @@ describe(PaymentsService.name, () => {
     );
   });
 
-  it("blocks delivery checkout when the address is outside the cart outlet radius", async () => {
-    await expect(
-      service.initiate(
-        {
-          id: customerId,
-          role: UserRole.CUSTOMER,
-          sessionId: "session-1",
-          accessTokenId: "access-token-1",
-        },
-        {
-          deliveryMode: "DELIVERY",
-          deliveryAddress: "Independence Layout, Enugu",
-          deliveryLatitude: 6.5244,
-          deliveryLongitude: 7.5103,
-          items: [
-            {
-              menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
-              quantity: 1,
-            },
-          ],
-          subtotalMinor: 450000,
-          deliveryFeeMinor: 150000,
-          serviceFeeMinor: 0,
-          vatMinor: 0,
-          platformCommissionMinor: 45000,
-          totalMinor: 645000,
-        },
-      ),
-    ).rejects.toThrow(BadRequestException);
+  it("allows delivery checkout based on the platform geofence instead of outlet radius", async () => {
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: null,
+            ...value,
+          }),
+        ),
+      }),
+    );
 
-    expect(dataSource.transaction).not.toHaveBeenCalled();
+    await service.initiate(
+      {
+        id: customerId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      },
+      {
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "Independence Layout, Enugu",
+        deliveryLatitude: 6.5244,
+        deliveryLongitude: 7.5103,
+        items: [
+          {
+            menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            quantity: 1,
+          },
+        ],
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 150000,
+        serviceFeeMinor: 0,
+        vatMinor: 33750,
+        platformCommissionMinor: 45000,
+        totalMinor: 678750,
+      },
+    );
+
+    expect(delivery.validateAddress).toHaveBeenCalledWith({
+      latitude: 6.5244,
+      longitude: 7.5103,
+    });
+    expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 678750 }));
+    expect(dataSource.transaction).toHaveBeenCalledOnce();
   });
 
   it("prices checkout lines with an active item-level discount", async () => {

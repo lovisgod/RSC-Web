@@ -31,9 +31,41 @@ export const http = axios.create({
   headers: { Accept: "application/json" },
 });
 
-const PUBLIC_AUTH_ENDPOINTS = ["/api/v1/auth/login"];
+const PUBLIC_AUTH_ENDPOINTS = ["/api/v1/auth/login", "/api/v1/auth/refresh"];
 
 let isRedirectingToLogin = false;
+let refreshPromise: Promise<void> | null = null;
+
+function shouldAttemptRefresh(error: AxiosError) {
+  const path = error.config?.url ?? "";
+  const config = error.config as typeof error.config & {
+    __isRetryRequest?: boolean;
+    __skipAuthRefresh?: boolean;
+  };
+
+  return (
+    error.response?.status === 401 &&
+    Boolean(error.config) &&
+    !config.__isRetryRequest &&
+    !config.__skipAuthRefresh &&
+    !PUBLIC_AUTH_ENDPOINTS.some((endpoint) => path.startsWith(endpoint))
+  );
+}
+
+function refreshSession(): Promise<void> {
+  refreshPromise ??= axios
+    .post<Envelope<unknown>>("/api/v1/auth/refresh", undefined, {
+      baseURL: import.meta.env.VITE_API_BASE_URL ?? "",
+      withCredentials: true,
+      headers: { Accept: "application/json" },
+    })
+    .then(() => undefined)
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+}
 
 function redirectOnUnauthorized(error: AxiosError) {
   const path = error.config?.url ?? "";
@@ -56,7 +88,18 @@ function redirectOnUnauthorized(error: AxiosError) {
 // Unwrap API errors into plain Error so TanStack mutation.error is always Error
 http.interceptors.response.use(
   (res) => res,
-  (err: AxiosError<{ message?: string }>) => {
+  async (err: AxiosError<{ message?: string }>) => {
+    if (shouldAttemptRefresh(err)) {
+      try {
+        await refreshSession();
+        const config = err.config as typeof err.config & { __isRetryRequest?: boolean };
+        config.__isRetryRequest = true;
+        return await http.request(config);
+      } catch {
+        // Fall through to login redirect and normal error handling.
+      }
+    }
+
     redirectOnUnauthorized(err);
     throw new Error(
       (err.response?.status ?? 0) >= 500

@@ -269,10 +269,6 @@ export class PaymentsService {
 
     this.ensureOutletsAreOnline(outletIds, outletById);
 
-    if (input.deliveryMode === "DELIVERY") {
-      this.ensureOutletsCanDeliver(input, outletIds, outletById);
-    }
-
     const subtotalMinor = pricedLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
     const deliveryFeeMinor =
       input.deliveryMode === "DELIVERY" ? platformCharges.deliveryFeeMinor : 0;
@@ -1162,39 +1158,6 @@ export class PaymentsService {
     return lines;
   }
 
-  private ensureOutletsCanDeliver(
-    input: InitiatePaymentDto,
-    outletIds: string[],
-    outletById: Map<string, Outlet>,
-  ): void {
-    const latitude = input.deliveryLatitude;
-    const longitude = input.deliveryLongitude;
-
-    if (latitude === undefined || longitude === undefined) {
-      throw new BadRequestException("Delivery address and coordinates are required");
-    }
-
-    for (const outletId of outletIds) {
-      const outlet = outletById.get(outletId);
-
-      if (!outlet) {
-        throw new BadRequestException("One or more outlets are unavailable");
-      }
-
-      if (outlet.latitude === null || outlet.longitude === null) {
-        continue;
-      }
-
-      const distanceKm = distanceBetweenKm(latitude, longitude, outlet.latitude, outlet.longitude);
-
-      if (distanceKm > outlet.deliveryRadiusKm) {
-        throw new BadRequestException(
-          `Delivery address is outside ${outlet.name}'s delivery radius`,
-        );
-      }
-    }
-  }
-
   private ensureOutletsAreOnline(outletIds: string[], outletById: Map<string, Outlet>): void {
     for (const outletId of outletIds) {
       const outlet = outletById.get(outletId);
@@ -1364,27 +1327,6 @@ function randomSixDigitCode(): string {
   return Math.floor(Math.random() * 1_000_000)
     .toString()
     .padStart(6, "0");
-}
-
-function distanceBetweenKm(
-  latitudeA: number,
-  longitudeA: number,
-  latitudeB: number,
-  longitudeB: number,
-): number {
-  const earthRadiusKm = 6_371;
-  const latA = toRadians(latitudeA);
-  const latB = toRadians(latitudeB);
-  const deltaLat = toRadians(latitudeB - latitudeA);
-  const deltaLon = toRadians(longitudeB - longitudeA);
-  const haversine =
-    Math.sin(deltaLat / 2) ** 2 + Math.cos(latA) * Math.cos(latB) * Math.sin(deltaLon / 2) ** 2;
-
-  return 2 * earthRadiusKm * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
-}
-
-function toRadians(value: number): number {
-  return (value * Math.PI) / 180;
 }
 
 function paginationMeta(total: number, limit: number, offset: number) {
