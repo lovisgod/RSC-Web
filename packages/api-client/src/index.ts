@@ -70,6 +70,7 @@ import {
   rateOutletInputSchema,
   rejectAssignedOrderInputSchema,
   rejectAssignedOrderResultSchema,
+  refreshSessionResultSchema,
   riderDispatchSchema,
   uploadedImageSchema,
   userVerificationResultSchema,
@@ -144,6 +145,7 @@ import {
   type RateOutletInput,
   type RejectAssignedOrderInput,
   type RejectAssignedOrderResult,
+  type RefreshSessionResult,
   type RiderDispatch,
   type UploadedImage,
   type UserVerificationResult,
@@ -199,11 +201,30 @@ export interface ApiClientOptions {
 export function createApiClient(options: ApiClientOptions) {
   const requestFetch = options.fetch ?? globalThis.fetch;
   const baseUrl = options.baseUrl.replace(/\/$/, "");
+  let refreshPromise: Promise<RefreshSessionResult> | null = null;
+
+  function shouldAttemptRefresh(path: string): boolean {
+    return !path.startsWith("/api/v1/auth/");
+  }
+
+  function refreshSessionOnce(): Promise<RefreshSessionResult> {
+    refreshPromise ??= request<RefreshSessionResult>(
+      "/api/v1/auth/refresh",
+      refreshSessionResultSchema,
+      { method: "POST" },
+      { skipAuthRefresh: true },
+    ).finally(() => {
+      refreshPromise = null;
+    });
+
+    return refreshPromise;
+  }
 
   async function request<T>(
     path: string,
     schema: z.ZodType<T>,
     init: RequestInit = {},
+    options_: { skipAuthRefresh?: boolean } = {},
   ): Promise<T> {
     const token = await options.getAccessToken?.();
     const headers = new Headers(init.headers);
@@ -234,7 +255,16 @@ export function createApiClient(options: ApiClientOptions) {
       credentials: "include",
     });
 
-    if (response.status === 401) {
+    if (response.status === 401 && !options_.skipAuthRefresh && shouldAttemptRefresh(path)) {
+      try {
+        await refreshSessionOnce();
+        return request(path, schema, init, { skipAuthRefresh: true });
+      } catch {
+        // Fall through to the existing unauthorized handling for the original response.
+      }
+    }
+
+    if (response.status === 401 && !options_.skipAuthRefresh) {
       try {
         await options.onUnauthorized?.(path);
       } catch {
@@ -293,6 +323,11 @@ export function createApiClient(options: ApiClientOptions) {
       return request("/api/v1/auth/login", loginResultSchema, {
         method: "POST",
         body: JSON.stringify(body),
+      });
+    },
+    refreshSession(): Promise<RefreshSessionResult> {
+      return request("/api/v1/auth/refresh", refreshSessionResultSchema, {
+        method: "POST",
       });
     },
     logout(): Promise<LogoutResult> {

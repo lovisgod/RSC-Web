@@ -94,6 +94,43 @@ describe(AuthSessionService.name, () => {
     );
   });
 
+  it("refreshes a session, rotates the refresh token, and keeps outlet context", async () => {
+    const user = Object.assign(new Customer(), {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+    const session = await service.issueSession(user);
+
+    const refreshed = await service.refreshSession(session.refreshToken);
+    const authenticated = await service.authenticateAccessToken(refreshed.accessToken);
+
+    expect(refreshed.refreshToken).not.toBe(session.refreshToken);
+    expect(refreshed.user).toEqual({
+      id: user.id,
+      role: UserRole.ADMIN,
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+    });
+    expect(authenticated).toMatchObject({
+      id: user.id,
+      role: UserRole.ADMIN,
+    });
+  });
+
+  it("rejects a refresh token after it has been rotated", async () => {
+    const user = Object.assign(new Customer(), {
+      id: "2abf9577-027c-4936-83a8-e004fd56a46e",
+      role: UserRole.CUSTOMER,
+    });
+    const session = await service.issueSession(user);
+
+    await service.refreshSession(session.refreshToken);
+
+    await expect(service.refreshSession(session.refreshToken)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+  });
+
   it("expires admin sessions after 30 minutes of inactivity", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-25T10:00:00.000Z"));

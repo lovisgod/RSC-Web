@@ -126,6 +126,8 @@ export const loginResultSchema = z.object({
   refreshTokenExpiresInSeconds: z.int().positive(),
 });
 
+export const refreshSessionResultSchema = loginResultSchema;
+
 export const logoutResultSchema = z.object({
   loggedOut: z.literal(true),
 });
@@ -1310,6 +1312,7 @@ export type VerifyUserInput = z.infer<typeof verifyUserInputSchema>;
 export type UserVerificationResult = z.infer<typeof userVerificationResultSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type LoginResult = z.infer<typeof loginResultSchema>;
+export type RefreshSessionResult = z.infer<typeof refreshSessionResultSchema>;
 export type LogoutResult = z.infer<typeof logoutResultSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminInputSchema>;
 export type AdminResult = z.infer<typeof adminResultSchema>;

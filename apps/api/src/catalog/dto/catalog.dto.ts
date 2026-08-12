@@ -83,7 +83,8 @@ export class CreateOutletDto {
 
   @ApiPropertyOptional({
     example: 6.4474,
-    description: "Outlet latitude used for delivery radius checks when configured",
+    description:
+      "Outlet latitude for display and operations metadata; checkout uses geofence zones.",
   })
   @IsOptional()
   @IsLatitude()
@@ -91,13 +92,18 @@ export class CreateOutletDto {
 
   @ApiPropertyOptional({
     example: 3.4542,
-    description: "Outlet longitude used for delivery radius checks when configured",
+    description:
+      "Outlet longitude for display and operations metadata; checkout uses geofence zones.",
   })
   @IsOptional()
   @IsLongitude()
   longitude?: number;
 
-  @ApiPropertyOptional({ example: 15, description: "Maximum delivery radius in kilometers" })
+  @ApiPropertyOptional({
+    example: 15,
+    description:
+      "Legacy outlet radius metadata. Checkout delivery eligibility uses geofence zones.",
+  })
   @IsOptional()
   @IsNumber()
   @Min(0.1)

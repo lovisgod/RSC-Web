@@ -1,4 +1,14 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBadGatewayResponse,
   ApiConflictResponse,
@@ -136,6 +146,42 @@ export class AuthController {
     clearAuthCookies(response);
 
     return { loggedOut: true };
+  }
+
+  @Post("refresh")
+  @ApiMessage("Session refreshed")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Refresh the active auth session using the refresh cookie" })
+  @ApiOkResponse({
+    description: "Refresh token accepted and rotated; fresh HttpOnly auth cookies issued",
+    type: LoginResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: "Refresh token is missing, expired, reused, or invalid" })
+  async refresh(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LoginDataDto> {
+    const refreshToken = readCookie(request.headers.cookie, REFRESH_TOKEN_COOKIE);
+
+    if (!refreshToken) {
+      clearAuthCookies(response);
+      throw new UnauthorizedException("Authentication required");
+    }
+
+    const session = await this.sessions.refreshSession(refreshToken);
+
+    setAuthCookies(response, {
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      accessTokenMaxAgeSeconds: session.accessTokenExpiresInSeconds,
+      refreshTokenMaxAgeSeconds: session.refreshTokenExpiresInSeconds,
+    });
+
+    return {
+      user: session.user,
+      accessTokenExpiresInSeconds: session.accessTokenExpiresInSeconds,
+      refreshTokenExpiresInSeconds: session.refreshTokenExpiresInSeconds,
+    };
   }
 
   @Post("change-password")
