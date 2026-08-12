@@ -20,6 +20,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import { RateLimit } from "../common/rate-limit/rate-limit.decorator";
 import { DeliveryService } from "./delivery.service";
 import {
   AddressSuggestionsQueryDto,
@@ -36,6 +37,7 @@ export class DeliveryController {
   constructor(private readonly delivery: DeliveryService) {}
 
   @Post("validate-address")
+  @RateLimit({ limit: 30, windowSeconds: 60 })
   @HttpCode(HttpStatus.OK)
   @ApiMessage("Delivery address validated")
   @ApiOperation({
@@ -48,6 +50,7 @@ export class DeliveryController {
   }
 
   @Get("address-suggestions")
+  @RateLimit({ limit: 60, windowSeconds: 60 })
   @ApiMessage("Delivery address suggestions retrieved")
   @ApiOperation({
     summary: "Get address suggestions",
@@ -58,6 +61,7 @@ export class DeliveryController {
   }
 
   @Post("resolve-address")
+  @RateLimit({ limit: 30, windowSeconds: 60 })
   @HttpCode(HttpStatus.OK)
   @ApiMessage("Delivery address resolved")
   @ApiOperation({
@@ -89,6 +93,7 @@ export class DeliveryController {
   }
 
   @Post("geofence-zones")
+  @RateLimit({ limit: 10, windowSeconds: 600 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
@@ -102,6 +107,7 @@ export class DeliveryController {
   }
 
   @Patch("geofence-zones/:id")
+  @RateLimit({ limit: 10, windowSeconds: 600 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
@@ -116,6 +122,7 @@ export class DeliveryController {
   }
 
   @Delete("geofence-zones/:id")
+  @RateLimit({ limit: 10, windowSeconds: 600 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
@@ -141,6 +148,7 @@ export class DeliveryController {
   }
 
   @Post("addresses")
+  @RateLimit({ limit: 20, windowSeconds: 60 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Delivery address created successfully")
@@ -165,6 +173,7 @@ export class DeliveryController {
   }
 
   @Patch("addresses/:id")
+  @RateLimit({ limit: 20, windowSeconds: 60 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Delivery address updated successfully")
@@ -181,6 +190,7 @@ export class DeliveryController {
   }
 
   @Patch("addresses/:id/default")
+  @RateLimit({ limit: 20, windowSeconds: 60 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Default delivery address updated")
@@ -194,6 +204,7 @@ export class DeliveryController {
   }
 
   @Delete("addresses/:id")
+  @RateLimit({ limit: 20, windowSeconds: 60 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Delivery address deleted successfully")

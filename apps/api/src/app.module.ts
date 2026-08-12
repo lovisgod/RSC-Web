@@ -1,11 +1,13 @@
 import { MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD } from "@nestjs/core";
 
 import { AppController } from "./app.controller";
 import { AuditModule } from "./audit/audit.module";
 import { AuthModule } from "./auth/auth.module";
 import { CatalogModule } from "./catalog/catalog.module";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
+import { RateLimitGuard } from "./common/rate-limit/rate-limit.guard";
 import { SecurityModule } from "./common/security/security.module";
 import configuration from "./config/configuration";
 import { validateEnvironment } from "./config/environment";
@@ -54,6 +56,12 @@ import { UsersModule } from "./users/users.module";
     HealthModule,
   ],
   controllers: [AppController],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

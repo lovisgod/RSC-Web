@@ -16,6 +16,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import { RateLimit } from "../common/rate-limit/rate-limit.decorator";
 import { MediaService, type UploadedImageFile } from "./media.service";
 
 @ApiTags("Media")
@@ -26,6 +27,7 @@ export class MediaController {
   constructor(private readonly media: MediaService) {}
 
   @Post("images")
+  @RateLimit({ limit: 20, windowSeconds: 600 })
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @UseInterceptors(FileInterceptor("file"))
   @ApiConsumes("multipart/form-data")

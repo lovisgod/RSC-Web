@@ -20,6 +20,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import { RateLimit } from "../common/rate-limit/rate-limit.decorator";
 import {
   AssignOrderRiderDto,
   CompleteDeliveryDto,
@@ -68,6 +69,7 @@ export class OrdersController {
   // treating "outlet" as a literal order-id path parameter.
 
   @Post("outlet/verify-handoff")
+  @RateLimit({ limit: 20, windowSeconds: 60 })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiMessage("Customer pickup verified")
@@ -81,6 +83,7 @@ export class OrdersController {
   }
 
   @Post("outlet/rider-collect")
+  @RateLimit({ limit: 20, windowSeconds: 60 })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiMessage("Rider collection confirmed")
@@ -134,6 +137,7 @@ export class OrdersController {
   }
 
   @Patch(":id/status")
+  @RateLimit({ limit: 30, windowSeconds: 60 })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RIDER)
   @ApiMessage("Order status updated")
@@ -151,6 +155,7 @@ export class OrdersController {
   }
 
   @Patch(":id/rider")
+  @RateLimit({ limit: 10, windowSeconds: 60 })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiMessage("Order rider assigned")
@@ -168,6 +173,7 @@ export class OrdersController {
   }
 
   @Patch(":id/sub-orders/:subOrderId/pickup")
+  @RateLimit({ limit: 20, windowSeconds: 60 })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.RIDER)
   @ApiMessage("Sub-order pickup confirmed")
@@ -186,6 +192,7 @@ export class OrdersController {
   }
 
   @Post(":id/complete-delivery")
+  @RateLimit({ limit: 10, windowSeconds: 60 })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.RIDER)
   @ApiMessage("Delivery completed")
@@ -203,6 +210,7 @@ export class OrdersController {
   }
 
   @Get(":id/rider-location")
+  @RateLimit({ limit: 60, windowSeconds: 60 })
   @ApiMessage("Latest rider location retrieved")
   @ApiOperation({
     summary: "Get latest rider location for my order",

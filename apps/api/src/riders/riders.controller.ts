@@ -7,6 +7,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import { RateLimit } from "../common/rate-limit/rate-limit.decorator";
 import { RejectAssignedOrderDto } from "../orders/dto/orders.dto";
 import { OrdersService } from "../orders/orders.service";
 import { UpdateRiderAvailabilityDto } from "./dto/rider-availability.dto";
@@ -24,6 +25,7 @@ export class RidersController {
   ) {}
 
   @Post("locations")
+  @RateLimit({ limit: 12, windowSeconds: 60 })
   @ApiMessage("Rider location recorded")
   @ApiOperation({
     summary: "Record rider location",
@@ -46,6 +48,7 @@ export class RidersController {
   }
 
   @Patch("me/availability")
+  @RateLimit({ limit: 20, windowSeconds: 60 })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.RIDER)
   @ApiMessage("Rider availability updated")
@@ -91,6 +94,7 @@ export class RidersController {
   }
 
   @Patch("me/assigned-orders/:id/reject")
+  @RateLimit({ limit: 10, windowSeconds: 60 })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.RIDER)
   @ApiMessage("Rider order assignment rejected")

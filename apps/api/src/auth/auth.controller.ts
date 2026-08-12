@@ -23,6 +23,7 @@ import type { Request, Response } from "express";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import { RateLimit } from "../common/rate-limit/rate-limit.decorator";
 import {
   AdminDataDto,
   AdminResponseDto,
@@ -59,6 +60,7 @@ export class AuthController {
   ) {}
 
   @Post("register")
+  @RateLimit({ limit: 5, windowSeconds: 600, keyBy: "ip-and-identifier" })
   @ApiMessage("Customer registered; verification codes sent")
   @ApiOperation({ summary: "Register a customer and send phone and email verification OTPs" })
   @ApiCreatedResponse({
@@ -72,6 +74,7 @@ export class AuthController {
   }
 
   @Post("verify-user")
+  @RateLimit({ limit: 10, windowSeconds: 600, keyBy: "ip-and-identifier" })
   @ApiMessage("User verified successfully")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Verify a customer using a phone or email OTP" })
@@ -85,6 +88,7 @@ export class AuthController {
   }
 
   @Post("resend-verification-code")
+  @RateLimit({ limit: 5, windowSeconds: 600, keyBy: "ip-and-identifier" })
   @ApiMessage("Verification code resent")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Resend a phone or email verification OTP" })
@@ -99,6 +103,7 @@ export class AuthController {
   }
 
   @Post("login")
+  @RateLimit({ limit: 10, windowSeconds: 300, keyBy: "ip-and-identifier" })
   @ApiMessage("Login successful")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Log in with email or phone and password" })
@@ -149,6 +154,7 @@ export class AuthController {
   }
 
   @Post("refresh")
+  @RateLimit({ limit: 30, windowSeconds: 60 })
   @ApiMessage("Session refreshed")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Refresh the active auth session using the refresh cookie" })
@@ -185,6 +191,7 @@ export class AuthController {
   }
 
   @Post("change-password")
+  @RateLimit({ limit: 5, windowSeconds: 600 })
   @ApiMessage("Password changed successfully")
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard)
@@ -194,6 +201,7 @@ export class AuthController {
   }
 
   @Post("forgot-password")
+  @RateLimit({ limit: 5, windowSeconds: 600, keyBy: "ip-and-identifier" })
   @ApiMessage("Password reset codes sent if the account exists")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Send password reset OTPs to the user's phone and email" })
@@ -202,6 +210,7 @@ export class AuthController {
   }
 
   @Post("reset-password")
+  @RateLimit({ limit: 5, windowSeconds: 600, keyBy: "ip-and-identifier" })
   @ApiMessage("Password reset successfully")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Reset a password using a phone or email OTP" })
@@ -210,6 +219,7 @@ export class AuthController {
   }
 
   @Post("admins")
+  @RateLimit({ limit: 10, windowSeconds: 600 })
   @ApiMessage("Admin created successfully")
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
