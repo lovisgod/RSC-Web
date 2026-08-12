@@ -32,6 +32,13 @@ interface RateLimitState {
   ttlSeconds: number;
 }
 
+type RateLimitedRequest = Omit<Request, "body" | "route"> & {
+  body?: unknown;
+  route?: {
+    path?: unknown;
+  };
+};
+
 @Injectable()
 export class RateLimitGuard implements CanActivate {
   constructor(
@@ -105,7 +112,8 @@ export class RateLimitGuard implements CanActivate {
   }
 
   private routeId(request: Request): string {
-    const routePath = typeof request.route?.path === "string" ? request.route.path : request.path;
+    const route = (request as RateLimitedRequest).route;
+    const routePath = typeof route?.path === "string" ? route.path : request.path;
     const baseUrl = request.baseUrl || "";
 
     return `${request.method}:${baseUrl}${routePath}`.toLowerCase();
@@ -120,7 +128,7 @@ export class RateLimitGuard implements CanActivate {
   }
 
   private requestIdentifier(request: Request): string {
-    const body = request.body;
+    const body = (request as RateLimitedRequest).body;
 
     if (!isRecord(body)) {
       return "anonymous";

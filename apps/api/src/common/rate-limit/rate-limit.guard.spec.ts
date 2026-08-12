@@ -13,9 +13,10 @@ describe(RateLimitGuard.name, () => {
     expire: vi.fn<(key: string, seconds: number) => Promise<number>>(),
     ttl: vi.fn<(key: string) => Promise<number>>(),
   };
+  const setHeader = vi.fn();
   const reflector = new Reflector();
   const response = {
-    setHeader: vi.fn(),
+    setHeader,
   } as unknown as Response;
   const handler = vi.fn();
   class TestController {}
@@ -43,9 +44,9 @@ describe(RateLimitGuard.name, () => {
 
     expect(redis.incr).toHaveBeenCalledOnce();
     expect(redis.expire).toHaveBeenCalledWith(expect.stringMatching(/^rate-limit:/), 60);
-    expect(response.setHeader).toHaveBeenCalledWith("X-RateLimit-Limit", "2");
-    expect(response.setHeader).toHaveBeenCalledWith("X-RateLimit-Remaining", "1");
-    expect(response.setHeader).toHaveBeenCalledWith("X-RateLimit-Reset", "60");
+    expect(setHeader).toHaveBeenCalledWith("X-RateLimit-Limit", "2");
+    expect(setHeader).toHaveBeenCalledWith("X-RateLimit-Remaining", "1");
+    expect(setHeader).toHaveBeenCalledWith("X-RateLimit-Reset", "60");
   });
 
   it("rejects requests over the configured limit with retry metadata", async () => {
@@ -68,8 +69,8 @@ describe(RateLimitGuard.name, () => {
       expect((error as HttpException).message).toBe("Too many requests. Please try again shortly.");
     });
 
-    expect(response.setHeader).toHaveBeenCalledWith("Retry-After", "42");
-    expect(response.setHeader).toHaveBeenCalledWith("X-RateLimit-Remaining", "0");
+    expect(setHeader).toHaveBeenCalledWith("Retry-After", "42");
+    expect(setHeader).toHaveBeenCalledWith("X-RateLimit-Remaining", "0");
   });
 
   it("skips Redis when the route opts out of rate limiting", async () => {
