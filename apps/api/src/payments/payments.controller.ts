@@ -20,6 +20,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { UserRole } from "../auth/user-role.enum";
 import { ApiMessage } from "../common/http/api-message.decorator";
+import { RateLimit, SkipRateLimit } from "../common/rate-limit/rate-limit.decorator";
 import {
   InitiatePaymentDto,
   ListRefundRequestsQueryDto,
@@ -55,6 +56,7 @@ export class PaymentsController {
   }
 
   @Get("resolve-account")
+  @RateLimit({ limit: 30, windowSeconds: 60 })
   @ApiMessage("Bank account resolved")
   resolveAccount(
     @Query("accountNumber") accountNumber: string,
@@ -64,6 +66,7 @@ export class PaymentsController {
   }
 
   @Patch("platform-charges")
+  @RateLimit({ limit: 10, windowSeconds: 600 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
@@ -73,6 +76,7 @@ export class PaymentsController {
   }
 
   @Post("initiate")
+  @RateLimit({ limit: 10, windowSeconds: 60 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Payment initiated successfully")
@@ -87,6 +91,7 @@ export class PaymentsController {
    * (see bootstrap.ts — rawBody: true on app.useBodyParser or NestFactory.create options).
    */
   @Post("webhook")
+  @SkipRateLimit()
   @HttpCode(200)
   @ApiOperation({
     summary: "Payment provider webhook receiver (Paystack)",
@@ -134,6 +139,7 @@ export class PaymentsController {
    * Authenticated — customers can only verify their own payments.
    */
   @Get("verify/:reference")
+  @RateLimit({ limit: 60, windowSeconds: 60 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Payment status retrieved")
@@ -142,6 +148,7 @@ export class PaymentsController {
   }
 
   @Post("orders/:orderId/retry")
+  @RateLimit({ limit: 5, windowSeconds: 60 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Payment retry initiated successfully")
@@ -173,6 +180,7 @@ export class PaymentsController {
   }
 
   @Post(":reference/refund-request")
+  @RateLimit({ limit: 5, windowSeconds: 600 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Refund request submitted")
@@ -190,6 +198,7 @@ export class PaymentsController {
   }
 
   @Post(":reference/refund")
+  @RateLimit({ limit: 10, windowSeconds: 600 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
