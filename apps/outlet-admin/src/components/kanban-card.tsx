@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { printReceipt } from "../lib/native-bridge";
 import type { PosSubOrder } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
+import { ReceiptPreviewModal } from "./receipt-preview-modal";
+import { buildReceiptFromSubOrder } from "../lib/receipt";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -406,48 +408,75 @@ function IncomingCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
 // ─── Kitchen card (ACCEPTED / PREPARING) ─────────────────────────────────────
 
 function KitchenCard({ order, onAdvance, isAdvancing }: KanbanCardProps) {
-  async function handlePrint() {
-    const result = await printReceipt({
-      orderId: order.id,
-      title: `Order #${order.id.slice(-8).toUpperCase()}`,
-      lines: order.items.map((item) => ({
-        label: item.name,
-        quantity: item.quantity,
-        amountMinor: item.priceMinor,
-      })),
-      totalMinor: order.totalAmountMinor,
-      currency: "NGN",
-    });
-    if (!result.printed) toastBus.emit("Printing unavailable outside POS shell", "warning");
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const receipt = buildReceiptFromSubOrder(order);
+
+  async function handleConfirmPrint() {
+    setIsPrinting(true);
+
+    try {
+      const result = await printReceipt(receipt);
+
+      if (!result.printed) {
+        toastBus.emit("Connect the POS printer shell to print receipts", "warning");
+        return;
+      }
+
+      if (!result.success) {
+        toastBus.emit(result.message ?? "Printer could not complete this receipt", "error");
+        return;
+      }
+
+      toastBus.emit(result.message ?? "Receipt sent to printer", "success");
+      setShowReceiptPreview(false);
+    } catch (error) {
+      toastBus.emit(error instanceof Error ? error.message : "Printer connection failed", "error");
+    } finally {
+      setIsPrinting(false);
+    }
   }
 
   const targetSlot = <PrepCountdown order={order} />;
 
   return (
-    <CardShell
-      order={order}
-      isAdvancing={isAdvancing}
-      accentClass="bg-yellow-400"
-      rightSlot={targetSlot}
-    >
-      <div className="flex items-center gap-2 border-t border-slate-50 pt-2">
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
-        >
-          🖨️ Print
-        </button>
-        <button
-          type="button"
-          disabled={isAdvancing}
-          onClick={() => onAdvance(order.id, NEXT_STATUS.PREPARING!)}
-          className="flex-1 rounded-lg bg-slate-900 px-2 py-1 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-50"
-        >
-          Mark Ready
-        </button>
-      </div>
-    </CardShell>
+    <>
+      <CardShell
+        order={order}
+        isAdvancing={isAdvancing}
+        accentClass="bg-yellow-400"
+        rightSlot={targetSlot}
+      >
+        <div className="flex items-center gap-2 border-t border-slate-50 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowReceiptPreview(true)}
+            className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+          >
+            Print receipt
+          </button>
+          <button
+            type="button"
+            disabled={isAdvancing}
+            onClick={() => onAdvance(order.id, NEXT_STATUS.PREPARING!)}
+            className="flex-1 rounded-lg bg-slate-900 px-2 py-1 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-50"
+          >
+            Mark Ready
+          </button>
+        </div>
+      </CardShell>
+
+      {showReceiptPreview && (
+        <ReceiptPreviewModal
+          receipt={receipt}
+          isPrinting={isPrinting}
+          onClose={() => {
+            if (!isPrinting) setShowReceiptPreview(false);
+          }}
+          onPrint={handleConfirmPrint}
+        />
+      )}
+    </>
   );
 }
 

@@ -5,6 +5,7 @@ dist
 coverage
 playwright-report
 test-results
+.codex-audit/
 *.tsbuildinfo
 .env
 .env.local

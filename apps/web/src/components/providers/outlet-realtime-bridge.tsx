@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 
 import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
+import { isPublicWebRoute } from "@/src/lib/public-routes";
 
 interface OutletStatusUpdateEvent {
   outletId: string;
@@ -25,6 +26,10 @@ export function OutletRealtimeBridge() {
   const hasConnectedRef = useRef(false);
 
   useEffect(() => {
+    if (window.location.pathname === "/" || isPublicWebRoute(window.location.pathname)) {
+      void queryClient.prefetchQuery(OUTLETS_QUERY);
+    }
+
     const origin =
       process.env.NEXT_PUBLIC_REALTIME_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
