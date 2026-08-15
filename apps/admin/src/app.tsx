@@ -15,7 +15,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { RouteNotFound } from "@rsc/ui";
+import { CssBrandLogo, RouteNotFound } from "@rsc/ui";
 import { useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -245,11 +245,7 @@ function AdminShell() {
       {/* Desktop sidebar */}
       <aside className="sidebar">
         <div className="admin-brand">
-          <span className="admin-brand__mark">D</span>
-          <span>
-            <strong>DineOut NG</strong>
-            <small>Central operations</small>
-          </span>
+          <CssBrandLogo size="sm" tagline="Central operations" />
         </div>
         <SidebarNav />
       </aside>
@@ -270,11 +266,7 @@ function AdminShell() {
           <aside className="mobile-nav-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-nav-drawer__head">
               <div className="admin-brand" style={{ margin: 0 }}>
-                <span className="admin-brand__mark">D</span>
-                <span>
-                  <strong>DineOut NG</strong>
-                  <small>Central operations</small>
-                </span>
+                <CssBrandLogo size="sm" tagline="Central operations" />
               </div>
               <button
                 className="mobile-nav-close"

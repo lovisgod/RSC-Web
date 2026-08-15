@@ -155,6 +155,23 @@ select {
   color: var(--rsc-sidebar-ink);
 }
 
+.admin-brand .rsc-css-logo__dine {
+  color: var(--rsc-sidebar-ink);
+}
+
+.admin-brand .rsc-css-logo__out,
+.admin-brand .rsc-css-logo__ng {
+  color: var(--rsc-brand-light);
+}
+
+.admin-brand .rsc-css-logo__rule {
+  background: linear-gradient(90deg, var(--rsc-sidebar-ink), var(--rsc-brand-light));
+}
+
+.admin-brand .rsc-css-logo__tagline {
+  color: var(--rsc-sidebar-muted);
+}
+
 .admin-brand__mark {
   display: grid;
   width: 40px;
@@ -4396,8 +4413,14 @@ th {
 .auth-brand {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
   margin-bottom: 2rem;
+  text-align: center;
+}
+
+.auth-brand .rsc-css-logo__tagline {
+  color: var(--rsc-muted);
 }
 
 .auth-brand__mark {
