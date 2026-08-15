@@ -1,6 +1,7 @@
 export { Button } from "./button";
 export { Card } from "./card";
 export { ChangePasswordPanel } from "./change-password-panel";
+export { CssBrandLogo } from "./css-brand-logo";
 export { DiscountPrice } from "./discount-price";
 export { EmptyState } from "./empty-state";
 export { Input } from "./input";

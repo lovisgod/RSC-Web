@@ -152,6 +152,10 @@ function AddItemModal({
       triggerShake();
       return;
     }
+    if (!imageFile) {
+      triggerShake();
+      return;
+    }
     if (
       discountPriceMinor !== null &&
       (!Number.isFinite(discountPriceMinor) ||
@@ -239,11 +243,12 @@ function AddItemModal({
             />
           </FormField>
 
-          <FormField label="Item Image">
+          <FormField label="Item Image *">
             <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm transition hover:border-emerald-400 hover:bg-emerald-50/30">
               <input
                 type="file"
                 accept="image/*"
+                required
                 className="sr-only"
                 onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
               />

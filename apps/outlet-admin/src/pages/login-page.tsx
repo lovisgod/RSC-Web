@@ -1,4 +1,5 @@
 import { nigerianPhoneNumberSchema } from "@rsc/contracts";
+import { CssBrandLogo } from "@rsc/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -58,17 +59,11 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--rsc-brand)_18%,transparent),transparent_34%),linear-gradient(135deg,var(--rsc-sidebar-bg)_0%,var(--rsc-navy-dark)_100%)] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--rsc-navy-dark)] p-4">
       {/* <ThemeToggle className="fixed right-4 top-4 z-10" /> */}
       <div className="w-full max-w-sm rounded-[1.75rem] border border-[color:color-mix(in_srgb,var(--rsc-main)_12%,white)] bg-[var(--rsc-panel)] p-8 shadow-[0_28px_80px_color-mix(in_srgb,var(--rsc-sidebar-bg)_38%,transparent)]">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--rsc-main)] text-lg font-black text-white shadow-[0_14px_32px_color-mix(in_srgb,var(--rsc-main)_28%,transparent)]">
-            D
-          </div>
-          <div>
-            <p className="text-sm font-black leading-tight text-[var(--rsc-ink)]">DineOut NG</p>
-            <p className="text-xs font-medium text-[var(--rsc-muted)]">Outlet staff sign-in</p>
-          </div>
+        <div className="mb-8 flex items-center justify-center gap-3 text-center">
+          <CssBrandLogo size="sm" tagline="Outlet staff sign-in" />
         </div>
 
         <h1 className="mb-1 text-2xl font-black tracking-tight text-[var(--rsc-ink)]">Sign in</h1>

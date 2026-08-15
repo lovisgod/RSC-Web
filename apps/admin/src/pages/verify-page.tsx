@@ -1,4 +1,4 @@
-import { Button } from "@rsc/ui";
+import { Button, CssBrandLogo } from "@rsc/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -98,11 +98,7 @@ export function VerifyPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="auth-brand__mark">R</span>
-          <span className="auth-brand__name">
-            <strong>DineOut NG Central</strong>
-            <small>Operations dashboard</small>
-          </span>
+          <CssBrandLogo size="sm" tagline="Operations dashboard" />
         </div>
 
         <h1 className="auth-heading">Verify your account</h1>

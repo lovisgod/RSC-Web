@@ -1,7 +1,7 @@
 "use client";
 
 import type { MenuItemSummary, OutletSummary, Promo } from "@rsc/contracts";
-import { Button } from "@rsc/ui";
+import { Button, DiscountPrice } from "@rsc/ui";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRightIcon,
@@ -535,9 +535,12 @@ export function LandingPage() {
                   <span className="landing-special-card__outlet">{item.outletName}</span>
                   <h3 className="landing-special-card__title">{item.name}</h3>
                   <div className="landing-special-card__footer">
-                    <b className="landing-special-card__price">
-                      {formatNaira(item.currentPriceMinor ?? item.priceMinor)}
-                    </b>
+                    <DiscountPrice
+                      className="landing-special-card__price"
+                      priceMinor={item.priceMinor}
+                      currentPriceMinor={item.currentPriceMinor}
+                      isDiscountActive={item.isDiscountActive}
+                    />
                     <span className="landing-special-card__add-btn">View Item</span>
                   </div>
                 </div>

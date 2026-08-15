@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@rsc/ui";
+import { Card, ThemeToggle } from "@rsc/ui";
 import type {
   NotificationPreferences,
   UpdateNotificationPreferencesInput,
@@ -320,6 +320,8 @@ function ProfileHeader() {
       className="rounded-2xl p-6 h-full flex flex-col relative"
       style={{ backgroundColor: "var(--rsc-main)" }}
     >
+      <ThemeToggle className="absolute right-4 top-4 border-white/20 bg-white/10 text-white shadow-none transition-colors hover:bg-white/15 md:hidden" />
+
       {/* Logout — mobile only, mirrors side-nav icon */}
       <button
         type="button"
