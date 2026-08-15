@@ -19,7 +19,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { RouteNotFound } from "@rsc/ui";
+import { CssBrandLogo, RouteNotFound } from "@rsc/ui";
 
 import { Toaster } from "./components/toaster";
 import { InstallAppButton } from "./components/install-app-button";
@@ -51,9 +51,7 @@ interface NavigationPanelProps {
 function Brand() {
   return (
     <div className="px-1">
-      <p className="m-0 text-xl font-black tracking-tight text-[var(--rsc-sidebar-ink)]">
-        DineOut NG
-      </p>
+      <CssBrandLogo className="outlet-sidebar-logo" size="sm" />
     </div>
   );
 }

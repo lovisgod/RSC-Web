@@ -23,26 +23,29 @@ body {
 }
 
 .rsc-brand-logo {
-  position: relative;
-  display: inline-block;
-  aspect-ratio: 600 / 340;
+  display: inline-grid;
+  width: max-content;
   flex-shrink: 0;
 }
 
-.rsc-brand-logo__image {
-  object-fit: contain;
+.rsc-brand-logo.w-24,
+.rsc-brand-logo.w-28,
+.rsc-brand-logo.w-36,
+.rsc-brand-logo.sm\:w-28 {
+  width: max-content;
 }
 
-.rsc-brand-logo__image--dark {
-  display: none;
+html:not([data-theme="dark"]) .web-sidebar-logo .rsc-css-logo__dine {
+  color: var(--rsc-sidebar-ink);
 }
 
-[data-theme="dark"] .rsc-brand-logo__image--light {
-  display: none;
+html:not([data-theme="dark"]) .web-sidebar-logo .rsc-css-logo__out,
+html:not([data-theme="dark"]) .web-sidebar-logo .rsc-css-logo__ng {
+  color: var(--rsc-brand-strong);
 }
 
-[data-theme="dark"] .rsc-brand-logo__image--dark {
-  display: block;
+html:not([data-theme="dark"]) .web-sidebar-logo .rsc-css-logo__rule {
+  background: linear-gradient(90deg, var(--rsc-sidebar-ink), var(--rsc-brand-strong));
 }
 
 .rsc-global-theme-toggle {
@@ -53,10 +56,9 @@ body {
   box-shadow: 0 8px 24px rgb(0 0 0 / 22%);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .rsc-global-theme-toggle {
-    bottom: 4.5rem;
-    right: 1rem;
+    display: none;
   }
 }
 
