@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   adminResultSchema,
+  adminOrderLineItemSchema,
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
   createAdminInputSchema,
@@ -745,5 +746,28 @@ describe("customer registration contracts", () => {
         hasPrevious: false,
       }),
     ).toBeTruthy();
+  });
+
+  it("calculates baseUnitPriceMinor fallback when missing or null", () => {
+    const parsed = adminOrderLineItemSchema.parse({
+      id: "b4eec994-872d-4915-9e12-b31947f96c3b",
+      masterOrderId: "50296ef7-fb39-4b42-ae55-81caec8efd21",
+      subOrderId: "8f36ee26-6f25-47cf-aed7-26afcb6278fe",
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+      itemNameSnapshot: "Rice",
+      unitPriceMinor: 1435000,
+      quantity: 1,
+      lineTotalMinor: 1435000,
+      currency: "NGN",
+      modifiersSnapshot: [
+        { name: "Chicken", priceDeltaMinor: 650000 },
+        { name: "Salad", priceDeltaMinor: 300000 },
+      ],
+      createdAt: "2026-07-02T08:00:00.000Z",
+      updatedAt: "2026-07-02T08:00:00.000Z",
+      deletedAt: null,
+    });
+    expect(parsed.baseUnitPriceMinor).toBe(485000);
   });
 });

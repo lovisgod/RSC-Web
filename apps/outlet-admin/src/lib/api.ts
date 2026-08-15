@@ -316,6 +316,7 @@ export interface PosSubOrderItemModifier {
 export interface PosSubOrderItem {
   name: string;
   quantity: number;
+  baseUnitPriceMinor?: number;
   priceMinor: number;
   lineTotalMinor: number;
   customerNote?: string;
@@ -356,6 +357,7 @@ function toSubOrders(data: AdminOrdersResult, outletId: string): PosSubOrder[] {
           .map((li) => ({
             name: li.itemNameSnapshot,
             quantity: li.quantity,
+            baseUnitPriceMinor: li.baseUnitPriceMinor,
             priceMinor: li.unitPriceMinor,
             lineTotalMinor: li.lineTotalMinor,
             ...(typeof li.customerNote === "string" && li.customerNote.trim()

@@ -50,6 +50,7 @@ interface PricedLine {
   outletId: string;
   menuItemId: string;
   itemNameSnapshot: string;
+  baseUnitPriceMinor: number;
   unitPriceMinor: number;
   quantity: number;
   lineTotalMinor: number;
@@ -412,6 +413,7 @@ export class PaymentsService {
               outletId: route.outletId,
               menuItemId: line.menuItemId,
               itemNameSnapshot: line.itemNameSnapshot,
+              baseUnitPriceMinor: line.baseUnitPriceMinor,
               unitPriceMinor: line.unitPriceMinor,
               quantity: line.quantity,
               lineTotalMinor: line.lineTotalMinor,
@@ -1137,12 +1139,14 @@ export class PaymentsService {
         (sum, modifier) => sum + modifier.priceDeltaMinor,
         0,
       );
-      const unitPriceMinor = item.getCurrentPriceMinor() + modifierTotalMinor;
+      const baseUnitPriceMinor = item.getCurrentPriceMinor();
+      const unitPriceMinor = baseUnitPriceMinor + modifierTotalMinor;
 
       lines.push({
         outletId: item.outletId,
         menuItemId: item.id,
         itemNameSnapshot: item.name,
+        baseUnitPriceMinor,
         unitPriceMinor,
         quantity: inputItem.quantity,
         lineTotalMinor: unitPriceMinor * inputItem.quantity,

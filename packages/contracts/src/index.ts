@@ -879,34 +879,47 @@ export const adminOrderSubOrderSchema = z.object({
   deletedAt: z.iso.datetime().nullable(),
 });
 
-export const adminOrderLineItemSchema = z.object({
-  id: z.uuid(),
-  masterOrderId: z.uuid(),
-  subOrderId: z.uuid(),
-  outletId: z.uuid(),
-  menuItemId: z.uuid().nullable(),
-  itemNameSnapshot: z.string().min(1),
-  unitPriceMinor: z.int().nonnegative(),
-  quantity: z.int().positive(),
-  lineTotalMinor: z.int().nonnegative(),
-  currency: currencySchema,
-  customerNote: z.string().nullable().optional(),
-  modifiersSnapshot: z
-    .array(
-      z
-        .object({
-          id: z.uuid().optional(),
-          name: z.string().min(1),
-          priceDeltaMinor: z.coerce.number().int().default(0),
-        })
-        .passthrough(),
-    )
-    .nullish()
-    .transform((value) => value ?? []),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  deletedAt: z.iso.datetime().nullable(),
-});
+export const adminOrderLineItemSchema = z
+  .object({
+    id: z.uuid(),
+    masterOrderId: z.uuid(),
+    subOrderId: z.uuid(),
+    outletId: z.uuid(),
+    menuItemId: z.uuid().nullable(),
+    itemNameSnapshot: z.string().min(1),
+    baseUnitPriceMinor: z.coerce.number().int().nonnegative().nullish(),
+    unitPriceMinor: z.int().nonnegative(),
+    quantity: z.int().positive(),
+    lineTotalMinor: z.int().nonnegative(),
+    currency: currencySchema,
+    customerNote: z.string().nullable().optional(),
+    modifiersSnapshot: z
+      .array(
+        z
+          .object({
+            id: z.uuid().optional(),
+            name: z.string().min(1),
+            priceDeltaMinor: z.coerce.number().int().default(0),
+          })
+          .passthrough(),
+      )
+      .nullish()
+      .transform((value) => value ?? []),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+    deletedAt: z.iso.datetime().nullable(),
+  })
+  .transform((item) => {
+    const modifierTotal = item.modifiersSnapshot.reduce(
+      (sum, mod) => sum + (mod.priceDeltaMinor || 0),
+      0,
+    );
+    return {
+      ...item,
+      baseUnitPriceMinor:
+        item.baseUnitPriceMinor ?? Math.max(0, item.unitPriceMinor - modifierTotal),
+    };
+  });
 
 export const adminOrderSummarySchema = z.object({
   order: adminOrderMasterSchema,
@@ -1027,6 +1040,7 @@ export const orderLineItemSchema = z
     outletId: z.uuid(),
     menuItemId: z.uuid().nullable(),
     itemNameSnapshot: z.string().min(1),
+    baseUnitPriceMinor: z.coerce.number().int().nonnegative().nullish(),
     unitPriceMinor: z.coerce.number().int(),
     quantity: z.coerce.number().int().positive(),
     lineTotalMinor: z.coerce.number().int(),
@@ -1045,7 +1059,18 @@ export const orderLineItemSchema = z
       .transform((value) => value ?? []),
     customerNote: z.string().nullable().optional(),
   })
-  .passthrough();
+  .passthrough()
+  .transform((item) => {
+    const modifierTotal = item.modifiersSnapshot.reduce(
+      (sum, mod) => sum + (mod.priceDeltaMinor || 0),
+      0,
+    );
+    return {
+      ...item,
+      baseUnitPriceMinor:
+        item.baseUnitPriceMinor ?? Math.max(0, item.unitPriceMinor - modifierTotal),
+    };
+  });
 
 export const riderInfoSchema = z.object({
   id: z.uuid(),
@@ -1103,6 +1128,9 @@ export const riderDispatchSchema = z.object({
           id: z.uuid(),
           name: z.string().min(1),
           quantity: z.coerce.number().int().positive(),
+          baseUnitPriceMinor: z.coerce.number().int().nonnegative().optional(),
+          unitPriceMinor: z.coerce.number().int().nonnegative().optional(),
+          lineTotalMinor: z.coerce.number().int().nonnegative().optional(),
           modifiers: z.array(z.unknown()),
         }),
       ),
