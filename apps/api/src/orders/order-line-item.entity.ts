@@ -30,6 +30,9 @@ export class OrderLineItem {
   @Column({ name: "item_name_snapshot", type: "varchar", length: 160 })
   itemNameSnapshot!: string;
 
+  @Column({ name: "base_unit_price_minor", type: "integer", nullable: true })
+  baseUnitPriceMinor!: number | null;
+
   @Column({ name: "unit_price_minor", type: "integer" })
   unitPriceMinor!: number;
 

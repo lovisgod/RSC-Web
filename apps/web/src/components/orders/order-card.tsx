@@ -231,7 +231,9 @@ function OrderDetailsContent({
                         {formatNaira(item.lineTotalMinor)}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-400">
-                        {formatNaira(item.unitPriceMinor)} each
+                        {item.modifiersSnapshot.length > 0
+                          ? `${formatNaira(item.baseUnitPriceMinor)} base (${formatNaira(item.unitPriceMinor)} total)`
+                          : `${formatNaira(item.baseUnitPriceMinor)} each`}
                       </p>
                     </div>
                   </div>

@@ -102,6 +102,9 @@ export interface RiderDispatch {
       id: string;
       name: string;
       quantity: number;
+      baseUnitPriceMinor?: number;
+      unitPriceMinor?: number;
+      lineTotalMinor?: number;
       modifiers: unknown[];
     }>;
   }>;
@@ -1107,12 +1110,22 @@ export class OrdersService {
           rejectionReason: this.rejectionReasonFor(subOrder),
           items: lineItems
             .filter((lineItem) => lineItem.subOrderId === subOrder.id)
-            .map((lineItem) => ({
-              id: lineItem.id,
-              name: lineItem.itemNameSnapshot,
-              quantity: lineItem.quantity,
-              modifiers: lineItem.modifiersSnapshot,
-            })),
+            .map((lineItem) => {
+              const modifierTotal = (
+                (lineItem.modifiersSnapshot as Array<{ priceDeltaMinor?: number }>) ?? []
+              ).reduce((sum, mod) => sum + (mod.priceDeltaMinor || 0), 0);
+              return {
+                id: lineItem.id,
+                name: lineItem.itemNameSnapshot,
+                quantity: lineItem.quantity,
+                baseUnitPriceMinor:
+                  lineItem.baseUnitPriceMinor ??
+                  Math.max(0, lineItem.unitPriceMinor - modifierTotal),
+                unitPriceMinor: lineItem.unitPriceMinor,
+                lineTotalMinor: lineItem.lineTotalMinor,
+                modifiers: lineItem.modifiersSnapshot,
+              };
+            }),
         };
       }),
     };

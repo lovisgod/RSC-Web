@@ -216,6 +216,12 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                         <div className="order-modal__line-info">
                           <span className="order-modal__line-name">
                             {li.quantity}× {li.itemNameSnapshot}
+                            {li.modifiersSnapshot && li.modifiersSnapshot.length > 0 && (
+                              <small style={{ fontWeight: "normal", opacity: 0.7 }}>
+                                {" "}
+                                ({fmt(li.baseUnitPriceMinor)} base)
+                              </small>
+                            )}
                           </span>
                           {li.modifiersSnapshot && li.modifiersSnapshot.length > 0 && (
                             <span className="order-modal__line-mods">
