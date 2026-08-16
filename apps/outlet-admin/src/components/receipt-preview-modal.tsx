@@ -92,7 +92,9 @@ export function ReceiptPreviewModal({
                         {formatReceiptMoney(item.unitPriceMinor)} × {item.quantity}
                       </p>
                     </div>
-                    <p className="font-bold">{formatReceiptMoney(item.lineTotalMinor)}</p>
+                    <p className="font-bold">
+                      {formatReceiptMoney(item.unitPriceMinor * item.quantity)}
+                    </p>
                   </div>
                   {item.modifiers?.length ? (
                     <ul className="mt-1 space-y-1 pl-4 text-xs text-slate-500">

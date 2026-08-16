@@ -6,6 +6,19 @@ export function formatReceiptMoney(minor: number): string {
 }
 
 export function buildReceiptFromSubOrder(order: PosSubOrder): ReceiptPrintInput {
+  const resolveBaseUnitPriceMinor = (item: PosSubOrder["items"][number]) => {
+    if (typeof item.baseUnitPriceMinor === "number") {
+      return item.baseUnitPriceMinor;
+    }
+
+    const modifierTotal = item.modifiers?.reduce(
+      (sum, modifier) => sum + modifier.priceDeltaMinor,
+      0,
+    );
+
+    return Math.max(0, item.priceMinor - (modifierTotal ?? 0));
+  };
+
   const modifiersMinor = order.items.reduce(
     (sum, item) =>
       sum +
@@ -29,7 +42,7 @@ export function buildReceiptFromSubOrder(order: PosSubOrder): ReceiptPrintInput 
     items: order.items.map((item) => ({
       name: item.name,
       quantity: item.quantity,
-      unitPriceMinor: item.priceMinor,
+      unitPriceMinor: resolveBaseUnitPriceMinor(item),
       ...(item.modifiers?.length
         ? {
             modifiers: item.modifiers.map((modifier) => ({
