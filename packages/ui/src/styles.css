@@ -129,66 +129,56 @@ body {
 
 .rsc-css-logo {
   display: inline-grid;
-  width: max-content;
+  width: var(--rsc-css-logo-width, 11rem);
   min-width: 0;
-  color: var(--rsc-main);
+  max-width: 100%;
+  justify-items: center;
   line-height: 1;
   text-decoration: none;
 }
 
-.rsc-css-logo__wordmark {
-  display: inline-flex;
-  align-items: baseline;
-  font-size: var(--rsc-css-logo-size, 1.75rem);
-  font-weight: 1000;
-  letter-spacing: -0.075em;
-  white-space: nowrap;
-}
-
 .rsc-css-logo--sm {
-  --rsc-css-logo-size: 1.35rem;
-  --rsc-css-logo-rule-width: 5.3rem;
+  --rsc-css-logo-width: 8.75rem;
 }
 
 .rsc-css-logo--md {
-  --rsc-css-logo-size: 1.85rem;
-  --rsc-css-logo-rule-width: 7.3rem;
+  --rsc-css-logo-width: 11rem;
 }
 
 .rsc-css-logo--lg {
-  --rsc-css-logo-size: 2.45rem;
-  --rsc-css-logo-rule-width: 9.75rem;
+  --rsc-css-logo-width: 14.5rem;
 }
 
-.rsc-css-logo__dine {
-  color: var(--rsc-main);
-}
-
-.rsc-css-logo__out,
-.rsc-css-logo__ng {
-  color: var(--rsc-brand-strong);
-}
-
-.rsc-css-logo__rule {
+.rsc-css-logo__image {
   display: block;
-  width: var(--rsc-css-logo-rule-width, 7.3rem);
-  height: 0.18em;
-  margin-top: 0.12em;
-  margin-left: 2.25em;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--rsc-main), var(--rsc-brand-strong));
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
-.rsc-css-logo__ng {
-  margin-top: 0.1em;
-  margin-left: 3.1em;
-  font-size: calc(var(--rsc-css-logo-size, 1.75rem) * 0.42);
-  font-weight: 1000;
-  letter-spacing: -0.02em;
+.rsc-css-logo__image--dark,
+.rsc-css-logo--light .rsc-css-logo__image--dark {
+  display: none;
+}
+
+.rsc-css-logo--dark .rsc-css-logo__image--light {
+  display: none;
+}
+
+.rsc-css-logo--dark .rsc-css-logo__image--dark {
+  display: block;
+}
+
+[data-theme="dark"] .rsc-css-logo--auto .rsc-css-logo__image--light {
+  display: none;
+}
+
+[data-theme="dark"] .rsc-css-logo--auto .rsc-css-logo__image--dark {
+  display: block;
 }
 
 .rsc-css-logo__tagline {
-  margin-top: 0.38rem;
+  margin-top: 0.2rem;
   color: var(--rsc-muted);
   font-size: 0.68rem;
   font-weight: 800;
