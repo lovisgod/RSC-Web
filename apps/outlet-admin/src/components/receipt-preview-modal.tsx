@@ -16,6 +16,17 @@ export function ReceiptPreviewModal({
   onClose,
   onPrint,
 }: ReceiptPreviewModalProps) {
+  const getItemGroupTotalMinor = (item: ReceiptPrintInput["items"][number]) => {
+    const itemTotalMinor = item.unitPriceMinor * item.quantity;
+    const modifiersTotalMinor =
+      item.modifiers?.reduce(
+        (sum, modifier) => sum + (modifier.amountMinor ?? 0) * item.quantity,
+        0,
+      ) ?? 0;
+
+    return itemTotalMinor + modifiersTotalMinor;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 py-6 backdrop-blur-sm">
       <section
@@ -84,20 +95,19 @@ export function ReceiptPreviewModal({
 
             <ul className="space-y-3">
               {receipt.items.map((item, index) => (
-                <li key={`${item.name}-${index}`}>
+                <li
+                  key={`${item.name}-${index}`}
+                  className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"
+                >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-bold">{item.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {formatReceiptMoney(item.unitPriceMinor)} × {item.quantity}
-                      </p>
-                    </div>
-                    <p className="font-bold">
-                      {formatReceiptMoney(item.unitPriceMinor * item.quantity)}
-                    </p>
+                    <p className="min-w-0 flex-1 font-bold">{item.name}</p>
+                    <span className="shrink-0 text-xs text-slate-500">
+                      {formatReceiptMoney(item.unitPriceMinor)} × {item.quantity}
+                    </span>
                   </div>
+
                   {item.modifiers?.length ? (
-                    <ul className="mt-1 space-y-1 pl-4 text-xs text-slate-500">
+                    <ul className="mt-2 space-y-1 border-l border-dashed border-slate-300 pl-3 text-xs text-slate-500">
                       {item.modifiers.map((modifier, modifierIndex) => (
                         <li
                           key={`${modifier.name}-${modifierIndex}`}
@@ -113,11 +123,17 @@ export function ReceiptPreviewModal({
                       ))}
                     </ul>
                   ) : null}
+
                   {item.customerNote && (
                     <p className="mt-1 rounded-lg bg-slate-50 px-2 py-1 text-xs italic text-slate-600">
                       Note: {item.customerNote}
                     </p>
                   )}
+
+                  <div className="mt-2 flex items-center justify-between border-t border-dashed border-slate-300 pt-2">
+                    <span className="text-xs font-semibold text-slate-500">Item total</span>
+                    <strong>{formatReceiptMoney(getItemGroupTotalMinor(item))}</strong>
+                  </div>
                 </li>
               ))}
             </ul>

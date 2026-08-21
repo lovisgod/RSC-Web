@@ -10,7 +10,7 @@ import {
   type OrderDetail,
   type RiderLocation,
 } from "@rsc/contracts";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import { io } from "socket.io-client";
 import { z } from "zod";
 
@@ -38,9 +38,58 @@ function getRealtimeOrigin() {
   );
 }
 
+function getOrderSourceId(orderId: string) {
+  return orderId.split(":")[0] ?? orderId;
+}
+
+function matchesCustomerOrder(order: CustomerOrder, orderId: string, sourceOrderId: string) {
+  return (
+    order.id === orderId ||
+    order.id === sourceOrderId ||
+    order.customerViewId === orderId ||
+    order.customerViewId === sourceOrderId ||
+    order.sourceMasterOrderId === sourceOrderId
+  );
+}
+
+export function syncCustomerOrderStatusCache(
+  queryClient: QueryClient,
+  input: {
+    orderId: string;
+    sourceOrderId?: string | undefined;
+    riderId?: string | null | undefined;
+    status: string;
+    updatedAt?: string | undefined;
+  },
+) {
+  const sourceOrderId = input.sourceOrderId ?? getOrderSourceId(input.orderId);
+
+  queryClient.setQueriesData<PaginatedCustomerOrders>({ queryKey: ["orders"] }, (current) => {
+    if (!current) return current;
+
+    let changed = false;
+    const orders = current.orders.map((order) => {
+      if (!matchesCustomerOrder(order, input.orderId, sourceOrderId)) {
+        return order;
+      }
+
+      changed = true;
+
+      return {
+        ...order,
+        riderId: input.riderId ?? order.riderId,
+        status: input.status,
+        updatedAt: input.updatedAt ?? order.updatedAt,
+      };
+    });
+
+    return changed ? { ...current, orders } : current;
+  });
+}
+
 export function useOrderDetail(orderId: string | null) {
   const queryClient = useQueryClient();
-  const sourceOrderId = orderId?.split(":")[0] ?? null;
+  const sourceOrderId = orderId ? getOrderSourceId(orderId) : null;
   const query = useQuery({
     queryKey: ["order", orderId],
     queryFn: () => apiClient.getOrder(orderId!),
@@ -86,28 +135,16 @@ export function useOrderDetail(orderId: string | null) {
             }
           : current,
       );
-      queryClient.setQueriesData<PaginatedCustomerOrders>({ queryKey: ["orders"] }, (current) =>
-        current
-          ? {
-              ...current,
-              orders: current.orders.map((order: CustomerOrder) =>
-                (order.sourceMasterOrderId ?? order.id) === sourceOrderId
-                  ? {
-                      ...order,
-                      riderId: parsed.data.riderId ?? order.riderId,
-                      status: parsed.data.status,
-                      updatedAt: parsed.data.updatedAt,
-                    }
-                  : order,
-              ),
-            }
-          : current,
-      );
+      syncCustomerOrderStatusCache(queryClient, {
+        orderId,
+        sourceOrderId,
+        riderId: parsed.data.riderId,
+        status: parsed.data.status,
+        updatedAt: parsed.data.updatedAt,
+      });
 
       void queryClient.invalidateQueries({ queryKey: ["order", orderId] });
-      if (parsed.data.status !== "DELIVERED" && parsed.data.status !== "CANCELLED") {
-        void queryClient.invalidateQueries({ queryKey: ["orders"] });
-      }
+      void queryClient.invalidateQueries({ queryKey: ["orders"], refetchType: "active" });
     });
 
     socket.on("rider:location_update", (payload: unknown) => {

@@ -12,7 +12,11 @@ import { Bike, ChevronDown, MapPin, RefreshCw, Store, Wifi, WifiOff } from "luci
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { useOrderDetail, useRiderTracking } from "@/src/hooks/use-order-tracking";
+import {
+  syncCustomerOrderStatusCache,
+  useOrderDetail,
+  useRiderTracking,
+} from "@/src/hooks/use-order-tracking";
 import { useCartStore } from "@/src/stores/cart-store";
 import { useActiveOrders } from "@/src/hooks/use-orders";
 import { useOutlets } from "@/src/hooks/use-outlets";
@@ -352,7 +356,33 @@ function RiderMapState({
 }
 
 function OrderTrackingDetail({ orderId }: { orderId: string }) {
+  const queryClient = useQueryClient();
   const { data: detail, isPending, isError, isFetching, refetch } = useOrderDetail(orderId);
+  const detailOrderId = detail?.order.id;
+  const detailSourceMasterOrderId = detail?.order.sourceMasterOrderId;
+  const detailRiderId = detail?.order.riderId;
+  const detailStatus = detail?.order.status;
+  const detailUpdatedAt = detail?.order.updatedAt;
+
+  useEffect(() => {
+    if (!detailOrderId || !detailStatus) return;
+
+    syncCustomerOrderStatusCache(queryClient, {
+      orderId,
+      sourceOrderId: detailSourceMasterOrderId ?? detailOrderId.split(":")[0],
+      riderId: detailRiderId,
+      status: detailStatus,
+      updatedAt: detailUpdatedAt,
+    });
+  }, [
+    detailOrderId,
+    detailRiderId,
+    detailSourceMasterOrderId,
+    detailStatus,
+    detailUpdatedAt,
+    orderId,
+    queryClient,
+  ]);
 
   if (isPending) {
     return (
