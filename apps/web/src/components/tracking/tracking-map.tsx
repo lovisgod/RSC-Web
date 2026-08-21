@@ -8,6 +8,7 @@ type LatLngLiteral = { lat: number; lng: number };
 
 interface GoogleMap {
   fitBounds(bounds: GoogleLatLngBounds, padding?: number | GoogleMapPadding): void;
+  getZoom(): number | undefined;
   setCenter(position: LatLngLiteral): void;
   setOptions(options: Partial<GoogleMapOptions>): void;
   setZoom(zoom: number): void;
@@ -101,7 +102,7 @@ const LOCKED_MAP_OPTIONS: Partial<GoogleMapOptions> = {
   keyboardShortcuts: false,
   mapTypeControl: false,
   maxZoom: 17,
-  minZoom: 12,
+  minZoom: 10,
   scrollwheel: false,
   streetViewControl: false,
   zoomControl: false,
@@ -222,6 +223,12 @@ function distanceKm(a: LatLngLiteral, b: LatLngLiteral) {
   return 2 * earthRadiusKm * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
 }
 
+function getRouteZoomFloor(distanceKmValue: number) {
+  if (distanceKmValue <= 2.5) return 15;
+  if (distanceKmValue <= 5) return 14;
+  return null;
+}
+
 interface TrackingMapProps {
   riderLocation: RiderLocation;
   customerLatLng: [number, number] | null;
@@ -285,10 +292,12 @@ export default function TrackingMap({ riderLocation, customerLatLng }: TrackingM
           riderMarkerRef.current.setPosition(riderPosition);
         }
 
-        const canShowRouteBounds =
-          isValidPosition(customerPosition) &&
-          isValidPosition(riderPosition) &&
-          distanceKm(riderPosition, customerPosition) <= BOUNDS_MAX_DISTANCE_KM;
+        const hasRoutePositions =
+          isValidPosition(customerPosition) && isValidPosition(riderPosition);
+        const routeDistanceKm = hasRoutePositions
+          ? distanceKm(riderPosition, customerPosition)
+          : Number.POSITIVE_INFINITY;
+        const canShowRouteBounds = hasRoutePositions && routeDistanceKm <= BOUNDS_MAX_DISTANCE_KM;
 
         if (canShowRouteBounds) {
           if (!customerMarkerRef.current) {
@@ -305,7 +314,18 @@ export default function TrackingMap({ riderLocation, customerLatLng }: TrackingM
           const bounds = new google.maps.LatLngBounds();
           bounds.extend(riderPosition);
           bounds.extend(customerPosition);
-          mapRef.current.fitBounds(bounds, { bottom: 36, left: 36, right: 36, top: 36 });
+          mapRef.current.fitBounds(bounds, { bottom: 28, left: 28, right: 28, top: 28 });
+          window.setTimeout(() => {
+            const routeZoomFloor = getRouteZoomFloor(routeDistanceKm);
+            const fittedZoom = mapRef.current?.getZoom();
+            if (
+              routeZoomFloor !== null &&
+              typeof fittedZoom === "number" &&
+              fittedZoom < routeZoomFloor
+            ) {
+              mapRef.current?.setZoom(routeZoomFloor);
+            }
+          }, 0);
           return;
         }
 
