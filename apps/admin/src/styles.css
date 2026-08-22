@@ -155,19 +155,6 @@ select {
   color: var(--rsc-sidebar-ink);
 }
 
-.admin-brand .rsc-css-logo__dine {
-  color: var(--rsc-sidebar-ink);
-}
-
-.admin-brand .rsc-css-logo__out,
-.admin-brand .rsc-css-logo__ng {
-  color: var(--rsc-brand-light);
-}
-
-.admin-brand .rsc-css-logo__rule {
-  background: linear-gradient(90deg, var(--rsc-sidebar-ink), var(--rsc-brand-light));
-}
-
 .admin-brand .rsc-css-logo__tagline {
   color: var(--rsc-sidebar-muted);
 }

@@ -46,7 +46,7 @@ export function SideNav() {
       {/* Brand */}
       <div className="border-b px-6 py-4" style={{ borderColor: "var(--rsc-sidebar-border)" }}>
         <Link href="/outlets" className="inline-flex" aria-label="DineOut NG home">
-          <BrandLogo className="web-sidebar-logo w-28" priority />
+          <BrandLogo className="web-sidebar-logo w-28" mode="dark" priority />
         </Link>
         <p className="text-xs" style={{ color: "var(--rsc-sidebar-muted)" }}>
           Your kitchen companion

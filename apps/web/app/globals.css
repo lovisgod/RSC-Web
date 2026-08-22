@@ -35,19 +35,6 @@ body {
   width: max-content;
 }
 
-html:not([data-theme="dark"]) .web-sidebar-logo .rsc-css-logo__dine {
-  color: var(--rsc-sidebar-ink);
-}
-
-html:not([data-theme="dark"]) .web-sidebar-logo .rsc-css-logo__out,
-html:not([data-theme="dark"]) .web-sidebar-logo .rsc-css-logo__ng {
-  color: var(--rsc-brand-strong);
-}
-
-html:not([data-theme="dark"]) .web-sidebar-logo .rsc-css-logo__rule {
-  background: linear-gradient(90deg, var(--rsc-sidebar-ink), var(--rsc-brand-strong));
-}
-
 .rsc-global-theme-toggle {
   position: fixed;
   z-index: 70;
