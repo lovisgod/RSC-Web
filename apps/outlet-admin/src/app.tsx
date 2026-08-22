@@ -51,7 +51,7 @@ interface NavigationPanelProps {
 function Brand() {
   return (
     <div className="px-1">
-      <CssBrandLogo className="outlet-sidebar-logo" size="sm" />
+      <CssBrandLogo className="outlet-sidebar-logo" mode="dark" size="sm" />
     </div>
   );
 }

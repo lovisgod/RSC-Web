@@ -245,7 +245,7 @@ function AdminShell() {
       {/* Desktop sidebar */}
       <aside className="sidebar">
         <div className="admin-brand">
-          <CssBrandLogo size="sm" tagline="Central operations" />
+          <CssBrandLogo mode="dark" size="sm" tagline="Central operations" />
         </div>
         <SidebarNav />
       </aside>
@@ -266,7 +266,7 @@ function AdminShell() {
           <aside className="mobile-nav-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-nav-drawer__head">
               <div className="admin-brand" style={{ margin: 0 }}>
-                <CssBrandLogo size="sm" tagline="Central operations" />
+                <CssBrandLogo mode="dark" size="sm" tagline="Central operations" />
               </div>
               <button
                 className="mobile-nav-close"

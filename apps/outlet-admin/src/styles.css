@@ -96,16 +96,3 @@ select {
   flex-direction: column;
   overflow: hidden;
 }
-
-.outlet-sidebar-logo .rsc-css-logo__dine {
-  color: var(--rsc-sidebar-ink);
-}
-
-.outlet-sidebar-logo .rsc-css-logo__out,
-.outlet-sidebar-logo .rsc-css-logo__ng {
-  color: var(--rsc-brand-light);
-}
-
-.outlet-sidebar-logo .rsc-css-logo__rule {
-  background: linear-gradient(90deg, var(--rsc-sidebar-ink), var(--rsc-brand-light));
-}
