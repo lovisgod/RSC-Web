@@ -582,6 +582,10 @@ export class PaymentsService {
   // ---------------------------------------------------------------------------
 
   async confirmPayment(event: ParsedWebhookEvent): Promise<{ already: boolean }> {
+    this.logger.log(
+      `Confirming payment from webhook: reference=${event.reference}, eventId=${event.eventId}, status=${event.status}, amountMinor=${event.amountMinor}`,
+    );
+
     const paymentsConfig = this.configService.get("payments", { infer: true });
     const gateway = paymentsConfig.provider;
     let payment: Payment | null = null;
