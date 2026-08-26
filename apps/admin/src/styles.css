@@ -2214,6 +2214,7 @@ th {
 
 .order-modal__body {
   gap: 1rem;
+  padding-bottom: 2rem;
 }
 
 .order-modal__meta {
@@ -2252,6 +2253,24 @@ th {
   color: var(--rsc-text-muted);
   padding-bottom: 0.25rem;
   border-bottom: 1px solid var(--rsc-border);
+}
+
+.order-modal__ledger-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--rsc-navy) 24%, var(--rsc-border));
+  border-radius: calc(var(--rsc-radius) - 4px);
+  background: color-mix(in srgb, var(--rsc-navy) 4%, white);
+  color: var(--rsc-navy-dark);
+  font-size: 0.88rem;
+}
+
+.order-modal__ledger-summary-row strong {
+  color: var(--rsc-main);
+  white-space: nowrap;
 }
 
 /* Per-outlet sub-order card */
@@ -4715,7 +4734,7 @@ th {
 
 .modal {
   width: min(620px, 100%);
-  max-height: 90dvh;
+  max-height: var(--modal-max-height, 90dvh);
   background: white;
   border-radius: var(--rsc-radius);
   box-shadow: 0 24px 80px rgb(0 0 0 / 25%);
