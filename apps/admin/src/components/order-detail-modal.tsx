@@ -287,7 +287,9 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
           })}
           <div className="order-modal__ledger-summary-row">
             <span>
-              {order.deliveryMode === "DELIVERY" ? "Platform & Delivery fee:" : "Platform charges:"}
+              {order.deliveryMode === "DELIVERY"
+                ? "Platform, VAT & Delivery fee:"
+                : "Platform charges & VAT :"}
             </span>
             <strong>{fmt(otherChargesAndDeliveryMinor)}</strong>
           </div>
