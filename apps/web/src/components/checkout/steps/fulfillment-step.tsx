@@ -278,6 +278,12 @@ export function FulfillmentStep({
 
   const grandTotal = subtotal + deliveryFee + serviceFee + vat + platformCommission;
 
+  const [idempotencyKey] = useState<string>(() =>
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : "chk_init",
+  );
+
   const initiateMutation = useMutation({
     mutationFn: () => {
       if (onBehalf) {
@@ -315,6 +321,7 @@ export function FulfillmentStep({
             ? `${window.location.origin}/payment/return`
             : "/payment/return",
         ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}),
+        idempotencyKey,
       };
 
       return apiClient.initiatePayment(
@@ -326,6 +333,7 @@ export function FulfillmentStep({
               deliveryLongitude: coords!.longitude,
             }
           : base,
+        { idempotencyKey },
       );
     },
     onSuccess: (result) => {

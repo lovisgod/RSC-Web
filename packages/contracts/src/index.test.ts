@@ -106,6 +106,7 @@ describe("payment contracts", () => {
         platformCommissionMinor: 66000,
         totalMinor: 925500,
         returnUrl: "rsc://payment/return",
+        idempotencyKey: "test-idempotency-key-123",
       }),
     ).toEqual({
       items: [
@@ -126,6 +127,7 @@ describe("payment contracts", () => {
       platformCommissionMinor: 66000,
       totalMinor: 925500,
       returnUrl: "rsc://payment/return",
+      idempotencyKey: "test-idempotency-key-123",
     });
   });
 });

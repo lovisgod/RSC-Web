@@ -27,7 +27,7 @@ import type {
   RefundProviderPaymentResult,
 } from "./payment-adapter";
 import { PaymentRefund } from "./payment-refund.entity";
-import { PaymentsService } from "./payments.service";
+import { PaymentsService, type InitiatePaymentResponse } from "./payments.service";
 
 describe(PaymentsService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
@@ -297,6 +297,104 @@ describe(PaymentsService.name, () => {
     });
     expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 678750 }));
     expect(dataSource.transaction).toHaveBeenCalledOnce();
+  });
+
+  it("returns cached result and avoids duplicate order creation when idempotencyKey is reused", async () => {
+    const mockRedis = {
+      get: vi.fn(),
+      set: vi.fn().mockResolvedValue("OK"),
+      del: vi.fn().mockResolvedValue(1),
+    };
+
+    const serviceWithRedis = new PaymentsService(
+      users as unknown as Repository<Customer>,
+      menuItems as unknown as Repository<MenuItem>,
+      modifiers as unknown as Repository<ItemModifier>,
+      outlets as unknown as Repository<Outlet>,
+      masterOrders as unknown as Repository<MasterOrder>,
+      subOrders as unknown as Repository<SubOrder>,
+      lineItems as unknown as Repository<OrderLineItem>,
+      payments as unknown as Repository<Payment>,
+      refunds as unknown as Repository<PaymentRefund>,
+      promos as unknown as Repository<Promo>,
+      dataSource as unknown as DataSource,
+      delivery as unknown as DeliveryService,
+      {
+        decrypt: vi.fn((value: string) => value.replace(/^encrypted:/, "")),
+      } as unknown as PiiCryptoService,
+      {
+        get: vi.fn().mockReturnValue({
+          platformCommissionBps: 1000,
+          vatBps: 750,
+          deliveryFeeMinor: 150000,
+        }),
+      } as unknown as ConfigService<ApplicationConfig, true>,
+      paymentAdapter,
+      realtime as unknown as RealtimeService,
+      notifications as unknown as NotificationsService,
+      mockRedis as never,
+    );
+
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: null,
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    const input = {
+      deliveryMode: "DELIVERY" as const,
+      deliveryAddress: "Independence Layout, Enugu",
+      deliveryLatitude: 6.5244,
+      deliveryLongitude: 7.5103,
+      items: [
+        {
+          menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+          quantity: 1,
+        },
+      ],
+      subtotalMinor: 450000,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 0,
+      vatMinor: 33750,
+      platformCommissionMinor: 45000,
+      totalMinor: 678750,
+      idempotencyKey: "test-idem-key-1",
+    };
+
+    const user = {
+      id: customerId,
+      role: UserRole.CUSTOMER,
+      sessionId: "session-1",
+      accessTokenId: "access-token-1",
+    };
+
+    // First call: executes transaction and caches in Redis
+    const firstResult: InitiatePaymentResponse = await serviceWithRedis.initiate(user, input);
+
+    expect(firstResult.reference).toBe("RSC-reference");
+    expect(mockRedis.set).toHaveBeenCalledWith(
+      `idempotency:checkout:${customerId}:test-idem-key-1`,
+      expect.any(String),
+      "EX",
+      1800,
+    );
+
+    // Second call: Redis returns cached result, no new transaction executed
+    mockRedis.get.mockResolvedValueOnce(JSON.stringify(firstResult));
+    dataSource.transaction.mockClear();
+
+    const secondResult: InitiatePaymentResponse = await serviceWithRedis.initiate(user, input);
+
+    expect(secondResult).toEqual(firstResult);
+    expect(dataSource.transaction).not.toHaveBeenCalled();
   });
 
   it("prices checkout lines with an active item-level discount", async () => {

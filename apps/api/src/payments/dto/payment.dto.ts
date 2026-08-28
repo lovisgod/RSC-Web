@@ -141,6 +141,15 @@ export class InitiatePaymentDto {
   @IsString()
   @Length(1, 2_000)
   returnUrl?: string;
+
+  @ApiPropertyOptional({
+    example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    description: "Optional client idempotency key to prevent duplicate checkouts on retry.",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 120)
+  idempotencyKey?: string;
 }
 
 export class RetryPaymentDto {

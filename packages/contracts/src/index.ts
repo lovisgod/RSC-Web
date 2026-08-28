@@ -521,6 +521,7 @@ export const initiatePaymentInputSchema = z
     platformCommissionMinor: z.int().nonnegative(),
     totalMinor: z.int().nonnegative(),
     returnUrl: z.string().trim().min(1).max(2_000).optional(),
+    idempotencyKey: z.string().trim().min(1).max(120).optional(),
   })
   .strict();
 
