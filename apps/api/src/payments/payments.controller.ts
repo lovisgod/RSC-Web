@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   Param,
   Patch,
@@ -11,7 +12,7 @@ import {
   UseGuards,
   Query,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Request } from "express";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
@@ -80,8 +81,22 @@ export class PaymentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Payment initiated successfully")
-  initiate(@Req() request: AuthenticatedRequest, @Body() input: InitiatePaymentDto) {
-    return this.payments.initiate(request.user!, input);
+  @ApiHeader({
+    name: "idempotency-key",
+    required: false,
+    description: "Client idempotency key to prevent duplicate checkouts.",
+  })
+  initiate(
+    @Req() request: AuthenticatedRequest,
+    @Body() input: InitiatePaymentDto,
+    @Headers("idempotency-key") idempotencyKeyHeader?: string,
+    @Headers("x-idempotency-key") xIdempotencyKeyHeader?: string,
+  ) {
+    const idempotencyKey = idempotencyKeyHeader || xIdempotencyKeyHeader || input.idempotencyKey;
+    return this.payments.initiate(request.user!, {
+      ...input,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    });
   }
 
   /**
