@@ -217,6 +217,10 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     const id = headers["webhook-id"];
     const timestamp = headers["webhook-timestamp"];
 
+    this.logger.log(
+      `[Moment] Inbound webhook received (webhook-id: ${id ?? "missing"}, webhook-timestamp: ${timestamp ?? "missing"}, signature: ${signatureHeader ? "present" : "missing"})`,
+    );
+
     if (!id || !timestamp || !signatureHeader) {
       this.logger.warn("Moment webhook: missing id, timestamp or signature headers");
       return null;
@@ -231,6 +235,8 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       return null;
     }
 
+    this.logger.log("Moment webhook: signature verified successfully");
+
     let event: MomentWebhookPayload;
     try {
       event = JSON.parse(rawBody.toString("utf8")) as MomentWebhookPayload;
@@ -244,6 +250,9 @@ export class MomentPaymentAdapter implements PaymentAdapter {
 
     // We only act on payment_session.completed
     if (eventType !== "payment_session.completed") {
+      this.logger.log(
+        `Moment webhook: ignored event type "${eventType}" (only payment_session.completed is processed)`,
+      );
       return null;
     }
 
@@ -252,6 +261,10 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       this.logger.warn(`Moment webhook: ${eventType} event missing external_reference`);
       return null;
     }
+
+    this.logger.log(
+      `Moment webhook parsed successfully: reference=${reference}, eventId=${event.id ?? reference}, outcome=${data.payment_outcome ?? data.status}, amount=${data.amount ?? 0}`,
+    );
 
     return {
       eventId: event.id ?? reference,
