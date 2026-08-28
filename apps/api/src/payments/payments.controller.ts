@@ -109,10 +109,10 @@ export class PaymentsController {
   @SkipRateLimit()
   @HttpCode(200)
   @ApiOperation({
-    summary: "Payment provider webhook receiver (Paystack)",
+    summary: "Payment provider webhook receiver",
     description:
-      "Receives charge.success / charge.failed events from Paystack. " +
-      "Validates HMAC-SHA512 signature. No auth cookie required.",
+      "Receives charge.success / charge.failed / payment_session.completed events from payment provider. " +
+      "Validates signature. No auth cookie required.",
   })
   async webhook(@Req() request: RawBodyRequest<Request>) {
     const rawBody = request.rawBody;
@@ -138,14 +138,26 @@ export class PaymentsController {
       }
     }
 
+    this.logger.log(
+      `Inbound payment webhook HTTP POST request received (signature header: ${signature ? "present" : "missing"})`,
+    );
+
     const event = await this.paymentAdapter.parseWebhookEvent(rawBody, signature, headersMap);
 
     if (!event) {
-      // Invalid signature or unrecognised event type — return 200 to stop Paystack retries
+      this.logger.warn("Webhook ignored: signature verification failed or event type unhandled");
       return { received: false };
     }
 
+    this.logger.log(
+      `Webhook parsed successfully: eventId=${event.eventId}, type=${event.eventType}, reference=${event.reference}, status=${event.status}, amountMinor=${event.amountMinor}`,
+    );
+
     const result = await this.payments.confirmPayment(event);
+    this.logger.log(
+      `Webhook payment confirmation finished for reference ${event.reference} (alreadyProcessed=${result.already})`,
+    );
+
     return { received: true, already: result.already };
   }
 

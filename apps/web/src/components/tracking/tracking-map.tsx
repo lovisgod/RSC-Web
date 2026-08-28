@@ -8,7 +8,9 @@ type LatLngLiteral = { lat: number; lng: number };
 
 interface GoogleMap {
   fitBounds(bounds: GoogleLatLngBounds, padding?: number | GoogleMapPadding): void;
+  getZoom(): number | undefined;
   setCenter(position: LatLngLiteral): void;
+  setOptions(options: Partial<GoogleMapOptions>): void;
   setZoom(zoom: number): void;
 }
 
@@ -42,11 +44,25 @@ interface GoogleMapsNamespace {
 interface GoogleMapOptions {
   center: LatLngLiteral;
   clickableIcons?: boolean;
+  disableDoubleClickZoom?: boolean;
   disableDefaultUI?: boolean;
+  draggable?: boolean;
   gestureHandling?: "cooperative" | "greedy" | "none" | "auto";
+  keyboardShortcuts?: boolean;
   mapTypeControl?: boolean;
+  maxZoom?: number;
+  minZoom?: number;
+  scrollwheel?: boolean;
   streetViewControl?: boolean;
+  styles?: GoogleMapStyle[];
   zoom: number;
+  zoomControl?: boolean;
+}
+
+interface GoogleMapStyle {
+  elementType?: string;
+  featureType?: string;
+  stylers: Array<Record<string, string | number | boolean>>;
 }
 
 interface GoogleMarkerOptions {
@@ -74,6 +90,57 @@ const GOOGLE_MAPS_SCRIPT_ID = "rsc-google-maps-script";
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 const RIDER_MARKER_COLOR = "#ff8200";
 const CUSTOMER_MARKER_COLOR = "#14883a";
+const DEFAULT_MAP_ZOOM = 15;
+const BOUNDS_MAX_DISTANCE_KM = 80;
+
+const LOCKED_MAP_OPTIONS: Partial<GoogleMapOptions> = {
+  clickableIcons: false,
+  disableDefaultUI: true,
+  disableDoubleClickZoom: true,
+  draggable: false,
+  gestureHandling: "none",
+  keyboardShortcuts: false,
+  mapTypeControl: false,
+  maxZoom: 17,
+  minZoom: 10,
+  scrollwheel: false,
+  streetViewControl: false,
+  zoomControl: false,
+};
+
+const MAP_STYLES: GoogleMapStyle[] = [
+  {
+    elementType: "geometry",
+    stylers: [{ color: "#eef7f1" }],
+  },
+  {
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#34513e" }],
+  },
+  {
+    elementType: "labels.text.stroke",
+    stylers: [{ color: "#f7fbf8" }],
+  },
+  {
+    featureType: "poi",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#ffffff" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#cde5d5" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#bfe5ea" }],
+  },
+];
 
 function loadGoogleMaps(apiKey: string): Promise<GoogleMapsNamespace> {
   if (window.google?.maps) {
@@ -130,6 +197,38 @@ function markerIcon(google: GoogleMapsNamespace, fillColor: string) {
   };
 }
 
+function isValidPosition(position: LatLngLiteral | null): position is LatLngLiteral {
+  return (
+    !!position &&
+    Number.isFinite(position.lat) &&
+    Number.isFinite(position.lng) &&
+    position.lat >= -90 &&
+    position.lat <= 90 &&
+    position.lng >= -180 &&
+    position.lng <= 180
+  );
+}
+
+function distanceKm(a: LatLngLiteral, b: LatLngLiteral) {
+  const earthRadiusKm = 6371;
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const latDelta = toRadians(b.lat - a.lat);
+  const lngDelta = toRadians(b.lng - a.lng);
+  const startLat = toRadians(a.lat);
+  const endLat = toRadians(b.lat);
+  const haversine =
+    Math.sin(latDelta / 2) ** 2 +
+    Math.cos(startLat) * Math.cos(endLat) * Math.sin(lngDelta / 2) ** 2;
+
+  return 2 * earthRadiusKm * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+}
+
+function getRouteZoomFloor(distanceKmValue: number) {
+  if (distanceKmValue <= 2.5) return 15;
+  if (distanceKmValue <= 5) return 14;
+  return null;
+}
+
 interface TrackingMapProps {
   riderLocation: RiderLocation;
   customerLatLng: [number, number] | null;
@@ -174,13 +273,12 @@ export default function TrackingMap({ riderLocation, customerLatLng }: TrackingM
         if (!mapRef.current) {
           mapRef.current = new google.maps.Map(mapElementRef.current, {
             center: riderPosition,
-            clickableIcons: false,
-            disableDefaultUI: true,
-            gestureHandling: "cooperative",
-            mapTypeControl: false,
-            streetViewControl: false,
-            zoom: 15,
+            ...LOCKED_MAP_OPTIONS,
+            styles: MAP_STYLES,
+            zoom: DEFAULT_MAP_ZOOM,
           });
+        } else {
+          mapRef.current.setOptions(LOCKED_MAP_OPTIONS);
         }
 
         if (!riderMarkerRef.current) {
@@ -194,7 +292,14 @@ export default function TrackingMap({ riderLocation, customerLatLng }: TrackingM
           riderMarkerRef.current.setPosition(riderPosition);
         }
 
-        if (customerPosition) {
+        const hasRoutePositions =
+          isValidPosition(customerPosition) && isValidPosition(riderPosition);
+        const routeDistanceKm = hasRoutePositions
+          ? distanceKm(riderPosition, customerPosition)
+          : Number.POSITIVE_INFINITY;
+        const canShowRouteBounds = hasRoutePositions && routeDistanceKm <= BOUNDS_MAX_DISTANCE_KM;
+
+        if (canShowRouteBounds) {
           if (!customerMarkerRef.current) {
             customerMarkerRef.current = new google.maps.Marker({
               icon: markerIcon(google, CUSTOMER_MARKER_COLOR),
@@ -209,14 +314,25 @@ export default function TrackingMap({ riderLocation, customerLatLng }: TrackingM
           const bounds = new google.maps.LatLngBounds();
           bounds.extend(riderPosition);
           bounds.extend(customerPosition);
-          mapRef.current.fitBounds(bounds, { bottom: 36, left: 36, right: 36, top: 36 });
+          mapRef.current.fitBounds(bounds, { bottom: 28, left: 28, right: 28, top: 28 });
+          window.setTimeout(() => {
+            const routeZoomFloor = getRouteZoomFloor(routeDistanceKm);
+            const fittedZoom = mapRef.current?.getZoom();
+            if (
+              routeZoomFloor !== null &&
+              typeof fittedZoom === "number" &&
+              fittedZoom < routeZoomFloor
+            ) {
+              mapRef.current?.setZoom(routeZoomFloor);
+            }
+          }, 0);
           return;
         }
 
         customerMarkerRef.current?.setMap(null);
         customerMarkerRef.current = null;
         mapRef.current.setCenter(riderPosition);
-        mapRef.current.setZoom(15);
+        mapRef.current.setZoom(DEFAULT_MAP_ZOOM);
       })
       .catch(() => {
         if (!disposed) {
