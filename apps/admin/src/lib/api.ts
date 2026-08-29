@@ -275,6 +275,7 @@ export interface OutletBody {
   isOnline?: boolean;
   settlementSubaccountCode?: string | null;
   imageUrl?: string;
+  logoUrl?: string;
   bannerUrl?: string;
 }
 

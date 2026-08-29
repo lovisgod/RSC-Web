@@ -16,6 +16,7 @@ export interface Outlet {
   cuisines: string[];
   headerColor: string;
   image: string;
+  logoUrl?: string | null;
   bannerImage?: string;
   isOnline?: boolean;
   vatBps: number;
@@ -44,6 +45,7 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     cuisines: [summary.cuisineType],
     headerColor: palette.headerColor,
     image: summary.imageUrl ?? palette.image,
+    logoUrl: summary.logoUrl ?? null,
     ...(summary.bannerUrl ? { bannerImage: summary.bannerUrl } : {}),
     isOnline: summary.isOnline,
     vatBps: summary.vatBps,

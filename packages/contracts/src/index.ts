@@ -710,6 +710,7 @@ export const outletSummarySchema = z
     cuisineType: z.string().min(1),
     description: z.string().nullable(),
     imageUrl: z.string().nullable(),
+    logoUrl: z.string().nullable().default(null),
     bannerUrl: z.string().nullable().default(null),
     isOnline: z.boolean(),
     settlementSubaccountCode: z.string().nullable().optional(),

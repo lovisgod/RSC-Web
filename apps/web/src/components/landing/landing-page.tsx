@@ -12,6 +12,7 @@ import {
   HeartIcon,
   HelpCircleIcon,
   HomeIcon,
+  MapPinIcon,
   PlusIcon,
   ReceiptIcon,
   SearchIcon,
@@ -823,9 +824,9 @@ export function LandingPage() {
           <HomeIcon className="w-5 h-5" />
           <span>Home</span>
         </Link>
-        <Link href="/orders" className="grab-bottom-nav__item">
-          <ReceiptIcon className="w-5 h-5" />
-          <span>Orders</span>
+        <Link href="/menu" className="grab-bottom-nav__item">
+          <SearchIcon className="w-5 h-5" />
+          <span>Search</span>
         </Link>
         <Link
           href="/cart"
@@ -840,13 +841,13 @@ export function LandingPage() {
           </div>
           <span>Cart</span>
         </Link>
-        <Link href="/outlets" className="grab-bottom-nav__item">
-          <HeartIcon className="w-5 h-5" />
-          <span>Favorites</span>
+        <Link href="/tracking" className="grab-bottom-nav__item">
+          <MapPinIcon className="w-5 h-5" />
+          <span>Tracking</span>
         </Link>
         <Link href={isSignedIn ? "/profile" : "/sign-in"} className="grab-bottom-nav__item">
           <UserIcon className="w-5 h-5" />
-          <span>Account</span>
+          <span>Profile</span>
         </Link>
       </nav>
     </main>
