@@ -5,20 +5,19 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRightIcon,
   AwardIcon,
-  BellIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
   ChevronRightIcon,
+  FlameIcon,
   HeartIcon,
   HelpCircleIcon,
   HomeIcon,
-  MenuIcon,
   PlusIcon,
   ReceiptIcon,
   SearchIcon,
   ShieldCheckIcon,
   ShoppingBagIcon,
-  SparklesIcon,
+  StarIcon,
   TagIcon,
   TruckIcon,
   UserIcon,
@@ -32,7 +31,7 @@ import { useMenuSearch } from "@/src/hooks/use-menu-search";
 import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
 import { usePromoNotifications } from "@/src/hooks/use-notifications";
 import { cartItemCount, formatNaira } from "@/src/lib/data/cart";
-import { toDisplayOutlet, type Outlet } from "@/src/lib/data/outlets";
+import { formatOutletRating, toDisplayOutlet, type Outlet } from "@/src/lib/data/outlets";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
@@ -70,84 +69,6 @@ const trustPillars = [
     icon: HeartIcon,
   },
 ] as const;
-
-const curatedOutletVisuals: Record<
-  string,
-  {
-    tagline: string;
-    brandTheme: "cactus" | "salmas" | "farfallino" | "tasteofnaija" | "generic";
-    dishImage: string;
-    ctaVariant?: "default" | "amber" | "emerald";
-  }
-> = {
-  cactus: {
-    tagline: "Home Away From Home",
-    brandTheme: "cactus",
-    dishImage:
-      "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80",
-    ctaVariant: "default",
-  },
-  salmas: {
-    tagline: "Authentic Lebanese",
-    brandTheme: "salmas",
-    dishImage:
-      "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?w=600&auto=format&fit=crop&q=80",
-    ctaVariant: "default",
-  },
-  farfallino: {
-    tagline: "True Italian Flavors",
-    brandTheme: "farfallino",
-    dishImage:
-      "https://images.unsplash.com/photo-1621996346565-e3d5d62810a9?w=600&auto=format&fit=crop&q=80",
-    ctaVariant: "amber",
-  },
-  "taste of naija": {
-    tagline: "Wholesome Flavors",
-    brandTheme: "tasteofnaija",
-    dishImage:
-      "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=600&auto=format&fit=crop&q=80",
-    ctaVariant: "default",
-  },
-};
-
-const defaultSpecials = [
-  {
-    id: "special-suya",
-    name: "Suya Platter",
-    description: "Juicy. Spicy. Unforgettable.",
-    badge: "TODAY'S PICK",
-    priceMinor: 900000,
-    currentPriceMinor: 750000,
-    imageUrl:
-      "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=80",
-    outletName: "Cactus Kitchen",
-    outletId: "cactus",
-  },
-  {
-    id: "special-pasta",
-    name: "Creamy Pasta",
-    description: "Rich. Creamy. Satisfying.",
-    badge: "15% OFF",
-    priceMinor: 800000,
-    currentPriceMinor: 680000,
-    imageUrl:
-      "https://images.unsplash.com/photo-1621996346565-e3d5d62810a9?w=500&auto=format&fit=crop&q=80",
-    outletName: "Farfallino",
-    outletId: "farfallino",
-  },
-  {
-    id: "special-pizza",
-    name: "Pepperoni Pizza",
-    description: "Cheesy. Saucy. Irresistible.",
-    badge: "20% OFF",
-    priceMinor: 1000000,
-    currentPriceMinor: 800000,
-    imageUrl:
-      "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=500&auto=format&fit=crop&q=80",
-    outletName: "Farfallino",
-    outletId: "farfallino",
-  },
-];
 
 const steps = [
   {
@@ -204,27 +125,20 @@ function isPromoLive(promo: Promo): boolean {
   return promo.isActive && startsAt <= now && now <= endsAt;
 }
 
-function getOutletVisual(outlet: Outlet, index: number) {
-  const cleanName = outlet.name.trim().toLowerCase();
-  for (const [key, visual] of Object.entries(curatedOutletVisuals)) {
-    if (cleanName.includes(key)) {
-      return visual;
-    }
-  }
+function topSpecials(outlets: OutletSummary[]): Array<MenuItemSummary & { outletName: string }> {
+  return outlets
+    .flatMap((outlet) =>
+      outlet.menuItems
+        .filter((item) => item.isAvailable)
+        .map((item) => ({ ...item, outletName: outlet.name })),
+    )
+    .sort((a, b) => {
+      const aDiscount = a.isDiscountActive ? 1 : 0;
+      const bDiscount = b.isDiscountActive ? 1 : 0;
 
-  const fallbackDishImages = [
-    "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?w=600&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1621996346565-e3d5d62810a9?w=600&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=600&auto=format&fit=crop&q=80",
-  ];
-
-  return {
-    tagline: outlet.cuisines?.[0] ? `${outlet.cuisines[0]} Specialties` : "Wholesome Flavors",
-    brandTheme: "generic" as const,
-    dishImage: fallbackDishImages[index % fallbackDishImages.length]!,
-    ctaVariant: (index === 2 ? "amber" : "default") as "default" | "amber",
-  };
+      return bDiscount - aDiscount || b.ratingAverage - a.ratingAverage;
+    })
+    .slice(0, 3);
 }
 
 export function LandingPage() {
@@ -248,7 +162,8 @@ export function LandingPage() {
   const promosQuery = usePromoNotifications();
 
   const outlets = (outletsQuery.data ?? []).map((outlet, index) => toDisplayOutlet(outlet, index));
-  const featuredOutlets = outlets.length > 0 ? outlets.slice(0, 4) : [];
+  const featuredOutlets = outlets.slice(0, 4);
+  const specials = topSpecials(outletsQuery.data ?? []);
   const promos = (promosQuery.data ?? []).filter(isPromoLive);
   const heroPromo = promos[0];
 
@@ -266,29 +181,6 @@ export function LandingPage() {
   );
 
   const showSearchDropdown = searchFocused && searchInput.trim().length > 0;
-
-  // Real backend specials fallback to curated mockup specials if empty
-  const liveSpecials = useMemo(() => {
-    const fromApi = (outletsQuery.data ?? [])
-      .flatMap((outlet) =>
-        outlet.menuItems
-          .filter((item) => item.isAvailable)
-          .map((item) => ({
-            id: item.id,
-            name: item.name,
-            description: item.description || "Freshly cooked to perfection.",
-            badge: item.isDiscountActive ? "SPECIAL OFFER" : "TODAY'S PICK",
-            priceMinor: item.priceMinor,
-            currentPriceMinor: item.currentPriceMinor ?? item.priceMinor,
-            imageUrl: item.imageUrl ?? "/images/images/fire_1f525.png",
-            outletName: outlet.name,
-            outletId: outlet.id,
-          })),
-      )
-      .slice(0, 3);
-
-    return fromApi.length > 0 ? fromApi : defaultSpecials;
-  }, [outletsQuery.data]);
 
   useEffect(() => {
     return () => {
@@ -315,7 +207,7 @@ export function LandingPage() {
     setSearchFocused(true);
   }
 
-  function handleQuickAddSpecial(special: (typeof liveSpecials)[number]) {
+  function handleQuickAddSpecial(special: MenuItemSummary & { outletName: string }) {
     addItemToCart({
       outletId: special.outletId,
       outletName: special.outletName,
@@ -324,7 +216,7 @@ export function LandingPage() {
         name: special.name,
         notes: "",
         quantity: 1,
-        unitPriceMinor: special.currentPriceMinor,
+        unitPriceMinor: special.currentPriceMinor ?? special.priceMinor,
         modifiers: [],
       },
     });
@@ -347,69 +239,44 @@ export function LandingPage() {
       )}
 
       {/* Top Banner Accent */}
-      <div className="grab-top-banner" aria-label="Announcement">
-        <span className="grab-top-banner__badge">NEW</span>
+      <div className="landing-top-banner" aria-label="Announcement">
+        <span className="landing-top-banner__badge">NEW</span>
         <span>Order across multiple DineOut NG kitchens with one single checkout & delivery!</span>
-        <Link href="#how-it-works" className="grab-top-banner__link">
+        <Link href="#how-it-works" className="landing-top-banner__link">
           Learn how it works →
         </Link>
       </div>
 
-      {/* Main App Bar / Header */}
-      <header className="grab-header" aria-label="DineOut NG navigation">
-        <div className="grab-header__inner">
-          <div className="grab-header__left">
-            <button
-              type="button"
-              className="grab-icon-btn"
-              aria-label="Toggle navigation menu"
-              onClick={() => {
-                const el = document.getElementById("outlets");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              <MenuIcon className="w-5 h-5" />
-            </button>
-            <Link className="grab-brand-lockup" href="/" aria-label="DineOut NG home">
-              <BrandLogo className="w-28 sm:w-32" priority />
-            </Link>
-          </div>
+      {/* Former Header Navigation */}
+      <header className="landing-header" aria-label="RSC Foods landing navigation">
+        <Link className="landing-brand" href="/" aria-label="RSC Foods home">
+          <BrandLogo className="w-28 sm:w-32" priority />
+        </Link>
 
-          <nav className="grab-header__nav" aria-label="Primary navigation">
-            <Link href="#outlets" className="grab-header__link">
-              Our Outlets
-            </Link>
-            <Link href="#specials" className="grab-header__link">
-              Daily Specials
-            </Link>
-            <Link href="#discounts" className="grab-header__link">
-              Discounts
-            </Link>
-            <Link href="#how-it-works" className="grab-header__link">
-              How It Works
-            </Link>
-          </nav>
+        <nav className="landing-header__nav" aria-label="Primary navigation">
+          <Link href="#outlets" className="landing-header__link">
+            Kitchens
+          </Link>
+          <Link href="#specials" className="landing-header__link">
+            Specials
+          </Link>
+          <Link href="#how-it-works" className="landing-header__link">
+            How it Works
+          </Link>
+          <Link href="/cart" className="landing-header__link">
+            Cart
+          </Link>
+        </nav>
 
-          <div className="grab-header__actions">
-            {showSignIn && (
-              <Link href="/sign-in" className="grab-sign-in">
-                Sign in
-              </Link>
-            )}
-            <Link href="/cart" className="grab-cart-btn" aria-label="View shopping cart">
-              <ShoppingBagIcon className="w-4 h-4" />
-              <span>Cart</span>
-              {totalCartCount > 0 && <b className="grab-cart-btn__badge">{totalCartCount}</b>}
+        <div className="landing-header__actions">
+          {showSignIn && (
+            <Link href="/sign-in" className="landing-sign-in">
+              Sign in
             </Link>
-            <button
-              type="button"
-              className="grab-icon-btn grab-bell-btn"
-              aria-label="Notifications"
-            >
-              <BellIcon className="w-5 h-5" />
-              <span className="grab-bell-dot" />
-            </button>
-          </div>
+          )}
+          <Link href="/outlets" className="landing-header__cta">
+            Order Now
+          </Link>
         </div>
       </header>
 
@@ -418,11 +285,6 @@ export function LandingPage() {
         <div className="grab-hero__brush-bg" aria-hidden="true" />
 
         <div className="grab-hero__brand-center">
-          {/* DineOut NG Master Brand Lockup */}
-          <div className="grab-hero__logo-wrapper">
-            <BrandLogo className="w-36 sm:w-44" priority />
-          </div>
-
           <div className="grab-hero__tagline-group">
             <h1 className="grab-hero__tagline-main">One App. Many Flavors.</h1>
             <p className="grab-hero__tagline-sub">Endless Choices.</p>
@@ -536,7 +398,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── SECTION 1: OUR OUTLETS (Portrait Cards with Order Now CTA) ── */}
+      {/* ── SECTION 1: OUR OUTLETS (Portrait Cards with Full Image & Order Now CTA) ── */}
       <section className="grab-section" id="outlets" aria-labelledby="grab-outlets-heading">
         <div className="grab-section__header">
           <h2 id="grab-outlets-heading" className="grab-section__title">
@@ -554,91 +416,73 @@ export function LandingPage() {
               <div key={n} className="grab-portrait-card grab-skeleton" />
             ))}
           </div>
+        ) : outletsQuery.isError || featuredOutlets.length === 0 ? (
+          <div className="grab-empty">
+            <UtensilsIcon className="w-8 h-8 text-emerald-500 mb-2" />
+            <p>No outlets are available right now. Please check back soon.</p>
+          </div>
         ) : (
           <div className="grab-outlets-portrait-grid">
-            {(featuredOutlets.length > 0
-              ? featuredOutlets
-              : [
-                  {
-                    id: "cactus",
-                    name: "CACTUS",
-                    cuisines: ["Continental", "Grills"],
-                    rating: 4.8,
-                    deliveryTime: "25-35",
-                  },
-                  {
-                    id: "salmas",
-                    name: "Salma's",
-                    cuisines: ["Authentic Lebanese"],
-                    rating: 4.9,
-                    deliveryTime: "30-40",
-                  },
-                  {
-                    id: "farfallino",
-                    name: "FARFALLINO",
-                    cuisines: ["Italian"],
-                    rating: 4.7,
-                    deliveryTime: "30-45",
-                  },
-                  {
-                    id: "taste-of-naija",
-                    name: "Taste of NAIJA",
-                    cuisines: ["Nigerian Local"],
-                    rating: 4.9,
-                    deliveryTime: "20-30",
-                  },
-                ]
-            ).map((outletItem, idx) => {
-              const outlet = outletItem as Outlet;
-              const visual = getOutletVisual(outlet, idx);
+            {featuredOutlets.map((outlet, idx) => {
               const isOffline = outlet.isOnline === false;
+              const hasImageUrl =
+                outlet.image && (outlet.image.startsWith("/") || outlet.image.startsWith("http"));
 
               return (
                 <article
                   key={outlet.id}
-                  className={`grab-portrait-card grab-portrait-card--${visual.brandTheme}`}
-                  data-theme-style={visual.brandTheme}
+                  className="grab-portrait-card"
                   data-disabled={isOffline}
+                  style={{
+                    backgroundColor: outlet.headerColor || "#0d1a12",
+                    ...(hasImageUrl
+                      ? {
+                          backgroundImage: `linear-gradient(180deg, rgba(6, 16, 10, 0.82) 0%, rgba(6, 16, 10, 0.25) 45%, rgba(6, 16, 10, 0.88) 100%), url(${outlet.image})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : {}),
+                  }}
                 >
                   {/* Card Brand Header */}
                   <div className="grab-portrait-card__header">
-                    {/* Brand Emblem Icon / Styling */}
-                    {visual.brandTheme === "cactus" && (
-                      <div className="grab-brand-icon grab-brand-icon--cactus">
-                        <UtensilsIcon className="w-5 h-5 text-emerald-400" />
-                      </div>
-                    )}
-                    {visual.brandTheme === "salmas" && (
-                      <div className="grab-brand-icon grab-brand-icon--salmas">
-                        <span className="grab-brand-icon__leaf">🌿</span>
-                      </div>
-                    )}
-                    {visual.brandTheme === "tasteofnaija" && (
-                      <div className="grab-brand-icon grab-brand-icon--naija">
-                        <SparklesIcon className="w-5 h-5 text-emerald-400" />
-                      </div>
-                    )}
+                    <div className="grab-portrait-card__top-meta">
+                      <span
+                        className="grab-portrait-card__status"
+                        data-online={outlet.isOnline !== false}
+                      >
+                        <span className="grab-portrait-card__status-dot" />
+                        {outlet.isOnline !== false ? "Open" : "Closed"}
+                      </span>
+                      <span className="grab-portrait-card__rating">
+                        <StarIcon className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        {formatOutletRating(outlet.rating)}
+                      </span>
+                    </div>
 
                     <h3 className="grab-portrait-card__title">{outlet.name}</h3>
-                    <p className="grab-portrait-card__subtitle">{visual.tagline}</p>
+                    <p className="grab-portrait-card__subtitle">
+                      {outlet.cuisines?.length > 0
+                        ? outlet.cuisines.join(" · ")
+                        : "Wholesome Flavors"}
+                    </p>
                   </div>
 
-                  {/* High Quality Round / Plated Dish Image */}
-                  <div className="grab-portrait-card__dish-wrap">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={visual.dishImage}
-                      alt={outlet.name}
-                      className="grab-portrait-card__dish-img"
-                      loading="lazy"
-                    />
-                  </div>
+                  {/* Non-URL Emoji / Fallback Graphic in Body if no image URL */}
+                  {!hasImageUrl && (
+                    <div className="grab-portrait-card__body-fallback">
+                      <span className="text-6xl">{outlet.image || "🍲"}</span>
+                    </div>
+                  )}
+
+                  {/* Spacer to push CTA cleanly to the bottom */}
+                  <div className="grab-portrait-card__spacer" />
 
                   {/* ORDER NOW CTA Pill Button */}
                   <div className="grab-portrait-card__footer">
                     <Link
                       href={isOffline ? "#" : `/outlets/${outlet.id}`}
-                      className={`grab-order-now-btn grab-order-now-btn--${visual.ctaVariant || "default"}`}
+                      className={`grab-order-now-btn ${idx === 2 ? "grab-order-now-btn--amber" : ""}`}
                       aria-label={`Order now from ${outlet.name}`}
                     >
                       <span className="grab-order-now-btn__text">
@@ -673,69 +517,80 @@ export function LandingPage() {
           </Link>
         </div>
 
-        <div className="grab-specials-grid">
-          {liveSpecials.map((special) => (
-            <div key={special.id} className="grab-special-card">
-              {/* Top Left Badge */}
-              <div className="grab-special-card__badge-row">
-                <span className="grab-special-badge">{special.badge}</span>
-              </div>
+        {specials.length === 0 ? (
+          <div className="grab-empty">
+            <FlameIcon className="w-8 h-8 text-amber-500 mb-2" />
+            <p>Menu specials will appear here once kitchens publish them.</p>
+          </div>
+        ) : (
+          <div className="grab-specials-grid">
+            {specials.map((special) => (
+              <div key={special.id} className="grab-special-card">
+                {/* Top Left Badge */}
+                <div className="grab-special-card__badge-row">
+                  <span className="grab-special-badge">
+                    {special.isDiscountActive ? "SPECIAL OFFER" : "TODAY'S PICK"}
+                  </span>
+                </div>
 
-              <div className="grab-special-card__body">
-                <div className="grab-special-card__info">
-                  <h3 className="grab-special-card__title">{special.name}</h3>
-                  <p className="grab-special-card__desc">{special.description}</p>
+                <div className="grab-special-card__body">
+                  <div className="grab-special-card__info">
+                    <h3 className="grab-special-card__title">{special.name}</h3>
+                    <p className="grab-special-card__desc">{special.outletName}</p>
 
-                  {/* Pricing Row */}
-                  <div className="grab-special-card__price-row">
-                    <span className="grab-special-card__price">
-                      {formatNaira(special.currentPriceMinor)}
-                    </span>
-                    {special.priceMinor > special.currentPriceMinor && (
-                      <span className="grab-special-card__strike-price">
-                        {formatNaira(special.priceMinor)}
+                    {/* Pricing Row */}
+                    <div className="grab-special-card__price-row">
+                      <span className="grab-special-card__price">
+                        {formatNaira(special.currentPriceMinor ?? special.priceMinor)}
                       </span>
-                    )}
+                      {special.isDiscountActive && (
+                        <span className="grab-special-card__strike-price">
+                          {formatNaira(special.priceMinor)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Round Food Image */}
+                  <div className="grab-special-card__image-container">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={special.imageUrl ?? "/images/images/fire_1f525.png"}
+                      alt={special.name}
+                      className="grab-special-card__image"
+                      loading="lazy"
+                    />
+
+                    {/* Green Round + Action Button */}
+                    <button
+                      type="button"
+                      className="grab-add-btn"
+                      aria-label={`Add ${special.name} to cart`}
+                      onClick={() => handleQuickAddSpecial(special)}
+                    >
+                      <PlusIcon className="w-5 h-5 text-white" />
+                    </button>
                   </div>
                 </div>
-
-                {/* Round Food Image */}
-                <div className="grab-special-card__image-container">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={special.imageUrl}
-                    alt={special.name}
-                    className="grab-special-card__image"
-                    loading="lazy"
-                  />
-
-                  {/* Green Round + Action Button */}
-                  <button
-                    type="button"
-                    className="grab-add-btn"
-                    aria-label={`Add ${special.name} to cart`}
-                    onClick={() => handleQuickAddSpecial(special)}
-                  >
-                    <PlusIcon className="w-5 h-5 text-white" />
-                  </button>
-                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Carousel Pagination Indicator Dots */}
-        <div className="grab-pagination-dots" aria-hidden="true">
-          {liveSpecials.map((_, dotIdx) => (
-            <button
-              key={dotIdx}
-              type="button"
-              className={`grab-pagination-dot ${dotIdx === activeSpecialIndex ? "grab-pagination-dot--active" : ""}`}
-              onClick={() => setActiveSpecialIndex(dotIdx)}
-              aria-label={`Go to slide ${dotIdx + 1}`}
-            />
-          ))}
-        </div>
+        {specials.length > 1 && (
+          <div className="grab-pagination-dots" aria-hidden="true">
+            {specials.map((_, dotIdx) => (
+              <button
+                key={dotIdx}
+                type="button"
+                className={`grab-pagination-dot ${dotIdx === activeSpecialIndex ? "grab-pagination-dot--active" : ""}`}
+                onClick={() => setActiveSpecialIndex(dotIdx)}
+                aria-label={`Go to slide ${dotIdx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── SECTION 3: EXCLUSIVE DISCOUNTS PROMO BANNER ── */}
@@ -768,7 +623,9 @@ export function LandingPage() {
             {heroPromo && (
               <div className="grab-promo-banner__code-pill">
                 <TagIcon className="w-3.5 h-3.5" />
-                <span>CODE: {heroPromo.code}</span>
+                <span>
+                  CODE: {heroPromo.code} · UP TO {heroPromo.discountPercent}% OFF
+                </span>
               </div>
             )}
           </div>
@@ -786,7 +643,7 @@ export function LandingPage() {
             {/* Circular Discount Callout Badge */}
             <div className="grab-promo-banner__circle-badge">
               <small>UP TO</small>
-              <strong>30%</strong>
+              <strong>{heroPromo?.discountPercent ?? 30}%</strong>
               <small>OFF</small>
               <span className="grab-promo-banner__circle-sub">LIMITED TIME ONLY!</span>
             </div>
