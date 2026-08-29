@@ -240,6 +240,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     if (input.endsAt !== undefined) promo.endsAt = new Date(input.endsAt);
     if (input.isActive !== undefined) promo.isActive = input.isActive;
     if (input.deepLink !== undefined) promo.deepLink = input.deepLink;
+    if (input.imageUrl !== undefined) promo.imageUrl = input.imageUrl;
     this.validatePromo(promo, { requireFutureStart: input.startsAt !== undefined });
 
     return this.withEffectivePromoActivity(await this.promos.save(promo));
@@ -300,6 +301,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       endsAt: new Date(input.endsAt),
       isActive: true,
       deepLink: input.deepLink ?? null,
+      imageUrl: input.imageUrl ?? null,
     });
     this.validatePromo(promo, { requireFutureStart: true });
 

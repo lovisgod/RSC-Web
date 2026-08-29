@@ -150,6 +150,12 @@ export class CreatePromoNotificationDto {
   @IsString()
   @MaxLength(512)
   deepLink?: string;
+
+  @ApiProperty({ example: "https://example.com/promo.jpg", required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  imageUrl?: string;
 }
 
 export class UpdatePromoDto {
@@ -210,6 +216,12 @@ export class UpdatePromoDto {
   @IsString()
   @MaxLength(512)
   deepLink?: string | null;
+
+  @ApiProperty({ example: "https://example.com/promo.jpg", required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  imageUrl?: string | null;
 }
 
 export class TogglePromoActiveDto {

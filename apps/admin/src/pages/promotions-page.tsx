@@ -11,11 +11,14 @@ import {
   CalendarClock,
   CheckCircle2,
   Edit3,
+  Image as ImageIcon,
+  Info,
   Loader2,
   Megaphone,
   PauseCircle,
   Plus,
   Send,
+  Trash2,
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -28,6 +31,7 @@ import {
   scheduleNotificationCampaign,
   togglePromoActive,
   updatePromo,
+  uploadImage,
 } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
@@ -50,6 +54,7 @@ const EMPTY_FORM = {
   startsAt: "",
   endsAt: "",
   scheduledAt: "",
+  imageUrl: "",
 };
 
 type PromoEditForm = {
@@ -61,6 +66,7 @@ type PromoEditForm = {
   outletId: string;
   startsAt: string;
   endsAt: string;
+  imageUrl: string;
 };
 
 const segmentLabels: Record<NotificationCampaignTargetSegment, string> = {
@@ -113,6 +119,7 @@ function promoToForm(promo: Promo): PromoEditForm {
     outletId: promo.outletId ?? "",
     startsAt: toDateTimeLocalValue(promo.startsAt),
     endsAt: toDateTimeLocalValue(promo.endsAt),
+    imageUrl: promo.imageUrl ?? "",
   };
 }
 
@@ -147,6 +154,7 @@ function PromoEditModal({
   saving: boolean;
 }) {
   const [form, setForm] = useState(() => promoToForm(promo));
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   function update<K extends keyof PromoEditForm>(key: K, value: PromoEditForm[K]) {
     setForm((current) => ({
@@ -154,6 +162,22 @@ function PromoEditModal({
       [key]: value,
       ...(key === "scope" && value === "ALL_OUTLETS" ? { outletId: "" } : {}),
     }));
+  }
+
+  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      const { url } = await uploadImage(file);
+      update("imageUrl", url);
+      toastBus.emit("Promo image uploaded", "success");
+    } catch (err) {
+      toastBus.emit((err as Error).message || "Failed to upload image", "error");
+    } finally {
+      setUploadingImage(false);
+    }
   }
 
   function submit() {
@@ -169,6 +193,7 @@ function PromoEditModal({
       outletId: form.scope === "OUTLET" ? form.outletId : null,
       startsAt: new Date(form.startsAt).toISOString(),
       endsAt: new Date(form.endsAt).toISOString(),
+      imageUrl: form.imageUrl || null,
     });
   }
 
@@ -209,6 +234,50 @@ function PromoEditModal({
               onChange={(event) => update("body", event.target.value)}
             />
           </label>
+
+          <div className="field-label">
+            <div className="admin-menu-field__label-row">
+              <span>Promo Image (optional)</span>
+              <span
+                className="admin-field-tooltip"
+                tabIndex={0}
+                role="img"
+                aria-label="Upload a photo for this promotion (recommended 1200x600 JPG/PNG/WEBP)"
+                title="Upload a photo for this promotion (recommended 1200x600 JPG/PNG/WEBP)"
+              >
+                <Info size={11} aria-hidden="true" />
+              </span>
+            </div>
+            {form.imageUrl ? (
+              <div className="relative mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2">
+                <img
+                  src={form.imageUrl}
+                  alt="Promo preview"
+                  className="h-32 w-full rounded-lg object-cover"
+                />
+                <button
+                  type="button"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-700"
+                  onClick={() => update("imageUrl", "")}
+                >
+                  <Trash2 size={13} /> Remove Image
+                </button>
+              </div>
+            ) : (
+              <div className="mt-1">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="field-input"
+                  disabled={uploadingImage}
+                  onChange={handleImageUpload}
+                />
+                {uploadingImage && (
+                  <p className="mt-1 text-xs text-slate-500">Uploading promo image...</p>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="modal-row">
             <label className="field-label">
@@ -423,41 +492,47 @@ function CampaignCard({ campaign }: { campaign: NotificationCampaign }) {
 }
 
 export function PromotionsPage() {
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [activeTab, setActiveTab] = useState<ManagementTab>("PROMOS");
+  const [currentTime] = useState(() => Date.now());
   const [createOpen, setCreateOpen] = useState(false);
   const [editingPromo, setEditingPromo] = useState<Promo | null>(null);
-  const [currentTime] = useState(() => Date.now());
-  const { mutate: sendPromo, isPending } = useSendPromo();
-  const { data: outlets = [] } = useQuery({ queryKey: ["outlets"], queryFn: listOutlets });
+  const [activeTab, setActiveTab] = useState<ManagementTab>("PROMOS");
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const queryClient = useQueryClient();
   const promos = useQuery({ queryKey: promosQueryKey, queryFn: listPromoNotifications });
   const campaigns = useQuery({
     queryKey: campaignsQueryKey,
     queryFn: listNotificationCampaigns,
   });
-
-  const outletNameById = useMemo(
-    () => new Map(outlets.map((outlet) => [outlet.id, outlet.name])),
-    [outlets],
+  const outletsQuery = useQuery({ queryKey: ["outlets"], queryFn: listOutlets });
+  const outlets = useMemo(
+    () =>
+      (outletsQuery.data ?? []).map((outlet) => ({
+        id: outlet.id,
+        name: outlet.name,
+      })),
+    [outletsQuery.data],
   );
+
+  const { mutate: sendPromo, isPending } = useSendPromo();
 
   const scheduleCampaign = useMutation({
     mutationFn: scheduleNotificationCampaign,
     onSuccess: async () => {
-      toastBus.emit("Campaign scheduled successfully", "success");
       setForm(EMPTY_FORM);
       setCreateOpen(false);
+      toastBus.emit("Campaign scheduled successfully", "success");
       await queryClient.invalidateQueries({ queryKey: campaignsQueryKey });
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
 
-  const savePromo = useMutation({
+  const updatePromoMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdatePromoInput }) => updatePromo(id, body),
     onSuccess: async () => {
-      toastBus.emit("Promo updated", "success");
       setEditingPromo(null);
+      toastBus.emit("Promo updated successfully", "success");
       await queryClient.invalidateQueries({ queryKey: promosQueryKey });
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),
@@ -492,6 +567,22 @@ export function PromotionsPage() {
     };
   }
 
+  async function handlePromoImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      const { url } = await uploadImage(file);
+      setForm((prev) => ({ ...prev, imageUrl: url }));
+      toastBus.emit("Promo image uploaded", "success");
+    } catch (err) {
+      toastBus.emit((err as Error).message || "Failed to upload image", "error");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   function selectNotificationType(notificationType: NotificationType) {
     setForm((previous) => ({
       ...previous,
@@ -505,6 +596,7 @@ export function PromotionsPage() {
             outletId: "",
             startsAt: "",
             endsAt: "",
+            imageUrl: "",
           }
         : {
             scheduledAt: "",
@@ -551,6 +643,7 @@ export function PromotionsPage() {
         ...(form.scope === "OUTLET" ? { outletId: form.outletId } : {}),
         startsAt: new Date(form.startsAt).toISOString(),
         endsAt: new Date(form.endsAt).toISOString(),
+        ...(form.imageUrl ? { imageUrl: form.imageUrl } : {}),
       },
       {
         onSuccess: async () => {
@@ -626,6 +719,50 @@ export function PromotionsPage() {
 
       {!isCampaign && (
         <>
+          <div className="field-label">
+            <div className="admin-menu-field__label-row">
+              <span>Promo Image (optional)</span>
+              <span
+                className="admin-field-tooltip"
+                tabIndex={0}
+                role="img"
+                aria-label="Upload a photo for this promotion (recommended 1200x600 JPG/PNG/WEBP)"
+                title="Upload a photo for this promotion (recommended 1200x600 JPG/PNG/WEBP)"
+              >
+                <Info size={11} aria-hidden="true" />
+              </span>
+            </div>
+            {form.imageUrl ? (
+              <div className="relative mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2">
+                <img
+                  src={form.imageUrl}
+                  alt="Promo preview"
+                  className="h-32 w-full rounded-lg object-cover"
+                />
+                <button
+                  type="button"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-700"
+                  onClick={() => setForm((prev) => ({ ...prev, imageUrl: "" }))}
+                >
+                  <Trash2 size={13} /> Remove Image
+                </button>
+              </div>
+            ) : (
+              <div className="mt-1">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="field-input"
+                  disabled={uploadingImage}
+                  onChange={handlePromoImageUpload}
+                />
+                {uploadingImage && (
+                  <p className="mt-1 text-xs text-slate-500">Uploading promo image...</p>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="modal-row">
             <label className="field-label">
               Recipient Role
@@ -813,7 +950,7 @@ export function PromotionsPage() {
                 <PromoCard
                   key={promo.id}
                   promo={promo}
-                  outletName={outletNameById.get(promo.outletId ?? "") ?? "Selected outlet"}
+                  outletName={outlets.find((o) => o.id === promo.outletId)?.name ?? "All Outlets"}
                   onEdit={() => setEditingPromo(promo)}
                   onToggle={() => togglePromo.mutate({ id: promo.id, isActive: !promo.isActive })}
                   toggling={togglePromo.isPending}
@@ -853,9 +990,9 @@ export function PromotionsPage() {
         <PromoEditModal
           promo={editingPromo}
           outlets={outlets}
-          saving={savePromo.isPending}
+          saving={updatePromoMutation.isPending}
           onClose={() => setEditingPromo(null)}
-          onSave={(body) => savePromo.mutate({ id: editingPromo.id, body })}
+          onSave={(body) => updatePromoMutation.mutate({ id: editingPromo.id, body })}
         />
       )}
 

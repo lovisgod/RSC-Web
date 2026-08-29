@@ -1052,6 +1052,153 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* ── SCROLLABLE DAILY SPECIALS / PROMOS ─────────────────────── */
+.grab-promos-scroll {
+  display: flex;
+  gap: 1.15rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.35rem 0.25rem 1rem;
+  scrollbar-width: thin;
+}
+
+.grab-promos-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.grab-promos-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 177, 79, 0.3);
+  border-radius: 999px;
+}
+
+.grab-promo-card {
+  flex: 0 0 320px;
+  max-width: 320px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(145deg, #073b22 0%, #0b4f2d 60%, #0f6e3c 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 28px rgba(7, 59, 34, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.grab-promo-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(7, 59, 34, 0.35);
+}
+
+.grab-promo-card__image-wrap {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  overflow: hidden;
+  background: #062b18;
+}
+
+.grab-promo-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.grab-promo-card:hover .grab-promo-card__image {
+  transform: scale(1.04);
+}
+
+.grab-promo-card__badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #ffcf1f;
+  color: #0b4f2d;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.grab-promo-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 1.15rem;
+  gap: 0.6rem;
+}
+
+.grab-promo-card__scope-tag {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.18rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grab-promo-card__title {
+  font-size: 1.08rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.grab-promo-card__desc {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.45;
+  margin: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.grab-promo-card__code-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  margin-top: 0.25rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.grab-promo-card__code-btn:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.grab-promo-card__copy-tag {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #ffcf1f;
+  letter-spacing: 0.04em;
+}
+
 /* ── SECTION 4: 4-PILLAR TRUST GRID ─────────────────────────── */
 .grab-trust-section {
   margin-top: 3.5rem;

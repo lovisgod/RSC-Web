@@ -1,6 +1,7 @@
 export interface AuthUser {
   id: string;
   role: string;
+  outletId?: string | null;
 }
 
 const LS_KEY = "rsc:admin:auth";

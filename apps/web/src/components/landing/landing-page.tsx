@@ -520,7 +520,7 @@ export function LandingPage() {
               POPULAR MENUS
             </h2>
           </div>
-          <Link href="/outlets" className="grab-section__view-all">
+          <Link href="/menu" className="grab-section__view-all">
             <span>View All</span>
             <ChevronRightIcon className="w-4 h-4" />
           </Link>
@@ -578,7 +578,7 @@ export function LandingPage() {
         )}
       </section>
 
-      {/* ── SECTION 3: DAILY SPECIALS (Real Backend Promos) ── */}
+      {/* ── SECTION 3: DAILY SPECIALS (Scrollable promos from backend) ── */}
       <section className="grab-section" id="specials" aria-labelledby="grab-specials-heading">
         <div className="grab-section__header">
           <div className="flex items-center gap-1.5">
@@ -589,65 +589,79 @@ export function LandingPage() {
               DAILY SPECIALS
             </h2>
           </div>
-          <Link href="/outlets" className="grab-section__view-all">
-            <span>View All</span>
-            <ChevronRightIcon className="w-4 h-4" />
-          </Link>
         </div>
 
-        <div className="grab-promo-banner">
-          <div className="grab-promo-banner__content">
-            <div className="grab-promo-banner__title-lockup">
-              <span className="grab-promo-banner__heading-white">
-                {heroPromo ? heroPromo.title.toUpperCase() : "HUNGRY FOR"}
-              </span>
-              <span className="grab-promo-banner__heading-green">
-                {heroPromo ? "SPECIALS!" : "MORE?"}
-              </span>
-            </div>
-            <p className="grab-promo-banner__copy">
-              {heroPromo?.body ??
-                "Enjoy amazing deals from your favorite outlets daily! Use coupon codes at checkout for instant feast savings."}
-            </p>
-            {heroPromo && (
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => handleCopyPromoCode(heroPromo.code)}
-                  className="grab-promo-banner__code-pill"
-                  title="Click to copy coupon code"
-                >
-                  <TagIcon className="w-3.5 h-3.5" />
-                  <span>
-                    CODE: <strong>{heroPromo.code}</strong> · {heroPromo.discountPercent}% OFF
-                  </span>
-                  <span className="ml-1.5 text-xs opacity-75 underline">
-                    {copiedCode === heroPromo.code ? "COPIED!" : "COPY"}
-                  </span>
-                </button>
+        {promos.length === 0 ? (
+          <div className="grab-promo-banner">
+            <div className="grab-promo-banner__content">
+              <div className="grab-promo-banner__title-lockup">
+                <span className="grab-promo-banner__heading-white">HUNGRY FOR</span>
+                <span className="grab-promo-banner__heading-green">MORE?</span>
               </div>
-            )}
-          </div>
-
-          <div className="grab-promo-banner__graphic">
-            {/* Array of delicious meal imagery */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
-              alt="Delicious DineOut burger & specials"
-              className="grab-promo-banner__food-img"
-              loading="lazy"
-            />
-
-            {/* Circular Discount Callout Badge */}
-            <div className="grab-promo-banner__circle-badge">
-              <small>UP TO</small>
-              <strong>{heroPromo?.discountPercent ?? 30}%</strong>
-              <small>OFF</small>
-              <span className="grab-promo-banner__circle-sub">LIMITED TIME ONLY!</span>
+              <p className="grab-promo-banner__copy">
+                Check back soon for fresh daily specials and exclusive kitchen discounts!
+              </p>
+            </div>
+            <div className="grab-promo-banner__graphic">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
+                alt="Delicious DineOut specials"
+                className="grab-promo-banner__food-img"
+                loading="lazy"
+              />
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="grab-promos-scroll">
+            {promos.map((promo) => (
+              <div key={promo.id} className="grab-promo-card">
+                <div className="grab-promo-card__image-wrap">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={
+                      promo.imageUrl ||
+                      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&auto=format&fit=crop&q=80"
+                    }
+                    alt={promo.title}
+                    className="grab-promo-card__image"
+                    loading="lazy"
+                  />
+                  <div className="grab-promo-card__badge">
+                    <span>{promo.discountPercent}% OFF</span>
+                  </div>
+                </div>
+
+                <div className="grab-promo-card__body">
+                  <span className="grab-promo-card__scope-tag">
+                    {promo.scope === "OUTLET" && promo.outletId
+                      ? (outletNameMap.get(promo.outletId) ?? "Outlet Exclusive")
+                      : "All Outlets"}
+                  </span>
+                  <h3 className="grab-promo-card__title">{promo.title}</h3>
+                  <p className="grab-promo-card__desc">{promo.body}</p>
+
+                  <button
+                    type="button"
+                    className="grab-promo-card__code-btn"
+                    onClick={() => handleCopyPromoCode(promo.code)}
+                    title="Click to copy promo code"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <TagIcon className="w-3.5 h-3.5 text-amber-300" />
+                      <span>
+                        CODE: <strong>{promo.code}</strong>
+                      </span>
+                    </span>
+                    <span className="grab-promo-card__copy-tag">
+                      {copiedCode === promo.code ? "COPIED!" : "COPY"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── SECTION 4: 4-PILLAR TRUST & BENEFIT GRID ── */}
