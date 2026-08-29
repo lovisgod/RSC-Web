@@ -678,33 +678,75 @@ body {
   font-weight: 800;
 }
 
-.grab-portrait-card__title {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 950;
-  color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
-  letter-spacing: -0.01em;
-}
-
-.grab-portrait-card__subtitle {
-  margin: 0;
-  font-size: 0.82rem;
-  font-weight: 650;
-  color: rgba(255, 255, 255, 0.88);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
-}
-
-.grab-portrait-card__body-fallback {
+.grab-portrait-card__center-brand {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1;
   margin-block: auto;
-  padding: 2rem;
+  padding: 1.5rem 0;
+  z-index: 2;
 }
 
-.grab-portrait-card__spacer {
-  flex: 1;
+.grab-portrait-card__logo-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0.85rem;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 3.5px rgba(255, 255, 255, 0.92);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+  overflow: hidden;
+}
+
+.grab-portrait-card:hover .grab-portrait-card__logo-badge {
+  transform: scale(1.08);
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.65),
+    0 0 0 3.5px #00b14f;
+}
+
+.grab-portrait-card__logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.grab-portrait-card__logo-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #0b3d1f;
+  line-height: 1.1;
+  width: 100%;
+}
+
+.grab-portrait-card__logo-monogram {
+  font-size: 1.6rem;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: #00b14f;
+}
+
+.grab-portrait-card__logo-fallback-name {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #0a2916;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
 }
 
 /* ── ORDER NOW CTA Pill Button (Matches Attached Reference) ── */

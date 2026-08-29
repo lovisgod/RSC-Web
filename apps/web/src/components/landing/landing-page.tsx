@@ -455,7 +455,7 @@ export function LandingPage() {
                       : {}),
                   }}
                 >
-                  {/* Card Brand Header */}
+                  {/* Card Top Meta */}
                   <div className="grab-portrait-card__header">
                     <div className="grab-portrait-card__top-meta">
                       <span
@@ -470,24 +470,30 @@ export function LandingPage() {
                         {formatOutletRating(outlet.rating)}
                       </span>
                     </div>
-
-                    <h3 className="grab-portrait-card__title">{outlet.name}</h3>
-                    <p className="grab-portrait-card__subtitle">
-                      {outlet.cuisines?.length > 0
-                        ? outlet.cuisines.join(" · ")
-                        : "Wholesome Flavors"}
-                    </p>
                   </div>
 
-                  {/* Non-URL Emoji / Fallback Graphic in Body if no image URL */}
-                  {!hasImageUrl && (
-                    <div className="grab-portrait-card__body-fallback">
-                      <span className="text-6xl">{outlet.image || "🍲"}</span>
+                  {/* Centralized Outlet Logo Badge */}
+                  <div className="grab-portrait-card__center-brand">
+                    <div className="grab-portrait-card__logo-badge" title={outlet.name}>
+                      {outlet.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={outlet.logoUrl}
+                          alt={outlet.name}
+                          className="grab-portrait-card__logo-img"
+                        />
+                      ) : (
+                        <div className="grab-portrait-card__logo-fallback">
+                          <span className="grab-portrait-card__logo-monogram">
+                            {outlet.name.slice(0, 2).toUpperCase()}
+                          </span>
+                          <span className="grab-portrait-card__logo-fallback-name">
+                            {outlet.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-
-                  {/* Spacer to push CTA cleanly to the bottom */}
-                  <div className="grab-portrait-card__spacer" />
+                  </div>
 
                   {/* ORDER NOW CTA Pill Button */}
                   <div className="grab-portrait-card__footer">
