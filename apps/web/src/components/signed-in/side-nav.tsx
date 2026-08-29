@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import {
+  Heart,
+  Home,
+  LogOut,
+  MapPin,
+  Receipt,
+  ShoppingBag,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { cartItemCount } from "@/src/lib/data/cart";
@@ -10,11 +19,19 @@ import { useAuthStore } from "@/src/stores/auth-store";
 import { apiClient } from "@/src/lib/api";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
 
-const navItems = [
-  { href: "/outlets", icon: "/icons/png/house_1f3e0.png", label: "Home" },
-  { href: "/cart", icon: "/icons/png/shopping-cart_1f6d2.png", label: "Cart" },
-  { href: "/tracking", icon: "/icons/png/round-pushpin_1f4cd.png", label: "Tracking" },
-  { href: "/profile", icon: "/icons/png/bust-in-silhouette_1f464.png", label: "Profile" },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon | string;
+}
+
+const navItems: NavItem[] = [
+  { href: "/outlets", icon: Home, label: "Home" },
+  { href: "/orders", icon: Receipt, label: "Orders" },
+  { href: "/cart", icon: ShoppingBag, label: "Cart" },
+  { href: "/favorites", icon: Heart, label: "Favourites" },
+  { href: "/tracking", icon: MapPin, label: "Tracking" },
+  { href: "/profile", icon: User, label: "Profile" },
 ];
 
 export function SideNav() {
@@ -79,11 +96,15 @@ export function SideNav() {
                   : "var(--rsc-sidebar-muted)";
               }}
             >
-              {item.icon.startsWith("/") ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.icon} alt={item.label} className="w-5 h-5 object-contain" />
+              {typeof item.icon === "string" ? (
+                item.icon.startsWith("/") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.icon} alt={item.label} className="w-5 h-5 object-contain" />
+                ) : (
+                  <span className="text-lg leading-none">{item.icon}</span>
+                )
               ) : (
-                <span className="text-lg leading-none">{item.icon}</span>
+                <item.icon className="w-5 h-5" />
               )}
               <span>{item.label}</span>
 

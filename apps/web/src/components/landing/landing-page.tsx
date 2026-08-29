@@ -578,7 +578,7 @@ export function LandingPage() {
         )}
       </section>
 
-      {/* ── SECTION 3: DAILY SPECIALS (Scrollable promos from backend) ── */}
+      {/* ── SECTION 3: DAILY SPECIALS (Scrollable banner promos from backend) ── */}
       <section className="grab-section" id="specials" aria-labelledby="grab-specials-heading">
         <div className="grab-section__header">
           <div className="flex items-center gap-1.5">
@@ -613,50 +613,54 @@ export function LandingPage() {
             </div>
           </div>
         ) : (
-          <div className="grab-promos-scroll">
+          <div className="grab-promo-banners-scroll">
             {promos.map((promo) => (
-              <div key={promo.id} className="grab-promo-card">
-                <div className="grab-promo-card__image-wrap">
+              <div key={promo.id} className="grab-promo-banner-card">
+                <div className="grab-promo-banner__content">
+                  <div className="grab-promo-banner__title-lockup">
+                    <span className="grab-promo-banner__heading-white">
+                      {promo.title.toUpperCase()}
+                    </span>
+                    <span className="grab-promo-banner__heading-green">SPECIALS!</span>
+                  </div>
+                  <p className="grab-promo-banner__copy">{promo.body}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleCopyPromoCode(promo.code)}
+                      className="grab-promo-banner__code-pill cursor-pointer"
+                      title="Click to copy coupon code"
+                    >
+                      <TagIcon className="w-3.5 h-3.5 text-amber-300" />
+                      <span>
+                        CODE: <strong>{promo.code}</strong> · {promo.discountPercent}% OFF
+                      </span>
+                      <span className="ml-1.5 text-xs opacity-75 underline font-bold">
+                        {copiedCode === promo.code ? "COPIED!" : "COPY"}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grab-promo-banner__graphic">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={
                       promo.imageUrl ||
-                      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&auto=format&fit=crop&q=80"
+                      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
                     }
                     alt={promo.title}
-                    className="grab-promo-card__image"
+                    className="grab-promo-banner__food-img"
                     loading="lazy"
                   />
-                  <div className="grab-promo-card__badge">
-                    <span>{promo.discountPercent}% OFF</span>
+
+                  {/* Circular Discount Callout Badge */}
+                  <div className="grab-promo-banner__circle-badge">
+                    <small>UP TO</small>
+                    <strong>{promo.discountPercent}%</strong>
+                    <small>OFF</small>
+                    <span className="grab-promo-banner__circle-sub">LIMITED TIME ONLY!</span>
                   </div>
-                </div>
-
-                <div className="grab-promo-card__body">
-                  <span className="grab-promo-card__scope-tag">
-                    {promo.scope === "OUTLET" && promo.outletId
-                      ? (outletNameMap.get(promo.outletId) ?? "Outlet Exclusive")
-                      : "All Outlets"}
-                  </span>
-                  <h3 className="grab-promo-card__title">{promo.title}</h3>
-                  <p className="grab-promo-card__desc">{promo.body}</p>
-
-                  <button
-                    type="button"
-                    className="grab-promo-card__code-btn"
-                    onClick={() => handleCopyPromoCode(promo.code)}
-                    title="Click to copy promo code"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <TagIcon className="w-3.5 h-3.5 text-amber-300" />
-                      <span>
-                        CODE: <strong>{promo.code}</strong>
-                      </span>
-                    </span>
-                    <span className="grab-promo-card__copy-tag">
-                      {copiedCode === promo.code ? "COPIED!" : "COPY"}
-                    </span>
-                  </button>
                 </div>
               </div>
             ))}
@@ -853,7 +857,7 @@ export function LandingPage() {
           </div>
           <span>Cart</span>
         </Link>
-        <Link href="/outlets" className="grab-bottom-nav__item">
+        <Link href="/favorites" className="grab-bottom-nav__item">
           <HeartIcon className="w-5 h-5" />
           <span>Favourites</span>
         </Link>

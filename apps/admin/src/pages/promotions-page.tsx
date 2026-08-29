@@ -11,7 +11,6 @@ import {
   CalendarClock,
   CheckCircle2,
   Edit3,
-  Image as ImageIcon,
   Info,
   Loader2,
   Megaphone,

@@ -931,10 +931,32 @@ body {
   background: #00b14f;
 }
 
-/* ── SECTION 3: EXCLUSIVE DISCOUNTS PROMO BANNER ────────────── */
-.grab-promo-banner {
+/* ── SECTION 3: PROMO BANNER & SCROLLABLE SPECIALS ───────────── */
+.grab-promo-banners-scroll {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.25rem 0.25rem 1rem;
+  scrollbar-width: thin;
+}
+
+.grab-promo-banners-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.grab-promo-banners-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 177, 79, 0.35);
+  border-radius: 999px;
+}
+
+.grab-promo-banner-card {
+  flex: 0 0 100%;
+  max-width: 100%;
+  scroll-snap-align: center;
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1.2fr 1fr;
   align-items: center;
   gap: 1.5rem;
   padding: 2.25rem;
