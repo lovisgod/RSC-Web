@@ -36,6 +36,7 @@ import { formatOutletRating, toDisplayOutlet, type Outlet } from "@/src/lib/data
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
+import { ThemeToggle } from "@rsc/ui";
 
 const categoryPills = [
   { label: "Rice & Swallow", icon: "🌾", query: "Rice" },
@@ -278,6 +279,7 @@ export function LandingPage() {
         </nav>
 
         <div className="landing-header__actions">
+          <ThemeToggle />
           {showSignIn && (
             <Link href="/sign-in" className="landing-sign-in">
               Sign in
@@ -624,20 +626,26 @@ export function LandingPage() {
                     <span className="grab-promo-banner__heading-green">SPECIALS!</span>
                   </div>
                   <p className="grab-promo-banner__copy">{promo.body}</p>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
+
+                  {/* Modern Coupon Ticket */}
+                  <div className="grab-promo-ticket mt-1">
+                    <div className="grab-promo-ticket__code-section">
+                      <TagIcon className="w-4 h-4 text-amber-300 shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="grab-promo-ticket__label">PROMO CODE</span>
+                        <span className="grab-promo-ticket__code">{promo.code}</span>
+                      </div>
+                      <span className="grab-promo-ticket__discount-pill">
+                        {promo.discountPercent}% OFF
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => handleCopyPromoCode(promo.code)}
-                      className="grab-promo-banner__code-pill cursor-pointer"
+                      className="grab-promo-ticket__copy-btn"
                       title="Click to copy coupon code"
                     >
-                      <TagIcon className="w-3.5 h-3.5 text-amber-300" />
-                      <span>
-                        CODE: <strong>{promo.code}</strong> · {promo.discountPercent}% OFF
-                      </span>
-                      <span className="ml-1.5 text-xs opacity-75 underline font-bold">
-                        {copiedCode === promo.code ? "COPIED!" : "COPY"}
-                      </span>
+                      {copiedCode === promo.code ? "COPIED!" : "COPY"}
                     </button>
                   </div>
                 </div>
@@ -659,7 +667,6 @@ export function LandingPage() {
                     <small>UP TO</small>
                     <strong>{promo.discountPercent}%</strong>
                     <small>OFF</small>
-                    <span className="grab-promo-banner__circle-sub">LIMITED TIME ONLY!</span>
                   </div>
                 </div>
               </div>

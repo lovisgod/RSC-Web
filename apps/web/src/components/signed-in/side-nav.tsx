@@ -18,6 +18,7 @@ import { useCartStore } from "@/src/stores/cart-store";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { apiClient } from "@/src/lib/api";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
+import { ThemeToggle } from "@rsc/ui";
 
 interface NavItem {
   href: string;
@@ -130,13 +131,16 @@ export function SideNav() {
         })}
       </nav>
 
-      {isSignedIn && (
-        <div className="border-t px-3 py-5" style={{ borderColor: "var(--rsc-sidebar-border)" }}>
+      <div
+        className="border-t px-3 py-4 flex items-center justify-between gap-2"
+        style={{ borderColor: "var(--rsc-sidebar-border)" }}
+      >
+        {isSignedIn && (
           <button
             type="button"
             onClick={handleLogout}
             aria-label="Sign out"
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors"
+            className="flex flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors"
             style={{ color: "var(--rsc-sidebar-muted)" }}
             onMouseEnter={(event) => {
               event.currentTarget.style.backgroundColor = "var(--rsc-sidebar-hover-bg)";
@@ -150,8 +154,9 @@ export function SideNav() {
             <LogOut className="h-5 w-5" aria-hidden="true" />
             <span>Logout</span>
           </button>
-        </div>
-      )}
+        )}
+        <ThemeToggle className="shrink-0" />
+      </div>
     </aside>
   );
 }
