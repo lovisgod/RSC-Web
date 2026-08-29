@@ -139,7 +139,7 @@ function topSpecials(outlets: OutletSummary[]): Array<MenuItemSummary & { outlet
 
       return bDiscount - aDiscount || b.ratingAverage - a.ratingAverage;
     })
-    .slice(0, 3);
+    .slice(0, 10);
 }
 
 export function LandingPage() {
@@ -147,8 +147,8 @@ export function LandingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [activeSpecialIndex, setActiveSpecialIndex] = useState(0);
   const [addedToast, setAddedToast] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
@@ -208,6 +208,14 @@ export function LandingPage() {
     setSearchFocused(true);
   }
 
+  function handleCopyPromoCode(code: string) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      void navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2500);
+    }
+  }
+
   function handleQuickAddSpecial(special: MenuItemSummary & { outletName: string }) {
     addItemToCart({
       outletId: special.outletId,
@@ -231,8 +239,8 @@ export function LandingPage() {
       {/* Toast Notification for quick add */}
       {addedToast && (
         <div className="grab-toast" role="status" aria-live="polite">
-          <CheckCircle2Icon className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span>{addedToast}</span>
+          <CheckCircle2Icon className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="grab-toast__msg">{addedToast}</span>
           <Link href="/cart" className="grab-toast__link">
             View Cart ({totalCartCount}) →
           </Link>
@@ -501,7 +509,76 @@ export function LandingPage() {
         )}
       </section>
 
-      {/* ── SECTION 2: DAILY SPECIALS (Cards with Green Add Button) ── */}
+      {/* ── SECTION 2: POPULAR MENUS (Portrait & Scrollable, no Today's Pick badge) ── */}
+      <section className="grab-section" id="menus" aria-labelledby="grab-menus-heading">
+        <div className="grab-section__header">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xl" role="img" aria-label="Plate">
+              🍽️
+            </span>
+            <h2 id="grab-menus-heading" className="grab-section__title">
+              POPULAR MENUS
+            </h2>
+          </div>
+          <Link href="/outlets" className="grab-section__view-all">
+            <span>View All</span>
+            <ChevronRightIcon className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {specials.length === 0 ? (
+          <div className="grab-empty">
+            <UtensilsIcon className="w-8 h-8 text-emerald-500 mb-2" />
+            <p>Menu items will appear here once kitchens publish them.</p>
+          </div>
+        ) : (
+          <div className="grab-menus-scroll">
+            {specials.map((special) => (
+              <div key={special.id} className="grab-menu-portrait-card">
+                {/* Food Photo with Floating Quick Add + button */}
+                <div className="grab-menu-portrait-card__image-wrap">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={special.imageUrl ?? "/images/images/fire_1f525.png"}
+                    alt={special.name}
+                    className="grab-menu-portrait-card__image"
+                    loading="lazy"
+                  />
+                  <button
+                    type="button"
+                    className="grab-menu-portrait-card__add-btn"
+                    aria-label={`Add ${special.name} to cart`}
+                    onClick={() => handleQuickAddSpecial(special)}
+                  >
+                    <PlusIcon className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+
+                {/* Card Body */}
+                <div className="grab-menu-portrait-card__body">
+                  <h3 className="grab-menu-portrait-card__title" title={special.name}>
+                    {special.name}
+                  </h3>
+                  <p className="grab-menu-portrait-card__outlet">{special.outletName}</p>
+
+                  <div className="grab-menu-portrait-card__price-row">
+                    <span className="grab-menu-portrait-card__price">
+                      {formatNaira(special.currentPriceMinor ?? special.priceMinor)}
+                    </span>
+                    {special.isDiscountActive && (
+                      <span className="grab-menu-portrait-card__strike-price">
+                        {formatNaira(special.priceMinor)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── SECTION 3: DAILY SPECIALS (Real Backend Promos) ── */}
       <section className="grab-section" id="specials" aria-labelledby="grab-specials-heading">
         <div className="grab-section__header">
           <div className="flex items-center gap-1.5">
@@ -518,115 +595,36 @@ export function LandingPage() {
           </Link>
         </div>
 
-        {specials.length === 0 ? (
-          <div className="grab-empty">
-            <FlameIcon className="w-8 h-8 text-amber-500 mb-2" />
-            <p>Menu specials will appear here once kitchens publish them.</p>
-          </div>
-        ) : (
-          <div className="grab-specials-grid">
-            {specials.map((special) => (
-              <div key={special.id} className="grab-special-card">
-                {/* Top Left Badge */}
-                <div className="grab-special-card__badge-row">
-                  <span className="grab-special-badge">
-                    {special.isDiscountActive ? "SPECIAL OFFER" : "TODAY'S PICK"}
-                  </span>
-                </div>
-
-                <div className="grab-special-card__body">
-                  <div className="grab-special-card__info">
-                    <h3 className="grab-special-card__title">{special.name}</h3>
-                    <p className="grab-special-card__desc">{special.outletName}</p>
-
-                    {/* Pricing Row */}
-                    <div className="grab-special-card__price-row">
-                      <span className="grab-special-card__price">
-                        {formatNaira(special.currentPriceMinor ?? special.priceMinor)}
-                      </span>
-                      {special.isDiscountActive && (
-                        <span className="grab-special-card__strike-price">
-                          {formatNaira(special.priceMinor)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Round Food Image */}
-                  <div className="grab-special-card__image-container">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={special.imageUrl ?? "/images/images/fire_1f525.png"}
-                      alt={special.name}
-                      className="grab-special-card__image"
-                      loading="lazy"
-                    />
-
-                    {/* Green Round + Action Button */}
-                    <button
-                      type="button"
-                      className="grab-add-btn"
-                      aria-label={`Add ${special.name} to cart`}
-                      onClick={() => handleQuickAddSpecial(special)}
-                    >
-                      <PlusIcon className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Carousel Pagination Indicator Dots */}
-        {specials.length > 1 && (
-          <div className="grab-pagination-dots" aria-hidden="true">
-            {specials.map((_, dotIdx) => (
-              <button
-                key={dotIdx}
-                type="button"
-                className={`grab-pagination-dot ${dotIdx === activeSpecialIndex ? "grab-pagination-dot--active" : ""}`}
-                onClick={() => setActiveSpecialIndex(dotIdx)}
-                aria-label={`Go to slide ${dotIdx + 1}`}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── SECTION 3: EXCLUSIVE DISCOUNTS PROMO BANNER ── */}
-      <section className="grab-section" id="discounts" aria-labelledby="grab-discounts-heading">
-        <div className="grab-section__header">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xl" role="img" aria-label="Discount tag">
-              🏷️
-            </span>
-            <h2 id="grab-discounts-heading" className="grab-section__title">
-              EXCLUSIVE DISCOUNTS
-            </h2>
-          </div>
-          <Link href="/outlets" className="grab-section__view-all">
-            <span>View All</span>
-            <ChevronRightIcon className="w-4 h-4" />
-          </Link>
-        </div>
-
         <div className="grab-promo-banner">
           <div className="grab-promo-banner__content">
             <div className="grab-promo-banner__title-lockup">
-              <span className="grab-promo-banner__heading-white">HUNGRY FOR</span>
-              <span className="grab-promo-banner__heading-green">MORE?</span>
+              <span className="grab-promo-banner__heading-white">
+                {heroPromo ? heroPromo.title.toUpperCase() : "HUNGRY FOR"}
+              </span>
+              <span className="grab-promo-banner__heading-green">
+                {heroPromo ? "SPECIALS!" : "MORE?"}
+              </span>
             </div>
             <p className="grab-promo-banner__copy">
-              Enjoy amazing deals from your favorite outlets daily! Use coupon codes at checkout for
-              instant feast savings.
+              {heroPromo?.body ??
+                "Enjoy amazing deals from your favorite outlets daily! Use coupon codes at checkout for instant feast savings."}
             </p>
             {heroPromo && (
-              <div className="grab-promo-banner__code-pill">
-                <TagIcon className="w-3.5 h-3.5" />
-                <span>
-                  CODE: {heroPromo.code} · UP TO {heroPromo.discountPercent}% OFF
-                </span>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopyPromoCode(heroPromo.code)}
+                  className="grab-promo-banner__code-pill"
+                  title="Click to copy coupon code"
+                >
+                  <TagIcon className="w-3.5 h-3.5" />
+                  <span>
+                    CODE: <strong>{heroPromo.code}</strong> · {heroPromo.discountPercent}% OFF
+                  </span>
+                  <span className="ml-1.5 text-xs opacity-75 underline">
+                    {copiedCode === heroPromo.code ? "COPIED!" : "COPY"}
+                  </span>
+                </button>
               </div>
             )}
           </div>
@@ -824,9 +822,9 @@ export function LandingPage() {
           <HomeIcon className="w-5 h-5" />
           <span>Home</span>
         </Link>
-        <Link href="/menu" className="grab-bottom-nav__item">
-          <SearchIcon className="w-5 h-5" />
-          <span>Search</span>
+        <Link href="/orders" className="grab-bottom-nav__item">
+          <ReceiptIcon className="w-5 h-5" />
+          <span>Orders</span>
         </Link>
         <Link
           href="/cart"
@@ -841,13 +839,13 @@ export function LandingPage() {
           </div>
           <span>Cart</span>
         </Link>
-        <Link href="/tracking" className="grab-bottom-nav__item">
-          <MapPinIcon className="w-5 h-5" />
-          <span>Tracking</span>
+        <Link href="/outlets" className="grab-bottom-nav__item">
+          <HeartIcon className="w-5 h-5" />
+          <span>Favourites</span>
         </Link>
         <Link href={isSignedIn ? "/profile" : "/sign-in"} className="grab-bottom-nav__item">
           <UserIcon className="w-5 h-5" />
-          <span>Profile</span>
+          <span>Account</span>
         </Link>
       </nav>
     </main>

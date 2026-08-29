@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Heart as HeartIcon,
   Home as HomeIcon,
-  Search as SearchIcon,
+  Receipt as ReceiptIcon,
   ShoppingBag as ShoppingBagIcon,
-  MapPin as MapPinIcon,
   User as UserIcon,
 } from "lucide-react";
 
@@ -15,10 +15,10 @@ import { useCartStore } from "@/src/stores/cart-store";
 
 const navItems = [
   { href: "/outlets", icon: HomeIcon, label: "Home" },
-  { href: "/menu", icon: SearchIcon, label: "Search" },
+  { href: "/orders", icon: ReceiptIcon, label: "Orders" },
   { href: "/cart", icon: ShoppingBagIcon, label: "Cart" },
-  { href: "/tracking", icon: MapPinIcon, label: "Tracking" },
-  { href: "/profile", icon: UserIcon, label: "Profile" },
+  { href: "/favorites", icon: HeartIcon, label: "Favourites" },
+  { href: "/profile", icon: UserIcon, label: "Account" },
 ];
 
 export function BottomNav() {
