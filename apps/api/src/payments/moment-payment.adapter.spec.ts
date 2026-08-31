@@ -260,6 +260,83 @@ describe(MomentPaymentAdapter.name, () => {
       });
     });
 
+    it("parses an active unpaid session update as a non-terminal payment event", async () => {
+      const payload = {
+        id: "evt_attempt_failed_123",
+        type: "payment_session.updated",
+        data: {
+          external_reference: "pmt_master_123",
+          status: "active",
+          payment_status: "unpaid",
+          amount: 50000,
+          last_payment_error: {
+            error_code: "card_declined",
+            decline_code: "insufficient_funds",
+            message: "Insufficient Funds",
+          },
+        },
+      };
+      const webhookId = "msg_attempt_failed_123";
+      const timestamp = "1720646400";
+      const rawBodyStr = JSON.stringify(payload);
+      const rawBody = Buffer.from(rawBodyStr, "utf8");
+      const secretBytes = Buffer.from(webhookSecret.split("_")[1] || "", "base64");
+      const generatedSig = createHmac("sha256", secretBytes)
+        .update(`${webhookId}.${timestamp}.${rawBodyStr}`)
+        .digest("base64");
+
+      const event = await adapter.parseWebhookEvent(rawBody, `v1,${generatedSig}`, {
+        "webhook-id": webhookId,
+        "webhook-timestamp": timestamp,
+        "webhook-signature": `v1,${generatedSig}`,
+      });
+
+      expect(event).toEqual({
+        eventId: "evt_attempt_failed_123",
+        eventType: "payment_session.updated",
+        reference: "pmt_master_123",
+        status: "PENDING",
+        amountMinor: 50000,
+        providerResponse: payload,
+      });
+    });
+
+    it("parses a completed paid session update as a successful payment event", async () => {
+      const payload = {
+        id: "evt_updated_paid_123",
+        type: "payment_session.updated",
+        data: {
+          external_reference: "pmt_master_123",
+          status: "completed",
+          payment_status: "paid",
+          payment_outcome: "paid",
+          amount: 50000,
+        },
+      };
+      const webhookId = "msg_updated_paid_123";
+      const timestamp = "1720646400";
+      const rawBodyStr = JSON.stringify(payload);
+      const rawBody = Buffer.from(rawBodyStr, "utf8");
+      const secretBytes = Buffer.from(webhookSecret.split("_")[1] || "", "base64");
+      const generatedSig = createHmac("sha256", secretBytes)
+        .update(`${webhookId}.${timestamp}.${rawBodyStr}`)
+        .digest("base64");
+
+      const event = await adapter.parseWebhookEvent(rawBody, `v1,${generatedSig}`, {
+        "webhook-id": webhookId,
+        "webhook-timestamp": timestamp,
+        "webhook-signature": `v1,${generatedSig}`,
+      });
+
+      expect(event).toEqual(
+        expect.objectContaining({
+          eventId: "evt_updated_paid_123",
+          eventType: "payment_session.updated",
+          status: "SUCCESS",
+        }),
+      );
+    });
+
     it("should return null if signature is invalid", async () => {
       const payload = {
         id: "evt_test_123",

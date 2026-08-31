@@ -111,7 +111,7 @@ export class PaymentsController {
   @ApiOperation({
     summary: "Payment provider webhook receiver",
     description:
-      "Receives charge.success / charge.failed / payment_session.completed events from payment provider. " +
+      "Receives charge.success / charge.failed / payment_session.updated / payment_session.completed events from payment provider. " +
       "Validates signature. No auth cookie required.",
   })
   async webhook(@Req() request: RawBodyRequest<Request>) {

@@ -1139,6 +1139,89 @@ describe(PaymentsService.name, () => {
     expect(dataSource.query).not.toHaveBeenCalled();
   });
 
+  it("stores a non-terminal Moment session update without failing the payment or cancelling the order", async () => {
+    const payment = Object.assign(new Payment(), {
+      id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+      masterOrderId: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      amountMinor: 645000,
+      currency: "NGN" as const,
+      gateway: "moment",
+      reference: "RSC-reference",
+      status: PaymentStatus.PENDING,
+      providerResponse: { id: "ps_original" },
+    });
+    payments.findOne.mockResolvedValue(payment);
+    const providerResponse = {
+      id: "evt-attempt-failed",
+      type: "payment_session.updated",
+      data: {
+        status: "active",
+        payment_status: "unpaid",
+        last_payment_error: {
+          error_code: "card_declined",
+          decline_code: "insufficient_funds",
+        },
+      },
+    };
+
+    const result = await service.confirmPayment({
+      eventId: "evt-attempt-failed",
+      eventType: "payment_session.updated",
+      reference: payment.reference,
+      status: "PENDING",
+      amountMinor: payment.amountMinor,
+      providerResponse,
+    });
+
+    expect(result).toEqual({ already: false });
+    expect(payments.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: PaymentStatus.PENDING,
+        providerResponse,
+      }),
+    );
+    expect(masterOrders.findOne).not.toHaveBeenCalled();
+    expect(masterOrders.save).not.toHaveBeenCalled();
+    expect(realtime.emitOrderStatusUpdate).not.toHaveBeenCalled();
+    expect(notifications.createAndPush).not.toHaveBeenCalled();
+  });
+
+  it("does not apply a duplicate non-terminal Moment session update twice", async () => {
+    const payment = Object.assign(new Payment(), {
+      id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+      masterOrderId: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      amountMinor: 645000,
+      currency: "NGN" as const,
+      gateway: "moment",
+      reference: "RSC-reference",
+      status: PaymentStatus.PENDING,
+      providerResponse: { id: "ps_original" },
+    });
+    const manager = {
+      query: vi.fn().mockResolvedValue([]),
+      getRepository: (entity: unknown) => (entity === Payment ? payments : masterOrders),
+    };
+    payments.findOne.mockResolvedValue(payment);
+    payments.save.mockClear();
+    dataSource.transaction = vi
+      .fn()
+      .mockImplementation((work: (manager: unknown) => unknown) => Promise.resolve(work(manager)));
+
+    const result = await service.confirmPayment({
+      eventId: "evt-attempt-failed",
+      eventType: "payment_session.updated",
+      reference: payment.reference,
+      status: "PENDING",
+      amountMinor: payment.amountMinor,
+      providerResponse: { id: "evt-attempt-failed" },
+    });
+
+    expect(result).toEqual({ already: true });
+    expect(payments.save).not.toHaveBeenCalled();
+    expect(masterOrders.findOne).not.toHaveBeenCalled();
+    expect(masterOrders.save).not.toHaveBeenCalled();
+  });
+
   it("rejects a successful webhook with a different amount", async () => {
     payments.findOne.mockResolvedValue({
       reference: "RSC-reference",
