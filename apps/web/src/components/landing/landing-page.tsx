@@ -38,6 +38,7 @@ import { formatOutletRating, toDisplayOutlet, type Outlet } from "@/src/lib/data
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
+import { SideNavDrawer } from "@/src/components/signed-in/side-nav";
 import { ThemeToggle } from "@rsc/ui";
 
 const categoryPills = [
@@ -149,6 +150,7 @@ export function LandingPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -239,6 +241,9 @@ export function LandingPage() {
 
   return (
     <main className="grab-landing-shell">
+      {/* Slide-out Navigation Drawer */}
+      <SideNavDrawer isOpen={isNavDrawerOpen} onClose={() => setIsNavDrawerOpen(false)} />
+
       {/* Toast Notification for quick add */}
       {addedToast && (
         <div className="grab-toast" role="status" aria-live="polite">
@@ -265,11 +270,8 @@ export function LandingPage() {
           <button
             type="button"
             className="landing-icon-btn"
-            aria-label="Open kitchen menu navigation"
-            onClick={() => {
-              const el = document.getElementById("outlets");
-              if (el) el.scrollIntoView({ behavior: "smooth" });
-            }}
+            aria-label="Open navigation menu"
+            onClick={() => setIsNavDrawerOpen(true)}
           >
             <ListIcon className="w-5 h-5" />
           </button>
@@ -449,27 +451,43 @@ export function LandingPage() {
               return (
                 <article
                   key={outlet.id}
-                  className={`grab-portrait-card ${outlet.name.toLowerCase().includes("farfallino") || idx === 2 ? "grab-portrait-card--light" : ""}`}
+                  className="grab-portrait-card"
                   data-disabled={isOffline}
                   style={{
                     backgroundColor: outlet.headerColor || "#0d1a12",
                     ...(hasImageUrl
                       ? {
-                          backgroundImage: `url(${outlet.image})`,
+                          backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.15) 38%, rgba(0, 0, 0, 0.88) 100%), url(${outlet.image})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                         }
                       : {}),
                   }}
                 >
-                  {/* Card Header: Text with Outlet Name & Cuisine */}
+                  {/* Card Header: Badges & Left-Aligned Outlet Name & Cuisine */}
                   <div className="grab-portrait-card__header">
-                    <h3 className="grab-portrait-card__title">{outlet.name}</h3>
-                    <p className="grab-portrait-card__cuisine">
-                      {outlet.cuisines?.length > 0
-                        ? outlet.cuisines.join(" · ")
-                        : "Wholesome Flavors"}
-                    </p>
+                    <div className="grab-portrait-card__top-meta">
+                      <span
+                        className="grab-portrait-card__status"
+                        data-online={outlet.isOnline !== false}
+                      >
+                        <span className="grab-portrait-card__status-dot" />
+                        {outlet.isOnline !== false ? "Open" : "Closed"}
+                      </span>
+                      <span className="grab-portrait-card__rating">
+                        <StarIcon className="w-3 h-3 fill-amber-400 text-amber-400" />
+                        {formatOutletRating(outlet.rating)}
+                      </span>
+                    </div>
+
+                    <div className="grab-portrait-card__title-group">
+                      <h3 className="grab-portrait-card__title">{outlet.name}</h3>
+                      <p className="grab-portrait-card__cuisine">
+                        {outlet.cuisines?.length > 0
+                          ? outlet.cuisines.join(" · ")
+                          : "Wholesome Flavors"}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Spacer to push CTA cleanly to the bottom */}
@@ -479,7 +497,7 @@ export function LandingPage() {
                   <div className="grab-portrait-card__footer">
                     <Link
                       href={isOffline ? "#" : `/outlets/${outlet.id}`}
-                      className={`grab-order-now-btn ${idx === 2 || outlet.name.toLowerCase().includes("farfallino") ? "grab-order-now-btn--amber" : ""}`}
+                      className={`grab-order-now-btn ${idx === 2 || outlet.name.toLowerCase().includes("salma") ? "grab-order-now-btn--amber" : ""}`}
                       aria-label={`Order now from ${outlet.name}`}
                     >
                       <span className="grab-order-now-btn__text">
