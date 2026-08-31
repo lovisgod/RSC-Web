@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRightIcon,
   AwardIcon,
+  BellIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -12,6 +13,7 @@ import {
   HeartIcon,
   HelpCircleIcon,
   HomeIcon,
+  ListIcon,
   MapPinIcon,
   PlusIcon,
   ReceiptIcon,
@@ -257,37 +259,37 @@ export function LandingPage() {
         </Link>
       </div>
 
-      {/* Former Header Navigation */}
-      <header className="landing-header" aria-label="RSC Foods landing navigation">
-        <Link className="landing-brand" href="/" aria-label="RSC Foods home">
-          <BrandLogo className="w-28 sm:w-32" priority />
-        </Link>
+      {/* Clean Full-Width Header Navigation (Non-rounded navbar with separated menu on left, notification + theme toggle on right) */}
+      <header className="landing-header" aria-label="DineOut NG navigation">
+        <div className="landing-header__left">
+          <button
+            type="button"
+            className="landing-icon-btn"
+            aria-label="Open kitchen menu navigation"
+            onClick={() => {
+              const el = document.getElementById("outlets");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            <ListIcon className="w-5 h-5" />
+          </button>
+        </div>
 
-        <nav className="landing-header__nav" aria-label="Primary navigation">
-          <Link href="#outlets" className="landing-header__link">
-            Kitchens
-          </Link>
-          <Link href="#specials" className="landing-header__link">
-            Specials
-          </Link>
-          <Link href="#how-it-works" className="landing-header__link">
-            How it Works
-          </Link>
-          <Link href="/cart" className="landing-header__link">
-            Cart
-          </Link>
-        </nav>
-
-        <div className="landing-header__actions">
+        <div className="landing-header__right">
           <ThemeToggle />
+          <Link
+            href="/notifications"
+            className="landing-icon-btn landing-notif-btn"
+            aria-label="View notifications"
+          >
+            <BellIcon className="w-5 h-5" />
+            <span className="landing-notif-dot" aria-hidden="true" />
+          </Link>
           {showSignIn && (
             <Link href="/sign-in" className="landing-sign-in">
               Sign in
             </Link>
           )}
-          <Link href="/outlets" className="landing-header__cta">
-            Order Now
-          </Link>
         </div>
       </header>
 
@@ -296,6 +298,11 @@ export function LandingPage() {
         <div className="grab-hero__brush-bg" aria-hidden="true" />
 
         <div className="grab-hero__brand-center">
+          {/* DineOut NG Logo directly on top of tagline */}
+          <div className="grab-hero__logo-wrapper">
+            <BrandLogo className="w-40 sm:w-52" priority />
+          </div>
+
           <div className="grab-hero__tagline-group">
             <h1 className="grab-hero__tagline-main">One App. Many Flavors.</h1>
             <p className="grab-hero__tagline-sub">Endless Choices.</p>
@@ -442,50 +449,27 @@ export function LandingPage() {
               return (
                 <article
                   key={outlet.id}
-                  className="grab-portrait-card"
+                  className={`grab-portrait-card ${outlet.name.toLowerCase().includes("farfallino") || idx === 2 ? "grab-portrait-card--light" : ""}`}
                   data-disabled={isOffline}
                   style={{
                     backgroundColor: outlet.headerColor || "#0d1a12",
                     ...(hasImageUrl
                       ? {
-                          backgroundImage: `linear-gradient(180deg, rgba(6, 16, 10, 0.82) 0%, rgba(6, 16, 10, 0.25) 45%, rgba(6, 16, 10, 0.88) 100%), url(${outlet.image})`,
+                          backgroundImage: `url(${outlet.image})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                         }
                       : {}),
                   }}
                 >
-                  {/* Card Brand Header */}
+                  {/* Card Header: Text with Outlet Name & Cuisine */}
                   <div className="grab-portrait-card__header">
-                    <div className="grab-portrait-card__top-meta">
-                      <span
-                        className="grab-portrait-card__status"
-                        data-online={outlet.isOnline !== false}
-                      >
-                        <span className="grab-portrait-card__status-dot" />
-                        {outlet.isOnline !== false ? "Open" : "Closed"}
-                      </span>
-                      <span className="grab-portrait-card__rating">
-                        <StarIcon className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        {formatOutletRating(outlet.rating)}
-                      </span>
-                    </div>
-
-                    {/* Top Logo (Transparent Background & Stands Out) */}
-                    <div className="grab-portrait-card__top-brand" title={outlet.name}>
-                      {outlet.logoUrl ? (
-                        <div className="grab-portrait-card__logo-wrap">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={outlet.logoUrl}
-                            alt={outlet.name}
-                            className="grab-portrait-card__logo-img"
-                          />
-                        </div>
-                      ) : (
-                        <h3 className="grab-portrait-card__logo-fallback-text">{outlet.name}</h3>
-                      )}
-                    </div>
+                    <h3 className="grab-portrait-card__title">{outlet.name}</h3>
+                    <p className="grab-portrait-card__cuisine">
+                      {outlet.cuisines?.length > 0
+                        ? outlet.cuisines.join(" · ")
+                        : "Wholesome Flavors"}
+                    </p>
                   </div>
 
                   {/* Spacer to push CTA cleanly to the bottom */}
@@ -495,7 +479,7 @@ export function LandingPage() {
                   <div className="grab-portrait-card__footer">
                     <Link
                       href={isOffline ? "#" : `/outlets/${outlet.id}`}
-                      className={`grab-order-now-btn ${idx === 2 ? "grab-order-now-btn--amber" : ""}`}
+                      className={`grab-order-now-btn ${idx === 2 || outlet.name.toLowerCase().includes("farfallino") ? "grab-order-now-btn--amber" : ""}`}
                       aria-label={`Order now from ${outlet.name}`}
                     >
                       <span className="grab-order-now-btn__text">
