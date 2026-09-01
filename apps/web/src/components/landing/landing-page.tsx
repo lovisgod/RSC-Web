@@ -497,7 +497,7 @@ export function LandingPage() {
                   <div className="grab-portrait-card__footer">
                     <Link
                       href={isOffline ? "#" : `/outlets/${outlet.id}`}
-                      className={`grab-order-now-btn ${idx === 2 || outlet.name.toLowerCase().includes("salma") ? "grab-order-now-btn--amber" : ""}`}
+                      className="grab-order-now-btn"
                       aria-label={`Order now from ${outlet.name}`}
                     >
                       <span className="grab-order-now-btn__text">
