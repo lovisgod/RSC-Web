@@ -250,9 +250,14 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     const eventType = event.type ?? "";
     const data = event.data ?? {};
 
-    if (eventType !== "payment_session.updated" && eventType !== "payment_session.completed") {
+    const supportedEventTypes = new Set([
+      "payment.succeeded",
+      "payment_session.updated",
+      "payment_session.completed",
+    ]);
+    if (!supportedEventTypes.has(eventType)) {
       this.logger.log(
-        `Moment webhook: ignored event type "${eventType}" (only payment_session.updated and payment_session.completed are processed)`,
+        `Moment webhook: ignored event type "${eventType}" (only payment.succeeded, payment_session.updated and payment_session.completed are processed)`,
       );
       return null;
     }
@@ -267,7 +272,12 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       `Moment webhook parsed successfully: reference=${reference}, eventId=${event.id ?? reference}, outcome=${data.payment_outcome ?? data.status}, amount=${data.amount ?? 0}`,
     );
 
-    const isSuccessful = data.payment_outcome === "paid" || data.status === "completed";
+    const isSuccessful =
+      eventType === "payment.succeeded" ||
+      data.payment_outcome === "paid" ||
+      data.payment_status === "paid" ||
+      data.status === "completed" ||
+      data.status === "succeeded";
     const status =
       eventType === "payment_session.updated" && !isSuccessful
         ? "PENDING"

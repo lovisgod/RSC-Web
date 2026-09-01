@@ -337,6 +337,50 @@ describe(MomentPaymentAdapter.name, () => {
       );
     });
 
+    it("parses a payment.succeeded event as a successful payment event", async () => {
+      const payload = {
+        id: "evt_payment_succeeded_123",
+        type: "payment.succeeded",
+        data: {
+          id: "pay_123",
+          external_reference: "pmt_master_123",
+          status: "succeeded",
+          amount: 50000,
+          currency: "NGN",
+          payment_method_details: {
+            type: "card",
+            card: {
+              scheme: "VERVE",
+              last4: "4242",
+            },
+          },
+        },
+      };
+      const webhookId = "msg_payment_succeeded_123";
+      const timestamp = "1720646400";
+      const rawBodyStr = JSON.stringify(payload);
+      const rawBody = Buffer.from(rawBodyStr, "utf8");
+      const secretBytes = Buffer.from(webhookSecret.split("_")[1] || "", "base64");
+      const generatedSig = createHmac("sha256", secretBytes)
+        .update(`${webhookId}.${timestamp}.${rawBodyStr}`)
+        .digest("base64");
+
+      const event = await adapter.parseWebhookEvent(rawBody, `v1,${generatedSig}`, {
+        "webhook-id": webhookId,
+        "webhook-timestamp": timestamp,
+        "webhook-signature": `v1,${generatedSig}`,
+      });
+
+      expect(event).toEqual({
+        eventId: "evt_payment_succeeded_123",
+        eventType: "payment.succeeded",
+        reference: "pmt_master_123",
+        status: "SUCCESS",
+        amountMinor: 50000,
+        providerResponse: payload,
+      });
+    });
+
     it("should return null if signature is invalid", async () => {
       const payload = {
         id: "evt_test_123",
