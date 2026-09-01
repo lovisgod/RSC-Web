@@ -1,6 +1,7 @@
 export interface ApplicationConfig {
   app: {
     environment: string;
+    deploymentEnvironment: string;
     port: number;
     version: string;
     corsOrigins: string[];
@@ -139,6 +140,7 @@ export default function configuration(): ApplicationConfig {
   return {
     app: {
       environment: process.env.NODE_ENV ?? "development",
+      deploymentEnvironment: process.env.DEPLOY_ENV ?? "development",
       port: Number(process.env.PORT ?? 4000),
       version: process.env.APP_VERSION ?? "development",
       corsOrigins,

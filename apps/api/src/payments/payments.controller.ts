@@ -167,7 +167,9 @@ export class PaymentsController {
   }
 
   private logMomentWebhookReplaySnippet(rawBody: Buffer, headers: Record<string, string>): void {
-    const environment = this.configService.get("app.environment", { infer: true });
+    const deploymentEnvironment = this.configService.get("app.deploymentEnvironment", {
+      infer: true,
+    });
     const enabled = this.configService.get("payments.moment.webhookReplayLog", { infer: true });
     const webhookId = headers["webhook-id"];
     const webhookTimestamp = headers["webhook-timestamp"];
@@ -175,7 +177,7 @@ export class PaymentsController {
 
     if (
       !enabled ||
-      environment === "production" ||
+      deploymentEnvironment === "production" ||
       !webhookId ||
       !webhookTimestamp ||
       !webhookSignature

@@ -4,6 +4,7 @@ export type NodeEnvironment = "development" | "staging" | "production";
 
 export interface Environment {
   NODE_ENV: NodeEnvironment;
+  DEPLOY_ENV: NodeEnvironment;
   PORT: number;
   APP_VERSION: string;
   LOG_LEVEL: string;
@@ -88,6 +89,7 @@ const environmentSchema = Joi.object<Environment>({
   NODE_ENV: Joi.string()
     .valid("development", "staging", "test", "production")
     .default("development"),
+  DEPLOY_ENV: Joi.string().valid("development", "staging", "production").default("development"),
   PORT: Joi.number().port().default(4000),
   APP_VERSION: Joi.string().default("development"),
   LOG_LEVEL: Joi.string().valid("fatal", "error", "warn", "log", "debug", "verbose").default("log"),
