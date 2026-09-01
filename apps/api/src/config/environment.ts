@@ -52,6 +52,7 @@ export interface Environment {
   MOMENT_SECRET_KEY?: string;
   MOMENT_BASE_URL: string;
   MOMENT_WEBHOOK_SECRET?: string;
+  MOMENT_WEBHOOK_REPLAY_LOG: boolean;
   MOMENT_SETTLEMENT_REPORT_PATH: string;
   PLATFORM_COMMISSION_BPS: number;
   VAT_BPS: number;
@@ -222,6 +223,7 @@ const environmentSchema = Joi.object<Environment>({
     then: Joi.string().min(10).required(),
     otherwise: Joi.string().optional().allow(""),
   }),
+  MOMENT_WEBHOOK_REPLAY_LOG: Joi.boolean().truthy("true").falsy("false").default(false),
   MOMENT_SETTLEMENT_REPORT_PATH: Joi.string().min(1).default("/settlements/report"),
   PLATFORM_COMMISSION_BPS: Joi.number().integer().min(0).max(10_000).default(1_000),
   VAT_BPS: Joi.number().integer().min(0).max(10_000).default(750),
