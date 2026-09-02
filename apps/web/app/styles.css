@@ -1800,17 +1800,51 @@ body {
   }
 
   .grab-outlets-portrait-grid {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 1rem;
-    padding-bottom: 0.75rem;
-    -webkit-overflow-scrolling: touch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
 
-    .grab-portrait-card {
-      flex: 0 0 240px;
-      scroll-snap-align: start;
-    }
+  .grab-portrait-card {
+    min-height: 280px;
+    padding: 0.85rem 0.75rem 0.75rem;
+    border-radius: 18px;
+  }
+
+  .grab-portrait-card__spacer {
+    min-height: 60px;
+  }
+
+  .grab-portrait-card__title {
+    font-size: 1rem;
+  }
+
+  .grab-portrait-card__cuisine {
+    font-size: 0.72rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+
+  .grab-portrait-card__status,
+  .grab-portrait-card__rating {
+    font-size: 0.68rem;
+    padding: 0.15rem 0.45rem;
+  }
+
+  .grab-order-now-btn {
+    height: 36px;
+    padding: 0 0.35rem 0 0.75rem;
+  }
+
+  .grab-order-now-btn__text {
+    font-size: 0.72rem;
+  }
+
+  .grab-order-now-btn__circle {
+    width: 26px;
+    height: 26px;
   }
 
   .grab-specials-grid {
@@ -1835,5 +1869,39 @@ body {
   .grab-footer__inner {
     grid-template-columns: 1fr;
     gap: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .grab-outlets-portrait-grid {
+    gap: 0.5rem;
+  }
+
+  .grab-portrait-card {
+    min-height: 250px;
+    padding: 0.75rem 0.55rem 0.55rem;
+    border-radius: 16px;
+  }
+
+  .grab-portrait-card__title {
+    font-size: 0.92rem;
+  }
+
+  .grab-portrait-card__cuisine {
+    font-size: 0.68rem;
+  }
+
+  .grab-order-now-btn {
+    height: 34px;
+    padding: 0 0.25rem 0 0.55rem;
+  }
+
+  .grab-order-now-btn__text {
+    font-size: 0.68rem;
+  }
+
+  .grab-order-now-btn__circle {
+    width: 24px;
+    height: 24px;
   }
 }
