@@ -22,7 +22,6 @@ import { BrandLogo } from "@/src/components/shared/brand-logo";
 export function SignInForm() {
   const searchParams = useSearchParams();
   const signIn = useAuthStore((s) => s.signIn);
-  const claimCartOwner = useCartStore((s) => s.claimActiveSessionOwner);
   const reconcileCartOwner = useCartStore((s) => s.reconcileOwner);
 
   const {
@@ -55,11 +54,7 @@ export function SignInForm() {
       if (stored) localStorage.removeItem(AUTH_REDIRECT_KEY);
       const redirectTarget = stored ?? searchParams.get("redirect") ?? "/outlets";
 
-      if (redirectTarget === "/checkout" || redirectTarget.startsWith("/checkout?")) {
-        reconcileCartOwner(result.user.id);
-      } else {
-        claimCartOwner(result.user.id);
-      }
+      reconcileCartOwner(result.user.id);
 
       signIn(result.user.id);
       // Replace so /sign-in is gone from history — back button can't return here

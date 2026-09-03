@@ -9,14 +9,14 @@ export function CartSessionBridge() {
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
   const isSignedIn = useAuthStore((state) => state.isSignedIn);
   const userId = useAuthStore((state) => state.userId);
-  const claimCartOwner = useCartStore((state) => state.claimActiveSessionOwner);
+  const reconcileCartOwner = useCartStore((state) => state.reconcileOwner);
   const releaseCartOwner = useCartStore((state) => state.releaseActiveSessionOwner);
 
   useEffect(() => {
     if (!hasHydrated) return;
 
     if (isSignedIn && userId) {
-      claimCartOwner(userId);
+      reconcileCartOwner(userId);
       return;
     }
 
