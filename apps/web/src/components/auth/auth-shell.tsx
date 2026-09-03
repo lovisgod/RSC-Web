@@ -14,13 +14,13 @@ export function AuthShell({ children }: { children: ReactNode }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
   const userId = useAuthStore((s) => s.userId);
-  const claimCartOwner = useCartStore((s) => s.claimActiveSessionOwner);
+  const reconcileCartOwner = useCartStore((s) => s.reconcileOwner);
   const pathname = usePathname();
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;
-    claimCartOwner(userId);
-  }, [claimCartOwner, isSignedIn, userId]);
+    reconcileCartOwner(userId);
+  }, [reconcileCartOwner, isSignedIn, userId]);
 
   // Push a duplicate history entry on every route change so back swipe
   // lands on the same URL rather than escaping to unauthenticated pages.
