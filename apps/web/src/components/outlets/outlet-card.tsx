@@ -1,12 +1,35 @@
 import Link from "next/link";
-import { Clock10Icon, StarIcon } from "lucide-react";
+import { Clock10Icon, Heart, StarIcon } from "lucide-react";
 
 import { formatOutletRating, type Outlet } from "@/src/lib/data/outlets";
+import { useFavoritesStore } from "@/src/stores/favorites-store";
 
 export function OutletCard({ outlet }: { outlet: Outlet }) {
   const isOffline = outlet.isOnline === false;
   const rating = formatOutletRating(outlet.rating);
   const deliveryTimeLabel = outlet.deliveryTime ? `${outlet.deliveryTime} mins` : "30-45 mins";
+  const isFavorite = useFavoritesStore((s) => s.isOutletFavorite(outlet.id));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleOutlet);
+
+  const favoriteButton = (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFavorite(outlet.id);
+      }}
+      aria-label={
+        isFavorite ? `Remove ${outlet.name} from favorites` : `Add ${outlet.name} to favorites`
+      }
+      className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full grid place-items-center backdrop-blur-md transition-transform active:scale-90 ${
+        isFavorite ? "bg-white text-red-500 shadow-md" : "bg-black/35 text-white hover:bg-black/55"
+      }`}
+    >
+      <Heart className={`w-4 h-4 ${isFavorite ? "fill-current" : ""}`} />
+    </button>
+  );
+
   const card = (
     <article
       data-disabled={isOffline}
@@ -38,6 +61,8 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
             {outlet.tag}
           </span>
         )}
+
+        {favoriteButton}
 
         {!outlet.image.startsWith("/") && !outlet.image.startsWith("http") && (
           <span className="absolute inset-0 flex items-center justify-center text-5xl sm:text-7xl select-none">
@@ -111,6 +136,8 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
               {outlet.tag}
             </span>
           )}
+
+          {favoriteButton}
 
           {!outlet.image.startsWith("/") && !outlet.image.startsWith("http") && (
             <span className="absolute inset-0 flex items-center justify-center text-5xl sm:text-7xl select-none">

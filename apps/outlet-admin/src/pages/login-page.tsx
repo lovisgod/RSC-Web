@@ -35,6 +35,18 @@ export function LoginPage() {
   const { mutate, isPending, error, reset } = useMutation({
     mutationFn: () => login({ identifier: identifier.trim(), password }),
     onSuccess: (data) => {
+      if (data.user.role === "CUSTOMER" || data.user.role === "RIDER") {
+        toastBus.emit(
+          "Access denied: Customer and rider accounts cannot access the Outlet Admin workspace.",
+          "error",
+        );
+        setErrors({
+          identifier:
+            "Access denied. Only kitchen administrators and platform admins can log in here.",
+        });
+        return;
+      }
+
       authStore.setUser({ id: data.user.id, role: data.user.role, outletId: data.user.outletId });
       toastBus.emit("Welcome back!", "success");
       navigate("/", { replace: true });

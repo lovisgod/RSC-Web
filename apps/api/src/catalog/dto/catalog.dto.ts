@@ -62,6 +62,13 @@ export class CreateOutletDto {
   @MaxLength(512)
   imageUrl?: string;
 
+  @ApiPropertyOptional({ example: "https://cdn.example.com/outlet-logo.png" })
+  @Transform(trim)
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  @MaxLength(512)
+  logoUrl?: string;
+
   @ApiPropertyOptional({ example: "https://cdn.example.com/outlet-banner.jpg" })
   @Transform(trim)
   @IsOptional()

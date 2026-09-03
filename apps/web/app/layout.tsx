@@ -40,7 +40,6 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body>
         <ThemeProvider>
           <QueryProvider>{children}</QueryProvider>
-          <ThemeToggle className="rsc-global-theme-toggle" />
           <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>

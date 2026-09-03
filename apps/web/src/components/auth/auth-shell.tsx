@@ -7,6 +7,7 @@ import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { SideNav } from "@/src/components/signed-in/side-nav";
 import { BottomNav } from "@/src/components/signed-in/bottom-nav";
+import { ThemeToggle } from "@rsc/ui";
 
 export function AuthShell({ children }: { children: ReactNode }) {
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
@@ -39,8 +40,12 @@ export function AuthShell({ children }: { children: ReactNode }) {
   }, [isSignedIn]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--rsc-page-background)]">
+    <div className="flex h-screen overflow-hidden bg-[var(--rsc-page-background)] relative">
       <SideNav />
+      {/* Floating Theme Toggle for Mobile Screens */}
+      <div className="fixed top-3 right-3 z-30 md:hidden">
+        <ThemeToggle className="shadow-md rounded-full bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800" />
+      </div>
       <main className="h-screen flex-1 overflow-x-hidden overflow-y-auto pb-20 md:pb-0">
         {children}
       </main>

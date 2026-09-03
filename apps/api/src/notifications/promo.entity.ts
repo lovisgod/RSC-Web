@@ -50,6 +50,9 @@ export class Promo {
   @Column({ name: "deep_link", type: "varchar", length: 512, nullable: true })
   deepLink!: string | null;
 
+  @Column({ name: "image_url", type: "varchar", length: 512, nullable: true })
+  imageUrl!: string | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 

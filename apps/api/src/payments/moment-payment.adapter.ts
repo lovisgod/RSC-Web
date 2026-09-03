@@ -39,6 +39,8 @@ interface MomentWebhookPayload {
     payment_outcome?: string;
     status?: string;
     amount?: number;
+    payment_status?: string;
+    last_payment_error?: unknown;
   };
 }
 
@@ -248,10 +250,14 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     const eventType = event.type ?? "";
     const data = event.data ?? {};
 
-    // We only act on payment_session.completed
-    if (eventType !== "payment_session.completed") {
+    const supportedEventTypes = new Set([
+      "payment.succeeded",
+      "payment_session.updated",
+      "payment_session.completed",
+    ]);
+    if (!supportedEventTypes.has(eventType)) {
       this.logger.log(
-        `Moment webhook: ignored event type "${eventType}" (only payment_session.completed is processed)`,
+        `Moment webhook: ignored event type "${eventType}" (only payment.succeeded, payment_session.updated and payment_session.completed are processed)`,
       );
       return null;
     }
@@ -266,11 +272,24 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       `Moment webhook parsed successfully: reference=${reference}, eventId=${event.id ?? reference}, outcome=${data.payment_outcome ?? data.status}, amount=${data.amount ?? 0}`,
     );
 
+    const isSuccessful =
+      eventType === "payment.succeeded" ||
+      data.payment_outcome === "paid" ||
+      data.payment_status === "paid" ||
+      data.status === "completed" ||
+      data.status === "succeeded";
+    const status =
+      eventType === "payment_session.updated" && !isSuccessful
+        ? "PENDING"
+        : isSuccessful
+          ? "SUCCESS"
+          : "FAILED";
+
     return {
       eventId: event.id ?? reference,
       eventType,
       reference,
-      status: data.payment_outcome === "paid" || data.status === "completed" ? "SUCCESS" : "FAILED",
+      status,
       amountMinor: data.amount ?? 0,
       providerResponse: event as unknown as Record<string, unknown>,
     };

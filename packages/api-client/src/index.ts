@@ -629,6 +629,11 @@ export function createApiClient(options: ApiClientOptions) {
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
     },
+    markNotificationRead(id: string): Promise<Notification> {
+      return request(`/api/v1/notifications/${encodeURIComponent(id)}/read`, notificationSchema, {
+        method: "PATCH",
+      });
+    },
     listPromoNotifications(): Promise<Promo[]> {
       return request("/api/v1/notifications/promos", z.array(promoSchema));
     },

@@ -50,7 +50,8 @@ export interface ParsedWebhookEvent {
   eventType: string;
   /** The payment reference that maps to our order */
   reference: string;
-  status: "SUCCESS" | "FAILED";
+  /** PENDING represents a non-terminal provider update, such as a retryable failed attempt. */
+  status: "PENDING" | "SUCCESS" | "FAILED";
   amountMinor: number;
   providerResponse: unknown;
 }

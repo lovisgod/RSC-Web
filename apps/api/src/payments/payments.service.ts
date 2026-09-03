@@ -725,6 +725,12 @@ export class PaymentsService {
         return;
       }
 
+      if (event.status === "PENDING") {
+        payment.providerResponse = event.providerResponse;
+        await paymentRepository.save(payment);
+        return;
+      }
+
       payment.status = event.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
       await paymentRepository.save(payment);
 
@@ -764,7 +770,7 @@ export class PaymentsService {
     }
 
     this.logger.log(
-      `Payment ${confirmedPayment.reference} confirmed: ${confirmedPayment.status} (order ${confirmedPayment.masterOrderId})`,
+      `Payment webhook applied for ${confirmedPayment.reference}: ${confirmedPayment.status} (order ${confirmedPayment.masterOrderId})`,
     );
 
     return { already };

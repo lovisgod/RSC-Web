@@ -125,6 +125,7 @@ export class CatalogService {
         address: input.address ?? null,
         cuisineType: input.cuisineType,
         imageUrl: input.imageUrl ?? null,
+        logoUrl: input.logoUrl ?? null,
         bannerUrl: input.bannerUrl ?? null,
         isOnline: settlementSubaccountCode ? (input.isOnline ?? true) : false,
         vatBps: input.vatBps ?? 0,
@@ -164,6 +165,7 @@ export class CatalogService {
       description: input.description === undefined ? outlet.description : input.description,
       address: input.address === undefined ? outlet.address : input.address,
       imageUrl: input.imageUrl === undefined ? outlet.imageUrl : input.imageUrl,
+      logoUrl: input.logoUrl === undefined ? outlet.logoUrl : input.logoUrl,
       bannerUrl: input.bannerUrl === undefined ? outlet.bannerUrl : input.bannerUrl,
     });
 
