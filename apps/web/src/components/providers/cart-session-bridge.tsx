@@ -21,7 +21,7 @@ export function CartSessionBridge() {
     }
 
     releaseCartOwner();
-  }, [claimCartOwner, hasHydrated, isSignedIn, releaseCartOwner, userId]);
+  }, [hasHydrated, isSignedIn, reconcileCartOwner, releaseCartOwner, userId]);
 
   return null;
 }
