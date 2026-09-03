@@ -8,7 +8,7 @@ import { useCartStore } from "@/src/stores/cart-store";
 
 const navItems = [
   { href: "/outlets", icon: "/icons/png/house_1f3e0.png", label: "Home" },
-  { href: "/menu", icon: "/icons/png/magnifying-glass-tilted-left_1f50d.png", label: "Search" },
+  { href: "/menu", icon: "/icons/png/magnifying-glass-tilted-left_1f50d.png", label: "Menu" },
   { href: "/cart", icon: "/icons/png/shopping-cart_1f6d2.png", label: "Cart" },
   { href: "/tracking", icon: "/icons/png/round-pushpin_1f4cd.png", label: "Tracking" },
   { href: "/profile", icon: "/icons/png/bust-in-silhouette_1f464.png", label: "Profile" },
