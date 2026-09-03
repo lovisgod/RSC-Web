@@ -11,7 +11,6 @@ import {
   HeartIcon,
   HelpCircleIcon,
   HomeIcon,
-  ListIcon,
   PlusIcon,
   ReceiptIcon,
   ShieldCheckIcon,
@@ -32,7 +31,6 @@ import { formatOutletRating, toDisplayOutlet } from "@/src/lib/data/outlets";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
-import { SideNavDrawer } from "@/src/components/signed-in/side-nav";
 
 const trustPillars = [
   {
@@ -129,7 +127,6 @@ function topSpecials(outlets: OutletSummary[]): Array<MenuItemSummary & { outlet
 }
 
 export function LandingPage() {
-  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -175,9 +172,6 @@ export function LandingPage() {
 
   return (
     <main className="grab-landing-shell">
-      {/* Slide-out Navigation Drawer */}
-      <SideNavDrawer isOpen={isNavDrawerOpen} onClose={() => setIsNavDrawerOpen(false)} />
-
       {/* Toast Notification for quick add */}
       {addedToast && (
         <div className="grab-toast" role="status" aria-live="polite">
@@ -215,14 +209,6 @@ export function LandingPage() {
             <BellIcon className="w-5 h-5" />
             <span className="landing-notif-dot" aria-hidden="true" />
           </Link>
-          <button
-            type="button"
-            className="landing-icon-btn"
-            aria-label="Open navigation menu"
-            onClick={() => setIsNavDrawerOpen(true)}
-          >
-            <ListIcon className="w-5 h-5" />
-          </button>
         </div>
       </header>
 
