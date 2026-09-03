@@ -3,21 +3,17 @@
 import type { MenuItemSummary, OutletSummary, Promo } from "@rsc/contracts";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowRightIcon,
   AwardIcon,
   BellIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
   ChevronRightIcon,
-  FlameIcon,
   HeartIcon,
   HelpCircleIcon,
   HomeIcon,
   ListIcon,
-  MapPinIcon,
   PlusIcon,
   ReceiptIcon,
-  SearchIcon,
   ShieldCheckIcon,
   ShoppingBagIcon,
   StarIcon,
@@ -25,32 +21,18 @@ import {
   TruckIcon,
   UserIcon,
   UtensilsIcon,
-  XIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 
-import { useMenuSearch } from "@/src/hooks/use-menu-search";
 import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
 import { usePromoNotifications } from "@/src/hooks/use-notifications";
 import { cartItemCount, formatNaira } from "@/src/lib/data/cart";
-import { formatOutletRating, toDisplayOutlet, type Outlet } from "@/src/lib/data/outlets";
+import { formatOutletRating, toDisplayOutlet } from "@/src/lib/data/outlets";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
 import { SideNavDrawer } from "@/src/components/signed-in/side-nav";
-import { ThemeToggle } from "@rsc/ui";
-
-const categoryPills = [
-  { label: "Rice & Swallow", icon: "🌾", query: "Rice" },
-  { label: "Suya & Grills", icon: "🔥", query: "Suya" },
-  { label: "Pasta & Italian", icon: "🍝", query: "Pasta" },
-  { label: "Pastries & Bakery", icon: "🥐", query: "Pastry" },
-  { label: "Coolers & Drinks", icon: "🥤", query: "Drink" },
-  { label: "Fast Bites", icon: "🍗", query: "Chicken" },
-  { label: "Burgers & Sandwiches", icon: "🍔", query: "Burger" },
-  { label: "Fresh Salads", icon: "🥗", query: "Salad" },
-] as const;
 
 const trustPillars = [
   {
@@ -147,22 +129,15 @@ function topSpecials(outlets: OutletSummary[]): Array<MenuItemSummary & { outlet
 }
 
 export function LandingPage() {
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
-  const hasHydrated = useAuthStore((s) => s._hasHydrated);
   const cart = useCartStore((s) => s.cart);
   const addItemToCart = useCartStore((s) => s.addItem);
   const totalCartCount = cartItemCount(cart);
-
-  const showSignIn = !hasHydrated || !isSignedIn;
 
   const outletsQuery = useQuery(OUTLETS_QUERY);
   const promosQuery = usePromoNotifications();
@@ -171,47 +146,6 @@ export function LandingPage() {
   const featuredOutlets = outlets.slice(0, 4);
   const specials = topSpecials(outletsQuery.data ?? []);
   const promos = (promosQuery.data ?? []).filter(isPromoLive);
-  const heroPromo = promos[0];
-
-  const canSearch = searchQuery.length >= 2;
-  const menuSearch = useMenuSearch(searchQuery, null, { enabled: canSearch, limit: 6 });
-
-  const searchResults = useMemo(
-    () => menuSearch.data?.pages.flatMap((page) => page.items).slice(0, 6) ?? [],
-    [menuSearch.data],
-  );
-
-  const outletNameMap = useMemo(
-    () => new Map((outletsQuery.data ?? []).map((outlet) => [outlet.id, outlet.name])),
-    [outletsQuery.data],
-  );
-
-  const showSearchDropdown = searchFocused && searchInput.trim().length > 0;
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
-  function handleSearchInput(value: string) {
-    setSearchInput(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    const trimmed = value.trim();
-    if (trimmed.length < 2) {
-      setSearchQuery("");
-      return;
-    }
-
-    debounceRef.current = setTimeout(() => setSearchQuery(trimmed), 300);
-  }
-
-  function handleCategoryPillClick(queryText: string) {
-    setSearchInput(queryText);
-    setSearchQuery(queryText);
-    setSearchFocused(true);
-  }
 
   function handleCopyPromoCode(code: string) {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -264,9 +198,23 @@ export function LandingPage() {
         </Link>
       </div>
 
-      {/* Clean Full-Width Header Navigation (Non-rounded navbar with separated menu on left, notification + theme toggle on right) */}
+      {/* Clean Full-Width Header Navigation */}
       <header className="landing-header" aria-label="DineOut NG navigation">
         <div className="landing-header__left">
+          <Link href="/" className="inline-flex items-center" aria-label="DineOut NG home">
+            <BrandLogo className="w-28 sm:w-36" priority />
+          </Link>
+        </div>
+
+        <div className="landing-header__right">
+          <Link
+            href="/notifications"
+            className="landing-icon-btn landing-notif-btn"
+            aria-label="View notifications"
+          >
+            <BellIcon className="w-5 h-5" />
+            <span className="landing-notif-dot" aria-hidden="true" />
+          </Link>
           <button
             type="button"
             className="landing-icon-btn"
@@ -276,147 +224,7 @@ export function LandingPage() {
             <ListIcon className="w-5 h-5" />
           </button>
         </div>
-
-        <div className="landing-header__right">
-          <ThemeToggle />
-          <Link
-            href="/notifications"
-            className="landing-icon-btn landing-notif-btn"
-            aria-label="View notifications"
-          >
-            <BellIcon className="w-5 h-5" />
-            <span className="landing-notif-dot" aria-hidden="true" />
-          </Link>
-          {showSignIn && (
-            <Link href="/sign-in" className="landing-sign-in">
-              Sign in
-            </Link>
-          )}
-        </div>
       </header>
-
-      {/* Hero Brand Identity Section */}
-      <section className="grab-hero">
-        <div className="grab-hero__brush-bg" aria-hidden="true" />
-
-        <div className="grab-hero__brand-center">
-          {/* DineOut NG Logo directly on top of tagline */}
-          <div className="grab-hero__logo-wrapper">
-            <BrandLogo className="w-40 sm:w-52" priority />
-          </div>
-
-          <div className="grab-hero__tagline-group">
-            <h1 className="grab-hero__tagline-main">One App. Many Flavors.</h1>
-            <p className="grab-hero__tagline-sub">Endless Choices.</p>
-          </div>
-        </div>
-
-        {/* Grab Pill Search Input */}
-        <div className="grab-search-container">
-          <div className="grab-search-card" role="search">
-            <SearchIcon className="grab-search-card__icon" aria-hidden="true" />
-            <input
-              value={searchInput}
-              type="search"
-              role="combobox"
-              autoComplete="off"
-              placeholder="Search for food, cuisines or restaurants"
-              aria-label="Search for food, cuisines or restaurants"
-              aria-expanded={showSearchDropdown}
-              aria-controls="grab-search-results"
-              aria-autocomplete="list"
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-              onChange={(event) => handleSearchInput(event.target.value)}
-            />
-
-            {searchInput.length > 0 && (
-              <button
-                type="button"
-                className="grab-search-card__clear"
-                onClick={() => {
-                  setSearchInput("");
-                  setSearchQuery("");
-                }}
-                aria-label="Clear search"
-              >
-                <XIcon className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Live Search Autocomplete Dropdown */}
-            {showSearchDropdown ? (
-              <div
-                id="grab-search-results"
-                className="grab-search-dropdown"
-                role="listbox"
-                aria-label="Menu search results"
-              >
-                {searchInput.trim().length < 2 ? (
-                  <p className="grab-search-dropdown__prompt">
-                    Type at least 2 characters to search menu items.
-                  </p>
-                ) : menuSearch.isPending || menuSearch.isFetching ? (
-                  <div className="grab-search-dropdown__loading">
-                    <span className="grab-skeleton grab-skeleton--item" />
-                    <span className="grab-skeleton grab-skeleton--item" />
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <p className="grab-search-dropdown__empty">
-                    No menu items found for &quot;{searchInput}&quot;. Try searching for Jollof,
-                    Pasta, Suya, or Burger.
-                  </p>
-                ) : (
-                  searchResults.map((item) => (
-                    <Link
-                      key={item.id}
-                      href={`/menu/${item.id}`}
-                      className="grab-search-result-row"
-                      role="option"
-                    >
-                      <span className="grab-search-result-row__thumb">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={item.imageUrl ?? "/images/images/fire_1f525.png"}
-                          alt=""
-                          aria-hidden="true"
-                        />
-                      </span>
-                      <span className="grab-search-result-row__details">
-                        <strong>{item.name}</strong>
-                        <small>{outletNameMap.get(item.outletId) ?? "DineOut Kitchen"}</small>
-                      </span>
-                      <b className="grab-search-result-row__price">
-                        {formatNaira(item.currentPriceMinor ?? item.priceMinor)}
-                      </b>
-                    </Link>
-                  ))
-                )}
-
-                <Link href="/outlets" className="grab-search-dropdown__footer">
-                  <span>Explore all kitchen menus</span>
-                  <ArrowRightIcon className="w-4 h-4" />
-                </Link>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Category Pills Bar */}
-        <div className="grab-category-scroll" aria-label="Popular food categories">
-          {categoryPills.map((pill) => (
-            <button
-              key={pill.label}
-              type="button"
-              className="grab-category-chip"
-              onClick={() => handleCategoryPillClick(pill.query)}
-            >
-              <span className="grab-category-chip__icon">{pill.icon}</span>
-              <span className="grab-category-chip__label">{pill.label}</span>
-            </button>
-          ))}
-        </div>
-      </section>
 
       {/* ── SECTION 1: OUR OUTLETS (Portrait Cards with Full Image & Order Now CTA) ── */}
       <section className="grab-section" id="outlets" aria-labelledby="grab-outlets-heading">

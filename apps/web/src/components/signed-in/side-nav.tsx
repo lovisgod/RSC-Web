@@ -306,7 +306,7 @@ export function SideNavDrawer({ isOpen, onClose }: SideNavDrawerProps) {
               type="button"
               onClick={handleLogout}
               aria-label="Sign out"
-              className="flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
+              className="flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-white/10"
               style={{ color: "var(--rsc-sidebar-muted)" }}
             >
               <LogOut className="h-5 w-5" aria-hidden="true" />
@@ -316,9 +316,10 @@ export function SideNavDrawer({ isOpen, onClose }: SideNavDrawerProps) {
             <Link
               href="/sign-in"
               onClick={onClose}
-              className="flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-white/5 text-emerald-400"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90 shadow-sm"
+              style={{ backgroundColor: "var(--rsc-brand, #00b14f)" }}
             >
-              <LogIn className="h-5 w-5" aria-hidden="true" />
+              <LogIn className="h-4 w-4" aria-hidden="true" />
               <span>Sign In</span>
             </Link>
           )}
