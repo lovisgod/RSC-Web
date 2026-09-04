@@ -72,7 +72,6 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--rsc-navy-dark)] p-4">
-      {/* <ThemeToggle className="fixed right-4 top-4 z-10" /> */}
       <div className="w-full max-w-sm rounded-[1.75rem] border border-[color:color-mix(in_srgb,var(--rsc-main)_12%,white)] bg-[var(--rsc-panel)] p-8 shadow-[0_28px_80px_color-mix(in_srgb,var(--rsc-sidebar-bg)_38%,transparent)]">
         <div className="mb-8 flex items-center justify-center gap-3 text-center">
           <CssBrandLogo size="sm" tagline="Outlet staff sign-in" />

@@ -373,7 +373,6 @@ function AppShell() {
             </p>
           </div>
           <InstallAppButton />
-          {/* <ThemeToggle className="ml-auto" /> */}
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto bg-[var(--rsc-panel)]">

@@ -298,7 +298,6 @@ function AdminShell() {
             <span className="topbar-title">{pageTitle}</span>
           </div>
           <div className="topbar__actions">
-            {/* <ThemeToggle /> */}
             <span className="topbar-clock">{clock}</span>
           </div>
         </header>

@@ -81,7 +81,6 @@ export function LoginPage() {
 
   return (
     <div className="auth-page">
-      {/* <ThemeToggle className="auth-theme-toggle" /> */}
       <div className="auth-card">
         <div className="auth-brand">
           <CssBrandLogo size="sm" tagline="Operations dashboard" />

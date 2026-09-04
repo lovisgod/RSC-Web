@@ -22,7 +22,6 @@ import { useCartStore } from "@/src/stores/cart-store";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { apiClient } from "@/src/lib/api";
 import { BrandLogo } from "@/src/components/shared/brand-logo";
-import { ThemeToggle } from "@rsc/ui";
 
 interface NavItem {
   href: string;
@@ -160,7 +159,6 @@ export function SideNav() {
             <span>Logout</span>
           </button>
         )}
-        <ThemeToggle className="shrink-0" />
       </div>
     </aside>
   );
@@ -323,7 +321,6 @@ export function SideNavDrawer({ isOpen, onClose }: SideNavDrawerProps) {
               <span>Sign In</span>
             </Link>
           )}
-          <ThemeToggle className="shrink-0" />
         </div>
       </div>
     </div>

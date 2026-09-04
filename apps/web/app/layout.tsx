@@ -7,7 +7,7 @@ import { Roboto } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { Toaster } from "sonner";
-import { ThemeProvider, ThemeToggle } from "@rsc/ui";
+import { ThemeProvider } from "@rsc/ui";
 
 import { QueryProvider } from "@/src/components/providers/query-provider";
 
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(()=>{try{const k='rsc-theme';const s=localStorage.getItem(k);const t=s==='light'||s==='dark'?s:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch{}})()",
+              "(()=>{try{const k='rsc-theme';const s=localStorage.getItem(k);const t=s==='light'||s==='dark'?s:'dark';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch{}})()",
           }}
         />
       </head>
