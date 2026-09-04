@@ -92,6 +92,14 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
   const hasRejectedSubOrder = subOrders.some((subOrder) => subOrder.status === "REJECTED");
   const canRefund =
     hasRejectedSubOrder && order.status !== "PENDING_PAYMENT" && !!order.paymentReference;
+  const platformCommissionMinor = subOrders.reduce(
+    (sum, subOrder) => sum + subOrder.commissionMinor,
+    0,
+  );
+  const platformChargeMinor = platformCommissionMinor + order.serviceFeeMinor;
+  const knownNonItemChargesMinor =
+    platformChargeMinor + order.deliveryFeeMinor + order.vatMinor - order.discountMinor;
+  const otherChargesAndDeliveryMinor = Math.max(0, knownNonItemChargesMinor);
 
   function handleRefund() {
     if (!canRefund || refundMutation.isPending) return;
@@ -202,9 +210,9 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
                     >
                       {SUB_ORDER_STATUS_LABELS[sub.status] ?? sub.status}
                     </span>
-                    <span className="order-modal__sub-subtotal">
+                    {/* <span className="order-modal__sub-subtotal">
                       Subtotal: {fmt(sub.subtotalMinor)}
-                    </span>
+                    </span> */}
                   </span>
                 </div>
 
@@ -277,28 +285,14 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
               </div>
             );
           })}
-
-          {/* Platform surpluses */}
-          {(order.vatMinor > 0 || order.deliveryFeeMinor > 0) && (
-            <div className="order-modal__surplus-card">
-              <div className="order-modal__surplus-head">
-                <span>Platform Surpluses</span>
-                <span>VAT + Delivery</span>
-              </div>
-              {order.vatMinor > 0 && (
-                <div className="order-modal__surplus-row">
-                  <span>Value Added Tax (7.5%):</span>
-                  <span>{fmt(order.vatMinor)}</span>
-                </div>
-              )}
-              {order.deliveryFeeMinor > 0 && (
-                <div className="order-modal__surplus-row">
-                  <span>Delivery Logistics Flat:</span>
-                  <span>{fmt(order.deliveryFeeMinor)}</span>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="order-modal__ledger-summary-row">
+            <span>
+              {order.deliveryMode === "DELIVERY"
+                ? "Platform, VAT & Delivery fee:"
+                : "Platform charges & VAT :"}
+            </span>
+            <strong>{fmt(otherChargesAndDeliveryMinor)}</strong>
+          </div>
         </div>
 
         {/* ── Grand Total — pinned above footer ────────────── */}
