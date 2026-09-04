@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import { type DeliveryForm, type OrderSnapshot } from "@/src/lib/data/checkout";
 import { CheckoutProgress } from "@/src/components/checkout/checkout-progress";
@@ -42,9 +43,9 @@ export function CheckoutView() {
             type="button"
             onClick={() => router.push("/cart")}
             aria-label="Go back"
-            className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm flex-shrink-0"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-700 shadow-sm transition hover:bg-white hover:text-black dark:border-gray-800 dark:bg-gray-900/90 dark:text-gray-200"
           >
-            ←
+            <ArrowLeft className="h-5 w-5" />
           </button>
         )}
         <h1 className="text-xl font-bold text-gray-900">Checkout</h1>
