@@ -299,6 +299,139 @@ describe(PaymentsService.name, () => {
     expect(dataSource.transaction).toHaveBeenCalledOnce();
   });
 
+  it("calculates delivery fee using PER_KM model with base price + distance", async () => {
+    outlets.findBy.mockResolvedValueOnce([
+      Object.assign(new Outlet(), {
+        id: outletId,
+        name: "Lekki Kitchen",
+        latitude: 6.4474,
+        longitude: 3.4542,
+        deliveryRadiusKm: 15,
+        isOnline: true,
+        vatBps: 0,
+        settlementSubaccountCode: "MOMENT_LEKKI",
+        deliveryPricingModel: "PER_KM",
+        deliveryBaseFeeMinor: 50000, // ₦500 base price
+        deliveryPricePerKmMinor: 20000, // ₦200/km
+      }),
+    ]);
+
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: null,
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    // Distance from (6.4474, 3.4542) to (6.4281, 3.4219) is ~4.22 km
+    // 50000 + round(4.22 * 20000) = 50000 + 84400 = 134400
+    // subtotal: 450000, deliveryFee: 134400, commission: 45000, vat: 33750 => total: 663150
+    await service.initiate(
+      {
+        id: customerId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      },
+      {
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "Victoria Island",
+        deliveryLatitude: 6.4281,
+        deliveryLongitude: 3.4219,
+        items: [
+          {
+            menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            quantity: 1,
+          },
+        ],
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 133290,
+        serviceFeeMinor: 0,
+        vatMinor: 33750,
+        platformCommissionMinor: 45000,
+        totalMinor: 662040,
+      },
+    );
+
+    expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 662040 }));
+  });
+
+  it("calculates delivery fee using PER_LOCATION model based on zone", async () => {
+    outlets.findBy.mockResolvedValueOnce([
+      Object.assign(new Outlet(), {
+        id: outletId,
+        name: "Lekki Kitchen",
+        latitude: 6.4474,
+        longitude: 3.4542,
+        deliveryRadiusKm: 15,
+        isOnline: true,
+        vatBps: 0,
+        settlementSubaccountCode: "MOMENT_LEKKI",
+        deliveryPricingModel: "PER_LOCATION",
+        deliveryBaseFeeMinor: 80000,
+        deliveryLocationFees: [
+          {
+            locationName: "Lagos Island",
+            zoneId: "lagos-expanded",
+            feeMinor: 220000,
+          },
+        ],
+      }),
+    ]);
+
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: null,
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    // Matches zone 'lagos-expanded' -> deliveryFeeMinor: 220000
+    // subtotal: 450000, deliveryFee: 220000, commission: 45000, vat: 33750 => total: 748750
+    await service.initiate(
+      {
+        id: customerId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      },
+      {
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "Victoria Island",
+        deliveryLatitude: 6.4281,
+        deliveryLongitude: 3.4219,
+        items: [
+          {
+            menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            quantity: 1,
+          },
+        ],
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 220000,
+        serviceFeeMinor: 0,
+        vatMinor: 33750,
+        platformCommissionMinor: 45000,
+        totalMinor: 748750,
+      },
+    );
+
+    expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 748750 }));
+  });
+
   it("returns cached result and avoids duplicate order creation when idempotencyKey is reused", async () => {
     const mockRedis = {
       get: vi.fn(),

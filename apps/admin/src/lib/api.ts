@@ -277,7 +277,33 @@ export interface OutletBody {
   imageUrl?: string;
   logoUrl?: string;
   bannerUrl?: string;
+  deliveryPricingModel?: "FLAT" | "PER_KM" | "PER_LOCATION";
+  deliveryFeeMinor?: number;
+  deliveryBaseFeeMinor?: number;
+  deliveryPricePerKmMinor?: number;
+  deliveryLocationFees?: Array<{ locationName: string; zoneId?: string | null; feeMinor: number }>;
 }
+
+export interface GeofenceZoneSummary {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
+export const listGeofenceZones = (): Promise<GeofenceZoneSummary[]> =>
+  get<unknown>("/api/v1/delivery/geofence-zones").then((data) => {
+    if (Array.isArray(data)) {
+      return data.map((item) => {
+        const z = item as Record<string, unknown>;
+        return {
+          id: String(z.id ?? ""),
+          name: String(z.name ?? ""),
+          isActive: Boolean(z.isActive ?? z.is_active ?? true),
+        };
+      });
+    }
+    return [];
+  });
 
 export const listOutlets = (): Promise<OutletSummary[]> =>
   get<unknown>("/api/v1/outlets").then((data) => parseResponse(outletSummarySchema.array(), data));

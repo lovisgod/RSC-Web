@@ -4,6 +4,7 @@ import type { TransformFnParams } from "class-transformer";
 import {
   ArrayUnique,
   IsArray,
+  IsIn,
   IsBoolean,
   IsDateString,
   IsInt,
@@ -20,6 +21,7 @@ import {
   Min,
   Max,
   ValidateIf,
+  ValidateNested,
 } from "class-validator";
 
 const trim = ({ value }: TransformFnParams): unknown =>
@@ -27,6 +29,24 @@ const trim = ({ value }: TransformFnParams): unknown =>
 
 const toBoolean = ({ value }: TransformFnParams): unknown =>
   value === true || value === "true" || value === "1";
+
+export class DeliveryLocationFeeDto {
+  @ApiProperty({ example: "Lekki Phase 1" })
+  @Transform(trim)
+  @IsString()
+  @Length(1, 120)
+  locationName!: string;
+
+  @ApiPropertyOptional({ example: "4273e96c-2887-49a5-a6d5-269f007f04f0" })
+  @IsOptional()
+  @IsUUID()
+  zoneId?: string | null;
+
+  @ApiProperty({ example: 100000 })
+  @IsInt()
+  @Min(0)
+  feeMinor!: number;
+}
 
 export class CreateOutletDto {
   @ApiProperty({ example: "Farfallino Kitchen" })
@@ -124,6 +144,45 @@ export class CreateOutletDto {
   @Length(2, 100)
   @Matches(/^\S+$/, { message: "settlementSubaccountCode must not contain spaces" })
   settlementSubaccountCode?: string | null;
+
+  @ApiPropertyOptional({ enum: ["FLAT", "PER_KM", "PER_LOCATION"], default: "FLAT" })
+  @IsOptional()
+  @IsIn(["FLAT", "PER_KM", "PER_LOCATION"])
+  deliveryPricingModel?: "FLAT" | "PER_KM" | "PER_LOCATION";
+
+  @ApiPropertyOptional({ example: 150000, description: "Flat delivery fee in minor units" })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  deliveryFeeMinor?: number;
+
+  @ApiPropertyOptional({
+    example: 50000,
+    description: "Base delivery fee for PER_KM or PER_LOCATION fallback",
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  deliveryBaseFeeMinor?: number;
+
+  @ApiPropertyOptional({
+    example: 20000,
+    description: "Rate per kilometer in minor units for PER_KM model",
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  deliveryPricePerKmMinor?: number;
+
+  @ApiPropertyOptional({
+    type: [DeliveryLocationFeeDto],
+    description: "Location/zone-based fee overrides",
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DeliveryLocationFeeDto)
+  deliveryLocationFees?: DeliveryLocationFeeDto[];
 }
 
 export class UpdateOutletDto extends PartialType(CreateOutletDto) {}

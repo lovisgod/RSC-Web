@@ -5,6 +5,7 @@ import {
   adminOrderLineItemSchema,
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
+  calculateOutletDeliveryFee,
   createAdminInputSchema,
   customerOrderSchema,
   initiatePaymentInputSchema,
@@ -660,7 +661,90 @@ describe("customer registration contracts", () => {
       itemModifierGroups: [],
       itemModifiers: [],
       menuItemModifierGroups: [],
+      deliveryPricingModel: "FLAT",
+      deliveryFeeMinor: 150_000,
+      deliveryBaseFeeMinor: 0,
+      deliveryPricePerKmMinor: 0,
+      deliveryLocationFees: [],
     });
+  });
+
+  it("calculates outlet delivery fees across FLAT, PER_KM, and PER_LOCATION models", () => {
+    // FLAT model
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "FLAT",
+        flatFeeMinor: 120_000,
+      }),
+    ).toBe(120_000);
+
+    // PER_KM model with coordinates
+    // Victoria Island to Lekki Phase 1 (~5 km)
+    const outletLat = 6.4281;
+    const outletLng = 3.4219;
+    const deliveryLat = 6.4474;
+    const deliveryLng = 3.4716;
+    const feePerKm = calculateOutletDeliveryFee({
+      pricingModel: "PER_KM",
+      baseFeeMinor: 50_000, // ₦500 base
+      pricePerKmMinor: 20_000, // ₦200/km
+      outletLatitude: outletLat,
+      outletLongitude: outletLng,
+      deliveryLatitude: deliveryLat,
+      deliveryLongitude: deliveryLng,
+    });
+    // Distance is ~5.9 km -> 50_000 + round(5.9 * 20_000) ~ 168_000
+    expect(feePerKm).toBeGreaterThan(150_000);
+    expect(feePerKm).toBeLessThan(190_000);
+
+    // PER_KM fallback when coords are missing
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "PER_KM",
+        baseFeeMinor: 50_000,
+        flatFeeMinor: 100_000,
+      }),
+    ).toBe(50_000);
+
+    // PER_LOCATION model matching zoneId or zoneName
+    const locationFees = [
+      {
+        locationName: "Lekki Phase 1",
+        zoneId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        feeMinor: 100_000,
+      },
+      { locationName: "Ikeja GRA", zoneId: null, feeMinor: 250_000 },
+    ];
+
+    // Match by zoneId
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "PER_LOCATION",
+        baseFeeMinor: 80_000,
+        locationFees,
+        zoneId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      }),
+    ).toBe(100_000);
+
+    // Match by zoneName
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "PER_LOCATION",
+        baseFeeMinor: 80_000,
+        locationFees,
+        zoneName: "Ikeja GRA",
+      }),
+    ).toBe(250_000);
+
+    // Unmatched zone falls back to baseFeeMinor
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "PER_LOCATION",
+        baseFeeMinor: 80_000,
+        locationFees,
+        zoneName: "Ajah",
+      }),
+    ).toBe(80_000);
   });
 
   it("documents admin order list contracts", () => {

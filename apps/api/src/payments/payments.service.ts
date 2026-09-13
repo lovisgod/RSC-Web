@@ -22,6 +22,7 @@ import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { REDIS_CLIENT } from "../redis/redis.constants";
 import type { ApplicationConfig } from "../config/configuration";
 import { DeliveryService } from "../delivery/delivery.service";
+import { calculateOutletDeliveryFee } from "../delivery/delivery-pricing";
 import { ItemModifier } from "../catalog/item-modifier.entity";
 import { MenuItem } from "../catalog/menu-item.entity";
 import { Outlet } from "../outlets/outlet.entity";
@@ -300,6 +301,8 @@ export class PaymentsService {
     }
 
     try {
+      let deliveryZone: { id: string; name: string } | null = null;
+
       if (input.deliveryMode === "DELIVERY") {
         if (
           !input.deliveryAddress ||
@@ -317,6 +320,8 @@ export class PaymentsService {
         if (!validation.deliverable) {
           throw new BadRequestException("Delivery address is outside the service zone");
         }
+
+        deliveryZone = validation.zone;
       }
 
       const customer = await this.users.findOneBy({ id: user.id });
@@ -340,8 +345,27 @@ export class PaymentsService {
       this.ensureOutletsAreOnline(outletIds, outletById);
 
       const subtotalMinor = pricedLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
-      const deliveryFeeMinor =
-        input.deliveryMode === "DELIVERY" ? platformCharges.deliveryFeeMinor : 0;
+      let deliveryFeeMinor = 0;
+      if (input.deliveryMode === "DELIVERY") {
+        deliveryFeeMinor = outletIds.reduce((sum, outletId) => {
+          const outlet = outletById.get(outletId);
+          const fee = calculateOutletDeliveryFee({
+            pricingModel: outlet?.deliveryPricingModel,
+            flatFeeMinor: outlet?.deliveryFeeMinor,
+            baseFeeMinor: outlet?.deliveryBaseFeeMinor,
+            pricePerKmMinor: outlet?.deliveryPricePerKmMinor,
+            locationFees: outlet?.deliveryLocationFees,
+            outletLatitude: outlet?.latitude,
+            outletLongitude: outlet?.longitude,
+            deliveryLatitude: input.deliveryLatitude,
+            deliveryLongitude: input.deliveryLongitude,
+            zoneId: deliveryZone?.id,
+            zoneName: deliveryZone?.name,
+            fallbackFeeMinor: platformCharges.deliveryFeeMinor,
+          });
+          return sum + fee;
+        }, 0);
+      }
       const serviceFeeMinor = platformCharges.serviceFeeMinor;
       const vatMinor = outletIds.reduce((sum, outletId) => {
         const outletSubtotalMinor = grouped
