@@ -16,3 +16,22 @@ export function useUpdateOutletDelivery() {
     onError: (error: Error) => toastBus.emit(error.message, "error"),
   });
 }
+
+export function useUpdateAllOutletsDelivery() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ outletIds, body }: { outletIds: string[]; body: Partial<OutletBody> }) => {
+      return Promise.all(outletIds.map((id) => updateOutlet(id, body)));
+    },
+    onSuccess: (updatedList) => {
+      for (const outlet of updatedList) {
+        queryClient.setQueryData(["admin", "outlets", outlet.id], outlet);
+      }
+      void queryClient.invalidateQueries({ queryKey: ["admin", "outlets"] });
+      void queryClient.invalidateQueries({ queryKey: ["outlets"] });
+      toastBus.emit(`Delivery settings updated for all ${updatedList.length} outlets`, "success");
+    },
+    onError: (error: Error) => toastBus.emit(error.message, "error"),
+  });
+}

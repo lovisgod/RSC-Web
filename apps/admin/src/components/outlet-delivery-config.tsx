@@ -7,6 +7,7 @@ import {
   Calculator,
   Check,
   Compass,
+  Globe,
   MapPin,
   Plus,
   Store,
@@ -16,7 +17,10 @@ import {
 import { type FormEvent, useState } from "react";
 
 import { useGeofenceZones } from "../hooks/use-geofence-zones";
-import { useUpdateOutletDelivery } from "../hooks/use-update-outlet-delivery";
+import {
+  useUpdateAllOutletsDelivery,
+  useUpdateOutletDelivery,
+} from "../hooks/use-update-outlet-delivery";
 import type { GeofenceZoneSummary } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
@@ -43,6 +47,7 @@ interface LocationFeeItem {
 }
 
 export function OutletDeliveryConfig({ outlets, isLoading }: Props) {
+  const [scope, setScope] = useState<"all" | "outlet">("all");
   const [selectedId, setSelectedId] = useState<string>("");
   const { data: geofenceZones = [] } = useGeofenceZones();
 
@@ -70,41 +75,81 @@ export function OutletDeliveryConfig({ outlets, isLoading }: Props) {
             Outlet Delivery Fee Configuration
           </h2>
           <p className="delivery-config__subtitle">
-            Configure flexible delivery pricing models per outlet. Choose Flat Rate, Distance-based
-            (Price per KM with Base Price), or Location/Zone-based pricing.
+            Configure flexible delivery pricing models. Choose Flat Rate, Distance-based (Price per
+            KM with Base Price), or Location/Zone-based pricing across all outlets or per outlet.
           </p>
         </div>
       </div>
 
-      {/* Outlet Selector Dropdown */}
-      <div className="delivery-config__outlet-selector">
-        <label htmlFor="outlet-picker" className="field-label">
-          Select Outlet to Configure
+      {/* Scope Selector: All Outlets vs Per Outlet */}
+      <div className="delivery-config__scope-wrapper">
+        <label className="field-label" style={{ marginBottom: "0.2rem" }}>
+          Configuration Scope
         </label>
-        <div className="outlet-selector-box">
-          <Store size={18} className="outlet-selector-icon" />
-          <select
-            id="outlet-picker"
-            className="field-input outlet-select-input"
-            value={selectedOutlet.id}
-            onChange={(e) => setSelectedId(e.target.value)}
+        <div className="scope-pills" role="radiogroup" aria-label="Configuration Scope">
+          <button
+            type="button"
+            className={`scope-pill ${scope === "all" ? "scope-pill--active" : ""}`}
+            onClick={() => setScope("all")}
+            role="radio"
+            aria-checked={scope === "all"}
           >
-            {outlets.map((outlet) => (
-              <option key={outlet.id} value={outlet.id}>
-                {outlet.name} ({outlet.cuisineType}) — Model:{" "}
-                {outlet.deliveryPricingModel === "PER_KM"
-                  ? "Price per KM"
-                  : outlet.deliveryPricingModel === "PER_LOCATION"
-                    ? "Location-based"
-                    : "Flat Rate"}
-              </option>
-            ))}
-          </select>
+            <Globe size={16} />
+            <span>All Outlets</span>
+            {scope === "all" && <Check size={14} className="scope-check" />}
+          </button>
+          <button
+            type="button"
+            className={`scope-pill ${scope === "outlet" ? "scope-pill--active" : ""}`}
+            onClick={() => setScope("outlet")}
+            role="radio"
+            aria-checked={scope === "outlet"}
+          >
+            <Store size={16} />
+            <span>Per Outlet</span>
+            {scope === "outlet" && <Check size={14} className="scope-check" />}
+          </button>
         </div>
+        <p className="delivery-config__scope-hint">
+          {scope === "all"
+            ? "Applying delivery pricing model to all outlets platform-wide."
+            : "Select an individual outlet below to customize its pricing model."}
+        </p>
       </div>
 
+      {/* Outlet Selector Dropdown (only visible when scope === "outlet") */}
+      {scope === "outlet" && (
+        <div className="delivery-config__outlet-selector">
+          <label htmlFor="outlet-picker" className="field-label">
+            Select Outlet to Configure
+          </label>
+          <div className="outlet-selector-box">
+            <Store size={18} className="outlet-selector-icon" />
+            <select
+              id="outlet-picker"
+              className="field-input outlet-select-input"
+              value={selectedOutlet.id}
+              onChange={(e) => setSelectedId(e.target.value)}
+            >
+              {outlets.map((outlet) => (
+                <option key={outlet.id} value={outlet.id}>
+                  {outlet.name} ({outlet.cuisineType}) — Model:{" "}
+                  {outlet.deliveryPricingModel === "PER_KM"
+                    ? "Price per KM"
+                    : outlet.deliveryPricingModel === "PER_LOCATION"
+                      ? "Location-based"
+                      : "Flat Rate"}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
+
       <OutletDeliveryForm
-        key={selectedOutlet.id}
+        key={`${scope}-${scope === "outlet" ? selectedOutlet.id : "all"}`}
+        scope={scope}
+        outlets={outlets}
         outlet={selectedOutlet}
         geofenceZones={geofenceZones}
       />
@@ -113,12 +158,16 @@ export function OutletDeliveryConfig({ outlets, isLoading }: Props) {
 }
 
 interface FormProps {
+  scope: "all" | "outlet";
+  outlets: OutletSummary[];
   outlet: OutletSummary;
   geofenceZones: GeofenceZoneSummary[];
 }
 
-function OutletDeliveryForm({ outlet, geofenceZones }: FormProps) {
-  const updateDelivery = useUpdateOutletDelivery();
+function OutletDeliveryForm({ scope, outlets, outlet, geofenceZones }: FormProps) {
+  const updateOutletDelivery = useUpdateOutletDelivery();
+  const updateAllDelivery = useUpdateAllOutletsDelivery();
+  const isPending = updateOutletDelivery.isPending || updateAllDelivery.isPending;
 
   const [pricingModel, setPricingModel] = useState<"FLAT" | "PER_KM" | "PER_LOCATION">(
     outlet.deliveryPricingModel ?? "FLAT",
@@ -258,16 +307,25 @@ function OutletDeliveryForm({ outlet, geofenceZones }: FormProps) {
       };
     });
 
-    updateDelivery.mutate({
-      id: outlet.id,
-      body: {
-        deliveryPricingModel: pricingModel,
-        deliveryFeeMinor: Math.round((flatFee ?? 1500) * 100),
-        deliveryBaseFeeMinor: Math.round((baseFee ?? 0) * 100),
-        deliveryPricePerKmMinor: Math.round((pricePerKm ?? 0) * 100),
-        deliveryLocationFees: payloadLocationFees,
-      },
-    });
+    const payload = {
+      deliveryPricingModel: pricingModel,
+      deliveryFeeMinor: Math.round((flatFee ?? 1500) * 100),
+      deliveryBaseFeeMinor: Math.round((baseFee ?? 0) * 100),
+      deliveryPricePerKmMinor: Math.round((pricePerKm ?? 0) * 100),
+      deliveryLocationFees: payloadLocationFees,
+    };
+
+    if (scope === "all") {
+      updateAllDelivery.mutate({
+        outletIds: outlets.map((o) => o.id),
+        body: payload,
+      });
+    } else {
+      updateOutletDelivery.mutate({
+        id: outlet.id,
+        body: payload,
+      });
+    }
   }
 
   // Preview calculation for PER_KM
@@ -349,7 +407,9 @@ function OutletDeliveryForm({ outlet, geofenceZones }: FormProps) {
           <label className="field-label">
             Flat Delivery Fee (₦)
             <span className="field-hint">
-              Customers ordering delivery from {outlet.name} will be charged this fixed amount.
+              {scope === "all"
+                ? "Customers ordering delivery will be charged this fixed amount across all outlets."
+                : `Customers ordering delivery from ${outlet.name} will be charged this fixed amount.`}
             </span>
             <input
               className="field-input"
@@ -605,8 +665,12 @@ function OutletDeliveryForm({ outlet, geofenceZones }: FormProps) {
 
       {/* Submit CTA */}
       <div className="delivery-config__actions">
-        <Button tone="navy" type="submit" disabled={updateDelivery.isPending}>
-          {updateDelivery.isPending ? "Saving..." : `Save Delivery Settings for ${outlet.name}`}
+        <Button tone="navy" type="submit" disabled={isPending}>
+          {isPending
+            ? "Saving..."
+            : scope === "all"
+              ? "Save Delivery Settings for All Outlets"
+              : `Save Delivery Settings for ${outlet.name}`}
         </Button>
       </div>
     </form>

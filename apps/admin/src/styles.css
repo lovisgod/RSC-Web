@@ -6446,6 +6446,57 @@ th {
   line-height: 1.45;
 }
 
+.delivery-config__scope-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.scope-pills {
+  display: inline-flex;
+  background: var(--rsc-bg-subtle, #f1f5f9);
+  padding: 0.3rem;
+  border-radius: 12px;
+  gap: 0.35rem;
+  width: fit-content;
+  border: 1px solid var(--rsc-border, #e2e8f0);
+}
+
+.scope-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--rsc-muted, #64748b);
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scope-pill:hover {
+  color: var(--rsc-ink, #0f172a);
+}
+
+.scope-pill--active {
+  background: #ffffff;
+  color: var(--rsc-navy-dark, #0f172a);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.scope-check {
+  color: var(--rsc-main, #047857);
+}
+
+.delivery-config__scope-hint {
+  margin: 0.1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--rsc-muted, #64748b);
+}
+
 .delivery-config__outlet-selector {
   display: flex;
   flex-direction: column;
