@@ -347,6 +347,29 @@ export class PaymentsService {
       const subtotalMinor = pricedLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
       let deliveryFeeMinor = 0;
       if (input.deliveryMode === "DELIVERY") {
+        for (const outletId of outletIds) {
+          const outlet = outletById.get(outletId);
+          if (!outlet) continue;
+
+          if (outlet.deliveryPricingModel === "PER_LOCATION") {
+            const locFees = outlet.deliveryLocationFees ?? [];
+            const matchesZone = locFees.some(
+              (l) =>
+                (deliveryZone?.id && l.zoneId === deliveryZone.id) ||
+                (deliveryZone?.name &&
+                  l.locationName.toLowerCase().trim() === deliveryZone.name.toLowerCase().trim()),
+            );
+            if (
+              !matchesZone &&
+              (!outlet.deliveryBaseFeeMinor || outlet.deliveryBaseFeeMinor <= 0)
+            ) {
+              throw new BadRequestException(
+                `Delivery to ${deliveryZone?.name ?? "this zone"} is not covered by ${outlet.name}`,
+              );
+            }
+          }
+        }
+
         deliveryFeeMinor = outletIds.reduce((sum, outletId) => {
           const outlet = outletById.get(outletId);
           const fee = calculateOutletDeliveryFee({

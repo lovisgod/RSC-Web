@@ -1,7 +1,18 @@
 import { Button } from "@rsc/ui";
 import type { OutletSummary } from "@rsc/contracts";
 import Skeleton from "@mui/material/Skeleton";
-import { Bike, Calculator, Check, Compass, MapPin, Plus, Store, Tag, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  Bike,
+  Calculator,
+  Check,
+  Compass,
+  MapPin,
+  Plus,
+  Store,
+  Tag,
+  Trash2,
+} from "lucide-react";
 import { type FormEvent, useState } from "react";
 
 import { useGeofenceZones } from "../hooks/use-geofence-zones";
@@ -132,16 +143,23 @@ function OutletDeliveryForm({ outlet, geofenceZones }: FormProps) {
   const [calcDistanceKm, setCalcDistanceKm] = useState<number>(5);
 
   // New location override row fields
-  const [newLocationName, setNewLocationName] = useState("");
   const [newZoneId, setNewZoneId] = useState("");
   const [newFeeNaira, setNewFeeNaira] = useState("");
 
+  const availableZones = geofenceZones.filter(
+    (z) =>
+      !locationFees.some(
+        (loc) =>
+          loc.zoneId === z.id ||
+          loc.locationName.toLowerCase().trim() === z.name.toLowerCase().trim(),
+      ),
+  );
+
   function handleAddLocationOverride() {
-    const name = newLocationName.trim();
     const feeNum = parseNonNegativeNumber(newFeeNaira);
 
-    if (!name) {
-      toastBus.emit("Please enter or select a location name.", "error");
+    if (!newZoneId) {
+      toastBus.emit("Please select a covered delivery area from the dropdown.", "error");
       return;
     }
     if (feeNum === null) {
@@ -149,34 +167,38 @@ function OutletDeliveryForm({ outlet, geofenceZones }: FormProps) {
       return;
     }
 
+    const matchedZone = geofenceZones.find((z) => z.id === newZoneId);
+    if (!matchedZone) {
+      toastBus.emit("Selected area is not an active covered zone.", "error");
+      return;
+    }
+
+    const alreadyAdded = locationFees.some(
+      (item) =>
+        item.zoneId === matchedZone.id ||
+        item.locationName.toLowerCase().trim() === matchedZone.name.toLowerCase().trim(),
+    );
+    if (alreadyAdded) {
+      toastBus.emit(`Rate for "${matchedZone.name}" is already configured.`, "error");
+      return;
+    }
+
     setLocationFees((prev) => [
       ...prev,
       {
-        id: `${name}-${Date.now()}`,
-        locationName: name,
-        zoneId: newZoneId || null,
+        id: `${matchedZone.id}-${Date.now()}`,
+        locationName: matchedZone.name,
+        zoneId: matchedZone.id,
         feeNaira: String(feeNum),
       },
     ]);
 
-    setNewLocationName("");
     setNewZoneId("");
     setNewFeeNaira("");
   }
 
   function handleRemoveLocation(id: string) {
     setLocationFees((prev) => prev.filter((item) => item.id !== id));
-  }
-
-  function handleZoneSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const zoneId = e.target.value;
-    setNewZoneId(zoneId);
-    if (zoneId) {
-      const matched = geofenceZones.find((z) => z.id === zoneId);
-      if (matched) {
-        setNewLocationName(matched.name);
-      }
-    }
   }
 
   function handleSave(event: FormEvent) {
@@ -203,11 +225,38 @@ function OutletDeliveryForm({ outlet, geofenceZones }: FormProps) {
       return;
     }
 
-    const payloadLocationFees = locationFees.map((loc) => ({
-      locationName: loc.locationName,
-      zoneId: loc.zoneId,
-      feeMinor: Math.round((parseNonNegativeNumber(loc.feeNaira) ?? 0) * 100),
-    }));
+    // Validate that all configured locations are valid covered areas
+    if (pricingModel === "PER_LOCATION") {
+      const uncoveredLocations = locationFees.filter(
+        (loc) =>
+          !geofenceZones.some(
+            (z) =>
+              (loc.zoneId && z.id === loc.zoneId) ||
+              z.name.toLowerCase().trim() === loc.locationName.toLowerCase().trim(),
+          ),
+      );
+
+      if (uncoveredLocations.length > 0) {
+        toastBus.emit(
+          `Cannot save: ${uncoveredLocations.map((l) => `"${l.locationName}"`).join(", ")} ${uncoveredLocations.length === 1 ? "is" : "are"} outside the areas covered by the outlets. Please remove uncovered locations before saving.`,
+          "error",
+        );
+        return;
+      }
+    }
+
+    const payloadLocationFees = locationFees.map((loc) => {
+      const matched = geofenceZones.find(
+        (z) =>
+          (loc.zoneId && z.id === loc.zoneId) ||
+          z.name.toLowerCase().trim() === loc.locationName.toLowerCase().trim(),
+      );
+      return {
+        locationName: matched ? matched.name : loc.locationName,
+        zoneId: matched ? matched.id : loc.zoneId,
+        feeMinor: Math.round((parseNonNegativeNumber(loc.feeNaira) ?? 0) * 100),
+      };
+    });
 
     updateDelivery.mutate({
       id: outlet.id,
@@ -424,98 +473,131 @@ function OutletDeliveryForm({ outlet, geofenceZones }: FormProps) {
 
             {locationFees.length === 0 ? (
               <p className="location-overrides__empty">
-                No location overrides configured yet. All delivery orders will use the default fee
+                No covered area rates configured yet. All delivery orders will use the default fee
                 of ₦{(Number(baseFeeNaira) || 0).toLocaleString()}.
               </p>
             ) : (
               <div className="location-fees-table">
                 <div className="location-fees-table__header">
-                  <span>Location / Zone</span>
+                  <span>Covered Location / Zone</span>
                   <span>Delivery Fee (₦)</span>
                   <span>Action</span>
                 </div>
-                {locationFees.map((loc) => (
-                  <div key={loc.id} className="location-fees-table__row">
-                    <div className="location-name-col">
-                      <MapPin size={14} className="location-pin-icon" />
-                      <span className="location-name-text">{loc.locationName}</span>
-                      {loc.zoneId && <span className="zone-badge">Geofence</span>}
+                {locationFees.map((loc) => {
+                  const isCovered = geofenceZones.some(
+                    (z) =>
+                      (loc.zoneId && loc.zoneId === z.id) ||
+                      z.name.toLowerCase().trim() === loc.locationName.toLowerCase().trim(),
+                  );
+                  return (
+                    <div key={loc.id} className="location-fees-table__row">
+                      <div className="location-name-col">
+                        <MapPin
+                          size={14}
+                          className={
+                            isCovered ? "location-pin-icon" : "location-pin-icon--uncovered"
+                          }
+                        />
+                        <span
+                          className={
+                            isCovered ? "location-name-text" : "location-name-text--uncovered"
+                          }
+                        >
+                          {loc.locationName}
+                        </span>
+                        {isCovered ? (
+                          <span className="zone-badge zone-badge--covered">Covered Area</span>
+                        ) : (
+                          <span
+                            className="zone-badge zone-badge--uncovered"
+                            title="This location is outside the areas covered by the outlets"
+                          >
+                            <AlertCircle size={11} /> Outside Covered Areas
+                          </span>
+                        )}
+                      </div>
+                      <div className="location-fee-col">
+                        <input
+                          type="number"
+                          min={0}
+                          step={50}
+                          className="field-input location-fee-input"
+                          value={loc.feeNaira}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLocationFees((prev) =>
+                              prev.map((item) =>
+                                item.id === loc.id ? { ...item, feeNaira: val } : item,
+                              ),
+                            );
+                          }}
+                        />
+                      </div>
+                      <div className="location-action-col">
+                        <button
+                          type="button"
+                          className="location-delete-btn"
+                          aria-label={`Remove ${loc.locationName}`}
+                          onClick={() => handleRemoveLocation(loc.id)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="location-fee-col">
-                      <input
-                        type="number"
-                        min={0}
-                        step={50}
-                        className="field-input location-fee-input"
-                        value={loc.feeNaira}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setLocationFees((prev) =>
-                            prev.map((item) =>
-                              item.id === loc.id ? { ...item, feeNaira: val } : item,
-                            ),
-                          );
-                        }}
-                      />
-                    </div>
-                    <div className="location-action-col">
-                      <button
-                        type="button"
-                        className="location-delete-btn"
-                        aria-label={`Remove ${loc.locationName}`}
-                        onClick={() => handleRemoveLocation(loc.id)}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
             {/* Add new location rate row */}
             <div className="add-location-box">
+              <span className="add-location-box__label">Add Rate for Covered Area</span>
               <div className="add-location-box__inputs">
-                {geofenceZones.length > 0 && (
-                  <select
-                    className="field-input zone-select-input"
-                    value={newZoneId}
-                    onChange={handleZoneSelectChange}
-                  >
-                    <option value="">-- Choose Geofence Zone --</option>
-                    {geofenceZones.map((zone) => (
-                      <option key={zone.id} value={zone.id}>
-                        📍 {zone.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <input
-                  type="text"
-                  className="field-input location-text-input"
-                  placeholder="Or enter location name (e.g. Lekki Phase 1)"
-                  value={newLocationName}
-                  onChange={(e) => setNewLocationName(e.target.value)}
-                />
-                <input
-                  type="number"
-                  min={0}
-                  step={50}
-                  className="field-input fee-input-short"
-                  placeholder="Fee (₦)"
-                  value={newFeeNaira}
-                  onChange={(e) => setNewFeeNaira(e.target.value)}
-                />
+                <select
+                  className="field-input zone-select-input"
+                  value={newZoneId}
+                  onChange={(e) => setNewZoneId(e.target.value)}
+                  disabled={availableZones.length === 0}
+                  aria-label="Select Covered Area"
+                >
+                  <option value="">
+                    {availableZones.length === 0
+                      ? "-- All covered areas configured --"
+                      : "-- Select Covered Area (Geofence Zone) --"}
+                  </option>
+                  {availableZones.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      📍 {zone.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="fee-input-wrapper">
+                  <span className="fee-currency-prefix">₦</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={50}
+                    className="field-input fee-input-short"
+                    placeholder="Delivery Fee"
+                    value={newFeeNaira}
+                    onChange={(e) => setNewFeeNaira(e.target.value)}
+                  />
+                </div>
                 <Button
-                  tone="quiet"
+                  tone="navy"
                   type="button"
                   className="add-loc-btn"
                   onClick={handleAddLocationOverride}
+                  disabled={!newZoneId || !newFeeNaira}
                 >
                   <Plus size={16} />
                   <span>Add Rate</span>
                 </Button>
               </div>
+              <p className="add-location-box__hint">
+                Only active covered areas (geofence zones) can be configured to prevent delivery to
+                unserviceable locations.
+              </p>
             </div>
           </div>
         </div>

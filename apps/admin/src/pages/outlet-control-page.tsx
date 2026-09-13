@@ -150,7 +150,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
     const form = new FormData(event.currentTarget);
     const commissionPercent = parseNonNegativeNumber(String(form.get("commission") ?? ""));
     const vatPercent = parseNonNegativeNumber(String(form.get("vat") ?? ""));
-    const deliveryFeeNaira = parseNonNegativeNumber(String(form.get("deliveryFee") ?? ""));
     const serviceFeeNaira = parseNonNegativeNumber(String(form.get("serviceFee") ?? ""));
 
     if (
@@ -158,7 +157,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
       commissionPercent > 100 ||
       vatPercent === null ||
       vatPercent > 100 ||
-      deliveryFeeNaira === null ||
       serviceFeeNaira === null
     ) {
       toastBus.emit("Enter valid charges. Percentage rates must be between 0 and 100.", "error");
@@ -168,7 +166,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
     updatePlatformCharges.mutate({
       platformCommissionBps: Math.round(commissionPercent * 100),
       defaultVatBps: Math.round(vatPercent * 100),
-      deliveryFeeMinor: Math.round(deliveryFeeNaira * 100),
       serviceFeeMinor: Math.round(serviceFeeNaira * 100),
     });
   }
@@ -318,7 +315,7 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
                 </div>
               ) : platformCharges.isLoading || !platformCharges.data ? (
                 <div className="charges-form" aria-label="Loading platform charges">
-                  {Array.from({ length: 4 }).map((_, index) => (
+                  {Array.from({ length: 3 }).map((_, index) => (
                     <Skeleton
                       key={index}
                       variant="rounded"
@@ -332,7 +329,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
                   key={[
                     platformCharges.data.platformCommissionBps,
                     platformCharges.data.defaultVatBps,
-                    platformCharges.data.deliveryFeeMinor,
                     platformCharges.data.serviceFeeMinor,
                   ].join("-")}
                   className="charges-form"
@@ -364,17 +360,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
                       max={100}
                       step="0.01"
                       defaultValue={basisPointsToPercent(platformCharges.data.defaultVatBps)}
-                      disabled={updatePlatformCharges.isPending}
-                      required
-                    />
-                  </label>
-                  <label className="field-label">
-                    Flat Delivery Fee (₦)
-                    <input
-                      className="field-input"
-                      name="deliveryFee"
-                      type="number"
-                      defaultValue={minorUnitsToNaira(platformCharges.data.deliveryFeeMinor)}
                       disabled={updatePlatformCharges.isPending}
                       required
                     />
