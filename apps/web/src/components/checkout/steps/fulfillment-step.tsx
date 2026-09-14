@@ -402,6 +402,7 @@ export function FulfillmentStep({
               deliveryAddress: addressText,
               deliveryLatitude: coords!.latitude,
               deliveryLongitude: coords!.longitude,
+              ...(landmark.trim() ? { landmark: landmark.trim() } : {}),
             }
           : base,
         { idempotencyKey },
@@ -431,6 +432,7 @@ export function FulfillmentStep({
         {
           mode,
           address: addressText,
+          landmark: landmark.trim(),
           latitude: coords?.latitude ?? null,
           longitude: coords?.longitude ?? null,
           zone,
@@ -476,18 +478,33 @@ export function FulfillmentStep({
         <div>
           <div className="flex items-center justify-between mb-2">
             <SectionLabel icon="/icons/png/round-pushpin_1f4cd.png" text="Delivery Address" />
-            <button
-              type="button"
-              onClick={handleUseDefault}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
-                defaultAddress
-                  ? "border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5"
-                  : "border-[var(--rsc-line)] text-[var(--rsc-muted)]"
-              }`}
-            >
-              <Star className="w-3 h-3" fill={defaultAddress ? "currentColor" : "none"} />
-              {defaultAddress ? `Use ${defaultAddress.label}` : "No Default Set"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={isLocating}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5 transition-all disabled:opacity-60"
+              >
+                {isLocating ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <LocateFixed className="w-3 h-3" />
+                )}
+                <span>{isLocating ? "Locating…" : "Current location"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleUseDefault}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                  defaultAddress
+                    ? "border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5"
+                    : "border-[var(--rsc-line)] text-[var(--rsc-muted)]"
+                }`}
+              >
+                <Star className="w-3 h-3" fill={defaultAddress ? "currentColor" : "none"} />
+                {defaultAddress ? `Use ${defaultAddress.label}` : "No Default Set"}
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3 rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-main)_15%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))] p-4 shadow-sm">
@@ -596,6 +613,24 @@ export function FulfillmentStep({
                     ))}
                   </div>
                 )}
+            </div>
+
+            {/* Landmark / directions */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="checkout-landmark"
+                className="block text-xs font-semibold text-[var(--rsc-muted)]"
+              >
+                Landmark / Navigation details (Optional)
+              </label>
+              <input
+                id="checkout-landmark"
+                type="text"
+                value={landmark}
+                onChange={(e) => setLandmark(e.target.value)}
+                placeholder="e.g. Opposite mega chicken, black gate, beside pharmacy"
+                className="w-full rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] px-4 py-2.5 text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] shadow-sm focus:border-[var(--rsc-main)] focus:outline-none transition-colors"
+              />
             </div>
 
             {/* Validation success */}
