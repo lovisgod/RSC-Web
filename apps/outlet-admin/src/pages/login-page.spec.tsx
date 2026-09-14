@@ -71,4 +71,28 @@ describe("LoginPage", () => {
       });
     });
   });
+
+  it("blocks customer and rider accounts from accessing outlet admin", async () => {
+    loginMock.mockResolvedValue({
+      user: { id: "customer-1", role: "CUSTOMER", outletId: null },
+    });
+    renderLogin();
+
+    fireEvent.change(screen.getByLabelText("Email or phone"), {
+      target: { value: "customer@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "correct-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Access denied. Only kitchen administrators and platform admins can log in here.",
+        ),
+      ).toBeInTheDocument();
+    });
+    expect(authStore.getUser()).toBeNull();
+  });
 });

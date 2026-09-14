@@ -35,20 +35,6 @@ body {
   width: max-content;
 }
 
-.rsc-global-theme-toggle {
-  position: fixed;
-  z-index: 70;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 22%);
-}
-
-@media (max-width: 767px) {
-  .rsc-global-theme-toggle {
-    display: none;
-  }
-}
-
 [data-theme="dark"] .bg-white {
   background-color: var(--rsc-panel) !important;
 }

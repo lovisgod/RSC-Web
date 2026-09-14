@@ -35,6 +35,18 @@ export function LoginPage() {
   const { mutate, isPending, error, reset } = useMutation({
     mutationFn: () => login({ identifier: identifier.trim(), password }),
     onSuccess: (data) => {
+      if (data.user.role === "CUSTOMER" || data.user.role === "RIDER") {
+        toastBus.emit(
+          "Access denied: Customer and rider accounts cannot access the Outlet Admin workspace.",
+          "error",
+        );
+        setErrors({
+          identifier:
+            "Access denied. Only kitchen administrators and platform admins can log in here.",
+        });
+        return;
+      }
+
       authStore.setUser({ id: data.user.id, role: data.user.role, outletId: data.user.outletId });
       toastBus.emit("Welcome back!", "success");
       navigate("/", { replace: true });
@@ -60,7 +72,6 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--rsc-navy-dark)] p-4">
-      {/* <ThemeToggle className="fixed right-4 top-4 z-10" /> */}
       <div className="w-full max-w-sm rounded-[1.75rem] border border-[color:color-mix(in_srgb,var(--rsc-main)_12%,white)] bg-[var(--rsc-panel)] p-8 shadow-[0_28px_80px_color-mix(in_srgb,var(--rsc-sidebar-bg)_38%,transparent)]">
         <div className="mb-8 flex items-center justify-center gap-3 text-center">
           <CssBrandLogo size="sm" tagline="Outlet staff sign-in" />

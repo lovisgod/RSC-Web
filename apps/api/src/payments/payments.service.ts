@@ -7,18 +7,22 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
+import type Redis from "ioredis";
 import { DataSource, In, QueryFailedError, Repository } from "typeorm";
 
 import { Customer } from "../auth/customer.entity";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { normalizeNigerianPhoneNumber } from "../auth/phone-number";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
+import { REDIS_CLIENT } from "../redis/redis.constants";
 import type { ApplicationConfig } from "../config/configuration";
 import { DeliveryService } from "../delivery/delivery.service";
+import { calculateOutletDeliveryFee } from "../delivery/delivery-pricing";
 import { ItemModifier } from "../catalog/item-modifier.entity";
 import { MenuItem } from "../catalog/menu-item.entity";
 import { Outlet } from "../outlets/outlet.entity";
@@ -72,6 +76,25 @@ interface PlatformChargesRow {
   deliveryFeeMinor: number;
   serviceFeeMinor: number;
   currency: "NGN";
+}
+
+export interface InitiatePaymentResponse {
+  masterOrderId: string;
+  paymentId: string;
+  reference: string;
+  checkoutUrl: string | null;
+  status: PaymentStatus;
+  totals: {
+    subtotalMinor: number;
+    deliveryFeeMinor: number;
+    serviceFeeMinor: number;
+    vatMinor: number;
+    discountMinor: number;
+    platformCommissionMinor: number;
+    totalMinor: number;
+    currency: "NGN";
+  };
+  splitBreakdown: PaymentSplitRoute[];
 }
 
 interface RefundRequestRaw {
@@ -154,6 +177,7 @@ export class PaymentsService {
     @Inject(PAYMENT_ADAPTER) private readonly paymentAdapter: PaymentAdapter,
     private readonly realtime: RealtimeService,
     private readonly notifications: NotificationsService,
+    @Optional() @Inject(REDIS_CLIENT) private readonly redis?: Redis,
   ) {
     const paymentsConfig = configService.get("payments", { infer: true });
 
@@ -230,242 +254,357 @@ export class PaymentsService {
     };
   }
 
-  async initiate(user: AuthenticatedUser, input: InitiatePaymentDto) {
-    if (input.deliveryMode === "DELIVERY") {
-      if (
-        !input.deliveryAddress ||
-        input.deliveryLatitude === undefined ||
-        input.deliveryLongitude === undefined
-      ) {
-        throw new BadRequestException("Delivery address and coordinates are required");
+  async initiate(
+    user: AuthenticatedUser,
+    input: InitiatePaymentDto,
+  ): Promise<InitiatePaymentResponse> {
+    const idempotencyKey = input.idempotencyKey?.trim();
+    const cacheKey = idempotencyKey ? `idempotency:checkout:${user.id}:${idempotencyKey}` : null;
+    const lockKey = idempotencyKey ? `idempotency:lock:${user.id}:${idempotencyKey}` : null;
+
+    if (cacheKey && this.redis) {
+      try {
+        const cached = await this.redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached) as InitiatePaymentResponse;
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Failed to read checkout idempotency cache for ${cacheKey}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    let lockAcquired = false;
+    if (lockKey && this.redis) {
+      try {
+        const result = await this.redis.set(lockKey, "1", "EX", 30, "NX");
+        lockAcquired = result === "OK";
+        if (!lockAcquired) {
+          for (let i = 0; i < 5; i++) {
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            if (cacheKey) {
+              const cached = await this.redis.get(cacheKey);
+              if (cached) {
+                return JSON.parse(cached) as InitiatePaymentResponse;
+              }
+            }
+          }
+          throw new ConflictException("Checkout initiation is already in progress");
+        }
+      } catch (err) {
+        if (err instanceof ConflictException) throw err;
+        this.logger.warn(
+          `Failed to acquire checkout idempotency lock for ${lockKey}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    try {
+      let deliveryZone: { id: string; name: string } | null = null;
+
+      if (input.deliveryMode === "DELIVERY") {
+        if (
+          !input.deliveryAddress ||
+          input.deliveryLatitude === undefined ||
+          input.deliveryLongitude === undefined
+        ) {
+          throw new BadRequestException("Delivery address and coordinates are required");
+        }
+
+        const validation = await this.delivery.validateAddress({
+          latitude: input.deliveryLatitude,
+          longitude: input.deliveryLongitude,
+        });
+
+        if (!validation.deliverable) {
+          throw new BadRequestException("Delivery address is outside the service zone");
+        }
+
+        deliveryZone = validation.zone;
       }
 
-      const validation = await this.delivery.validateAddress({
-        latitude: input.deliveryLatitude,
-        longitude: input.deliveryLongitude,
+      const customer = await this.users.findOneBy({ id: user.id });
+
+      if (!customer) {
+        throw new BadRequestException("Customer not found");
+      }
+
+      const pricedLines = await this.priceCart(input);
+      const platformCharges = await this.getPlatformCharges();
+      const grouped = new Map<string, PricedLine[]>();
+
+      for (const line of pricedLines) {
+        grouped.set(line.outletId, [...(grouped.get(line.outletId) ?? []), line]);
+      }
+
+      const outletIds = [...grouped.keys()];
+      const outlets = await this.outlets.findBy({ id: In(outletIds) });
+      const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
+
+      this.ensureOutletsAreOnline(outletIds, outletById);
+
+      const subtotalMinor = pricedLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
+      let deliveryFeeMinor = 0;
+      if (input.deliveryMode === "DELIVERY") {
+        for (const outletId of outletIds) {
+          const outlet = outletById.get(outletId);
+          if (!outlet) continue;
+
+          if (outlet.deliveryPricingModel === "PER_LOCATION") {
+            const locFees = outlet.deliveryLocationFees ?? [];
+            const matchesZone = locFees.some(
+              (l) =>
+                (deliveryZone?.id && l.zoneId === deliveryZone.id) ||
+                (deliveryZone?.name &&
+                  l.locationName.toLowerCase().trim() === deliveryZone.name.toLowerCase().trim()),
+            );
+            if (
+              !matchesZone &&
+              (!outlet.deliveryBaseFeeMinor || outlet.deliveryBaseFeeMinor <= 0)
+            ) {
+              throw new BadRequestException(
+                `Delivery to ${deliveryZone?.name ?? "this zone"} is not covered by ${outlet.name}`,
+              );
+            }
+          }
+        }
+
+        deliveryFeeMinor = outletIds.reduce((sum, outletId) => {
+          const outlet = outletById.get(outletId);
+          const fee = calculateOutletDeliveryFee({
+            pricingModel: outlet?.deliveryPricingModel,
+            flatFeeMinor: outlet?.deliveryFeeMinor,
+            baseFeeMinor: outlet?.deliveryBaseFeeMinor,
+            pricePerKmMinor: outlet?.deliveryPricePerKmMinor,
+            locationFees: outlet?.deliveryLocationFees,
+            outletLatitude: outlet?.latitude,
+            outletLongitude: outlet?.longitude,
+            deliveryLatitude: input.deliveryLatitude,
+            deliveryLongitude: input.deliveryLongitude,
+            zoneId: deliveryZone?.id,
+            zoneName: deliveryZone?.name,
+            fallbackFeeMinor: platformCharges.deliveryFeeMinor,
+          });
+          return sum + fee;
+        }, 0);
+      }
+      const serviceFeeMinor = platformCharges.serviceFeeMinor;
+      const vatMinor = outletIds.reduce((sum, outletId) => {
+        const outletSubtotalMinor = grouped
+          .get(outletId)!
+          .reduce((lineSum, line) => lineSum + line.lineTotalMinor, 0);
+        const outletVatBps = outletById.get(outletId)?.vatBps ?? 0;
+        const vatBps = outletVatBps > 0 ? outletVatBps : platformCharges.defaultVatBps;
+
+        return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
+      }, 0);
+
+      const splitRoutes: PaymentSplitRoute[] = outletIds.map((outletId) => {
+        const grossMinor = grouped
+          .get(outletId)!
+          .reduce((sum, line) => sum + line.lineTotalMinor, 0);
+        const commissionMinor = Math.round(
+          (grossMinor * platformCharges.platformCommissionBps) / 10_000,
+        );
+
+        return {
+          outletId,
+          subaccountCode: outletById.get(outletId)?.settlementSubaccountCode ?? null,
+          grossMinor,
+          commissionMinor,
+          netMinor: grossMinor - commissionMinor,
+        };
       });
 
-      if (!validation.deliverable) {
-        throw new BadRequestException("Delivery address is outside the service zone");
+      const platformCommissionMinor = splitRoutes.reduce((sum, r) => sum + r.commissionMinor, 0);
+      const discountMinor = await this.calculatePromoDiscount(input, {
+        subtotalMinor,
+        deliveryFeeMinor,
+        outletIds,
+        grouped,
+      });
+      const totalMinor =
+        subtotalMinor +
+        deliveryFeeMinor +
+        serviceFeeMinor +
+        vatMinor +
+        platformCommissionMinor -
+        discountMinor;
+      const undiscountedTotalMinor = totalMinor + discountMinor;
+
+      // Validate client-provided totals to prevent cheating/manipulation
+      if (input.subtotalMinor !== subtotalMinor) {
+        throw new BadRequestException(
+          `Subtotal mismatch: expected ${subtotalMinor}, got ${input.subtotalMinor}`,
+        );
       }
-    }
+      if (input.deliveryFeeMinor !== deliveryFeeMinor) {
+        throw new BadRequestException(
+          `Delivery fee mismatch: expected ${deliveryFeeMinor}, got ${input.deliveryFeeMinor}`,
+        );
+      }
+      if (input.serviceFeeMinor !== serviceFeeMinor) {
+        throw new BadRequestException(
+          `Service fee mismatch: expected ${serviceFeeMinor}, got ${input.serviceFeeMinor}`,
+        );
+      }
+      if (input.vatMinor !== vatMinor) {
+        throw new BadRequestException(`VAT mismatch: expected ${vatMinor}, got ${input.vatMinor}`);
+      }
+      if (input.discountMinor !== undefined && input.discountMinor !== discountMinor) {
+        throw new BadRequestException(
+          `Discount mismatch: expected ${discountMinor}, got ${input.discountMinor}`,
+        );
+      }
+      if (input.platformCommissionMinor !== platformCommissionMinor) {
+        throw new BadRequestException(
+          `Platform commission mismatch: expected ${platformCommissionMinor}, got ${input.platformCommissionMinor}`,
+        );
+      }
+      if (input.totalMinor !== totalMinor && input.totalMinor !== undiscountedTotalMinor) {
+        throw new BadRequestException(
+          `Total mismatch: expected ${totalMinor}, got ${input.totalMinor}`,
+        );
+      }
+      const reference = `RSC-${randomUUID()}`;
+      const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
+      const recipientPhone = this.normalizeRecipientPhone(input.recipientPhone);
+      const preparationNote = input.preparationNote?.trim() || null;
+      const returnUrl = this.normalizeReturnUrl(input.returnUrl);
 
-    const customer = await this.users.findOneBy({ id: user.id });
-
-    if (!customer) {
-      throw new BadRequestException("Customer not found");
-    }
-
-    const pricedLines = await this.priceCart(input);
-    const platformCharges = await this.getPlatformCharges();
-    const grouped = new Map<string, PricedLine[]>();
-
-    for (const line of pricedLines) {
-      grouped.set(line.outletId, [...(grouped.get(line.outletId) ?? []), line]);
-    }
-
-    const outletIds = [...grouped.keys()];
-    const outlets = await this.outlets.findBy({ id: In(outletIds) });
-    const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
-
-    this.ensureOutletsAreOnline(outletIds, outletById);
-
-    const subtotalMinor = pricedLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
-    const deliveryFeeMinor =
-      input.deliveryMode === "DELIVERY" ? platformCharges.deliveryFeeMinor : 0;
-    const serviceFeeMinor = platformCharges.serviceFeeMinor;
-    const vatMinor = outletIds.reduce((sum, outletId) => {
-      const outletSubtotalMinor = grouped
-        .get(outletId)!
-        .reduce((lineSum, line) => lineSum + line.lineTotalMinor, 0);
-      const outletVatBps = outletById.get(outletId)?.vatBps ?? 0;
-      const vatBps = outletVatBps > 0 ? outletVatBps : platformCharges.defaultVatBps;
-
-      return sum + Math.round((outletSubtotalMinor * vatBps) / 10_000);
-    }, 0);
-
-    const splitRoutes: PaymentSplitRoute[] = outletIds.map((outletId) => {
-      const grossMinor = grouped.get(outletId)!.reduce((sum, line) => sum + line.lineTotalMinor, 0);
-      const commissionMinor = Math.round(
-        (grossMinor * platformCharges.platformCommissionBps) / 10_000,
-      );
-
-      return {
-        outletId,
-        subaccountCode: outletById.get(outletId)?.settlementSubaccountCode ?? null,
-        grossMinor,
-        commissionMinor,
-        netMinor: grossMinor - commissionMinor,
+      const providerPaymentInput: InitiateProviderPaymentInput = {
+        email: customerEmail,
+        amountMinor: totalMinor,
+        currency: "NGN",
+        reference,
+        splitRoutes,
+        ...(returnUrl ? { returnUrl } : {}),
       };
-    });
+      const providerPayment = await this.paymentAdapter.initiate(providerPaymentInput);
 
-    const platformCommissionMinor = splitRoutes.reduce((sum, r) => sum + r.commissionMinor, 0);
-    const discountMinor = await this.calculatePromoDiscount(input, {
-      subtotalMinor,
-      deliveryFeeMinor,
-      outletIds,
-      grouped,
-    });
-    const totalMinor =
-      subtotalMinor +
-      deliveryFeeMinor +
-      serviceFeeMinor +
-      vatMinor +
-      platformCommissionMinor -
-      discountMinor;
-    const undiscountedTotalMinor = totalMinor + discountMinor;
+      const persisted = await this.dataSource.transaction(async (manager) => {
+        const masterOrder = await manager.save(
+          manager.create(MasterOrder, {
+            customerId: user.id,
+            subtotalMinor,
+            deliveryFeeMinor,
+            serviceFeeMinor,
+            vatMinor,
+            discountMinor,
+            totalMinor,
+            currency: "NGN",
+            deliveryMode: input.deliveryMode,
+            deliveryAddress: input.deliveryAddress ?? null,
+            deliveryLatitude: input.deliveryLatitude ?? null,
+            deliveryLongitude: input.deliveryLongitude ?? null,
+            recipientPhone,
+            paymentReference: providerPayment.reference,
+            deliveryCode: randomSixDigitCode(),
+            status:
+              providerPayment.status === "SUCCESS"
+                ? MasterOrderStatus.CONFIRMED
+                : MasterOrderStatus.PENDING_PAYMENT,
+          }),
+        );
 
-    // Validate client-provided totals to prevent cheating/manipulation
-    if (input.subtotalMinor !== subtotalMinor) {
-      throw new BadRequestException(
-        `Subtotal mismatch: expected ${subtotalMinor}, got ${input.subtotalMinor}`,
-      );
-    }
-    if (input.deliveryFeeMinor !== deliveryFeeMinor) {
-      throw new BadRequestException(
-        `Delivery fee mismatch: expected ${deliveryFeeMinor}, got ${input.deliveryFeeMinor}`,
-      );
-    }
-    if (input.serviceFeeMinor !== serviceFeeMinor) {
-      throw new BadRequestException(
-        `Service fee mismatch: expected ${serviceFeeMinor}, got ${input.serviceFeeMinor}`,
-      );
-    }
-    if (input.vatMinor !== vatMinor) {
-      throw new BadRequestException(`VAT mismatch: expected ${vatMinor}, got ${input.vatMinor}`);
-    }
-    if (input.discountMinor !== undefined && input.discountMinor !== discountMinor) {
-      throw new BadRequestException(
-        `Discount mismatch: expected ${discountMinor}, got ${input.discountMinor}`,
-      );
-    }
-    if (input.platformCommissionMinor !== platformCommissionMinor) {
-      throw new BadRequestException(
-        `Platform commission mismatch: expected ${platformCommissionMinor}, got ${input.platformCommissionMinor}`,
-      );
-    }
-    if (input.totalMinor !== totalMinor && input.totalMinor !== undiscountedTotalMinor) {
-      throw new BadRequestException(
-        `Total mismatch: expected ${totalMinor}, got ${input.totalMinor}`,
-      );
-    }
-    const reference = `RSC-${randomUUID()}`;
-    const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
-    const recipientPhone = this.normalizeRecipientPhone(input.recipientPhone);
-    const preparationNote = input.preparationNote?.trim() || null;
-    const returnUrl = this.normalizeReturnUrl(input.returnUrl);
+        const subOrders: SubOrder[] = [];
+        for (const route of splitRoutes) {
+          const subOrder = await manager.save(
+            manager.create(SubOrder, {
+              masterOrderId: masterOrder.id,
+              outletId: route.outletId,
+              pickupCode: randomSixDigitCode(),
+              subtotalMinor: route.grossMinor,
+              commissionMinor: route.commissionMinor,
+              netMinor: route.netMinor,
+              preparationNote,
+            }),
+          );
+          subOrders.push(subOrder);
 
-    const providerPaymentInput: InitiateProviderPaymentInput = {
-      email: customerEmail,
-      amountMinor: totalMinor,
-      currency: "NGN",
-      reference,
-      splitRoutes,
-      ...(returnUrl ? { returnUrl } : {}),
-    };
-    const providerPayment = await this.paymentAdapter.initiate(providerPaymentInput);
+          for (const line of grouped.get(route.outletId)!) {
+            await manager.save(
+              manager.create(OrderLineItem, {
+                masterOrderId: masterOrder.id,
+                subOrderId: subOrder.id,
+                outletId: route.outletId,
+                menuItemId: line.menuItemId,
+                itemNameSnapshot: line.itemNameSnapshot,
+                baseUnitPriceMinor: line.baseUnitPriceMinor,
+                unitPriceMinor: line.unitPriceMinor,
+                quantity: line.quantity,
+                lineTotalMinor: line.lineTotalMinor,
+                currency: "NGN",
+                modifiersSnapshot: line.modifiersSnapshot,
+                customerNote: line.customerNote ?? null,
+              }),
+            );
+          }
+        }
 
-    const persisted = await this.dataSource.transaction(async (manager) => {
-      const masterOrder = await manager.save(
-        manager.create(MasterOrder, {
-          customerId: user.id,
+        const payment = await manager.save(
+          manager.create(Payment, {
+            masterOrderId: masterOrder.id,
+            amountMinor: totalMinor,
+            currency: "NGN",
+            gateway: providerPayment.gateway,
+            reference: providerPayment.reference,
+            status:
+              providerPayment.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
+            checkoutUrl: providerPayment.checkoutUrl,
+            splitBreakdown: splitRoutes,
+            providerResponse: providerPayment.providerResponse,
+          }),
+        );
+
+        return { masterOrder, subOrders, payment };
+      });
+
+      if (persisted.payment.status === PaymentStatus.SUCCESS) {
+        await this.emitConfirmedSubOrders(persisted.masterOrder);
+        await this.notifyAdminsOfSuccessfulPayment(persisted.masterOrder, persisted.payment);
+      }
+
+      const response = {
+        masterOrderId: persisted.masterOrder.id,
+        paymentId: persisted.payment.id,
+        reference: persisted.payment.reference,
+        checkoutUrl: persisted.payment.checkoutUrl,
+        status: persisted.payment.status,
+        totals: {
           subtotalMinor,
           deliveryFeeMinor,
           serviceFeeMinor,
           vatMinor,
           discountMinor,
+          platformCommissionMinor,
           totalMinor,
-          currency: "NGN",
-          deliveryMode: input.deliveryMode,
-          deliveryAddress: input.deliveryAddress ?? null,
-          deliveryLatitude: input.deliveryLatitude ?? null,
-          deliveryLongitude: input.deliveryLongitude ?? null,
-          recipientPhone,
-          paymentReference: providerPayment.reference,
-          deliveryCode: randomSixDigitCode(),
-          status:
-            providerPayment.status === "SUCCESS"
-              ? MasterOrderStatus.CONFIRMED
-              : MasterOrderStatus.PENDING_PAYMENT,
-        }),
-      );
+          currency: "NGN" as const,
+        },
+        splitBreakdown: splitRoutes,
+      };
 
-      const subOrders: SubOrder[] = [];
-      for (const route of splitRoutes) {
-        const subOrder = await manager.save(
-          manager.create(SubOrder, {
-            masterOrderId: masterOrder.id,
-            outletId: route.outletId,
-            pickupCode: randomSixDigitCode(),
-            subtotalMinor: route.grossMinor,
-            commissionMinor: route.commissionMinor,
-            netMinor: route.netMinor,
-            preparationNote,
-          }),
-        );
-        subOrders.push(subOrder);
-
-        for (const line of grouped.get(route.outletId)!) {
-          await manager.save(
-            manager.create(OrderLineItem, {
-              masterOrderId: masterOrder.id,
-              subOrderId: subOrder.id,
-              outletId: route.outletId,
-              menuItemId: line.menuItemId,
-              itemNameSnapshot: line.itemNameSnapshot,
-              baseUnitPriceMinor: line.baseUnitPriceMinor,
-              unitPriceMinor: line.unitPriceMinor,
-              quantity: line.quantity,
-              lineTotalMinor: line.lineTotalMinor,
-              currency: "NGN",
-              modifiersSnapshot: line.modifiersSnapshot,
-              customerNote: line.customerNote ?? null,
-            }),
+      if (cacheKey && this.redis) {
+        try {
+          await this.redis.set(cacheKey, JSON.stringify(response), "EX", 1800);
+        } catch (err) {
+          this.logger.warn(
+            `Failed to save checkout idempotency cache for ${cacheKey}: ${(err as Error).message}`,
           );
         }
       }
 
-      const payment = await manager.save(
-        manager.create(Payment, {
-          masterOrderId: masterOrder.id,
-          amountMinor: totalMinor,
-          currency: "NGN",
-          gateway: providerPayment.gateway,
-          reference: providerPayment.reference,
-          status:
-            providerPayment.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
-          checkoutUrl: providerPayment.checkoutUrl,
-          splitBreakdown: splitRoutes,
-          providerResponse: providerPayment.providerResponse,
-        }),
-      );
-
-      return { masterOrder, subOrders, payment };
-    });
-
-    if (persisted.payment.status === PaymentStatus.SUCCESS) {
-      await this.emitConfirmedSubOrders(persisted.masterOrder);
-      await this.notifyAdminsOfSuccessfulPayment(persisted.masterOrder, persisted.payment);
+      return response;
+    } finally {
+      if (lockKey && lockAcquired && this.redis) {
+        try {
+          await this.redis.del(lockKey);
+        } catch {
+          // ignore
+        }
+      }
     }
-
-    return {
-      masterOrderId: persisted.masterOrder.id,
-      paymentId: persisted.payment.id,
-      reference: persisted.payment.reference,
-      checkoutUrl: persisted.payment.checkoutUrl,
-      status: persisted.payment.status,
-      totals: {
-        subtotalMinor,
-        deliveryFeeMinor,
-        serviceFeeMinor,
-        vatMinor,
-        discountMinor,
-        platformCommissionMinor,
-        totalMinor,
-        currency: "NGN",
-      },
-      splitBreakdown: splitRoutes,
-    };
   }
 
   async retryOrderPayment(user: AuthenticatedUser, orderId: string, input: RetryPaymentDto = {}) {
@@ -582,6 +721,10 @@ export class PaymentsService {
   // ---------------------------------------------------------------------------
 
   async confirmPayment(event: ParsedWebhookEvent): Promise<{ already: boolean }> {
+    this.logger.log(
+      `Confirming payment from webhook: reference=${event.reference}, eventId=${event.eventId}, status=${event.status}, amountMinor=${event.amountMinor}`,
+    );
+
     const paymentsConfig = this.configService.get("payments", { infer: true });
     const gateway = paymentsConfig.provider;
     let payment: Payment | null = null;
@@ -629,6 +772,12 @@ export class PaymentsService {
         return;
       }
 
+      if (event.status === "PENDING") {
+        payment.providerResponse = event.providerResponse;
+        await paymentRepository.save(payment);
+        return;
+      }
+
       payment.status = event.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
       await paymentRepository.save(payment);
 
@@ -668,7 +817,7 @@ export class PaymentsService {
     }
 
     this.logger.log(
-      `Payment ${confirmedPayment.reference} confirmed: ${confirmedPayment.status} (order ${confirmedPayment.masterOrderId})`,
+      `Payment webhook applied for ${confirmedPayment.reference}: ${confirmedPayment.status} (order ${confirmedPayment.masterOrderId})`,
     );
 
     return { already };

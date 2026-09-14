@@ -32,6 +32,9 @@ export class Outlet {
   @Column({ name: "image_url", type: "varchar", length: 512, nullable: true })
   imageUrl!: string | null;
 
+  @Column({ name: "logo_url", type: "varchar", length: 512, nullable: true })
+  logoUrl!: string | null;
+
   @Column({ name: "banner_url", type: "varchar", length: 512, nullable: true })
   bannerUrl!: string | null;
 
@@ -52,6 +55,26 @@ export class Outlet {
 
   @Column({ name: "delivery_radius_km", type: "double precision", default: 15 })
   deliveryRadiusKm!: number;
+
+  @Column({
+    name: "delivery_pricing_model",
+    type: "varchar",
+    length: 32,
+    default: "FLAT",
+  })
+  deliveryPricingModel!: "FLAT" | "PER_KM" | "PER_LOCATION";
+
+  @Column({ name: "delivery_fee_minor", type: "integer", default: 150000 })
+  deliveryFeeMinor!: number;
+
+  @Column({ name: "delivery_base_fee_minor", type: "integer", default: 0 })
+  deliveryBaseFeeMinor!: number;
+
+  @Column({ name: "delivery_price_per_km_minor", type: "integer", default: 0 })
+  deliveryPricePerKmMinor!: number;
+
+  @Column({ name: "delivery_location_fees", type: "jsonb", default: () => "'[]'" })
+  deliveryLocationFees!: Array<{ locationName: string; zoneId?: string | null; feeMinor: number }>;
 
   @Column({ name: "rating_average", type: "numeric", precision: 3, scale: 2, default: 0 })
   ratingAverage!: string;

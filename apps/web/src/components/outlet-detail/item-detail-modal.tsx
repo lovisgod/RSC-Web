@@ -197,10 +197,10 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
             type="button"
             onClick={onClose}
             aria-label="Close item details"
-            className="absolute left-4 top-4 z-10 inline-flex h-10 items-center gap-2 rounded-full bg-white/95 px-3 text-sm font-bold text-gray-700 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-brand)] md:right-4 md:left-auto md:w-10 md:justify-center md:px-0"
+            className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-700 shadow-md backdrop-blur transition hover:bg-white hover:text-black dark:border-gray-800 dark:bg-gray-900/90 dark:text-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-brand)]"
           >
             <X className="h-5 w-5" aria-hidden="true" />
-            <span className="md:sr-only">Close</span>
+            <span className="sr-only">Close</span>
           </button>
 
           {item.image.startsWith("/") || item.image.startsWith("http") ? (

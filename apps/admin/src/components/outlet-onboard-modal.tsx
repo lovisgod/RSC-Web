@@ -58,12 +58,15 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
   const [form, setForm] = useState<FormState>(() => getInitialForm(outlet));
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(outlet?.imageUrl ?? null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(outlet?.logoUrl ?? null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(outlet?.bannerUrl ?? null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const hasSettlementSubaccount = form.settlementSubaccountCode.trim().length > 0;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
@@ -78,12 +81,20 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
   } = useMutation({
     mutationFn: async () => {
       let resolvedImageUrl: string | undefined;
+      let resolvedLogoUrl: string | undefined;
       let resolvedBannerUrl: string | undefined;
 
       if (imageFile) {
         setUploadStep(true);
         const { url } = await uploadImage(imageFile);
         resolvedImageUrl = url;
+        setUploadStep(false);
+      }
+
+      if (logoFile) {
+        setUploadStep(true);
+        const { url } = await uploadImage(logoFile);
+        resolvedLogoUrl = url;
         setUploadStep(false);
       }
 
@@ -101,6 +112,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
         isOnline: hasSettlementSubaccount && form.isOnline,
         settlementSubaccountCode: form.settlementSubaccountCode.trim() || null,
         ...(resolvedImageUrl !== undefined && { imageUrl: resolvedImageUrl }),
+        ...(resolvedLogoUrl !== undefined && { logoUrl: resolvedLogoUrl }),
         ...(resolvedBannerUrl !== undefined && { bannerUrl: resolvedBannerUrl }),
       };
 
@@ -144,6 +156,15 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
   }
 
@@ -212,9 +233,19 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
         <form className="modal__body" onSubmit={handleSubmit} noValidate>
           {/* Image upload / replace */}
           <div className="outlet-media-grid">
+            {/* Outlet Photo */}
             <div>
               <label className="field-label" htmlFor="outlet-image">
-                Outlet photo
+                <span className="field-label__row">
+                  Outlet photo
+                  <span
+                    className="field-info-icon"
+                    title="Main photo for the outlet card & listing in customer discovery."
+                    aria-label="Main photo for customer discovery"
+                  >
+                    <Info size={14} aria-hidden="true" />
+                  </span>
+                </span>
               </label>
               <input
                 ref={fileInputRef}
@@ -228,7 +259,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
                 className={`outlet-image-drop${imagePreview ? " outlet-image-drop--filled" : ""}`}
                 role="button"
                 tabIndex={0}
-                aria-label={isEditMode ? "Replace outlet image" : "Upload outlet image"}
+                aria-label={isEditMode ? "Replace outlet photo" : "Upload outlet photo"}
                 onClick={() => fileInputRef.current?.click()}
                 onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
               >
@@ -240,7 +271,7 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
                   />
                 ) : (
                   <span className="outlet-image-drop__placeholder">
-                    <Upload size={26} />
+                    <Upload size={24} />
                     <span>Click to upload outlet photo</span>
                     <small>JPG · PNG · WEBP</small>
                   </span>
@@ -248,9 +279,65 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
               </div>
             </div>
 
+            {/* Outlet Logo */}
+            <div>
+              <label className="field-label" htmlFor="outlet-logo">
+                <span className="field-label__row">
+                  Outlet logo
+                  <span
+                    className="field-info-icon"
+                    title="Brand logo / icon displayed on outlet headers and receipts."
+                    aria-label="Brand logo for outlet headers and receipts"
+                  >
+                    <Info size={14} aria-hidden="true" />
+                  </span>
+                </span>
+              </label>
+              <input
+                ref={logoInputRef}
+                id="outlet-logo"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                className="sr-only"
+                onChange={handleLogoChange}
+              />
+              <div
+                className={`outlet-image-drop${logoPreview ? " outlet-image-drop--filled" : ""}`}
+                role="button"
+                tabIndex={0}
+                aria-label={isEditMode ? "Replace outlet logo" : "Upload outlet logo"}
+                onClick={() => logoInputRef.current?.click()}
+                onKeyDown={(e) => e.key === "Enter" && logoInputRef.current?.click()}
+              >
+                {logoPreview ? (
+                  <img
+                    src={logoPreview}
+                    alt="Outlet logo preview"
+                    className="outlet-image-drop__preview outlet-image-drop__preview--contain"
+                  />
+                ) : (
+                  <span className="outlet-image-drop__placeholder">
+                    <Upload size={24} />
+                    <span>Click to upload logo</span>
+                    <small>PNG · SVG · JPG</small>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Outlet Side-Nav Banner */}
             <div>
               <label className="field-label" htmlFor="outlet-banner">
-                Outlet side-nav banner
+                <span className="field-label__row">
+                  Outlet side-nav banner
+                  <span
+                    className="field-info-icon"
+                    title="This banner brands the outlet-admin side navigation for that outlet."
+                    aria-label="Side-nav banner for outlet admin"
+                  >
+                    <Info size={14} aria-hidden="true" />
+                  </span>
+                </span>
               </label>
               <input
                 ref={bannerInputRef}
@@ -282,15 +369,12 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
                   </>
                 ) : (
                   <span className="outlet-image-drop__placeholder">
-                    <Upload size={26} />
+                    <Upload size={24} />
                     <span>Upload side-nav banner</span>
                     <small>Wide image works best</small>
                   </span>
                 )}
               </div>
-              <span className="field-hint">
-                This banner brands the outlet-admin side navigation for that outlet.
-              </span>
             </div>
           </div>
 

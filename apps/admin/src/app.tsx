@@ -298,7 +298,6 @@ function AdminShell() {
             <span className="topbar-title">{pageTitle}</span>
           </div>
           <div className="topbar__actions">
-            {/* <ThemeToggle /> */}
             <span className="topbar-clock">{clock}</span>
           </div>
         </header>
@@ -337,9 +336,30 @@ function AdminShell() {
   );
 }
 
+function isCentralAdmin(user: { role: string; outletId?: string | null } | null): boolean {
+  if (!user) return false;
+  if (user.role === "CUSTOMER" || user.role === "RIDER") return false;
+  if (user.role === "ADMIN" && user.outletId) return false;
+  return user.role === "OWNER" || user.role === "SUPER_ADMIN" || user.role === "ADMIN";
+}
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  const { isAuthenticated, user, logout } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isCentralAdmin(user)) {
+    logout();
+    toastBus.emit(
+      "Access denied: Central operations is restricted to platform administrators.",
+      "error",
+    );
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
 }
 
 export function App() {

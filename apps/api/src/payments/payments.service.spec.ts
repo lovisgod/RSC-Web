@@ -27,7 +27,7 @@ import type {
   RefundProviderPaymentResult,
 } from "./payment-adapter";
 import { PaymentRefund } from "./payment-refund.entity";
-import { PaymentsService } from "./payments.service";
+import { PaymentsService, type InitiatePaymentResponse } from "./payments.service";
 
 describe(PaymentsService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
@@ -297,6 +297,237 @@ describe(PaymentsService.name, () => {
     });
     expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 678750 }));
     expect(dataSource.transaction).toHaveBeenCalledOnce();
+  });
+
+  it("calculates delivery fee using PER_KM model with base price + distance", async () => {
+    outlets.findBy.mockResolvedValueOnce([
+      Object.assign(new Outlet(), {
+        id: outletId,
+        name: "Lekki Kitchen",
+        latitude: 6.4474,
+        longitude: 3.4542,
+        deliveryRadiusKm: 15,
+        isOnline: true,
+        vatBps: 0,
+        settlementSubaccountCode: "MOMENT_LEKKI",
+        deliveryPricingModel: "PER_KM",
+        deliveryBaseFeeMinor: 50000, // ₦500 base price
+        deliveryPricePerKmMinor: 20000, // ₦200/km
+      }),
+    ]);
+
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: null,
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    // Distance from (6.4474, 3.4542) to (6.4281, 3.4219) is ~4.22 km
+    // 50000 + round(4.22 * 20000) = 50000 + 84400 = 134400
+    // subtotal: 450000, deliveryFee: 134400, commission: 45000, vat: 33750 => total: 663150
+    await service.initiate(
+      {
+        id: customerId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      },
+      {
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "Victoria Island",
+        deliveryLatitude: 6.4281,
+        deliveryLongitude: 3.4219,
+        items: [
+          {
+            menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            quantity: 1,
+          },
+        ],
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 133290,
+        serviceFeeMinor: 0,
+        vatMinor: 33750,
+        platformCommissionMinor: 45000,
+        totalMinor: 662040,
+      },
+    );
+
+    expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 662040 }));
+  });
+
+  it("calculates delivery fee using PER_LOCATION model based on zone", async () => {
+    outlets.findBy.mockResolvedValueOnce([
+      Object.assign(new Outlet(), {
+        id: outletId,
+        name: "Lekki Kitchen",
+        latitude: 6.4474,
+        longitude: 3.4542,
+        deliveryRadiusKm: 15,
+        isOnline: true,
+        vatBps: 0,
+        settlementSubaccountCode: "MOMENT_LEKKI",
+        deliveryPricingModel: "PER_LOCATION",
+        deliveryBaseFeeMinor: 80000,
+        deliveryLocationFees: [
+          {
+            locationName: "Lagos Island",
+            zoneId: "lagos-expanded",
+            feeMinor: 220000,
+          },
+        ],
+      }),
+    ]);
+
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: null,
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    // Matches zone 'lagos-expanded' -> deliveryFeeMinor: 220000
+    // subtotal: 450000, deliveryFee: 220000, commission: 45000, vat: 33750 => total: 748750
+    await service.initiate(
+      {
+        id: customerId,
+        role: UserRole.CUSTOMER,
+        sessionId: "session-1",
+        accessTokenId: "access-token-1",
+      },
+      {
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "Victoria Island",
+        deliveryLatitude: 6.4281,
+        deliveryLongitude: 3.4219,
+        items: [
+          {
+            menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            quantity: 1,
+          },
+        ],
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 220000,
+        serviceFeeMinor: 0,
+        vatMinor: 33750,
+        platformCommissionMinor: 45000,
+        totalMinor: 748750,
+      },
+    );
+
+    expect(initiatePayment).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 748750 }));
+  });
+
+  it("returns cached result and avoids duplicate order creation when idempotencyKey is reused", async () => {
+    const mockRedis = {
+      get: vi.fn(),
+      set: vi.fn().mockResolvedValue("OK"),
+      del: vi.fn().mockResolvedValue(1),
+    };
+
+    const serviceWithRedis = new PaymentsService(
+      users as unknown as Repository<Customer>,
+      menuItems as unknown as Repository<MenuItem>,
+      modifiers as unknown as Repository<ItemModifier>,
+      outlets as unknown as Repository<Outlet>,
+      masterOrders as unknown as Repository<MasterOrder>,
+      subOrders as unknown as Repository<SubOrder>,
+      lineItems as unknown as Repository<OrderLineItem>,
+      payments as unknown as Repository<Payment>,
+      refunds as unknown as Repository<PaymentRefund>,
+      promos as unknown as Repository<Promo>,
+      dataSource as unknown as DataSource,
+      delivery as unknown as DeliveryService,
+      {
+        decrypt: vi.fn((value: string) => value.replace(/^encrypted:/, "")),
+      } as unknown as PiiCryptoService,
+      {
+        get: vi.fn().mockReturnValue({
+          platformCommissionBps: 1000,
+          vatBps: 750,
+          deliveryFeeMinor: 150000,
+        }),
+      } as unknown as ConfigService<ApplicationConfig, true>,
+      paymentAdapter,
+      realtime as unknown as RealtimeService,
+      notifications as unknown as NotificationsService,
+      mockRedis as never,
+    );
+
+    dataSource.transaction.mockImplementation((callback: (manager: unknown) => unknown) =>
+      callback({
+        create: vi.fn((_entity: unknown, value: unknown) => value),
+        save: vi.fn((value: Record<string, unknown>) =>
+          Promise.resolve({
+            id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+            reference: "RSC-reference",
+            checkoutUrl: null,
+            ...value,
+          }),
+        ),
+      }),
+    );
+
+    const input = {
+      deliveryMode: "DELIVERY" as const,
+      deliveryAddress: "Independence Layout, Enugu",
+      deliveryLatitude: 6.5244,
+      deliveryLongitude: 7.5103,
+      items: [
+        {
+          menuItemId: "45ef3252-b96f-4308-b40e-391623b25ac9",
+          quantity: 1,
+        },
+      ],
+      subtotalMinor: 450000,
+      deliveryFeeMinor: 150000,
+      serviceFeeMinor: 0,
+      vatMinor: 33750,
+      platformCommissionMinor: 45000,
+      totalMinor: 678750,
+      idempotencyKey: "test-idem-key-1",
+    };
+
+    const user = {
+      id: customerId,
+      role: UserRole.CUSTOMER,
+      sessionId: "session-1",
+      accessTokenId: "access-token-1",
+    };
+
+    // First call: executes transaction and caches in Redis
+    const firstResult: InitiatePaymentResponse = await serviceWithRedis.initiate(user, input);
+
+    expect(firstResult.reference).toBe("RSC-reference");
+    expect(mockRedis.set).toHaveBeenCalledWith(
+      `idempotency:checkout:${customerId}:test-idem-key-1`,
+      expect.any(String),
+      "EX",
+      1800,
+    );
+
+    // Second call: Redis returns cached result, no new transaction executed
+    mockRedis.get.mockResolvedValueOnce(JSON.stringify(firstResult));
+    dataSource.transaction.mockClear();
+
+    const secondResult: InitiatePaymentResponse = await serviceWithRedis.initiate(user, input);
+
+    expect(secondResult).toEqual(firstResult);
+    expect(dataSource.transaction).not.toHaveBeenCalled();
   });
 
   it("prices checkout lines with an active item-level discount", async () => {
@@ -1039,6 +1270,89 @@ describe(PaymentsService.name, () => {
       }),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
     expect(dataSource.query).not.toHaveBeenCalled();
+  });
+
+  it("stores a non-terminal Moment session update without failing the payment or cancelling the order", async () => {
+    const payment = Object.assign(new Payment(), {
+      id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+      masterOrderId: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      amountMinor: 645000,
+      currency: "NGN" as const,
+      gateway: "moment",
+      reference: "RSC-reference",
+      status: PaymentStatus.PENDING,
+      providerResponse: { id: "ps_original" },
+    });
+    payments.findOne.mockResolvedValue(payment);
+    const providerResponse = {
+      id: "evt-attempt-failed",
+      type: "payment_session.updated",
+      data: {
+        status: "active",
+        payment_status: "unpaid",
+        last_payment_error: {
+          error_code: "card_declined",
+          decline_code: "insufficient_funds",
+        },
+      },
+    };
+
+    const result = await service.confirmPayment({
+      eventId: "evt-attempt-failed",
+      eventType: "payment_session.updated",
+      reference: payment.reference,
+      status: "PENDING",
+      amountMinor: payment.amountMinor,
+      providerResponse,
+    });
+
+    expect(result).toEqual({ already: false });
+    expect(payments.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: PaymentStatus.PENDING,
+        providerResponse,
+      }),
+    );
+    expect(masterOrders.findOne).not.toHaveBeenCalled();
+    expect(masterOrders.save).not.toHaveBeenCalled();
+    expect(realtime.emitOrderStatusUpdate).not.toHaveBeenCalled();
+    expect(notifications.createAndPush).not.toHaveBeenCalled();
+  });
+
+  it("does not apply a duplicate non-terminal Moment session update twice", async () => {
+    const payment = Object.assign(new Payment(), {
+      id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+      masterOrderId: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      amountMinor: 645000,
+      currency: "NGN" as const,
+      gateway: "moment",
+      reference: "RSC-reference",
+      status: PaymentStatus.PENDING,
+      providerResponse: { id: "ps_original" },
+    });
+    const manager = {
+      query: vi.fn().mockResolvedValue([]),
+      getRepository: (entity: unknown) => (entity === Payment ? payments : masterOrders),
+    };
+    payments.findOne.mockResolvedValue(payment);
+    payments.save.mockClear();
+    dataSource.transaction = vi
+      .fn()
+      .mockImplementation((work: (manager: unknown) => unknown) => Promise.resolve(work(manager)));
+
+    const result = await service.confirmPayment({
+      eventId: "evt-attempt-failed",
+      eventType: "payment_session.updated",
+      reference: payment.reference,
+      status: "PENDING",
+      amountMinor: payment.amountMinor,
+      providerResponse: { id: "evt-attempt-failed" },
+    });
+
+    expect(result).toEqual({ already: true });
+    expect(payments.save).not.toHaveBeenCalled();
+    expect(masterOrders.findOne).not.toHaveBeenCalled();
+    expect(masterOrders.save).not.toHaveBeenCalled();
   });
 
   it("rejects a successful webhook with a different amount", async () => {

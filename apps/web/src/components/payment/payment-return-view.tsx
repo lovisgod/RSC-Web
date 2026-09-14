@@ -67,10 +67,10 @@ export function PaymentReturnView({ reference }: { reference: string | null }) {
           aria-hidden="true"
         />
       </div>
-      <h1 className="mt-4 text-xl font-bold text-gray-950">
+      <h1 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">
         {paymentVerification.isError ? "Payment sync is taking longer" : "Confirming payment"}
       </h1>
-      <p className="mt-2 text-sm leading-6 text-gray-500">
+      <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
         {paymentVerification.isError
           ? "We could not confirm the payment immediately. You can refresh this page or check active orders shortly."
           : "Please hold on while we confirm your payment before opening live tracking."}

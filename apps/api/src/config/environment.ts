@@ -4,6 +4,7 @@ export type NodeEnvironment = "development" | "staging" | "production";
 
 export interface Environment {
   NODE_ENV: NodeEnvironment;
+  DEPLOY_ENV: NodeEnvironment;
   PORT: number;
   APP_VERSION: string;
   LOG_LEVEL: string;
@@ -52,6 +53,7 @@ export interface Environment {
   MOMENT_SECRET_KEY?: string;
   MOMENT_BASE_URL: string;
   MOMENT_WEBHOOK_SECRET?: string;
+  MOMENT_WEBHOOK_REPLAY_LOG: boolean;
   MOMENT_SETTLEMENT_REPORT_PATH: string;
   PLATFORM_COMMISSION_BPS: number;
   VAT_BPS: number;
@@ -87,6 +89,7 @@ const environmentSchema = Joi.object<Environment>({
   NODE_ENV: Joi.string()
     .valid("development", "staging", "test", "production")
     .default("development"),
+  DEPLOY_ENV: Joi.string().valid("development", "staging", "production").default("development"),
   PORT: Joi.number().port().default(4000),
   APP_VERSION: Joi.string().default("development"),
   LOG_LEVEL: Joi.string().valid("fatal", "error", "warn", "log", "debug", "verbose").default("log"),
@@ -222,6 +225,7 @@ const environmentSchema = Joi.object<Environment>({
     then: Joi.string().min(10).required(),
     otherwise: Joi.string().optional().allow(""),
   }),
+  MOMENT_WEBHOOK_REPLAY_LOG: Joi.boolean().truthy("true").falsy("false").default(false),
   MOMENT_SETTLEMENT_REPORT_PATH: Joi.string().min(1).default("/settlements/report"),
   PLATFORM_COMMISSION_BPS: Joi.number().integer().min(0).max(10_000).default(1_000),
   VAT_BPS: Joi.number().integer().min(0).max(10_000).default(750),

@@ -5,6 +5,7 @@ import { Pencil, Store, Trash2 } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { OutletDeliveryConfig } from "../components/outlet-delivery-config";
 import { OutletOnboardModal } from "../components/outlet-onboard-modal";
 import { useDeleteOutlet } from "../hooks/use-delete-outlet";
 import { useOutletsLive } from "../hooks/use-outlets-live";
@@ -149,7 +150,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
     const form = new FormData(event.currentTarget);
     const commissionPercent = parseNonNegativeNumber(String(form.get("commission") ?? ""));
     const vatPercent = parseNonNegativeNumber(String(form.get("vat") ?? ""));
-    const deliveryFeeNaira = parseNonNegativeNumber(String(form.get("deliveryFee") ?? ""));
     const serviceFeeNaira = parseNonNegativeNumber(String(form.get("serviceFee") ?? ""));
 
     if (
@@ -157,7 +157,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
       commissionPercent > 100 ||
       vatPercent === null ||
       vatPercent > 100 ||
-      deliveryFeeNaira === null ||
       serviceFeeNaira === null
     ) {
       toastBus.emit("Enter valid charges. Percentage rates must be between 0 and 100.", "error");
@@ -167,7 +166,6 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
     updatePlatformCharges.mutate({
       platformCommissionBps: Math.round(commissionPercent * 100),
       defaultVatBps: Math.round(vatPercent * 100),
-      deliveryFeeMinor: Math.round(deliveryFeeNaira * 100),
       serviceFeeMinor: Math.round(serviceFeeNaira * 100),
     });
   }
@@ -301,100 +299,94 @@ export function OutletControlPage({ view = "outlets" }: OutletControlPageProps) 
           </section>
         )}
 
-        {/* Platform charges */}
+        {/* Platform charges and Outlet Delivery Fee configuration */}
         {view === "platform" && (
-          <section className="panel platform-charges">
-            <h2 className="platform-charges__title">Adjust Platform Charges</h2>
-            {platformCharges.isError ? (
-              <div className="charges-form__error" role="alert">
-                <p>Platform charges could not be loaded.</p>
-                <Button tone="quiet" type="button" onClick={() => void platformCharges.refetch()}>
-                  Try Again
-                </Button>
-              </div>
-            ) : platformCharges.isLoading || !platformCharges.data ? (
-              <div className="charges-form" aria-label="Loading platform charges">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <Skeleton
-                    key={index}
-                    variant="rounded"
-                    height={68}
-                    sx={{ borderRadius: "12px", transform: "none" }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <form
-                key={[
-                  platformCharges.data.platformCommissionBps,
-                  platformCharges.data.defaultVatBps,
-                  platformCharges.data.deliveryFeeMinor,
-                  platformCharges.data.serviceFeeMinor,
-                ].join("-")}
-                className="charges-form"
-                onSubmit={handleSavePlatformCharges}
-              >
-                <label className="field-label">
-                  Platform Commission (%)
-                  <input
-                    className="field-input"
-                    name="commission"
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.01"
-                    defaultValue={basisPointsToPercent(platformCharges.data.platformCommissionBps)}
-                    disabled={updatePlatformCharges.isPending}
-                    required
-                  />
-                </label>
-                <label className="field-label">
-                  VAT Rate (%)
-                  <input
-                    className="field-input"
-                    name="vat"
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.01"
-                    defaultValue={basisPointsToPercent(platformCharges.data.defaultVatBps)}
-                    disabled={updatePlatformCharges.isPending}
-                    required
-                  />
-                </label>
-                <label className="field-label">
-                  Flat Delivery Fee (₦)
-                  <input
-                    className="field-input"
-                    name="deliveryFee"
-                    type="number"
-                    defaultValue={minorUnitsToNaira(platformCharges.data.deliveryFeeMinor)}
-                    disabled={updatePlatformCharges.isPending}
-                    required
-                  />
-                </label>
-                <label className="field-label">
-                  Service Fee (₦)
-                  <input
-                    className="field-input"
-                    name="serviceFee"
-                    type="number"
-                    defaultValue={minorUnitsToNaira(platformCharges.data.serviceFeeMinor)}
-                    disabled={updatePlatformCharges.isPending}
-                    required
-                  />
-                </label>
-                <Button
-                  tone="navy"
-                  fullWidth
-                  type="submit"
-                  disabled={updatePlatformCharges.isPending}
+          <>
+            <OutletDeliveryConfig outlets={outlets} isLoading={isLoading} />
+
+            <section className="panel platform-charges">
+              <h2 className="platform-charges__title">Adjust Platform Charges</h2>
+              {platformCharges.isError ? (
+                <div className="charges-form__error" role="alert">
+                  <p>Platform charges could not be loaded.</p>
+                  <Button tone="quiet" type="button" onClick={() => void platformCharges.refetch()}>
+                    Try Again
+                  </Button>
+                </div>
+              ) : platformCharges.isLoading || !platformCharges.data ? (
+                <div className="charges-form" aria-label="Loading platform charges">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <Skeleton
+                      key={index}
+                      variant="rounded"
+                      height={68}
+                      sx={{ borderRadius: "12px", transform: "none" }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <form
+                  key={[
+                    platformCharges.data.platformCommissionBps,
+                    platformCharges.data.defaultVatBps,
+                    platformCharges.data.serviceFeeMinor,
+                  ].join("-")}
+                  className="charges-form"
+                  onSubmit={handleSavePlatformCharges}
                 >
-                  {updatePlatformCharges.isPending ? "Saving…" : "Save Configuration"}
-                </Button>
-              </form>
-            )}
-          </section>
+                  <label className="field-label">
+                    Platform Commission (%)
+                    <input
+                      className="field-input"
+                      name="commission"
+                      type="number"
+                      min={0}
+                      max={100}
+                      step="0.01"
+                      defaultValue={basisPointsToPercent(
+                        platformCharges.data.platformCommissionBps,
+                      )}
+                      disabled={updatePlatformCharges.isPending}
+                      required
+                    />
+                  </label>
+                  <label className="field-label">
+                    VAT Rate (%)
+                    <input
+                      className="field-input"
+                      name="vat"
+                      type="number"
+                      min={0}
+                      max={100}
+                      step="0.01"
+                      defaultValue={basisPointsToPercent(platformCharges.data.defaultVatBps)}
+                      disabled={updatePlatformCharges.isPending}
+                      required
+                    />
+                  </label>
+                  <label className="field-label">
+                    Service Fee (₦)
+                    <input
+                      className="field-input"
+                      name="serviceFee"
+                      type="number"
+                      defaultValue={minorUnitsToNaira(platformCharges.data.serviceFeeMinor)}
+                      disabled={updatePlatformCharges.isPending}
+                      required
+                    />
+                  </label>
+                  <Button
+                    tone="navy"
+                    fullWidth
+                    type="submit"
+                    disabled={updatePlatformCharges.isPending}
+                  >
+                    {updatePlatformCharges.isPending ? "Saving…" : "Save Configuration"}
+                  </Button>
+                </form>
+              )}
+            </section>
+          </>
         )}
       </div>
     </>

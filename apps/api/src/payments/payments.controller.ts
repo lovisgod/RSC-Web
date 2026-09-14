@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   Param,
   Patch,
@@ -11,10 +12,12 @@ import {
   UseGuards,
   Query,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ConfigService } from "@nestjs/config";
 import type { Request } from "express";
 
 import type { AuthenticatedRequest } from "../auth/auth-request";
+import type { ApplicationConfig } from "../config/configuration";
 import { AuthGuard } from "../auth/auth.guard";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
@@ -41,6 +44,7 @@ export class PaymentsController {
   constructor(
     private readonly payments: PaymentsService,
     @Inject(PAYMENT_ADAPTER) private readonly paymentAdapter: PaymentAdapter,
+    private readonly configService: ConfigService<ApplicationConfig, true>,
   ) {}
 
   @Get("platform-charges")
@@ -80,8 +84,22 @@ export class PaymentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @ApiMessage("Payment initiated successfully")
-  initiate(@Req() request: AuthenticatedRequest, @Body() input: InitiatePaymentDto) {
-    return this.payments.initiate(request.user!, input);
+  @ApiHeader({
+    name: "idempotency-key",
+    required: false,
+    description: "Client idempotency key to prevent duplicate checkouts.",
+  })
+  initiate(
+    @Req() request: AuthenticatedRequest,
+    @Body() input: InitiatePaymentDto,
+    @Headers("idempotency-key") idempotencyKeyHeader?: string,
+    @Headers("x-idempotency-key") xIdempotencyKeyHeader?: string,
+  ) {
+    const idempotencyKey = idempotencyKeyHeader || xIdempotencyKeyHeader || input.idempotencyKey;
+    return this.payments.initiate(request.user!, {
+      ...input,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    });
   }
 
   /**
@@ -94,10 +112,10 @@ export class PaymentsController {
   @SkipRateLimit()
   @HttpCode(200)
   @ApiOperation({
-    summary: "Payment provider webhook receiver (Paystack)",
+    summary: "Payment provider webhook receiver",
     description:
-      "Receives charge.success / charge.failed events from Paystack. " +
-      "Validates HMAC-SHA512 signature. No auth cookie required.",
+      "Receives charge.success / charge.failed / payment_session.updated / payment_session.completed events from payment provider. " +
+      "Validates signature. No auth cookie required.",
   })
   async webhook(@Req() request: RawBodyRequest<Request>) {
     const rawBody = request.rawBody;
@@ -123,15 +141,76 @@ export class PaymentsController {
       }
     }
 
+    this.logger.log(
+      `Inbound payment webhook HTTP POST request received (signature header: ${signature ? "present" : "missing"})`,
+    );
+
     const event = await this.paymentAdapter.parseWebhookEvent(rawBody, signature, headersMap);
 
     if (!event) {
-      // Invalid signature or unrecognised event type — return 200 to stop Paystack retries
+      this.logger.warn("Webhook ignored: signature verification failed or event type unhandled");
       return { received: false };
     }
 
+    this.logMomentWebhookReplaySnippet(rawBody, headersMap);
+
+    this.logger.log(
+      `Webhook parsed successfully: eventId=${event.eventId}, type=${event.eventType}, reference=${event.reference}, status=${event.status}, amountMinor=${event.amountMinor}`,
+    );
+
     const result = await this.payments.confirmPayment(event);
+    this.logger.log(
+      `Webhook payment confirmation finished for reference ${event.reference} (alreadyProcessed=${result.already})`,
+    );
+
     return { received: true, already: result.already };
+  }
+
+  private logMomentWebhookReplaySnippet(rawBody: Buffer, headers: Record<string, string>): void {
+    const deploymentEnvironment = this.configService.get("app.deploymentEnvironment", {
+      infer: true,
+    });
+    const enabled = this.configService.get("payments.moment.webhookReplayLog", { infer: true });
+    const webhookId = headers["webhook-id"];
+    const webhookTimestamp = headers["webhook-timestamp"];
+    const webhookSignature = headers["webhook-signature"];
+
+    if (
+      !enabled ||
+      deploymentEnvironment === "production" ||
+      !webhookId ||
+      !webhookTimestamp ||
+      !webhookSignature
+    ) {
+      return;
+    }
+
+    const lines = [
+      `const webhookId = ${JSON.stringify(webhookId)};`,
+      `const webhookTimestamp = ${JSON.stringify(webhookTimestamp)};`,
+      `const webhookSignature = ${JSON.stringify(webhookSignature)};`,
+      `const rawBody = ${JSON.stringify(rawBody.toString("utf8"))};`,
+      "const replayWebhook = async () => {",
+      '  const response = await fetch("/api/v1/payments/webhook", {',
+      '    method: "POST",',
+      "    headers: {",
+      '      "content-type": "application/json",',
+      '      "webhook-id": webhookId,',
+      '      "webhook-timestamp": webhookTimestamp,',
+      '      "webhook-signature": webhookSignature,',
+      "    },",
+      "    body: rawBody,",
+      "  });",
+      "  return { httpStatus: response.status, responseBody: await response.json() };",
+      "};",
+      "const firstReplay = await replayWebhook();",
+      "const secondReplay = await replayWebhook();",
+      "console.log({ firstReplay, secondReplay });",
+    ];
+
+    this.logger.warn(
+      `MOMENT_WEBHOOK_REPLAY_CONSOLE_START\n${lines.join("\n")}\nMOMENT_WEBHOOK_REPLAY_CONSOLE_END`,
+    );
   }
 
   /**

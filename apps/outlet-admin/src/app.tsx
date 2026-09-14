@@ -373,7 +373,6 @@ function AppShell() {
             </p>
           </div>
           <InstallAppButton />
-          {/* <ThemeToggle className="ml-auto" /> */}
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto bg-[var(--rsc-panel)]">
@@ -384,10 +383,25 @@ function AppShell() {
   );
 }
 
+function isAuthorizedOutletStaff(user: { role: string } | null): boolean {
+  if (!user) return false;
+  if (user.role === "CUSTOMER" || user.role === "RIDER") return false;
+  return user.role === "OWNER" || user.role === "SUPER_ADMIN" || user.role === "ADMIN";
+}
+
 function ProtectedShell() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
 
   if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAuthorizedOutletStaff(user)) {
+    logout();
+    toastBus.emit(
+      "Access denied: Outlet workspace is restricted to outlet staff and administrators.",
+      "error",
+    );
     return <Navigate to="/login" replace />;
   }
 

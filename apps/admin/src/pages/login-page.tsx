@@ -35,7 +35,28 @@ export function LoginPage() {
   const { mutate, isPending, error, reset } = useMutation({
     mutationFn: () => login({ identifier: identifier.trim(), password }),
     onSuccess: (data) => {
-      authStore.setUser({ id: data.user.id, role: data.user.role });
+      if (data.user.role === "CUSTOMER" || data.user.role === "RIDER") {
+        toastBus.emit(
+          "Access denied: Customer and rider accounts cannot access Central Operations.",
+          "error",
+        );
+        setErrors({
+          identifier: "Access denied. Only central platform administrators can log in here.",
+        });
+        return;
+      }
+      if (data.user.role === "ADMIN" && data.user.outletId) {
+        toastBus.emit(
+          "Access denied: Outlet administrators must use the Outlet Admin workspace.",
+          "error",
+        );
+        setErrors({
+          identifier: "Access denied. Outlet administrators cannot access Central Operations.",
+        });
+        return;
+      }
+
+      authStore.setUser({ id: data.user.id, role: data.user.role, outletId: data.user.outletId });
       toastBus.emit("Welcome back!", "success");
       navigate("/", { replace: true });
     },
@@ -60,7 +81,6 @@ export function LoginPage() {
 
   return (
     <div className="auth-page">
-      {/* <ThemeToggle className="auth-theme-toggle" /> */}
       <div className="auth-card">
         <div className="auth-brand">
           <CssBrandLogo size="sm" tagline="Operations dashboard" />

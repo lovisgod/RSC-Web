@@ -2,16 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Heart as HeartIcon,
+  Home as HomeIcon,
+  Receipt as ReceiptIcon,
+  ShoppingBag as ShoppingBagIcon,
+  User as UserIcon,
+} from "lucide-react";
 
 import { cartItemCount } from "@/src/lib/data/cart";
 import { useCartStore } from "@/src/stores/cart-store";
 
 const navItems = [
-  { href: "/outlets", icon: "/icons/png/house_1f3e0.png", label: "Home" },
-  { href: "/menu", icon: "/icons/png/magnifying-glass-tilted-left_1f50d.png", label: "Search" },
-  { href: "/cart", icon: "/icons/png/shopping-cart_1f6d2.png", label: "Cart" },
-  { href: "/tracking", icon: "/icons/png/round-pushpin_1f4cd.png", label: "Tracking" },
-  { href: "/profile", icon: "/icons/png/bust-in-silhouette_1f464.png", label: "Profile" },
+  { href: "/outlets", icon: HomeIcon, label: "Home" },
+  { href: "/orders", icon: ReceiptIcon, label: "Orders" },
+  { href: "/cart", icon: ShoppingBagIcon, label: "Cart" },
+  { href: "/favorites", icon: HeartIcon, label: "Favourites" },
+  { href: "/profile", icon: UserIcon, label: "Account" },
 ];
 
 export function BottomNav() {
@@ -23,7 +30,7 @@ export function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-40 border-t px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 md:hidden"
       style={{
         backgroundColor: "var(--rsc-bottom-nav-bg)",
-        borderColor: "var(--rsc-sidebar-border)",
+        borderColor: "var(--rsc-bottom-nav-border)",
         boxShadow: "0 -18px 40px color-mix(in srgb, var(--rsc-main) 12%, transparent)",
       }}
       aria-label="Primary mobile navigation"
@@ -33,6 +40,7 @@ export function BottomNav() {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           const isPrimaryAction = item.href === "/cart";
           const isElevated = isPrimaryAction;
+          const Icon = item.icon;
 
           return (
             <Link
@@ -43,42 +51,33 @@ export function BottomNav() {
               className="group relative flex min-w-0 flex-1 flex-col items-center justify-end gap-1 rounded-2xl px-1 py-1.5 text-xs font-black transition-colors"
               style={{
                 backgroundColor:
-                  isActive && !isPrimaryAction ? "var(--rsc-sidebar-active-bg)" : "transparent",
-                color: isActive ? "var(--rsc-brand)" : "var(--rsc-sidebar-muted)",
+                  isActive && !isPrimaryAction ? "var(--rsc-bottom-nav-active-bg)" : "transparent",
+                color: isActive ? "var(--rsc-brand)" : "var(--rsc-bottom-nav-muted)",
               }}
             >
               <span
                 className={`relative grid place-items-center transition-all ${
                   isElevated
-                    ? "-mt-7 h-16 w-16 rounded-full shadow-[0_16px_36px_rgba(0,0,0,0.24)]"
-                    : "h-8 w-8 rounded-xl group-hover:bg-[var(--rsc-sidebar-hover-bg)]"
+                    ? "-mt-7 h-14 w-14 rounded-full shadow-[0_12px_28px_rgba(0,177,79,0.4)]"
+                    : "h-8 w-8 rounded-xl group-hover:bg-[var(--rsc-bottom-nav-active-bg)]"
                 }`}
                 style={{
                   backgroundColor: isElevated
-                    ? "var(--rsc-main)"
+                    ? "var(--rsc-brand)"
                     : isActive
-                      ? "color-mix(in srgb, var(--rsc-brand) 10%, transparent)"
+                      ? "var(--rsc-bottom-nav-active-bg)"
                       : "transparent",
                 }}
               >
-                {item.icon.startsWith("/") ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.icon}
-                    alt=""
-                    aria-hidden="true"
-                    className={`${isElevated ? "h-8 w-8" : "h-6 w-6"} object-contain`}
-                  />
-                ) : (
-                  <span className={`${isElevated ? "text-3xl" : "text-2xl"} leading-none`}>
-                    {item.icon}
-                  </span>
-                )}
+                <Icon
+                  className={`${isElevated ? "h-6 w-6 text-white" : "h-5 w-5"} transition-transform`}
+                  aria-hidden="true"
+                />
 
                 {item.href === "/cart" && itemCount > 0 && (
                   <span
-                    className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[10px] font-bold text-white"
-                    style={{ backgroundColor: "var(--rsc-brand)" }}
+                    className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm"
+                    style={{ backgroundColor: "#ffcf1f", color: "#073b1f" }}
                   >
                     {itemCount}
                   </span>
@@ -87,7 +86,7 @@ export function BottomNav() {
 
               <span
                 className="max-w-full truncate text-[0.7rem] leading-none"
-                style={{ color: isActive ? "var(--rsc-brand)" : "var(--rsc-sidebar-muted)" }}
+                style={{ color: isActive ? "var(--rsc-brand)" : "var(--rsc-bottom-nav-muted)" }}
               >
                 {item.label}
               </span>

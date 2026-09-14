@@ -102,9 +102,9 @@ export function OutletDetailView({ id }: { id: string }) {
           type="button"
           onClick={() => router.push("/outlets")}
           aria-label="Go back"
-          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow text-gray-700 hover:bg-gray-50 transition-colors z-10"
+          className="absolute top-3 left-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md border border-gray-200 text-gray-700 transition hover:bg-white hover:text-black dark:bg-gray-900/90 dark:border-gray-800 dark:text-gray-200"
         >
-          <ArrowLeft />
+          <ArrowLeft className="h-5 w-5" />
         </button>
 
         {/* Emoji fallback — only shown when no photo */}

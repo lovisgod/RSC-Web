@@ -629,6 +629,11 @@ export function createApiClient(options: ApiClientOptions) {
     listNotifications(): Promise<Notification[]> {
       return request("/api/v1/notifications", z.array(notificationSchema));
     },
+    markNotificationRead(id: string): Promise<Notification> {
+      return request(`/api/v1/notifications/${encodeURIComponent(id)}/read`, notificationSchema, {
+        method: "PATCH",
+      });
+    },
     listPromoNotifications(): Promise<Promo[]> {
       return request("/api/v1/notifications/promos", z.array(promoSchema));
     },
@@ -702,12 +707,20 @@ export function createApiClient(options: ApiClientOptions) {
         body: JSON.stringify(body),
       });
     },
-    initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
-      const body = initiatePaymentInputSchema.parse(input);
+    initiatePayment(
+      input: InitiatePaymentInput,
+      options?: { idempotencyKey?: string },
+    ): Promise<InitiatePaymentResult> {
+      const idempotencyKey = options?.idempotencyKey || input.idempotencyKey;
+      const body = initiatePaymentInputSchema.parse({
+        ...input,
+        ...(idempotencyKey ? { idempotencyKey } : {}),
+      });
 
       return request("/api/v1/payments/initiate", initiatePaymentResultSchema, {
         method: "POST",
         body: JSON.stringify(body),
+        ...(idempotencyKey ? { headers: { "Idempotency-Key": idempotencyKey } } : {}),
       });
     },
     retryPayment(orderId: string, input: RetryPaymentInput = {}): Promise<InitiatePaymentResult> {

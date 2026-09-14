@@ -1,6 +1,10 @@
 "use client";
 
-import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
+import {
+  calculateOutletDeliveryFee,
+  nigerianPhoneNumberSchema,
+  type DeliveryAddressSummary,
+} from "@rsc/contracts";
 import { Button } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, Star, Tag, XCircle } from "lucide-react";
@@ -255,7 +259,27 @@ export function FulfillmentStep({
   }, []);
 
   const subtotal = cart ? cartSubtotalMinor(cart) : 0;
-  const deliveryFee = mode === "delivery" && platformCharges ? platformCharges.deliveryFeeMinor : 0;
+  const deliveryFee =
+    mode === "delivery" && cart
+      ? cart.groups.reduce((sum, group) => {
+          const outlet = outletById.get(group.outletId);
+          const fee = calculateOutletDeliveryFee({
+            pricingModel: outlet?.deliveryPricingModel,
+            flatFeeMinor: outlet?.deliveryFeeMinor,
+            baseFeeMinor: outlet?.deliveryBaseFeeMinor,
+            pricePerKmMinor: outlet?.deliveryPricePerKmMinor,
+            locationFees: outlet?.deliveryLocationFees,
+            outletLatitude: outlet?.latitude,
+            outletLongitude: outlet?.longitude,
+            deliveryLatitude: coords?.latitude,
+            deliveryLongitude: coords?.longitude,
+            zoneId: zone?.id,
+            zoneName: zone?.name,
+            fallbackFeeMinor: platformCharges?.deliveryFeeMinor ?? 150_000,
+          });
+          return sum + fee;
+        }, 0)
+      : 0;
   const serviceFee = platformCharges?.serviceFeeMinor ?? 0;
 
   const vat = cart
@@ -277,6 +301,12 @@ export function FulfillmentStep({
     : 0;
 
   const grandTotal = subtotal + deliveryFee + serviceFee + vat + platformCommission;
+
+  const [idempotencyKey] = useState<string>(() =>
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : "chk_init",
+  );
 
   const initiateMutation = useMutation({
     mutationFn: () => {
@@ -315,6 +345,7 @@ export function FulfillmentStep({
             ? `${window.location.origin}/payment/return`
             : "/payment/return",
         ...(promoCode.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}),
+        idempotencyKey,
       };
 
       return apiClient.initiatePayment(
@@ -326,6 +357,7 @@ export function FulfillmentStep({
               deliveryLongitude: coords!.longitude,
             }
           : base,
+        { idempotencyKey },
       );
     },
     onSuccess: (result) => {
