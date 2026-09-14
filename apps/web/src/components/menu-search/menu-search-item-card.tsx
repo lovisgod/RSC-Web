@@ -1,7 +1,8 @@
-import { Loader2 } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 
 import type { MenuItemSummary } from "@rsc/contracts";
 import { DiscountPrice } from "@rsc/ui";
+import { useFavoritesStore } from "@/src/stores/favorites-store";
 
 const FOOD_EMOJIS = ["🍲", "🥗", "🍛", "🍜", "🥘", "🍱", "🍖", "🍗", "🥩", "🍝"];
 const BG_COLORS = [
@@ -36,6 +37,8 @@ export function MenuSearchItemCard({
   const hasImage = !!item.imageUrl;
   const soldOut = !item.isAvailable;
   const disabled = soldOut || loading;
+  const isFavorite = useFavoritesStore((s) => s.isItemFavorite(item.id));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleItem);
 
   return (
     <button
@@ -47,7 +50,7 @@ export function MenuSearchItemCard({
     >
       {/* Thumbnail */}
       <div
-        className={`w-20 h-20 flex-shrink-0 overflow-hidden rounded-xl flex items-center justify-center text-4xl ${soldOut ? "grayscale" : ""}`}
+        className={`relative w-20 h-20 flex-shrink-0 overflow-hidden rounded-xl flex items-center justify-center text-4xl ${soldOut ? "grayscale" : ""}`}
         style={{ backgroundColor: bgColor }}
       >
         {hasImage ? (
@@ -56,6 +59,24 @@ export function MenuSearchItemCard({
         ) : (
           <span>{emoji}</span>
         )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite(item.id);
+          }}
+          aria-label={
+            isFavorite ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`
+          }
+          className={`absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-sm transition-transform active:scale-90 ${
+            isFavorite
+              ? "bg-white text-red-500 shadow-sm"
+              : "bg-black/35 text-white hover:bg-black/55"
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current" : ""}`} />
+        </button>
       </div>
 
       {/* Details */}

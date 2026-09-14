@@ -51,7 +51,7 @@ describe(TermiiSmsSender.name, () => {
           api_key: "termii-secret",
           to: "2348031234567",
           from: "RSCApp",
-          sms: "Your RSC verification code is 482901. It expires in 10 minutes.",
+          sms: "Your DineOutNG verification code is 482901. It expires in 10 minutes.",
           type: "plain",
           channel: "dnd",
         }),

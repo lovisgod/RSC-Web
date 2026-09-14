@@ -1,5 +1,8 @@
+import { Heart } from "lucide-react";
+
 import type { MenuItem } from "@/src/lib/data/outlet-menu";
 import { DiscountPrice } from "@rsc/ui";
+import { useFavoritesStore } from "@/src/stores/favorites-store";
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -12,6 +15,8 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
   const soldOut = !item.isAvailable;
   const unavailable = soldOut || disabled;
   const statusLabel = soldOut ? "Sold out" : disabledLabel;
+  const isFavorite = useFavoritesStore((s) => s.isItemFavorite(item.id));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleItem);
 
   return (
     <article
@@ -19,7 +24,7 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
     >
       {/* Thumbnail */}
       <div
-        className={`w-20 h-20 flex-shrink-0 rounded-xl flex items-center justify-center text-4xl ${unavailable ? "grayscale" : ""}`}
+        className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden flex items-center justify-center text-4xl ${unavailable ? "grayscale" : ""}`}
         style={{ backgroundColor: item.bgColor }}
       >
         {item.image.startsWith("/") || item.image.startsWith("http") ? (
@@ -28,6 +33,24 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
         ) : (
           <span className="text-4xl">{item.image}</span>
         )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite(item.id);
+          }}
+          aria-label={
+            isFavorite ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`
+          }
+          className={`absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-sm transition-transform active:scale-90 ${
+            isFavorite
+              ? "bg-white text-red-500 shadow-sm"
+              : "bg-black/35 text-white hover:bg-black/55"
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current" : ""}`} />
+        </button>
       </div>
 
       {/* Details */}

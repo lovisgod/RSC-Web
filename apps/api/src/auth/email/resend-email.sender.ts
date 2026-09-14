@@ -31,12 +31,13 @@ export class ResendEmailSender implements EmailSender {
   async sendWelcomeVerification(input: SendWelcomeVerificationEmailInput): Promise<void> {
     await this.sendEmail({
       to: input.email,
-      subject: "Welcome to RSC - verify your email",
+      subject: "Welcome to DineOutNG - verify your email",
       html: renderEmailTemplate({
         preheader: `Your verification code expires in ${input.expiresInMinutes} minutes.`,
         heading: "Verify your email",
         greetingName: input.name,
-        intro: "Welcome to RSC. Use the verification code below to finish setting up your account.",
+        intro:
+          "Welcome to DineOutNG. Use the verification code below to finish setting up your account.",
         codeLabel: "Verification code",
         code: input.code,
         body: `This code expires in ${input.expiresInMinutes} minutes.`,
@@ -47,12 +48,12 @@ export class ResendEmailSender implements EmailSender {
   async sendPasswordReset(input: SendPasswordResetEmailInput): Promise<void> {
     await this.sendEmail({
       to: input.email,
-      subject: "Reset your RSC password",
+      subject: "Reset your DineOutNG password",
       html: renderEmailTemplate({
         preheader: `Your password reset code expires in ${input.expiresInMinutes} minutes.`,
         heading: "Reset your password",
         greetingName: input.name,
-        intro: "Use the code below to reset your RSC password.",
+        intro: "Use the code below to reset your DineOutNG password.",
         codeLabel: "Password reset code",
         code: input.code,
         body: `This code expires in ${input.expiresInMinutes} minutes.`,
@@ -63,12 +64,12 @@ export class ResendEmailSender implements EmailSender {
   async sendTemporaryPassword(input: SendTemporaryPasswordEmailInput): Promise<void> {
     await this.sendEmail({
       to: input.email,
-      subject: `Your RSC ${input.role} account`,
+      subject: `Your DineOutNG ${input.role} account`,
       html: renderEmailTemplate({
-        preheader: `Your RSC ${input.role} account is ready.`,
+        preheader: `Your DineOutNG ${input.role} account is ready.`,
         heading: "Your account is ready",
         greetingName: input.name,
-        intro: `Your RSC ${input.role} account has been created. Use this temporary password to sign in.`,
+        intro: `Your DineOutNG ${input.role} account has been created. Use this temporary password to sign in.`,
         codeLabel: "Temporary password",
         code: input.temporaryPassword,
         body: "Please change this password after your first sign in.",
@@ -86,21 +87,22 @@ export class ResendEmailSender implements EmailSender {
         greetingName: input.name,
         intro: input.body,
         footerNote:
-          "You are receiving this because promotional notifications are enabled on your RSC account.",
+          "You are receiving this because promotional notifications are enabled on your DineOutNG account.",
       }),
     });
   }
 
   async sendDatabaseBackup(input: SendDatabaseBackupEmailInput): Promise<void> {
-    const subject = `RSC database backup - ${input.createdAt.toISOString()}`;
+    const subject = `DineOutNG database backup - ${input.createdAt.toISOString()}`;
     await this.sendEmail({
       to: input.email,
       subject,
       html: renderEmailTemplate({
-        preheader: "Your requested RSC database backup is attached.",
+        preheader: "Your requested DineOutNG database backup is attached.",
         heading: "Database backup ready",
         greetingName: "Owner",
-        intro: "The latest RSC database backup has been generated and attached to this email.",
+        intro:
+          "The latest DineOutNG database backup has been generated and attached to this email.",
         body: `File: ${input.fileName}. Size: ${formatBytes(input.fileSizeBytes)}.`,
         footerNote: "Store this backup securely and avoid forwarding it over unsecured channels.",
       }),

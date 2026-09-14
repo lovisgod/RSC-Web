@@ -14,6 +14,7 @@ import { ConfirmationStep } from "@/src/components/checkout/steps/confirmation-s
 const EMPTY_DELIVERY: DeliveryForm = {
   mode: "delivery",
   address: "",
+  landmark: "",
   latitude: null,
   longitude: null,
   zone: null,

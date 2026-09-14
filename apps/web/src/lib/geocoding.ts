@@ -11,9 +11,9 @@ export interface GeocodingResult {
 }
 
 export function geocodeAddress(query: string): Promise<GeocodingResult | null> {
-  return apiClient.resolveDeliveryAddress({ input: query });
+  return apiClient.resolveDeliveryAddress({ input: query, provider: "google" });
 }
 
 export function reverseGeocode(lat: number, lon: number): Promise<GeocodingResult | null> {
-  return apiClient.resolveDeliveryAddress({ input: `${lat},${lon}` });
+  return apiClient.resolveDeliveryAddress({ input: `${lat},${lon}`, provider: "google" });
 }

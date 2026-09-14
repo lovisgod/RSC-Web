@@ -495,7 +495,11 @@ export class PaymentsService {
             totalMinor,
             currency: "NGN",
             deliveryMode: input.deliveryMode,
-            deliveryAddress: input.deliveryAddress ?? null,
+            deliveryAddress: input.deliveryAddress
+              ? input.landmark?.trim()
+                ? `${input.deliveryAddress.trim()} (Landmark: ${input.landmark.trim()})`
+                : input.deliveryAddress.trim()
+              : null,
             deliveryLatitude: input.deliveryLatitude ?? null,
             deliveryLongitude: input.deliveryLongitude ?? null,
             recipientPhone,

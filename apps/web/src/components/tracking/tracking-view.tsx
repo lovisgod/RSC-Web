@@ -8,7 +8,7 @@ import { useRef, useState } from "react";
 
 import type { OrderLineItem, SubOrderDetail } from "@rsc/contracts";
 import { Card, EmptyState } from "@rsc/ui";
-import { Bike, ChevronDown, MapPin, RefreshCw, Store, Wifi, WifiOff } from "lucide-react";
+import { Bike, ChevronDown, MapPin, Phone, RefreshCw, Store, Wifi, WifiOff } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -410,7 +410,7 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
     );
   }
 
-  const { order, events, subOrders, lineItems } = detail;
+  const { order, events, subOrders, lineItems, rider } = detail;
   const normalizedStatus = order.status.toUpperCase();
   const isOutForDelivery = normalizedStatus === "OUT_FOR_DELIVERY";
   const customerLatLng: [number, number] | null =
@@ -456,6 +456,62 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
       )}
 
       <KitchenBreakdown subOrders={subOrders} lineItems={lineItems} />
+
+      {/* Rider Details */}
+      {rider && (
+        <Card className="space-y-3 border-[color:color-mix(in_srgb,var(--rsc-brand)_22%,var(--rsc-line))] bg-[var(--rsc-panel)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_14%,var(--rsc-panel))] text-[var(--rsc-brand-strong)] font-bold">
+                {rider.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={rider.avatarUrl}
+                    alt={rider.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Bike className="h-6 w-6" aria-hidden="true" />
+                )}
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--rsc-muted)]">
+                  Your Rider
+                </p>
+                <p className="text-base font-bold text-[var(--rsc-ink)]">{rider.name}</p>
+              </div>
+            </div>
+            {rider.phone && (
+              <a
+                href={`tel:${rider.phone}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--rsc-brand)] px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:opacity-90"
+              >
+                <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                Call
+              </a>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--rsc-line)]">
+            {rider.plateNumber && (
+              <div className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-2.5 py-1 text-xs font-medium text-[var(--rsc-ink)]">
+                <span className="text-[var(--rsc-muted)]">Plate:</span>
+                <span className="font-mono font-bold tracking-wider">{rider.plateNumber}</span>
+              </div>
+            )}
+            {rider.vehicleType && (
+              <span className="inline-flex items-center rounded-lg border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-2.5 py-1 text-xs font-medium capitalize text-[var(--rsc-muted)]">
+                {rider.vehicleType.toLowerCase()}
+              </span>
+            )}
+            {rider.phone && (
+              <span className="text-xs font-medium text-[var(--rsc-muted)] ml-auto">
+                {rider.phone}
+              </span>
+            )}
+          </div>
+        </Card>
+      )}
 
       <Card className="space-y-4 border-[color:color-mix(in_srgb,var(--rsc-main)_10%,var(--rsc-line))] bg-[var(--rsc-panel)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
         <div className="flex items-center gap-2.5">

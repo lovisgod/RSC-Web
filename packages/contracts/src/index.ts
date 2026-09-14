@@ -508,6 +508,7 @@ export const initiatePaymentInputSchema = z
       .min(1),
     deliveryMode: z.enum(["DELIVERY", "TAKEOUT"]),
     deliveryAddress: z.string().optional(),
+    landmark: z.string().trim().max(255).optional(),
     deliveryLatitude: z.number().optional(),
     deliveryLongitude: z.number().optional(),
     recipientPhone: nigerianPhoneNumberSchema.optional(),

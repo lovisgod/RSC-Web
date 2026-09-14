@@ -7,7 +7,7 @@ import {
 } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Star, Tag, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, LocateFixed, Star, Tag, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { apiClient } from "@/src/lib/api";
@@ -20,7 +20,7 @@ import {
   type OrderSnapshot,
 } from "@/src/lib/data/checkout";
 import type { GooglePlaceSuggestion } from "@/src/lib/google-places";
-import { geocodeAddress } from "@/src/lib/geocoding";
+import { geocodeAddress, reverseGeocode } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
@@ -73,6 +73,8 @@ export function FulfillmentStep({
 
   const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
   const [addressText, setAddressText] = useState(initial.address);
+  const [landmark, setLandmark] = useState(initial.landmark ?? "");
+  const [isLocating, setIsLocating] = useState(false);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
   const [recipientPhoneError, setRecipientPhoneError] = useState<string | null>(null);
@@ -158,6 +160,51 @@ export function FulfillmentStep({
     } else {
       setShowNoDefaultHint(true);
     }
+  }
+
+  function handleUseCurrentLocation() {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+    setShowNoDefaultHint(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const result = await reverseGeocode(latitude, longitude);
+          setIsLocating(false);
+          if (!result) {
+            setLocationError("Could not determine address for your current location.");
+            return;
+          }
+          setAddressText(result.displayName || result.addressLine);
+          setSelectedSavedId(null);
+          setShowDropdown(false);
+          handleResolvedAddress(result);
+        } catch {
+          setIsLocating(false);
+          setLocationError("Could not resolve your location address. Please enter it manually.");
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError(
+            "Location access was denied. Please allow permission or type your address.",
+          );
+        } else {
+          setLocationError(
+            "Unable to retrieve your current location. Please try again or type your address.",
+          );
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
   }
 
   function handleAddressChange(value: string) {
