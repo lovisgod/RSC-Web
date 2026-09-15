@@ -20,7 +20,22 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
 
   return (
     <article
-      className={`bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 p-3 transition-opacity ${unavailable ? "opacity-60" : ""}`}
+      role="button"
+      tabIndex={unavailable ? -1 : 0}
+      aria-label={unavailable ? `${item.name} unavailable` : `View ${item.name} options`}
+      onClick={unavailable ? undefined : onAdd}
+      onKeyDown={(event) => {
+        if (unavailable) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onAdd();
+        }
+      }}
+      className={`bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 p-3 transition-opacity ${
+        unavailable
+          ? "opacity-60"
+          : "cursor-pointer hover:border-[var(--rsc-main)]/25 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rsc-main)]/35"
+      }`}
     >
       {/* Thumbnail */}
       <div
@@ -76,7 +91,11 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
       {/* Add button */}
       <button
         type="button"
-        onClick={unavailable ? undefined : onAdd}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!unavailable) onAdd();
+        }}
         disabled={unavailable}
         aria-label={unavailable ? `${item.name} unavailable` : `Add ${item.name}`}
         className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"

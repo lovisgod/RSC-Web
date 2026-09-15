@@ -17,7 +17,7 @@ const navItems = [
   { href: "/outlets", icon: HomeIcon, label: "Home" },
   { href: "/orders", icon: ReceiptIcon, label: "Orders" },
   { href: "/cart", icon: ShoppingBagIcon, label: "Cart" },
-  { href: "/favorites", icon: HeartIcon, label: "Favourites" },
+  { href: "/favorites", icon: HeartIcon, label: "My Items" },
   { href: "/profile", icon: UserIcon, label: "Account" },
 ];
 
