@@ -8,6 +8,7 @@ export interface DeliveryZone {
 export interface DeliveryForm {
   mode: FulfillmentMode;
   address: string;
+  landmark: string;
   latitude: number | null;
   longitude: number | null;
   zone: DeliveryZone | null;
@@ -31,6 +32,7 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
 export const DEFAULT_DELIVERY: DeliveryForm = {
   mode: "delivery",
   address: "12 Admiralty Way, Lekki Phase 1, Lagos",
+  landmark: "",
   latitude: null,
   longitude: null,
   zone: null,

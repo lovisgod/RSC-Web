@@ -372,9 +372,17 @@ export class DeliveryService {
     input: ResolveAddressDto,
   ): Promise<ResolvedDeliveryAddress | null> {
     const { google } = this.config.get("addressAutocomplete", { infer: true });
-    const placeId = input.provider === "google" ? input.suggestionId : input.suggestionId;
 
-    if (!google.apiKey || !placeId) {
+    if (!google.apiKey) {
+      return null;
+    }
+
+    const placeId = input.suggestionId;
+    if (!placeId && input.input) {
+      return this.resolveGoogleGeocode(input.input, google.apiKey);
+    }
+
+    if (!placeId) {
       return null;
     }
 
@@ -427,6 +435,66 @@ export class DeliveryService {
         displayName: place.formattedAddress ?? addressLine,
         latitude: place.location.latitude,
         longitude: place.location.longitude,
+        provider: "google",
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async resolveGoogleGeocode(
+    rawQuery: string,
+    apiKey: string,
+  ): Promise<ResolvedDeliveryAddress | null> {
+    const trimmed = rawQuery.trim();
+    if (!trimmed) return null;
+
+    const coordsMatch = trimmed.match(/^(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)$/);
+    const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+    url.searchParams.set("key", apiKey);
+
+    if (coordsMatch) {
+      url.searchParams.set("latlng", `${coordsMatch[1]},${coordsMatch[3]}`);
+    } else {
+      url.searchParams.set("address", normalizeLagosQuery(trimmed));
+      url.searchParams.set("region", "ng");
+    }
+
+    try {
+      const response = await fetch(url.toString());
+      if (!response.ok) return null;
+
+      const data = (await response.json()) as GoogleGeocodingResponse;
+      const first = data.results?.[0];
+      if (!first || !first.geometry?.location) return null;
+
+      const components: GoogleAddressComponent[] = (first.address_components ?? []).map((c) => ({
+        longText: c.long_name,
+        shortText: c.short_name,
+        types: c.types,
+      }));
+
+      const addressLine = first.formatted_address.split(",")[0]?.trim() || first.formatted_address;
+      const city =
+        findGoogleAddressComponent(components, [
+          "locality",
+          "administrative_area_level_2",
+          "sublocality",
+        ]) ?? "Lagos";
+      const state =
+        findGoogleAddressComponent(components, ["administrative_area_level_1"]) ?? "Lagos State";
+      const label =
+        findGoogleAddressComponent(components, ["route", "neighborhood", "sublocality_level_1"]) ??
+        addressLine;
+
+      return {
+        addressLine,
+        city,
+        state,
+        label: label.slice(0, 30),
+        displayName: first.formatted_address,
+        latitude: first.geometry.location.lat,
+        longitude: first.geometry.location.lng,
         provider: "google",
       };
     } catch {
@@ -551,6 +619,20 @@ interface GooglePlaceDetailsResponse {
   displayName?: { text?: string };
   location?: { latitude: number; longitude: number };
   addressComponents?: GoogleAddressComponent[];
+}
+
+interface GoogleGeocodingResponse {
+  results?: Array<{
+    formatted_address: string;
+    geometry?: { location?: { lat: number; lng: number } };
+    address_components?: Array<{
+      long_name: string;
+      short_name: string;
+      types: string[];
+    }>;
+  }>;
+  status?: string;
+  error_message?: string;
 }
 
 interface OpenCageComponents {

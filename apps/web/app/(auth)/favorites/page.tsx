@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Store } from "lucide-react";
+import { Utensils } from "lucide-react";
 
 import { FavoritesView } from "@/src/components/favorites/favorites-view";
 
@@ -15,16 +15,16 @@ export default function FavoritesPage() {
             My Favourites
           </h1>
           <p className="mt-0.5 text-sm text-gray-400">
-            Quickly order from your saved kitchens and favorite meals.
+            Quickly order from your saved and favorite meals.
           </p>
         </div>
         <Link
-          href="/outlets"
-          aria-label="Browse kitchens"
+          href="/menu"
+          aria-label="Browse menu"
           className="rsc-button rsc-button--primary shrink-0 gap-2"
         >
-          <Store className="h-5 w-5" aria-hidden="true" />
-          <span className="hidden sm:inline">Browse Kitchens</span>
+          <Utensils className="h-5 w-5" aria-hidden="true" />
+          <span className="hidden sm:inline">Browse Menu</span>
         </Link>
       </div>
 

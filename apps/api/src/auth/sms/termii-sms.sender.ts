@@ -53,14 +53,14 @@ export class TermiiSmsSender implements SmsSender {
   async sendPhoneVerification(input: SendPhoneVerificationInput): Promise<void> {
     await this.sendSms(
       input.phone,
-      `Your RSC verification code is ${input.code}. It expires in ${input.expiresInMinutes} minutes.`,
+      `Your DineOutNG verification code is ${input.code}. It expires in ${input.expiresInMinutes} minutes.`,
     );
   }
 
   async sendPasswordReset(input: SendPasswordResetSmsInput): Promise<void> {
     await this.sendSms(
       input.phone,
-      `Your RSC password reset code is ${input.code}. It expires in ${input.expiresInMinutes} minutes.`,
+      `Your DineOutNG password reset code is ${input.code}. It expires in ${input.expiresInMinutes} minutes.`,
     );
   }
 

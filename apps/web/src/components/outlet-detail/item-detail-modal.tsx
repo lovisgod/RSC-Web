@@ -1,15 +1,15 @@
 "use client";
 
-import { Button } from "@rsc/ui";
-import { DiscountPrice } from "@rsc/ui";
+import { Button, DiscountPrice } from "@rsc/ui";
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Heart, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { apiClient } from "@/src/lib/api";
 import { formatNaira } from "@/src/lib/data/cart";
 import type { DisplayModifierGroup, MenuItem } from "@/src/lib/data/outlet-menu";
 import { useCartStore } from "@/src/stores/cart-store";
+import { useFavoritesStore } from "@/src/stores/favorites-store";
 
 interface ItemDetailModalProps {
   item: MenuItem;
@@ -117,6 +117,8 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
   // groupId → Set of selected modifierIds
   const [selections, setSelections] = useState<Map<string, Set<string>>>(() => new Map());
   const addItem = useCartStore((s) => s.addItem);
+  const isFavorite = useFavoritesStore((s) => s.isItemFavorite(item.id));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleItem);
 
   function toggle(group: DisplayModifierGroup, modifierId: string) {
     setSelections((prev) => {
@@ -193,6 +195,21 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
           className="relative h-52 flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: item.bgColor }}
         >
+          <button
+            type="button"
+            onClick={() => toggleFavorite(item.id)}
+            aria-label={
+              isFavorite ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`
+            }
+            className={`absolute left-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 backdrop-blur shadow-md transition active:scale-90 ${
+              isFavorite
+                ? "bg-white text-red-500"
+                : "bg-white/90 text-gray-700 hover:bg-white hover:text-black dark:border-gray-800 dark:bg-gray-900/90 dark:text-gray-200"
+            }`}
+          >
+            <Heart className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`} aria-hidden="true" />
+          </button>
+
           <button
             type="button"
             onClick={onClose}

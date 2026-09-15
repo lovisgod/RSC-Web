@@ -1,5 +1,8 @@
+import { Heart } from "lucide-react";
+
 import type { MenuItem } from "@/src/lib/data/outlet-menu";
 import { DiscountPrice } from "@rsc/ui";
+import { useFavoritesStore } from "@/src/stores/favorites-store";
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -12,14 +15,31 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
   const soldOut = !item.isAvailable;
   const unavailable = soldOut || disabled;
   const statusLabel = soldOut ? "Sold out" : disabledLabel;
+  const isFavorite = useFavoritesStore((s) => s.isItemFavorite(item.id));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleItem);
 
   return (
     <article
-      className={`bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 p-3 transition-opacity ${unavailable ? "opacity-60" : ""}`}
+      role="button"
+      tabIndex={unavailable ? -1 : 0}
+      aria-label={unavailable ? `${item.name} unavailable` : `View ${item.name} options`}
+      onClick={unavailable ? undefined : onAdd}
+      onKeyDown={(event) => {
+        if (unavailable) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onAdd();
+        }
+      }}
+      className={`bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 p-3 transition-opacity ${
+        unavailable
+          ? "opacity-60"
+          : "cursor-pointer hover:border-[var(--rsc-main)]/25 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rsc-main)]/35"
+      }`}
     >
       {/* Thumbnail */}
       <div
-        className={`w-20 h-20 flex-shrink-0 rounded-xl flex items-center justify-center text-4xl ${unavailable ? "grayscale" : ""}`}
+        className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden flex items-center justify-center text-4xl ${unavailable ? "grayscale" : ""}`}
         style={{ backgroundColor: item.bgColor }}
       >
         {item.image.startsWith("/") || item.image.startsWith("http") ? (
@@ -28,6 +48,24 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
         ) : (
           <span className="text-4xl">{item.image}</span>
         )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite(item.id);
+          }}
+          aria-label={
+            isFavorite ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`
+          }
+          className={`absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-sm transition-transform active:scale-90 ${
+            isFavorite
+              ? "bg-white text-red-500 shadow-sm"
+              : "bg-black/35 text-white hover:bg-black/55"
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current" : ""}`} />
+        </button>
       </div>
 
       {/* Details */}
@@ -53,7 +91,11 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
       {/* Add button */}
       <button
         type="button"
-        onClick={unavailable ? undefined : onAdd}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!unavailable) onAdd();
+        }}
         disabled={unavailable}
         aria-label={unavailable ? `${item.name} unavailable` : `Add ${item.name}`}
         className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"

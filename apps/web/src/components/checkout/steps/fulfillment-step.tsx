@@ -7,7 +7,7 @@ import {
 } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Star, Tag, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, LocateFixed, Star, Tag, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { apiClient } from "@/src/lib/api";
@@ -20,7 +20,7 @@ import {
   type OrderSnapshot,
 } from "@/src/lib/data/checkout";
 import type { GooglePlaceSuggestion } from "@/src/lib/google-places";
-import { geocodeAddress } from "@/src/lib/geocoding";
+import { geocodeAddress, reverseGeocode } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
@@ -71,6 +71,8 @@ export function FulfillmentStep({
 
   const mode: FulfillmentMode = "delivery";
   const [addressText, setAddressText] = useState(initial.address);
+  const [landmark, setLandmark] = useState(initial.landmark ?? "");
+  const [isLocating, setIsLocating] = useState(false);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
   const [recipientPhoneError, setRecipientPhoneError] = useState<string | null>(null);
@@ -156,6 +158,51 @@ export function FulfillmentStep({
     } else {
       setShowNoDefaultHint(true);
     }
+  }
+
+  function handleUseCurrentLocation() {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+    setShowNoDefaultHint(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const result = await reverseGeocode(latitude, longitude);
+          setIsLocating(false);
+          if (!result) {
+            setLocationError("Could not determine address for your current location.");
+            return;
+          }
+          setAddressText(result.displayName || result.addressLine);
+          setSelectedSavedId(null);
+          setShowDropdown(false);
+          handleResolvedAddress(result);
+        } catch {
+          setIsLocating(false);
+          setLocationError("Could not resolve your location address. Please enter it manually.");
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError(
+            "Location access was denied. Please allow permission or type your address.",
+          );
+        } else {
+          setLocationError(
+            "Unable to retrieve your current location. Please try again or type your address.",
+          );
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
   }
 
   function handleAddressChange(value: string) {
@@ -351,6 +398,7 @@ export function FulfillmentStep({
           deliveryAddress: addressText,
           deliveryLatitude: coords!.latitude,
           deliveryLongitude: coords!.longitude,
+          ...(landmark.trim() ? { landmark: landmark.trim() } : {}),
         },
         { idempotencyKey },
       );
@@ -379,6 +427,7 @@ export function FulfillmentStep({
         {
           mode,
           address: addressText,
+          landmark: landmark.trim(),
           latitude: coords?.latitude ?? null,
           longitude: coords?.longitude ?? null,
           zone,
@@ -400,22 +449,37 @@ export function FulfillmentStep({
 
   return (
     <div className="space-y-6">
-      {/* Delivery address — only shown in delivery mode */}
+      {/* Delivery address */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <SectionLabel icon="/icons/png/round-pushpin_1f4cd.png" text="Delivery Address" />
-          <button
-            type="button"
-            onClick={handleUseDefault}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
-              defaultAddress
-                ? "border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5"
-                : "border-[var(--rsc-line)] text-[var(--rsc-muted)]"
-            }`}
-          >
-            <Star className="w-3 h-3" fill={defaultAddress ? "currentColor" : "none"} />
-            {defaultAddress ? `Use ${defaultAddress.label}` : "No Default Set"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleUseCurrentLocation}
+              disabled={isLocating}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5 transition-all disabled:opacity-60"
+            >
+              {isLocating ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <LocateFixed className="w-3 h-3" />
+              )}
+              <span>{isLocating ? "Locating…" : "Current location"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleUseDefault}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                defaultAddress
+                  ? "border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5"
+                  : "border-[var(--rsc-line)] text-[var(--rsc-muted)]"
+              }`}
+            >
+              <Star className="w-3 h-3" fill={defaultAddress ? "currentColor" : "none"} />
+              {defaultAddress ? `Use ${defaultAddress.label}` : "No Default Set"}
+            </button>
+          </div>
         </div>
 
         <div className="space-y-3 rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-main)_15%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))] p-4 shadow-sm">
@@ -524,6 +588,24 @@ export function FulfillmentStep({
                   ))}
                 </div>
               )}
+          </div>
+
+          {/* Landmark / directions */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="checkout-landmark"
+              className="block text-xs font-semibold text-[var(--rsc-muted)]"
+            >
+              Landmark / Navigation details (Optional)
+            </label>
+            <input
+              id="checkout-landmark"
+              type="text"
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+              placeholder="e.g. Opposite mega chicken, black gate, beside pharmacy"
+              className="w-full rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] px-4 py-2.5 text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] shadow-sm focus:border-[var(--rsc-main)] focus:outline-none transition-colors"
+            />
           </div>
 
           {/* Validation success */}
