@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
   { href: "/outlets", icon: Home, label: "Home" },
   { href: "/orders", icon: Receipt, label: "Orders" },
   { href: "/cart", icon: ShoppingBag, label: "Cart" },
-  { href: "/favorites", icon: Heart, label: "Favourites" },
+  { href: "/favorites", icon: Heart, label: "My Items" },
   { href: "/notifications", icon: Bell, label: "Notifications" },
   { href: "/tracking", icon: MapPin, label: "Tracking" },
   { href: "/profile", icon: User, label: "Profile" },

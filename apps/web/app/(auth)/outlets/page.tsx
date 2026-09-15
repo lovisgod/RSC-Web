@@ -11,10 +11,10 @@ export const metadata: Metadata = { title: "Kitchens" };
 export default function OutletsPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-4 sm:p-6 lg:p-8">
-      <div className="mb-5 flex items-start justify-between gap-4">
+      <div className="mb-5 flex items-start justify-between gap-4 pl-12 md:pl-0">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "var(--rsc-main)" }}>
-            DineOut NG Kitchens
+            DineOut NG Outlets
           </h1>
           <p className="mt-0.5 text-sm text-gray-400">
             Browse, add to cart, and order — all in one checkout.

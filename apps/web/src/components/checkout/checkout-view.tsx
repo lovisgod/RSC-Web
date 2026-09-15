@@ -62,7 +62,6 @@ export function CheckoutView() {
           {step === 1 && (
             <FulfillmentStep
               initial={delivery}
-              onModeChange={(mode) => setDelivery((current) => ({ ...current, mode }))}
               onComplete={(d, id, snap, url) => {
                 setDelivery(d);
                 setOrderId(id);
