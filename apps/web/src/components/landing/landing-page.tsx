@@ -110,20 +110,87 @@ function isPromoLive(promo: Promo): boolean {
   return promo.isActive && startsAt <= now && now <= endsAt;
 }
 
-function topSpecials(outlets: OutletSummary[]): Array<MenuItemSummary & { outletName: string }> {
+export interface DailySpecialItem extends MenuItemSummary {
+  outletName: string;
+  discountPercent: number;
+}
+
+function resolveSpecialImage(item: MenuItemSummary): string {
+  if (item.imageUrl && !item.imageUrl.includes("fire_1f525")) {
+    return item.imageUrl;
+  }
+  const name = (item.name || "").toLowerCase();
+  if (
+    name.includes("suya") ||
+    name.includes("meat") ||
+    name.includes("grill") ||
+    name.includes("skewer")
+  ) {
+    return "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80";
+  }
+  if (
+    name.includes("pasta") ||
+    name.includes("alfredo") ||
+    name.includes("spaghetti") ||
+    name.includes("macaroni")
+  ) {
+    return "https://images.unsplash.com/photo-1621996346565-e3d5d6281084?w=500&auto=format&fit=crop&q=80";
+  }
+  if (name.includes("pizza") || name.includes("pepperoni")) {
+    return "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500&auto=format&fit=crop&q=80";
+  }
+  if (name.includes("rice") || name.includes("jollof")) {
+    return "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80";
+  }
+  return "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=80";
+}
+
+function getDailySpecials(outlets: OutletSummary[]): DailySpecialItem[] {
+  const now = new Date();
+  const currentTime = now.getTime();
+
   return outlets
     .flatMap((outlet) =>
       outlet.menuItems
-        .filter((item) => item.isAvailable)
-        .map((item) => ({ ...item, outletName: outlet.name })),
-    )
-    .sort((a, b) => {
-      const aDiscount = a.isDiscountActive ? 1 : 0;
-      const bDiscount = b.isDiscountActive ? 1 : 0;
+        .filter((item) => {
+          if (!item.isAvailable) return false;
+          if (
+            item.discountPriceMinor === null ||
+            item.discountPriceMinor === undefined ||
+            item.discountPriceMinor <= 0 ||
+            item.discountPriceMinor >= item.priceMinor
+          ) {
+            return false;
+          }
 
-      return bDiscount - aDiscount || b.ratingAverage - a.ratingAverage;
-    })
-    .slice(0, 10);
+          if (item.isDiscountActive) {
+            return true;
+          }
+
+          const startsAt = item.discountStartsAt
+            ? new Date(item.discountStartsAt).getTime()
+            : Number.NEGATIVE_INFINITY;
+          const endsAt = item.discountEndsAt
+            ? new Date(item.discountEndsAt).getTime()
+            : Number.POSITIVE_INFINITY;
+
+          return currentTime >= startsAt && currentTime <= endsAt;
+        })
+        .map((item) => {
+          const discountPrice = item.discountPriceMinor ?? item.priceMinor;
+          const discountPercent =
+            item.priceMinor > 0
+              ? Math.round(((item.priceMinor - discountPrice) / item.priceMinor) * 100)
+              : 0;
+
+          return {
+            ...item,
+            outletName: outlet.name,
+            discountPercent,
+          };
+        }),
+    )
+    .sort((a, b) => b.discountPercent - a.discountPercent || b.ratingAverage - a.ratingAverage);
 }
 
 export function LandingPage() {
@@ -141,7 +208,7 @@ export function LandingPage() {
 
   const outlets = (outletsQuery.data ?? []).map((outlet, index) => toDisplayOutlet(outlet, index));
   const featuredOutlets = outlets.slice(0, 4);
-  const specials = topSpecials(outletsQuery.data ?? []);
+  const dailySpecials = getDailySpecials(outletsQuery.data ?? []);
   const promos = (promosQuery.data ?? []).filter(isPromoLive);
 
   function handleCopyPromoCode(code: string) {
@@ -309,76 +376,7 @@ export function LandingPage() {
         )}
       </section>
 
-      {/* ── SECTION 2: POPULAR MENUS (Portrait & Scrollable, no Today's Pick badge) ── */}
-      <section className="grab-section" id="menus" aria-labelledby="grab-menus-heading">
-        <div className="grab-section__header">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xl" role="img" aria-label="Plate">
-              🍽️
-            </span>
-            <h2 id="grab-menus-heading" className="grab-section__title">
-              POPULAR MENUS
-            </h2>
-          </div>
-          <Link href="/menu" className="grab-section__view-all">
-            <span>View All</span>
-            <ChevronRightIcon className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {specials.length === 0 ? (
-          <div className="grab-empty">
-            <UtensilsIcon className="w-8 h-8 text-emerald-500 mb-2" />
-            <p>Menu items will appear here once kitchens publish them.</p>
-          </div>
-        ) : (
-          <div className="grab-menus-scroll">
-            {specials.map((special) => (
-              <div key={special.id} className="grab-menu-portrait-card">
-                {/* Food Photo with Floating Quick Add + button */}
-                <div className="grab-menu-portrait-card__image-wrap">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={special.imageUrl ?? "/images/images/fire_1f525.png"}
-                    alt={special.name}
-                    className="grab-menu-portrait-card__image"
-                    loading="lazy"
-                  />
-                  <button
-                    type="button"
-                    className="grab-menu-portrait-card__add-btn"
-                    aria-label={`Add ${special.name} to cart`}
-                    onClick={() => handleQuickAddSpecial(special)}
-                  >
-                    <PlusIcon className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-
-                {/* Card Body */}
-                <div className="grab-menu-portrait-card__body">
-                  <h3 className="grab-menu-portrait-card__title" title={special.name}>
-                    {special.name}
-                  </h3>
-                  <p className="grab-menu-portrait-card__outlet">{special.outletName}</p>
-
-                  <div className="grab-menu-portrait-card__price-row">
-                    <span className="grab-menu-portrait-card__price">
-                      {formatNaira(special.currentPriceMinor ?? special.priceMinor)}
-                    </span>
-                    {special.isDiscountActive && (
-                      <span className="grab-menu-portrait-card__strike-price">
-                        {formatNaira(special.priceMinor)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── SECTION 3: DAILY SPECIALS (Scrollable banner promos from backend) ── */}
+      {/* ── SECTION 2: DAILY SPECIALS (Cards matching reference design) ── */}
       <section className="grab-section" id="specials" aria-labelledby="grab-specials-heading">
         <div className="grab-section__header">
           <div className="flex items-center gap-1.5">
@@ -389,6 +387,128 @@ export function LandingPage() {
               DAILY SPECIALS
             </h2>
           </div>
+          <Link href="/menu" className="grab-section__view-all">
+            <span>View All</span>
+            <ChevronRightIcon className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {dailySpecials.length === 0 ? (
+          <div className="grab-empty">
+            <UtensilsIcon className="w-8 h-8 text-emerald-500 mb-2" />
+            <p>
+              No daily specials set for today. Kitchens will publish today&apos;s specials soon!
+            </p>
+          </div>
+        ) : (
+          <div className="grab-daily-specials-container">
+            <div className="grab-daily-specials-scroll">
+              {dailySpecials.map((special, idx) => {
+                const discountPrice =
+                  special.discountPriceMinor ?? special.currentPriceMinor ?? special.priceMinor;
+                const originalPrice = special.priceMinor;
+                const imageUrl = resolveSpecialImage(special);
+                const isFirst = idx === 0;
+
+                return (
+                  <article key={special.id} className="grab-daily-special-card">
+                    {/* Top-left Badge */}
+                    <div className="z-10 mb-2">
+                      {isFirst ? (
+                        <span className="grab-daily-special-badge-pill">TODAY&apos;S PICK</span>
+                      ) : (
+                        <div className="grab-daily-special-badge-circle">
+                          <span className="grab-daily-special-badge-circle__pct">
+                            {special.discountPercent}%
+                          </span>
+                          <span className="grab-daily-special-badge-circle__off">OFF</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Circular Dish Photo */}
+                    <div className="grab-daily-special-image-wrap">
+                      <img
+                        src={imageUrl}
+                        alt={special.name}
+                        className="grab-daily-special-image"
+                        loading="lazy"
+                      />
+                    </div>
+
+                    {/* Title & Description */}
+                    <div className="z-10 max-w-[62%] pr-2">
+                      <h3
+                        className="text-base font-bold text-white line-clamp-1 leading-snug"
+                        title={special.name}
+                      >
+                        {special.name}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 leading-tight">
+                        {special.description || special.outletName}
+                      </p>
+                    </div>
+
+                    {/* Bottom Row: Price */}
+                    <div className="z-10 mt-3 flex items-baseline gap-2">
+                      <span className="text-base font-extrabold text-emerald-400">
+                        {formatNaira(discountPrice)}
+                      </span>
+                      {originalPrice > discountPrice && (
+                        <span className="text-xs text-slate-400 line-through">
+                          {formatNaira(originalPrice)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Quick Add Button */}
+                    <button
+                      type="button"
+                      className="grab-daily-special-add-btn"
+                      aria-label={`Add ${special.name} to cart`}
+                      onClick={() => handleQuickAddSpecial(special)}
+                    >
+                      <PlusIcon className="w-5 h-5 stroke-[2.5]" />
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+
+            {/* Pagination indicator dots */}
+            <div className="grab-pagination-dots" aria-hidden="true">
+              {Array.from({ length: Math.min(Math.max(dailySpecials.length, 3), 3) }).map(
+                (_, i) => (
+                  <span
+                    key={i}
+                    className={`grab-pagination-dot ${i === 0 ? "grab-pagination-dot--active" : ""}`}
+                  />
+                ),
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── SECTION 3: EXCLUSIVE DISCOUNTS (Scrollable banner promos from backend) ── */}
+      <section
+        className="grab-section"
+        id="exclusive-discounts"
+        aria-labelledby="grab-exclusive-discounts-heading"
+      >
+        <div className="grab-section__header">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xl" role="img" aria-label="Tag">
+              🏷️
+            </span>
+            <h2 id="grab-exclusive-discounts-heading" className="grab-section__title">
+              EXCLUSIVE DISCOUNTS
+            </h2>
+          </div>
+          <Link href="/notifications" className="grab-section__view-all">
+            <span>View All</span>
+            <ChevronRightIcon className="w-4 h-4" />
+          </Link>
         </div>
 
         {promos.length === 0 ? (
@@ -399,14 +519,14 @@ export function LandingPage() {
                 <span className="grab-promo-banner__heading-green">MORE?</span>
               </div>
               <p className="grab-promo-banner__copy">
-                Check back soon for fresh daily specials and exclusive kitchen discounts!
+                Enjoy amazing deals from your favorite outlets daily!
               </p>
             </div>
             <div className="grab-promo-banner__graphic">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
-                alt="Delicious DineOut specials"
+                alt="Delicious DineOut deals"
                 className="grab-promo-banner__food-img"
                 loading="lazy"
               />
@@ -591,6 +711,9 @@ export function LandingPage() {
               </li>
               <li>
                 <Link href="#specials">Daily Specials</Link>
+              </li>
+              <li>
+                <Link href="#exclusive-discounts">Exclusive Discounts</Link>
               </li>
               <li>
                 <Link href="/cart">Your Cart</Link>

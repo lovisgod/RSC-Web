@@ -161,6 +161,36 @@ export function MenuItemDetail({
           />
         </DetailRow>
 
+        {item.discountPriceMinor && (
+          <DetailRow label="Daily Special">
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${
+                    item.isDiscountActive
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {item.isDiscountActive ? "🔥 Active Special" : "Scheduled Special"}
+                </span>
+                <span className="text-xs font-semibold text-emerald-600">
+                  {Math.round(
+                    ((item.priceMinor - item.discountPriceMinor) / item.priceMinor) * 100,
+                  )}
+                  % off
+                </span>
+              </div>
+              {item.discountStartsAt && item.discountEndsAt && (
+                <p className="text-[11px] text-slate-500">
+                  {new Date(item.discountStartsAt).toLocaleDateString()} –{" "}
+                  {new Date(item.discountEndsAt).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </DetailRow>
+        )}
+
         {categoryName && (
           <DetailRow label="Category">
             <span className="rounded-lg bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">

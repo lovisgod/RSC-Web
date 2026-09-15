@@ -942,6 +942,151 @@ body {
   text-decoration: line-through;
 }
 
+/* ── SECTION 2: DAILY SPECIALS (Cards matching reference design) ── */
+.grab-daily-specials-scroll {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.15rem;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .grab-daily-specials-scroll {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.25rem 0.15rem 0.5rem;
+    scrollbar-width: none;
+  }
+  .grab-daily-specials-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.grab-daily-special-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 24px;
+  background: radial-gradient(circle at 80% 20%, #17271e 0%, #0d1712 60%, #080f0b 100%);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  padding: 1.15rem 1.15rem 1.15rem 1.25rem;
+  min-height: 200px;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (max-width: 1024px) {
+    flex: 0 0 280px;
+    min-width: 280px;
+    max-width: 280px;
+    scroll-snap-align: start;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(52, 211, 153, 0.45);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.grab-daily-special-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(6, 44, 25, 0.9);
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  color: #34d399;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.grab-daily-special-badge-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(6, 44, 25, 0.9);
+  border: 1.5px solid rgba(52, 211, 153, 0.45);
+  color: #34d399;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.grab-daily-special-badge-circle__pct {
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.grab-daily-special-badge-circle__off {
+  font-size: 0.54rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.grab-daily-special-image-wrap {
+  position: absolute;
+  top: 15px;
+  right: -15px;
+  width: 145px;
+  height: 145px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 2px solid rgba(52, 211, 153, 0.15);
+  box-shadow: -4px 6px 20px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.grab-daily-special-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+
+  .grab-daily-special-card:hover & {
+    transform: scale(1.08);
+  }
+}
+
+.grab-daily-special-add-btn {
+  position: absolute;
+  bottom: 0.85rem;
+  right: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #00b14f;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 177, 79, 0.4);
+  cursor: pointer;
+  color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: #009643;
+    transform: scale(1.12);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
 /* Pagination Dots */
 .grab-pagination-dots {
   display: flex;
