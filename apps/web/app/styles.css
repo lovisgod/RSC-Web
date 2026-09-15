@@ -1601,7 +1601,8 @@ body {
 
 .grab-footer__inner {
   display: grid;
-  grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(280px, 1.5fr) repeat(2, minmax(180px, 1fr));
+  align-items: start;
   gap: 2.5rem;
 }
 
@@ -1796,6 +1797,10 @@ body {
   .grab-footer__inner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .grab-footer__brand-col {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1883,6 +1888,11 @@ body {
   .grab-footer__inner {
     grid-template-columns: 1fr;
     gap: 2rem;
+    text-align: left;
+  }
+
+  .grab-footer__brand-col {
+    grid-column: auto;
   }
 }
 

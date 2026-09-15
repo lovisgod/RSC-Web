@@ -144,11 +144,25 @@ function refreshSession(): Promise<void> {
   return refreshPromise;
 }
 
-function redirectOnUnauthorized(error: AxiosError) {
+function isSessionAccessError(error: AxiosError<{ message?: string }>) {
+  const status = error.response?.status;
+  if (status === 401) return true;
+  if (status !== 403) return false;
+
+  const message = error.response?.data?.message?.toLowerCase() ?? "";
+  return (
+    message.includes("insufficient") ||
+    message.includes("permission") ||
+    message.includes("authentication required") ||
+    message.includes("forbidden")
+  );
+}
+
+function redirectOnUnauthorized(error: AxiosError<{ message?: string }>) {
   const path = error.config?.url ?? "";
 
   if (
-    error.response?.status !== 401 ||
+    !isSessionAccessError(error) ||
     typeof window === "undefined" ||
     isRedirectingToLogin ||
     window.location.pathname === "/login" ||
