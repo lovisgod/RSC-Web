@@ -12,6 +12,7 @@ import type { RealtimeService } from "../realtime/realtime.service";
 import { MasterOrder } from "./master-order.entity";
 import { OrderLineItem } from "./order-line-item.entity";
 import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
+import type { OrderRiderRejection } from "./order-rider-rejection.entity";
 import type { OrderStatusEvent } from "./order-status-event.entity";
 import { OrdersService } from "./orders.service";
 import { SubOrder } from "./sub-order.entity";
@@ -131,6 +132,15 @@ function createService(input: {
   const piiCrypto = {
     decrypt: vi.fn((val: string): string => val),
   };
+  const riderRejections = {
+    createQueryBuilder: vi.fn().mockReturnValue({
+      insert: vi.fn().mockReturnThis(),
+      into: vi.fn().mockReturnThis(),
+      values: vi.fn().mockReturnThis(),
+      orIgnore: vi.fn().mockReturnThis(),
+      execute: vi.fn().mockResolvedValue({}),
+    }),
+  };
   const service = new OrdersService(
     users as unknown as Repository<Customer>,
     outlets as unknown as Repository<Outlet>,
@@ -138,6 +148,7 @@ function createService(input: {
     subOrders as unknown as Repository<SubOrder>,
     lineItems as unknown as Repository<OrderLineItem>,
     statusEvents as unknown as Repository<OrderStatusEvent>,
+    riderRejections as unknown as Repository<OrderRiderRejection>,
     dataSource as unknown as DataSource,
     {} as PaymentsService,
     notifications as unknown as NotificationsService,

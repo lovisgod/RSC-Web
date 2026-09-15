@@ -19,6 +19,7 @@ import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { MasterOrder } from "./master-order.entity";
 import { OrderLineItem } from "./order-line-item.entity";
 import { MasterOrderStatus, SubOrderStatus } from "./order-status.enum";
+import { OrderRiderRejection } from "./order-rider-rejection.entity";
 import { OrderStatusEvent } from "./order-status-event.entity";
 import { SubOrder } from "./sub-order.entity";
 import type {
@@ -127,6 +128,8 @@ export class OrdersService {
     @InjectRepository(OrderLineItem) private readonly lineItems: Repository<OrderLineItem>,
     @InjectRepository(OrderStatusEvent)
     private readonly statusEvents: Repository<OrderStatusEvent>,
+    @InjectRepository(OrderRiderRejection)
+    private readonly riderRejections: Repository<OrderRiderRejection>,
     private readonly dataSource: DataSource,
     private readonly payments: PaymentsService,
     private readonly notifications: NotificationsService,
@@ -494,6 +497,16 @@ export class OrdersService {
     order.riderId = null;
     await this.masterOrders.save(order);
     await this.recordStatusEvent(order, user.id, `Rider rejected assignment: ${input.reason}`);
+
+    // Persist the rejection so this rider is never re-assigned to this order,
+    // even if they toggle availability off and back on.
+    await this.riderRejections
+      .createQueryBuilder()
+      .insert()
+      .into(OrderRiderRejection)
+      .values({ orderId: order.id, riderId: rejectedRiderId, reason: input.reason ?? null })
+      .orIgnore() // idempotent — UNIQUE constraint (order_id, rider_id)
+      .execute();
 
     const reassignment = await this.assignFairRider(
       user,
@@ -1276,6 +1289,13 @@ export class OrdersService {
               AND pending_sub_orders.status <> 'REJECTED'
               AND pending_sub_orders.status <> 'READY'
               AND pending_sub_orders.deleted_at IS NULL
+          )
+          -- Never re-assign an order to a rider who already rejected it
+          AND NOT EXISTS (
+            SELECT 1
+            FROM order_rider_rejections orr
+            WHERE orr.order_id = mo.id
+              AND orr.rider_id = $1
           )
         ORDER BY mo.created_at ASC
         LIMIT 1
