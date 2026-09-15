@@ -6,9 +6,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
-import type { OrderLineItem, SubOrderDetail } from "@rsc/contracts";
+import type { OrderLineItem, RiderInfo, SubOrderDetail } from "@rsc/contracts";
 import { Card, EmptyState } from "@rsc/ui";
-import { Bike, ChevronDown, MapPin, RefreshCw, Store, Wifi, WifiOff } from "lucide-react";
+import {
+  Bike,
+  ChevronDown,
+  IdCard,
+  MapPin,
+  Phone,
+  RefreshCw,
+  Store,
+  UserRound,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -355,6 +366,79 @@ function RiderMapState({
   );
 }
 
+function RiderDetailsCard({ rider }: { rider: RiderInfo }) {
+  const riderMeta = [
+    {
+      label: "Rider",
+      value: rider.name,
+      icon: UserRound,
+    },
+    {
+      label: "License plate",
+      value: rider.plateNumber || "Not provided",
+      icon: IdCard,
+    },
+    {
+      label: "Phone number",
+      value: rider.phone,
+      icon: Phone,
+      href: `tel:${rider.phone}`,
+    },
+  ];
+
+  return (
+    <Card className="border-[color:color-mix(in_srgb,var(--rsc-main)_16%,var(--rsc-line))] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--rsc-main)_7%,var(--rsc-panel))_0%,var(--rsc-panel)_100%)] shadow-[0_12px_32px_rgba(30,49,96,0.07)]">
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--rsc-main)_12%,var(--rsc-panel))] text-[var(--rsc-main)]">
+          <Bike className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div>
+          <p className="text-sm font-bold text-[var(--rsc-ink)]">Assigned rider</p>
+          <p className="text-xs text-[var(--rsc-muted)]">Your rider details before live tracking</p>
+        </div>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-3">
+        {riderMeta.map((item) => {
+          const Icon = item.icon;
+          const content = (
+            <>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--rsc-main)_9%,var(--rsc-panel))] text-[var(--rsc-main)]">
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--rsc-muted)]">
+                  {item.label}
+                </span>
+                <span className="mt-0.5 block truncate text-sm font-semibold text-[var(--rsc-ink)]">
+                  {item.value}
+                </span>
+              </span>
+            </>
+          );
+
+          return item.href ? (
+            <a
+              key={item.label}
+              href={item.href}
+              className="flex items-center gap-2 rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-3 py-2.5 transition-colors hover:border-[color:color-mix(in_srgb,var(--rsc-main)_32%,var(--rsc-line))]"
+            >
+              {content}
+            </a>
+          ) : (
+            <div
+              key={item.label}
+              className="flex items-center gap-2 rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-3 py-2.5"
+            >
+              {content}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
 function OrderTrackingDetail({ orderId }: { orderId: string }) {
   const queryClient = useQueryClient();
   const { data: detail, isPending, isError, isFetching, refetch } = useOrderDetail(orderId);
@@ -410,7 +494,7 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
     );
   }
 
-  const { order, events, subOrders, lineItems } = detail;
+  const { order, events, subOrders, lineItems, rider } = detail;
   const normalizedStatus = order.status.toUpperCase();
   const isOutForDelivery = normalizedStatus === "OUT_FOR_DELIVERY";
   const customerLatLng: [number, number] | null =
@@ -438,7 +522,10 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
       {isOutForDelivery && order.deliveryMode === "DELIVERY" && (
         <>
           {order.riderId ? (
-            <RiderMapState orderId={order.id} customerLatLng={customerLatLng} />
+            <>
+              {rider && <RiderDetailsCard rider={rider} />}
+              <RiderMapState orderId={order.id} customerLatLng={customerLatLng} />
+            </>
           ) : (
             <Card className="flex items-center gap-3 border-[var(--rsc-line)] bg-[var(--rsc-panel)]">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)] text-[var(--rsc-brand)]">

@@ -58,40 +58,40 @@ const trustPillars = [
 const steps = [
   {
     step: "01",
-    title: "Pick kitchens",
+    title: "Pick Outlets",
     subtitle: "Explore live outlets",
-    copy: "Browse our curated network of live DineOut NG kitchens. Discover specialized menus from authentic Nigerian delicacies to artisanal continental favorites.",
+    copy: "Browse our curated network of live DineOut NG. Discover specialized menus from authentic Nigerian delicacies to artisanal continental favorites.",
     icon: UtensilsIcon,
   },
   {
     step: "02",
     title: "Build one cart",
     subtitle: "Mix & match freely",
-    copy: "Add Jollof from Kitchen A and Lebanese Mezze from Kitchen B into one single cart. No split app orders or juggling separate deliveries.",
+    copy: "Add Jollof from Outlet A and Lebanese Mezze from Outlet B into one single cart. No split app orders or juggling separate deliveries.",
     icon: ShoppingBagIcon,
   },
   {
     step: "03",
     title: "Pay & track live",
     subtitle: "Single checkout & updates",
-    copy: "Pay once securely. Watch each kitchen prepare your dishes in real-time, then track your unified dispatch right to your doorstep.",
+    copy: "Pay once securely. Watch each kitchen prepare your meals in real-time, then track your unified dispatch right to your doorstep.",
     icon: TruckIcon,
   },
 ] as const;
 
 const faqItems = [
   {
-    question: "Can I really order from multiple DineOut NG kitchens in one transaction?",
+    question: "Can I really order from multiple DineOut NG Outlets in one transaction?",
     answer:
-      "Yes! DineOut NG enables you to add dishes from different kitchens into a single master cart and pay once. Our dispatch coordination system manages the cooking and pickup so your complete order arrives together.",
+      "Yes! DineOut NG enables you to add meals from different outlets into a single master cart and pay once. Our dispatch coordination system manages the cooking and pickup so your complete order arrives together.",
   },
   {
-    question: "How does delivery pricing work for multi-kitchen orders?",
+    question: "How does delivery pricing work for multi-outlets orders?",
     answer:
       "You pay a transparent delivery fee calculated for your overall trip, without having to pay full separate delivery charges for every single kitchen you order from.",
   },
   {
-    question: "How do I track my order if kitchens prepare food at different speeds?",
+    question: "How do I track my order if outlets prepare food at different speeds?",
     answer:
       "Our live order tracking screen breaks down the progress of each kitchen in real-time — from kitchen prep and cooking to driver dispatch and final delivery.",
   },
@@ -186,7 +186,7 @@ export function LandingPage() {
       {/* Top Banner Accent */}
       <div className="landing-top-banner" aria-label="Announcement">
         <span className="landing-top-banner__badge">NEW</span>
-        <span>Order across multiple DineOut NG kitchens with one single checkout & delivery!</span>
+        <span>Order across multiple DineOut NG outlets with one single checkout & delivery!</span>
         <Link href="#how-it-works" className="landing-top-banner__link">
           Learn how it works →
         </Link>
@@ -329,7 +329,7 @@ export function LandingPage() {
         {specials.length === 0 ? (
           <div className="grab-empty">
             <UtensilsIcon className="w-8 h-8 text-emerald-500 mb-2" />
-            <p>Menu items will appear here once kitchens publish them.</p>
+            <p>Menu items will appear here once outlets publish them.</p>
           </div>
         ) : (
           <div className="grab-menus-scroll">
@@ -500,7 +500,7 @@ export function LandingPage() {
               How one DineOut NG order works
             </h2>
             <p className="grab-steps-desc">
-              Ordering from multiple kitchens used to mean multiple delivery fees and separate app
+              Ordering from multiple outlets used to mean multiple delivery fees and separate app
               checkouts. DineOut NG simplifies everything into 3 steps.
             </p>
           </div>
@@ -576,7 +576,7 @@ export function LandingPage() {
             <BrandLogo className="w-32" priority />
             <p className="grab-footer__tagline">
               One app. Many flavors. Endless choices. The smartest way to order food across
-              specialized DineOut NG kitchens in Nigeria.
+              specialized DineOut NG outlets in Nigeria.
             </p>
             <p className="grab-footer__copy">
               © {new Date().getFullYear()} DineOut Group Ltd. All rights reserved.
@@ -587,7 +587,7 @@ export function LandingPage() {
             <h4>Quick Links</h4>
             <ul>
               <li>
-                <Link href="/outlets">All Kitchens</Link>
+                <Link href="/outlets">All outlets</Link>
               </li>
               <li>
                 <Link href="#specials">Daily Specials</Link>
@@ -597,24 +597,6 @@ export function LandingPage() {
               </li>
               <li>
                 <Link href="/sign-in">Customer Sign In</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="grab-footer__links-col">
-            <h4>Kitchen Network</h4>
-            <ul>
-              <li>
-                <Link href="/outlets">Lagos Outlets</Link>
-              </li>
-              <li>
-                <Link href="/outlets">Abuja Outlets</Link>
-              </li>
-              <li>
-                <Link href="/outlets">Port Harcourt Hubs</Link>
-              </li>
-              <li>
-                <Link href="/outlets">Ibadan Kitchens</Link>
               </li>
             </ul>
           </div>
