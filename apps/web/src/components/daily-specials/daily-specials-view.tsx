@@ -1,31 +1,32 @@
 "use client";
 
-import type { Promo } from "@rsc/contracts";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Search, Tag } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { usePromoNotifications } from "@/src/hooks/use-notifications";
+import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
+import { formatNaira } from "@/src/lib/data/cart";
+import {
+  type DailySpecialItem,
+  getDailySpecials,
+  resolveSpecialImage,
+} from "@/src/lib/data/daily-specials";
 
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-NG", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
+function SpecialCard({ special }: { special: DailySpecialItem }) {
+  const imageUrl = resolveSpecialImage(special);
+  const discountPrice =
+    special.discountPriceMinor ?? special.currentPriceMinor ?? special.priceMinor;
+  const originalPrice = special.priceMinor;
 
-function SpecialCard({ promo }: { promo: Promo }) {
   return (
     <article className="flex w-full items-start gap-3 rounded-2xl border border-gray-100 bg-white p-3 text-left shadow-sm transition hover:border-[color:color-mix(in_srgb,var(--rsc-main)_18%,white)] hover:shadow-[0_10px_24px_rgba(30,49,96,0.08)]">
       <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-[color:color-mix(in_srgb,var(--rsc-main)_10%,white)] text-[var(--rsc-main)]">
-        {promo.imageUrl ? (
+        {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={promo.imageUrl}
-            alt=""
+            src={imageUrl}
+            alt={special.name}
             className="h-full w-full rounded-xl object-cover"
             loading="lazy"
           />
@@ -37,19 +38,27 @@ function SpecialCard({ promo }: { promo: Promo }) {
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <span className="rounded-full border border-[color-mix(in_srgb,var(--rsc-main)_20%,transparent)] bg-[color:color-mix(in_srgb,var(--rsc-main)_12%,white)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--rsc-main)]">
-            Code: {promo.code}
+            {special.outletName}
           </span>
           <span className="rounded-full bg-[color:color-mix(in_srgb,var(--rsc-brand)_14%,white)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--rsc-brand-strong)]">
-            {promo.discountPercent}% off {promo.discountTarget.toLowerCase()}
+            {special.discountPercent}% off
           </span>
         </div>
 
-        <h3 className="text-sm font-bold leading-tight text-gray-900">{promo.title}</h3>
-        <p className="mt-0.5 line-clamp-2 text-xs text-gray-400">{promo.body}</p>
+        <h3 className="text-sm font-bold leading-tight text-gray-900">{special.name}</h3>
+        <p className="mt-0.5 line-clamp-2 text-xs text-gray-400">
+          {special.description || "Today’s discounted kitchen special."}
+        </p>
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
-          <span>{promo.scope === "ALL_OUTLETS" ? "All outlets" : "Selected outlet"}</span>
-          <span>Expires {formatDate(promo.endsAt)}</span>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="text-sm font-extrabold text-[var(--rsc-brand)]">
+            {formatNaira(discountPrice)}
+          </span>
+          {originalPrice > discountPrice && (
+            <span className="text-xs font-semibold text-gray-400 line-through">
+              {formatNaira(originalPrice)}
+            </span>
+          )}
         </div>
       </div>
     </article>
@@ -72,19 +81,24 @@ function CardSkeleton() {
 
 export function DailySpecialsView() {
   const [input, setInput] = useState("");
-  const { data: promos = [], isPending, isError, refetch } = usePromoNotifications();
+  const outletsQuery = useQuery(OUTLETS_QUERY);
 
-  const visiblePromos = useMemo(() => {
+  const dailySpecials = useMemo(
+    () => getDailySpecials(outletsQuery.data ?? []),
+    [outletsQuery.data],
+  );
+
+  const visibleSpecials = useMemo(() => {
     const query = input.trim().toLowerCase();
-    if (!query) return promos;
+    if (!query) return dailySpecials;
 
-    return promos.filter((promo) =>
-      [promo.title, promo.body, promo.code, promo.discountTarget, promo.scope]
+    return dailySpecials.filter((special) =>
+      [special.name, special.description, special.outletName]
         .join(" ")
         .toLowerCase()
         .includes(query),
     );
-  }, [input, promos]);
+  }, [dailySpecials, input]);
 
   return (
     <div className="flex h-full flex-col">
@@ -117,26 +131,26 @@ export function DailySpecialsView() {
       </div>
 
       <p className="px-4 pt-3 text-xs text-gray-400">
-        {isPending
+        {outletsQuery.isPending
           ? "Loading daily specials…"
-          : `${visiblePromos.length} daily special${visiblePromos.length === 1 ? "" : "s"}`}
+          : `${visibleSpecials.length} daily special${visibleSpecials.length === 1 ? "" : "s"}`}
       </p>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
-        {isPending ? (
+        {outletsQuery.isPending ? (
           Array.from({ length: 5 }).map((_, index) => <CardSkeleton key={index} />)
-        ) : isError ? (
+        ) : outletsQuery.isError ? (
           <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
             <p className="font-semibold text-gray-700">Daily specials could not be loaded.</p>
             <button
               type="button"
-              onClick={() => void refetch()}
+              onClick={() => void outletsQuery.refetch()}
               className="rounded-full bg-[var(--rsc-main)] px-5 py-2 text-sm font-bold text-white"
             >
               Retry
             </button>
           </div>
-        ) : visiblePromos.length === 0 ? (
+        ) : visibleSpecials.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-20 text-center">
             <p className="text-3xl">🔥</p>
             <p className="font-semibold text-gray-700">No daily specials found</p>
@@ -145,7 +159,7 @@ export function DailySpecialsView() {
             </p>
           </div>
         ) : (
-          visiblePromos.map((promo) => <SpecialCard key={promo.id} promo={promo} />)
+          visibleSpecials.map((special) => <SpecialCard key={special.id} special={special} />)
         )}
       </div>
     </div>

@@ -475,10 +475,12 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
                 )}
               </span>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--rsc-muted)]">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--rsc-muted)] dark:text-white/70">
                   Your Rider
                 </p>
-                <p className="text-base font-bold text-[var(--rsc-ink)]">{rider.name}</p>
+                <p className="text-base font-bold text-[var(--rsc-ink)] dark:text-white">
+                  {rider.name}
+                </p>
               </div>
             </div>
             {rider.phone && (
@@ -494,18 +496,20 @@ function OrderTrackingDetail({ orderId }: { orderId: string }) {
 
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--rsc-line)]">
             {rider.plateNumber && (
-              <div className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-2.5 py-1 text-xs font-medium text-[var(--rsc-ink)]">
-                <span className="text-[var(--rsc-muted)]">Plate:</span>
-                <span className="font-mono font-bold tracking-wider">{rider.plateNumber}</span>
+              <div className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-2.5 py-1 text-xs font-medium text-[var(--rsc-ink)] dark:border-white/15 dark:bg-white/10 dark:text-white">
+                <span className="text-[var(--rsc-muted)] dark:text-white/70">Plate:</span>
+                <span className="font-mono font-bold tracking-wider dark:text-white">
+                  {rider.plateNumber}
+                </span>
               </div>
             )}
             {rider.vehicleType && (
-              <span className="inline-flex items-center rounded-lg border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-2.5 py-1 text-xs font-medium capitalize text-[var(--rsc-muted)]">
+              <span className="inline-flex items-center rounded-lg border border-[var(--rsc-line)] bg-[var(--rsc-field-bg)] px-2.5 py-1 text-xs font-medium capitalize text-[var(--rsc-muted)] dark:border-white/15 dark:bg-white/10 dark:text-white/85">
                 {rider.vehicleType.toLowerCase()}
               </span>
             )}
             {rider.phone && (
-              <span className="text-xs font-medium text-[var(--rsc-muted)] ml-auto">
+              <span className="ml-auto text-xs font-semibold text-[var(--rsc-muted)] dark:text-white/70">
                 {rider.phone}
               </span>
             )}
