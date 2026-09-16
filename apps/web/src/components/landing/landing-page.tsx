@@ -387,7 +387,7 @@ export function LandingPage() {
               DAILY SPECIALS
             </h2>
           </div>
-          <Link href="/menu" className="grab-section__view-all">
+          <Link href="/daily-specials" className="grab-section__view-all">
             <span>View All</span>
             <ChevronRightIcon className="w-4 h-4" />
           </Link>

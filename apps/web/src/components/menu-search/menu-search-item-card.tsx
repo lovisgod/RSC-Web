@@ -41,12 +41,22 @@ export function MenuSearchItemCard({
   const toggleFavorite = useFavoritesStore((s) => s.toggleItem);
 
   return (
-    <button
-      type="button"
+    <article
+      role="button"
+      tabIndex={disabled ? -1 : 0}
       onClick={disabled ? undefined : onViewOptions}
-      disabled={disabled}
+      onKeyDown={(event) => {
+        if (disabled) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onViewOptions();
+        }
+      }}
+      aria-disabled={disabled}
       aria-label={`${loading ? "Loading options for" : "View options for"} ${item.name} from ${outletName}`}
-      className={`flex w-full items-start gap-3 rounded-2xl border border-gray-100 bg-white p-3 text-left shadow-sm transition hover:border-[color:color-mix(in_srgb,var(--rsc-main)_18%,white)] hover:shadow-[0_10px_24px_rgba(30,49,96,0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-main)] disabled:cursor-not-allowed ${soldOut ? "opacity-60" : ""}`}
+      className={`flex w-full items-start gap-3 rounded-2xl border border-gray-100 bg-white p-3 text-left shadow-sm transition hover:border-[color:color-mix(in_srgb,var(--rsc-main)_18%,white)] hover:shadow-[0_10px_24px_rgba(30,49,96,0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-main)] ${
+        disabled ? "cursor-not-allowed" : "cursor-pointer"
+      } ${soldOut ? "opacity-60" : ""}`}
     >
       {/* Thumbnail */}
       <div
@@ -125,6 +135,6 @@ export function MenuSearchItemCard({
           </span>
         </div>
       </div>
-    </button>
+    </article>
   );
 }
