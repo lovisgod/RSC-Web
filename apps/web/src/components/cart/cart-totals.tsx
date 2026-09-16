@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Card } from "@rsc/ui";
 
 import {
@@ -8,7 +9,8 @@ import {
   type Cart,
 } from "@/src/lib/data/cart";
 import { CheckoutButton } from "@/src/components/cart/checkout-button";
-import { calcCharges, usePlatformCharges } from "@/src/hooks/use-platform-charges";
+import { useOutlets } from "@/src/hooks/use-outlets";
+import { calculateCartFees, usePlatformCharges } from "@/src/hooks/use-platform-charges";
 
 function pctFromBps(bps: number): string {
   return (bps / 100).toFixed(2).replace(/\.?0+$/, "");
@@ -16,8 +18,10 @@ function pctFromBps(bps: number): string {
 
 export function CartTotals({ cart }: { cart: Cart }) {
   const { data: charges } = usePlatformCharges();
+  const { data: outlets = [] } = useOutlets();
+  const outletById = useMemo(() => new Map(outlets.map((o) => [o.id, o])), [outlets]);
   const subtotal = cartSubtotalMinor(cart);
-  const fees = charges ? calcCharges(subtotal, charges) : null;
+  const fees = charges ? calculateCartFees({ cart, charges, outletById }) : null;
   const total = fees?.total ?? subtotal;
 
   return (
