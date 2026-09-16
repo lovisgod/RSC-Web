@@ -1,6 +1,6 @@
 "use client";
 
-import type { MenuItemSummary, OutletSummary, Promo } from "@rsc/contracts";
+import type { MenuItemSummary } from "@rsc/contracts";
 import { useQuery } from "@tanstack/react-query";
 import {
   AwardIcon,
@@ -16,17 +16,16 @@ import {
   ShieldCheckIcon,
   ShoppingBagIcon,
   StarIcon,
-  TagIcon,
   TruckIcon,
   UserIcon,
   UtensilsIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
-import { usePromoNotifications } from "@/src/hooks/use-notifications";
 import { cartItemCount, formatNaira } from "@/src/lib/data/cart";
+import { getDailySpecials, resolveSpecialImage } from "@/src/lib/data/daily-specials";
 import { formatOutletRating, toDisplayOutlet } from "@/src/lib/data/outlets";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
@@ -102,101 +101,11 @@ const faqItems = [
   },
 ] as const;
 
-function isPromoLive(promo: Promo): boolean {
-  const now = Date.now();
-  const startsAt = new Date(promo.startsAt).getTime();
-  const endsAt = new Date(promo.endsAt).getTime();
-
-  return promo.isActive && startsAt <= now && now <= endsAt;
-}
-
-export interface DailySpecialItem extends MenuItemSummary {
-  outletName: string;
-  discountPercent: number;
-}
-
-function resolveSpecialImage(item: MenuItemSummary): string {
-  if (item.imageUrl && !item.imageUrl.includes("fire_1f525")) {
-    return item.imageUrl;
-  }
-  const name = (item.name || "").toLowerCase();
-  if (
-    name.includes("suya") ||
-    name.includes("meat") ||
-    name.includes("grill") ||
-    name.includes("skewer")
-  ) {
-    return "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80";
-  }
-  if (
-    name.includes("pasta") ||
-    name.includes("alfredo") ||
-    name.includes("spaghetti") ||
-    name.includes("macaroni")
-  ) {
-    return "https://images.unsplash.com/photo-1621996346565-e3d5d6281084?w=500&auto=format&fit=crop&q=80";
-  }
-  if (name.includes("pizza") || name.includes("pepperoni")) {
-    return "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500&auto=format&fit=crop&q=80";
-  }
-  if (name.includes("rice") || name.includes("jollof")) {
-    return "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80";
-  }
-  return "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=80";
-}
-
-function getDailySpecials(outlets: OutletSummary[]): DailySpecialItem[] {
-  const now = new Date();
-  const currentTime = now.getTime();
-
-  return outlets
-    .flatMap((outlet) =>
-      outlet.menuItems
-        .filter((item) => {
-          if (!item.isAvailable) return false;
-          if (
-            item.discountPriceMinor === null ||
-            item.discountPriceMinor === undefined ||
-            item.discountPriceMinor <= 0 ||
-            item.discountPriceMinor >= item.priceMinor
-          ) {
-            return false;
-          }
-
-          if (item.isDiscountActive) {
-            return true;
-          }
-
-          const startsAt = item.discountStartsAt
-            ? new Date(item.discountStartsAt).getTime()
-            : Number.NEGATIVE_INFINITY;
-          const endsAt = item.discountEndsAt
-            ? new Date(item.discountEndsAt).getTime()
-            : Number.POSITIVE_INFINITY;
-
-          return currentTime >= startsAt && currentTime <= endsAt;
-        })
-        .map((item) => {
-          const discountPrice = item.discountPriceMinor ?? item.priceMinor;
-          const discountPercent =
-            item.priceMinor > 0
-              ? Math.round(((item.priceMinor - discountPrice) / item.priceMinor) * 100)
-              : 0;
-
-          return {
-            ...item,
-            outletName: outlet.name,
-            discountPercent,
-          };
-        }),
-    )
-    .sort((a, b) => b.discountPercent - a.discountPercent || b.ratingAverage - a.ratingAverage);
-}
-
 export function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [addedToast, setAddedToast] = useState<string | null>(null);
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [activeDailyPage, setActiveDailyPage] = useState(0);
+  const dailyScrollerRef = useRef<HTMLDivElement | null>(null);
 
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
   const cart = useCartStore((s) => s.cart);
@@ -204,20 +113,16 @@ export function LandingPage() {
   const totalCartCount = cartItemCount(cart);
 
   const outletsQuery = useQuery(OUTLETS_QUERY);
-  const promosQuery = usePromoNotifications();
 
   const outlets = (outletsQuery.data ?? []).map((outlet, index) => toDisplayOutlet(outlet, index));
   const featuredOutlets = outlets.slice(0, 4);
   const dailySpecials = getDailySpecials(outletsQuery.data ?? []);
-  const promos = (promosQuery.data ?? []).filter(isPromoLive);
+  const dailyPageCount = Math.max(1, Math.ceil(dailySpecials.length / 3));
 
-  function handleCopyPromoCode(code: string) {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      void navigator.clipboard.writeText(code);
-      setCopiedCode(code);
-      setTimeout(() => setCopiedCode(null), 2500);
-    }
-  }
+  useEffect(() => {
+    setActiveDailyPage(0);
+    dailyScrollerRef.current?.scrollTo({ left: 0 });
+  }, [dailyPageCount]);
 
   function handleQuickAddSpecial(special: MenuItemSummary & { outletName: string }) {
     addItemToCart({
@@ -235,6 +140,33 @@ export function LandingPage() {
 
     setAddedToast(`Added "${special.name}" to cart!`);
     setTimeout(() => setAddedToast(null), 2500);
+  }
+
+  function handleDailyScroll() {
+    const scroller = dailyScrollerRef.current;
+    if (!scroller) return;
+
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    if (maxScrollLeft <= 0) {
+      setActiveDailyPage(0);
+      return;
+    }
+
+    const scrollProgress = scroller.scrollLeft / maxScrollLeft;
+    const nextPage = Math.round(scrollProgress * (dailyPageCount - 1));
+    setActiveDailyPage(Math.min(Math.max(nextPage, 0), dailyPageCount - 1));
+  }
+
+  function scrollDailySpecials(page: number) {
+    const scroller = dailyScrollerRef.current;
+    if (!scroller) return;
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    const targetLeft = dailyPageCount <= 1 ? 0 : (maxScrollLeft / (dailyPageCount - 1)) * page;
+
+    scroller.scrollTo({
+      left: targetLeft,
+      behavior: "smooth",
+    });
   }
 
   return (
@@ -376,18 +308,18 @@ export function LandingPage() {
         )}
       </section>
 
-      {/* ── SECTION 2: DAILY SPECIALS (Cards matching reference design) ── */}
+      {/* Daily specials */}
       <section className="grab-section" id="specials" aria-labelledby="grab-specials-heading">
         <div className="grab-section__header">
           <div className="flex items-center gap-1.5">
             <span className="text-xl" role="img" aria-label="Fire">
-              🔥
+              &#128293;
             </span>
             <h2 id="grab-specials-heading" className="grab-section__title">
               DAILY SPECIALS
             </h2>
           </div>
-          <Link href="/menu" className="grab-section__view-all">
+          <Link href="/daily-specials" className="grab-section__view-all">
             <span>View All</span>
             <ChevronRightIcon className="w-4 h-4" />
           </Link>
@@ -401,8 +333,13 @@ export function LandingPage() {
             </p>
           </div>
         ) : (
-          <div className="grab-daily-specials-container">
-            <div className="grab-daily-specials-scroll">
+          <>
+            <div
+              ref={dailyScrollerRef}
+              className="grab-daily-specials-scroll"
+              onScroll={handleDailyScroll}
+              aria-label="Daily specials carousel"
+            >
               {dailySpecials.map((special, idx) => {
                 const discountPrice =
                   special.discountPriceMinor ?? special.currentPriceMinor ?? special.priceMinor;
@@ -412,59 +349,38 @@ export function LandingPage() {
 
                 return (
                   <article key={special.id} className="grab-daily-special-card">
-                    {/* Top-left Badge */}
-                    <div className="z-10 mb-2">
+                    <div className="grab-daily-special-card__badge">
                       {isFirst ? (
-                        <span className="grab-daily-special-badge-pill">TODAY&apos;S PICK</span>
+                        "TODAY'S PICK"
                       ) : (
-                        <div className="grab-daily-special-badge-circle">
-                          <span className="grab-daily-special-badge-circle__pct">
-                            {special.discountPercent}%
-                          </span>
-                          <span className="grab-daily-special-badge-circle__off">OFF</span>
-                        </div>
+                        <>
+                          <strong>{special.discountPercent}%</strong>
+                          <span>OFF</span>
+                        </>
                       )}
                     </div>
 
-                    {/* Circular Dish Photo */}
-                    <div className="grab-daily-special-image-wrap">
+                    <div className="grab-daily-special-card__copy">
+                      <h3 title={special.name}>{special.name}</h3>
+                      <p>{special.description || special.outletName}</p>
+                      <div className="grab-daily-special-card__prices">
+                        <strong>{formatNaira(discountPrice)}</strong>
+                        {originalPrice > discountPrice && <span>{formatNaira(originalPrice)}</span>}
+                      </div>
+                    </div>
+
+                    <div className="grab-daily-special-card__image-wrap">
                       <img
                         src={imageUrl}
                         alt={special.name}
-                        className="grab-daily-special-image"
+                        className="grab-daily-special-card__image"
                         loading="lazy"
                       />
                     </div>
 
-                    {/* Title & Description */}
-                    <div className="z-10 max-w-[62%] pr-2">
-                      <h3
-                        className="text-base font-bold text-white line-clamp-1 leading-snug"
-                        title={special.name}
-                      >
-                        {special.name}
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 leading-tight">
-                        {special.description || special.outletName}
-                      </p>
-                    </div>
-
-                    {/* Bottom Row: Price */}
-                    <div className="z-10 mt-3 flex items-baseline gap-2">
-                      <span className="text-base font-extrabold text-emerald-400">
-                        {formatNaira(discountPrice)}
-                      </span>
-                      {originalPrice > discountPrice && (
-                        <span className="text-xs text-slate-400 line-through">
-                          {formatNaira(originalPrice)}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Quick Add Button */}
                     <button
                       type="button"
-                      className="grab-daily-special-add-btn"
+                      className="grab-daily-special-card__add-btn"
                       aria-label={`Add ${special.name} to cart`}
                       onClick={() => handleQuickAddSpecial(special)}
                     >
@@ -475,22 +391,27 @@ export function LandingPage() {
               })}
             </div>
 
-            {/* Pagination indicator dots */}
-            <div className="grab-pagination-dots" aria-hidden="true">
-              {Array.from({ length: Math.min(Math.max(dailySpecials.length, 3), 3) }).map(
-                (_, i) => (
-                  <span
-                    key={i}
-                    className={`grab-pagination-dot ${i === 0 ? "grab-pagination-dot--active" : ""}`}
+            {dailyPageCount > 1 && (
+              <div className="grab-pagination-dots" aria-label="Daily specials pages">
+                {Array.from({ length: dailyPageCount }).map((_, page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    aria-label={`Show daily specials page ${page + 1}`}
+                    aria-current={activeDailyPage === page ? "true" : undefined}
+                    className={`grab-pagination-dot${
+                      activeDailyPage === page ? " grab-pagination-dot--active" : ""
+                    }`}
+                    onClick={() => scrollDailySpecials(page)}
                   />
-                ),
-              )}
-            </div>
-          </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
 
-      {/* ── SECTION 3: EXCLUSIVE DISCOUNTS (Scrollable banner promos from backend) ── */}
+      {/* Exclusive discounts */}
       <section
         className="grab-section"
         id="exclusive-discounts"
@@ -511,86 +432,26 @@ export function LandingPage() {
           </Link>
         </div>
 
-        {promos.length === 0 ? (
-          <div className="grab-promo-banner">
-            <div className="grab-promo-banner__content">
-              <div className="grab-promo-banner__title-lockup">
-                <span className="grab-promo-banner__heading-white">HUNGRY FOR</span>
-                <span className="grab-promo-banner__heading-green">MORE?</span>
-              </div>
-              <p className="grab-promo-banner__copy">
-                Enjoy amazing deals from your favorite outlets daily!
-              </p>
+        <div className="grab-promo-banner">
+          <div className="grab-promo-banner__content">
+            <div className="grab-promo-banner__title-lockup">
+              <span className="grab-promo-banner__heading-white">HUNGRY FOR</span>
+              <span className="grab-promo-banner__heading-green">MORE?</span>
             </div>
-            <div className="grab-promo-banner__graphic">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
-                alt="Delicious DineOut deals"
-                className="grab-promo-banner__food-img"
-                loading="lazy"
-              />
-            </div>
+            <p className="grab-promo-banner__copy">
+              Enjoy amazing deals from your favorite outlets daily!
+            </p>
           </div>
-        ) : (
-          <div className="grab-promo-banners-scroll">
-            {promos.map((promo) => (
-              <div key={promo.id} className="grab-promo-banner-card">
-                <div className="grab-promo-banner__content">
-                  <div className="grab-promo-banner__title-lockup">
-                    <span className="grab-promo-banner__heading-white">
-                      {promo.title.toUpperCase()}
-                    </span>
-                    <span className="grab-promo-banner__heading-green">SPECIALS!</span>
-                  </div>
-                  <p className="grab-promo-banner__copy">{promo.body}</p>
-
-                  {/* Modern Coupon Ticket */}
-                  <div className="grab-promo-ticket mt-1">
-                    <div className="grab-promo-ticket__code-section">
-                      <TagIcon className="w-4 h-4 text-amber-300 shrink-0" />
-                      <div className="flex flex-col">
-                        <span className="grab-promo-ticket__label">PROMO CODE</span>
-                        <span className="grab-promo-ticket__code">{promo.code}</span>
-                      </div>
-                      <span className="grab-promo-ticket__discount-pill">
-                        {promo.discountPercent}% OFF
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyPromoCode(promo.code)}
-                      className="grab-promo-ticket__copy-btn"
-                      title="Click to copy coupon code"
-                    >
-                      {copiedCode === promo.code ? "COPIED!" : "COPY"}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grab-promo-banner__graphic">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      promo.imageUrl ||
-                      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
-                    }
-                    alt={promo.title}
-                    className="grab-promo-banner__food-img"
-                    loading="lazy"
-                  />
-
-                  {/* Circular Discount Callout Badge */}
-                  <div className="grab-promo-banner__circle-badge">
-                    <small>UP TO</small>
-                    <strong>{promo.discountPercent}%</strong>
-                    <small>OFF</small>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="grab-promo-banner__graphic">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
+              alt="Delicious DineOut deals"
+              className="grab-promo-banner__food-img"
+              loading="lazy"
+            />
           </div>
-        )}
+        </div>
       </section>
 
       {/* ── SECTION 4: 4-PILLAR TRUST & BENEFIT GRID ── */}
