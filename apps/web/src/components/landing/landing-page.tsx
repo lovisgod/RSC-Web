@@ -118,9 +118,11 @@ export function LandingPage() {
   const featuredOutlets = outlets.slice(0, 4);
   const dailySpecials = getDailySpecials(outletsQuery.data ?? []);
   const dailyPageCount = Math.max(1, Math.ceil(dailySpecials.length / 3));
+  // Clamp active page so it never exceeds the current page count (avoids setState-in-effect)
+  const clampedActivePage = Math.min(activeDailyPage, dailyPageCount - 1);
 
   useEffect(() => {
-    setActiveDailyPage(0);
+    // Only update external DOM (scroll position) — no setState here
     dailyScrollerRef.current?.scrollTo({ left: 0 });
   }, [dailyPageCount]);
 
@@ -236,7 +238,7 @@ export function LandingPage() {
           </div>
         ) : (
           <div className="grab-outlets-portrait-grid">
-            {featuredOutlets.map((outlet, idx) => {
+            {featuredOutlets.map((outlet) => {
               const isOffline = outlet.isOnline === false;
               const hasImageUrl =
                 outlet.image && (outlet.image.startsWith("/") || outlet.image.startsWith("http"));
@@ -398,9 +400,9 @@ export function LandingPage() {
                     key={page}
                     type="button"
                     aria-label={`Show daily specials page ${page + 1}`}
-                    aria-current={activeDailyPage === page ? "true" : undefined}
+                    aria-current={clampedActivePage === page ? "true" : undefined}
                     className={`grab-pagination-dot${
-                      activeDailyPage === page ? " grab-pagination-dot--active" : ""
+                      clampedActivePage === page ? " grab-pagination-dot--active" : ""
                     }`}
                     onClick={() => scrollDailySpecials(page)}
                   />
