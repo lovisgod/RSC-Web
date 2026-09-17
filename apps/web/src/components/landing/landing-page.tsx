@@ -265,7 +265,9 @@ export function LandingPage() {
                         data-online={outlet.isOnline !== false}
                       >
                         <span className="grab-portrait-card__status-dot" />
-                        {outlet.isOnline !== false ? "Open" : "Closed"}
+                        <span className="grab-portrait-card__status-label">
+                          {outlet.isOnline !== false ? "Open" : "Closed"}
+                        </span>
                       </span>
                       <span className="grab-portrait-card__rating">
                         <StarIcon className="w-3 h-3 fill-amber-400 text-amber-400" />
@@ -294,7 +296,7 @@ export function LandingPage() {
                       aria-label={`Order now from ${outlet.name}`}
                     >
                       <span className="grab-order-now-btn__text">
-                        {isOffline ? "CLOSED" : "ORDER NOW"}
+                        {isOffline ? "Closed" : "Order"}
                       </span>
                       <span className="grab-order-now-btn__circle">
                         <ChevronRightIcon className="w-4 h-4" />
@@ -420,7 +422,7 @@ export function LandingPage() {
         <div className="grab-section__header">
           <div className="flex items-center gap-1.5">
             <span className="text-xl" role="img" aria-label="Tag">
-              🏷️
+              ðŸ·ï¸
             </span>
             <h2 id="grab-exclusive-discounts-heading" className="grab-section__title">
               EXCLUSIVE DISCOUNTS
