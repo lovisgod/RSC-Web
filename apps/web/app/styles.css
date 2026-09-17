@@ -1329,6 +1329,15 @@ body {
     font-size: 0.62rem;
   }
 
+  .grab-daily-special-card:first-child .grab-daily-special-card__badge {
+    min-width: unset;
+    max-width: calc(100% - 1.3rem);
+    padding: 0.28rem 0.45rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
   .grab-daily-special-card__copy {
     padding-top: 2.6rem;
     padding-right: 0;
@@ -1382,6 +1391,14 @@ body {
     top: 0.55rem;
     min-width: 2.8rem;
     min-height: 1.6rem;
+  }
+
+  .grab-daily-special-card:first-child .grab-daily-special-card__badge {
+    min-width: unset;
+    max-width: calc(100% - 1.1rem);
+    padding: 0.2rem 0.35rem;
+    font-size: 0.52rem;
+    letter-spacing: 0;
   }
 
   .grab-daily-special-card__copy {
