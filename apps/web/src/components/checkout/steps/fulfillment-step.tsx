@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  calculateOutletDeliveryFee,
-  nigerianPhoneNumberSchema,
-  type DeliveryAddressSummary,
-} from "@rsc/contracts";
+import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, LocateFixed, Star, Tag, XCircle } from "lucide-react";
@@ -25,7 +21,7 @@ import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
 import { useOutlets } from "@/src/hooks/use-outlets";
-import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
+import { calculateCartFees, usePlatformCharges } from "@/src/hooks/use-platform-charges";
 import { useCartStore } from "@/src/stores/cart-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
@@ -303,48 +299,27 @@ export function FulfillmentStep({
     };
   }, []);
 
-  const subtotal = cart ? cartSubtotalMinor(cart) : 0;
-  const deliveryFee = cart
-    ? cart.groups.reduce((sum, group) => {
-        const outlet = outletById.get(group.outletId);
-        const fee = calculateOutletDeliveryFee({
-          pricingModel: outlet?.deliveryPricingModel,
-          flatFeeMinor: outlet?.deliveryFeeMinor,
-          baseFeeMinor: outlet?.deliveryBaseFeeMinor,
-          pricePerKmMinor: outlet?.deliveryPricePerKmMinor,
-          locationFees: outlet?.deliveryLocationFees,
-          outletLatitude: outlet?.latitude,
-          outletLongitude: outlet?.longitude,
-          deliveryLatitude: coords?.latitude,
-          deliveryLongitude: coords?.longitude,
-          zoneId: zone?.id,
-          zoneName: zone?.name,
-          fallbackFeeMinor: platformCharges?.deliveryFeeMinor ?? 150_000,
-        });
-        return sum + fee;
-      }, 0)
-    : 0;
-  const serviceFee = platformCharges?.serviceFeeMinor ?? 0;
-
-  const vat = cart
-    ? cart.groups.reduce((sum, group) => {
-        const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
-        const outletVatBps = outletById.get(group.outletId)?.vatBps ?? 0;
-        const defaultVatBps = platformCharges?.defaultVatBps ?? 750;
-        const vatBps = outletVatBps > 0 ? outletVatBps : defaultVatBps;
-        return sum + Math.round((groupSubtotal * vatBps) / 10_000);
-      }, 0)
-    : 0;
-
-  const platformCommission = cart
-    ? cart.groups.reduce((sum, group) => {
-        const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
-        const commissionBps = platformCharges?.platformCommissionBps ?? 1000;
-        return sum + Math.round((groupSubtotal * commissionBps) / 10_000);
-      }, 0)
-    : 0;
-
-  const grandTotal = subtotal + deliveryFee + serviceFee + vat + platformCommission;
+  const fees =
+    cart && platformCharges
+      ? calculateCartFees({
+          cart,
+          charges: platformCharges,
+          outletById,
+          options: {
+            includeDelivery: true,
+            deliveryLatitude: coords?.latitude,
+            deliveryLongitude: coords?.longitude,
+            zoneId: zone?.id,
+            zoneName: zone?.name,
+          },
+        })
+      : null;
+  const subtotal = fees?.subtotal ?? (cart ? cartSubtotalMinor(cart) : 0);
+  const deliveryFee = fees?.delivery ?? 0;
+  const serviceFee = fees?.service ?? platformCharges?.serviceFeeMinor ?? 0;
+  const vat = fees?.vat ?? 0;
+  const platformCommission = fees?.commission ?? 0;
+  const grandTotal = fees?.total ?? 0;
 
   const [idempotencyKey] = useState<string>(() =>
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"

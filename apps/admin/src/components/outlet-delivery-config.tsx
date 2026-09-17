@@ -238,6 +238,7 @@ function OutletDeliveryForm({ outlets, geofenceZones }: FormProps) {
     });
 
     const payload = {
+      deliveryPricingModel: pricingModel,
       deliveryFeeMinor: Math.round((flatFee ?? 1500) * 100),
       deliveryBaseFeeMinor: Math.round((baseFee ?? 0) * 100),
       deliveryPricePerKmMinor: Math.round((pricePerKm ?? 0) * 100),

@@ -851,7 +851,7 @@ describe(OrdersService.name, () => {
     );
   });
 
-  it("hides assigned dispatches until all fulfillable sub-orders are ready", async () => {
+  it("lists active preparing dispatches assigned to the calling rider", async () => {
     const order = Object.assign(new MasterOrder(), {
       id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
       customerId: "2abf9577-027c-4936-83a8-e004fd56a46e",
@@ -884,7 +884,20 @@ describe(OrdersService.name, () => {
 
     const result = await service.listAssignedDispatches(riderUser);
 
-    expect(result).toHaveLength(0);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        orderId: order.id,
+        status: MasterOrderStatus.PREPARING,
+        riderId: riderUser.id,
+        outlets: [
+          expect.objectContaining({
+            pickupCode: "123456",
+            items: [expect.objectContaining({ name: "Jollof Rice", quantity: 2 })],
+          }),
+        ],
+      }),
+    );
   });
 
   it("shows assigned dispatches when ready sub-orders remain after another sub-order is rejected", async () => {

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Card } from "@rsc/ui";
 
@@ -11,7 +11,7 @@ import {
 import { type FulfillmentMode, type OrderSnapshot } from "@/src/lib/data/checkout";
 import { useCart } from "@/src/hooks/use-cart";
 import { useOutlets } from "@/src/hooks/use-outlets";
-import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
+import { calculateCartFees, usePlatformCharges } from "@/src/hooks/use-platform-charges";
 
 function FeeLine({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
   return (
@@ -125,18 +125,14 @@ export function CheckoutSidebar({
   const subtotal = cartSubtotalMinor(cart!);
   const includeDelivery = mode === "delivery";
   const fees = charges
-    ? {
-        delivery: includeDelivery ? charges.deliveryFeeMinor : 0,
-        service: charges.serviceFeeMinor,
-        commission: Math.round((subtotal * charges.platformCommissionBps) / 10_000),
-        vat: cart!.groups.reduce((sum, group) => {
-          const outletVatBps = outletById.get(group.outletId)?.vatBps ?? 0;
-          const vatBps = outletVatBps > 0 ? outletVatBps : charges.defaultVatBps;
-          return sum + Math.round((outletSubtotalMinor(group) * vatBps) / 10_000);
-        }, 0),
-      }
+    ? calculateCartFees({
+        cart: cart!,
+        charges,
+        outletById,
+        options: { includeDelivery },
+      })
     : null;
-  const total = fees ? subtotal + fees.delivery + fees.service + fees.commission + fees.vat : null;
+  const total = fees?.total ?? null;
   const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : null;
   const commPct = charges
     ? (charges.platformCommissionBps / 100).toFixed(2).replace(/\.?0+$/, "")

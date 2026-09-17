@@ -450,6 +450,9 @@ export class OrdersService {
       where: {
         riderId: user.id,
         status: In([
+          MasterOrderStatus.CONFIRMED,
+          MasterOrderStatus.PREPARING,
+          MasterOrderStatus.PARTIALLY_READY,
           MasterOrderStatus.PARTIALLY_FULFILLED,
           MasterOrderStatus.READY,
           MasterOrderStatus.OUT_FOR_DELIVERY,
@@ -464,6 +467,9 @@ export class OrdersService {
         subOrders: await this.subOrders.find({ where: { masterOrderId: order.id } }),
       })),
     );
+    // Show any order the rider has been assigned to — the push notification already went out.
+    // isRiderDispatchVisible retains its secondary check for orders that should be hidden
+    // (e.g. OUT_FOR_DELIVERY gating), but all assigned active orders are now included.
     const visibleOrders = dispatches
       .filter(({ order, subOrders }) => this.isRiderDispatchVisible(order, subOrders))
       .map(({ order }) => order);
@@ -1334,6 +1340,12 @@ export class OrdersService {
   }
 
   private isRiderDispatchVisible(order: MasterOrder, subOrders: SubOrder[]): boolean {
+    // Once the rider is assigned (riderId is set), the order is visible regardless of
+    // whether sub-orders are ready — the push notification was already sent.
+    if (order.riderId) {
+      return true;
+    }
+
     if (order.status === MasterOrderStatus.OUT_FOR_DELIVERY) {
       return true;
     }
