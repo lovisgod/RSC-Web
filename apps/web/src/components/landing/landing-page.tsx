@@ -16,6 +16,7 @@ import {
   ShieldCheckIcon,
   ShoppingBagIcon,
   StarIcon,
+  TagIcon,
   TruckIcon,
   UserIcon,
   UtensilsIcon,
@@ -265,7 +266,9 @@ export function LandingPage() {
                         data-online={outlet.isOnline !== false}
                       >
                         <span className="grab-portrait-card__status-dot" />
-                        {outlet.isOnline !== false ? "Open" : "Closed"}
+                        <span className="grab-portrait-card__status-label">
+                          {outlet.isOnline !== false ? "Open" : "Closed"}
+                        </span>
                       </span>
                       <span className="grab-portrait-card__rating">
                         <StarIcon className="w-3 h-3 fill-amber-400 text-amber-400" />
@@ -294,7 +297,14 @@ export function LandingPage() {
                       aria-label={`Order now from ${outlet.name}`}
                     >
                       <span className="grab-order-now-btn__text">
-                        {isOffline ? "CLOSED" : "ORDER NOW"}
+                        {isOffline ? (
+                          "Closed"
+                        ) : (
+                          <>
+                            <span className="grab-order-now-btn__label-full">Order Now</span>
+                            <span className="grab-order-now-btn__label-mobile">Order</span>
+                          </>
+                        )}
                       </span>
                       <span className="grab-order-now-btn__circle">
                         <ChevronRightIcon className="w-4 h-4" />
@@ -419,9 +429,7 @@ export function LandingPage() {
       >
         <div className="grab-section__header">
           <div className="flex items-center gap-1.5">
-            <span className="text-xl" role="img" aria-label="Tag">
-              🏷️
-            </span>
+            <TagIcon className="h-6 w-6 text-[var(--rsc-orange)]" aria-hidden="true" />
             <h2 id="grab-exclusive-discounts-heading" className="grab-section__title">
               EXCLUSIVE DISCOUNTS
             </h2>
@@ -445,11 +453,17 @@ export function LandingPage() {
           <div className="grab-promo-banner__graphic">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
+              src="/assets/promo-burger-cutout.png"
               alt="Delicious DineOut deals"
               className="grab-promo-banner__food-img"
               loading="lazy"
             />
+            <div className="grab-promo-banner__circle-badge" aria-label="Up to 30 percent off">
+              <small>UP TO</small>
+              <strong>30%</strong>
+              <small>OFF</small>
+            </div>
+            <span className="grab-promo-banner__limited-ribbon">LIMITED TIME ONLY!</span>
           </div>
         </div>
       </section>
