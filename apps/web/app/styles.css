@@ -1289,45 +1289,110 @@ body {
   }
 }
 
-@media (max-width: 520px) {
+/* ── MOBILE: show 3 cards at once ───────────────────────────── */
+@media (max-width: 768px) {
+  .grab-daily-specials-scroll {
+    gap: 0.6rem;
+  }
+
   .grab-daily-special-card {
-    grid-template-columns: minmax(0, 1fr) 7.75rem;
-    min-height: 190px;
-    padding: 1.2rem 1rem 1.1rem;
+    flex-basis: calc((100% - 2 * 0.6rem) / 3);
+    min-width: calc((100% - 2 * 0.6rem) / 3);
+    /* Switch to single-column layout — image won't fit at this width */
+    grid-template-columns: 1fr;
+    min-height: 160px;
+    padding: 0.75rem 0.65rem 2.8rem;
+  }
+
+  /* Hide the circular image: too wide for a 1/3-screen card */
+  .grab-daily-special-card__image-wrap {
+    display: none;
   }
 
   .grab-daily-special-card__badge {
-    left: 1rem;
-    top: 1rem;
-    min-width: 3.8rem;
-    min-height: 2.2rem;
+    left: 0.65rem;
+    top: 0.65rem;
+    min-width: 3rem;
+    min-height: 1.75rem;
+    font-size: 0.62rem;
   }
 
   .grab-daily-special-card__copy {
-    padding-top: 3.2rem;
+    padding-top: 2.6rem;
+    padding-right: 0;
   }
 
   .grab-daily-special-card__copy h3 {
-    font-size: 1rem;
+    font-size: 0.78rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   .grab-daily-special-card__copy p {
-    font-size: 0.8rem;
+    font-size: 0.68rem;
+    -webkit-line-clamp: 1;
+    margin-top: 0.15rem;
+  }
+
+  .grab-daily-special-card__prices {
+    padding-top: 0.5rem;
+    gap: 0.35rem;
   }
 
   .grab-daily-special-card__prices strong {
-    font-size: 1.05rem;
+    font-size: 0.88rem;
   }
 
-  .grab-daily-special-card__image-wrap {
-    max-width: 7.75rem;
+  .grab-daily-special-card__prices span {
+    font-size: 0.72rem;
   }
 
   .grab-daily-special-card__add-btn {
-    right: 0.85rem;
-    bottom: 0.85rem;
-    width: 2.65rem;
-    height: 2.65rem;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+}
+
+/* 520px tweaks — inherit 3-per-view layout from 768px block above */
+@media (max-width: 520px) {
+  .grab-daily-special-card {
+    /* Keep single-column / 3-per-view — no grid override needed */
+    min-height: 150px;
+    padding: 0.7rem 0.55rem 2.6rem;
+  }
+
+  .grab-daily-special-card__badge {
+    left: 0.55rem;
+    top: 0.55rem;
+    min-width: 2.8rem;
+    min-height: 1.6rem;
+  }
+
+  .grab-daily-special-card__copy {
+    padding-top: 2.4rem;
+  }
+
+  .grab-daily-special-card__copy h3 {
+    font-size: 0.72rem;
+  }
+
+  .grab-daily-special-card__copy p {
+    font-size: 0.64rem;
+  }
+
+  .grab-daily-special-card__prices strong {
+    font-size: 0.82rem;
+  }
+
+  .grab-daily-special-card__add-btn {
+    right: 0.4rem;
+    bottom: 0.4rem;
+    width: 1.9rem;
+    height: 1.9rem;
   }
 }
 

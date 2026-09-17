@@ -391,7 +391,7 @@ export function LandingPage() {
               })}
             </div>
 
-            {dailyPageCount > 1 && (
+            {dailySpecials.length > 0 && (
               <div className="grab-pagination-dots" aria-label="Daily specials pages">
                 {Array.from({ length: dailyPageCount }).map((_, page) => (
                   <button
