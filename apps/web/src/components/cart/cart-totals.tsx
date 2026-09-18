@@ -20,8 +20,8 @@ export function CartTotals({ cart }: { cart: Cart }) {
   const { data: charges } = usePlatformCharges();
   const { data: outlets = [] } = useOutlets();
   const outletById = useMemo(() => new Map(outlets.map((o) => [o.id, o])), [outlets]);
-  const subtotal = cartSubtotalMinor(cart);
   const fees = charges ? calculateCartFees({ cart, charges, outletById }) : null;
+  const subtotal = fees?.subtotal ?? cartSubtotalMinor(cart);
   const total = fees?.total ?? subtotal;
 
   return (
@@ -47,7 +47,9 @@ export function CartTotals({ cart }: { cart: Cart }) {
                 ))}
               </div>
               <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
-                {formatNaira(outletSubtotalMinor(group))}
+                {formatNaira(
+                  fees?.groupSubtotals?.get(group.outletId) ?? outletSubtotalMinor(group),
+                )}
               </span>
             </div>
           </div>

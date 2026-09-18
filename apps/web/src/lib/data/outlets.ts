@@ -1,4 +1,10 @@
-import type { DeliveryLocationFee, DeliveryPricingModel, OutletSummary } from "@rsc/contracts";
+import type {
+  DeliveryLocationFee,
+  DeliveryPricingModel,
+  ItemModifierSummary,
+  MenuItemSummary,
+  OutletSummary,
+} from "@rsc/contracts";
 
 import { computeOutletMetrics } from "@/src/lib/data/outlet-menu";
 
@@ -27,6 +33,8 @@ export interface Outlet {
   deliveryBaseFeeMinor?: number;
   deliveryPricePerKmMinor?: number;
   deliveryLocationFees?: DeliveryLocationFee[];
+  menuItems?: MenuItemSummary[];
+  itemModifiers?: ItemModifierSummary[];
   // Optional — not yet returned by the API
   rating?: number;
   deliveryTime?: string;
@@ -72,6 +80,8 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     deliveryBaseFeeMinor: summary.deliveryBaseFeeMinor,
     deliveryPricePerKmMinor: summary.deliveryPricePerKmMinor,
     deliveryLocationFees: summary.deliveryLocationFees,
+    menuItems: summary.menuItems,
+    itemModifiers: summary.itemModifiers,
     ...(!summary.isOnline ? { tag: "Offline" } : {}),
     ...metrics,
   };

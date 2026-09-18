@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "@/src/lib/api";
 import { toDisplayOutlet, type Outlet } from "@/src/lib/data/outlets";
+import { useCartStore } from "@/src/stores/cart-store";
 
 export const OUTLETS_QUERY = {
   queryKey: ["outlets"] as const,
@@ -14,8 +16,18 @@ export const OUTLETS_QUERY = {
 };
 
 export function useOutlets() {
-  return useQuery({
+  const query = useQuery({
     ...OUTLETS_QUERY,
     select: (summaries): Outlet[] => summaries.map((s, i) => toDisplayOutlet(s, i)),
   });
+
+  const reconcileItemPrices = useCartStore((s) => s.reconcileItemPrices);
+
+  useEffect(() => {
+    if (query.data && query.data.length > 0) {
+      reconcileItemPrices(query.data);
+    }
+  }, [query.data, reconcileItemPrices]);
+
+  return query;
 }

@@ -1,4 +1,9 @@
-import type { MenuItemSummary, OutletSummary } from "@rsc/contracts";
+import {
+  getMenuItemCurrentPriceMinor,
+  isMenuItemDiscountActive,
+  type MenuItemSummary,
+  type OutletSummary,
+} from "@rsc/contracts";
 
 export interface DailySpecialItem extends MenuItemSummary {
   outletName: string;
@@ -42,37 +47,14 @@ export function resolveSpecialImage(item: MenuItemSummary): string {
 }
 
 export function getDailySpecials(outlets: OutletSummary[]): DailySpecialItem[] {
-  const currentTime = Date.now();
+  const at = new Date();
 
   return outlets
     .flatMap((outlet) =>
       outlet.menuItems
-        .filter((item) => {
-          if (!item.isAvailable) return false;
-          if (
-            item.discountPriceMinor === null ||
-            item.discountPriceMinor === undefined ||
-            item.discountPriceMinor <= 0 ||
-            item.discountPriceMinor >= item.priceMinor
-          ) {
-            return false;
-          }
-
-          if (item.isDiscountActive) {
-            return true;
-          }
-
-          const startsAt = item.discountStartsAt
-            ? new Date(item.discountStartsAt).getTime()
-            : Number.NEGATIVE_INFINITY;
-          const endsAt = item.discountEndsAt
-            ? new Date(item.discountEndsAt).getTime()
-            : Number.POSITIVE_INFINITY;
-
-          return currentTime >= startsAt && currentTime <= endsAt;
-        })
+        .filter((item) => item.isAvailable && isMenuItemDiscountActive(item, at))
         .map((item) => {
-          const discountPrice = item.discountPriceMinor ?? item.priceMinor;
+          const discountPrice = getMenuItemCurrentPriceMinor(item, at);
           const discountPercent =
             item.priceMinor > 0
               ? Math.round(((item.priceMinor - discountPrice) / item.priceMinor) * 100)
@@ -80,6 +62,8 @@ export function getDailySpecials(outlets: OutletSummary[]): DailySpecialItem[] {
 
           return {
             ...item,
+            currentPriceMinor: discountPrice,
+            isDiscountActive: true,
             outletName: outlet.name,
             discountPercent,
           };

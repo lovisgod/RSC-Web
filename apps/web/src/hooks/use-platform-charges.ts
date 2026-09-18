@@ -3,12 +3,15 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   calculateOutletDeliveryFee,
+  getMenuItemCurrentPriceMinor,
   type DeliveryLocationFee,
   type DeliveryPricingModel,
+  type ItemModifierSummary,
+  type MenuItemSummary,
 } from "@rsc/contracts";
 
 import { apiClient } from "@/src/lib/api";
-import { cartSubtotalMinor, outletSubtotalMinor, type Cart } from "@/src/lib/data/cart";
+import { outletSubtotalMinor, type Cart, type CartItem } from "@/src/lib/data/cart";
 
 export function usePlatformCharges() {
   return useQuery({
@@ -19,6 +22,7 @@ export function usePlatformCharges() {
 }
 
 export interface OutletDeliveryPricingInfo {
+  id?: string;
   vatBps?: number | null;
   deliveryPricingModel?: DeliveryPricingModel | null;
   deliveryFeeMinor?: number | null;
@@ -27,6 +31,30 @@ export interface OutletDeliveryPricingInfo {
   deliveryLocationFees?: DeliveryLocationFee[] | null;
   latitude?: number | null;
   longitude?: number | null;
+  menuItems?: MenuItemSummary[] | null;
+  itemModifiers?: ItemModifierSummary[] | null;
+}
+
+export function resolveCartItemUnitPriceMinor(
+  item: CartItem,
+  outlet?: OutletDeliveryPricingInfo | null,
+  at: Date = new Date(),
+): number {
+  const menuItem = outlet?.menuItems?.find((m) => m.id === item.id);
+  if (!menuItem) {
+    return item.unitPriceMinor;
+  }
+
+  const baseUnitPriceMinor = getMenuItemCurrentPriceMinor(menuItem, at);
+  let modifiersTotalMinor = 0;
+  if (item.modifiers && item.modifiers.length > 0 && outlet?.itemModifiers) {
+    const modifierMap = new Map(outlet.itemModifiers.map((mod) => [mod.id, mod.priceDeltaMinor]));
+    for (const mod of item.modifiers) {
+      modifiersTotalMinor += modifierMap.get(mod.modifierId) ?? 0;
+    }
+  }
+
+  return baseUnitPriceMinor + modifiersTotalMinor;
 }
 
 export interface CalculateCartFeesOptions {
@@ -59,14 +87,25 @@ export function calculateCartFees({
   outletById,
   options = {},
 }: CalculateCartFeesParams) {
-  const subtotal = cartSubtotalMinor(cart);
+  const groupSubtotals = new Map<string, number>();
+  for (const group of cart.groups) {
+    const outlet = outletById?.get(group.outletId);
+    const gSubtotal = group.items.reduce((sum, item) => {
+      const unitPrice = resolveCartItemUnitPriceMinor(item, outlet);
+      return sum + unitPrice * item.quantity;
+    }, 0);
+    groupSubtotals.set(group.outletId, gSubtotal);
+  }
+
+  const subtotal = Array.from(groupSubtotals.values()).reduce((a, b) => a + b, 0);
+
   const commission = cart.groups.reduce((sum, group) => {
-    const groupSubtotal = outletSubtotalMinor(group);
+    const groupSubtotal = groupSubtotals.get(group.outletId) ?? outletSubtotalMinor(group);
     return sum + Math.round((groupSubtotal * charges.platformCommissionBps) / 10_000);
   }, 0);
 
   const vat = cart.groups.reduce((sum, group) => {
-    const groupSubtotal = outletSubtotalMinor(group);
+    const groupSubtotal = groupSubtotals.get(group.outletId) ?? outletSubtotalMinor(group);
     const outletVatBps = outletById?.get(group.outletId)?.vatBps ?? 0;
     const vatBps = outletVatBps > 0 ? outletVatBps : charges.defaultVatBps;
     return sum + Math.round((groupSubtotal * vatBps) / 10_000);
@@ -97,7 +136,7 @@ export function calculateCartFees({
   const service = charges.serviceFeeMinor;
   const total = subtotal + commission + vat + delivery + service;
 
-  return { subtotal, commission, vat, delivery, service, total };
+  return { subtotal, commission, vat, delivery, service, total, groupSubtotals };
 }
 
 /** Calculate all fees from subtotal + platform charges (all values in minor units / kobo). */

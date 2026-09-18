@@ -1,6 +1,6 @@
 "use client";
 
-import type { MenuItemSummary } from "@rsc/contracts";
+import { getMenuItemCurrentPriceMinor, type MenuItemSummary } from "@rsc/contracts";
 import { useQuery } from "@tanstack/react-query";
 import {
   AwardIcon,
@@ -136,7 +136,7 @@ export function LandingPage() {
         name: special.name,
         notes: "",
         quantity: 1,
-        unitPriceMinor: special.currentPriceMinor ?? special.priceMinor,
+        unitPriceMinor: getMenuItemCurrentPriceMinor(special),
         modifiers: [],
       },
     });

@@ -9,7 +9,7 @@ import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
 import { useFavoritesStore } from "@/src/stores/favorites-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { formatNaira } from "@/src/lib/data/cart";
-import type { MenuItemSummary } from "@rsc/contracts";
+import { getMenuItemCurrentPriceMinor, type MenuItemSummary } from "@rsc/contracts";
 
 export function FavoritesView() {
   const { data: rawSummaries = [], isPending } = useQuery(OUTLETS_QUERY);
@@ -39,7 +39,7 @@ export function FavoritesView() {
         name: item.name,
         notes: "",
         quantity: 1,
-        unitPriceMinor: item.currentPriceMinor ?? item.priceMinor,
+        unitPriceMinor: getMenuItemCurrentPriceMinor(item),
         modifiers: [],
       },
     });

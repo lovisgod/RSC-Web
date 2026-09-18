@@ -122,7 +122,6 @@ export function CheckoutSidebar({
   }
 
   // Live cart view (step 1 only)
-  const subtotal = cartSubtotalMinor(cart!);
   const includeDelivery = mode === "delivery";
   const fees = charges
     ? calculateCartFees({
@@ -132,6 +131,7 @@ export function CheckoutSidebar({
         options: { includeDelivery },
       })
     : null;
+  const subtotal = fees?.subtotal ?? cartSubtotalMinor(cart!);
   const total = fees?.total ?? null;
   const vatPct = charges ? (charges.defaultVatBps / 100).toFixed(2).replace(/\.?0+$/, "") : null;
   const commPct = charges
@@ -158,7 +158,9 @@ export function CheckoutSidebar({
                 ))}
               </div>
               <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
-                {formatNaira(outletSubtotalMinor(group))}
+                {formatNaira(
+                  fees?.groupSubtotals?.get(group.outletId) ?? outletSubtotalMinor(group),
+                )}
               </span>
             </div>
           </div>

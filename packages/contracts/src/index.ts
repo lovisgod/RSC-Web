@@ -626,6 +626,44 @@ export const menuCategorySchema = z.object({
   isActive: z.boolean(),
 });
 
+export interface MenuItemPricingFields {
+  priceMinor: number;
+  discountPriceMinor?: number | null;
+  discountStartsAt?: string | Date | null;
+  discountEndsAt?: string | Date | null;
+}
+
+export function isMenuItemDiscountActive(
+  item: MenuItemPricingFields,
+  at: Date = new Date(),
+): boolean {
+  if (
+    item.discountPriceMinor === null ||
+    item.discountPriceMinor === undefined ||
+    item.discountPriceMinor <= 0 ||
+    item.discountPriceMinor >= item.priceMinor
+  ) {
+    return false;
+  }
+
+  const atTime = at.getTime();
+  const startsAt = item.discountStartsAt
+    ? new Date(item.discountStartsAt).getTime()
+    : Number.NEGATIVE_INFINITY;
+  const endsAt = item.discountEndsAt
+    ? new Date(item.discountEndsAt).getTime()
+    : Number.POSITIVE_INFINITY;
+
+  return atTime >= startsAt && atTime <= endsAt;
+}
+
+export function getMenuItemCurrentPriceMinor(
+  item: MenuItemPricingFields,
+  at: Date = new Date(),
+): number {
+  return isMenuItemDiscountActive(item, at) ? item.discountPriceMinor! : item.priceMinor;
+}
+
 export const menuItemSchema = z
   .object({
     id: z.uuid(),
@@ -650,10 +688,18 @@ export const menuItemSchema = z
     updatedAt: z.iso.datetime(),
     deletedAt: z.iso.datetime().nullable(),
   })
-  .transform((item) => ({
-    ...item,
-    currentPriceMinor: item.currentPriceMinor ?? item.priceMinor,
-  }));
+  .transform((item) => {
+    const active = item.isDiscountActive || isMenuItemDiscountActive(item);
+    const currentPriceMinor = active
+      ? (item.discountPriceMinor ?? item.currentPriceMinor ?? item.priceMinor)
+      : (item.currentPriceMinor ?? item.priceMinor);
+
+    return {
+      ...item,
+      isDiscountActive: active,
+      currentPriceMinor,
+    };
+  });
 
 export const menuItemsPageSchema = z.object({
   items: z.array(menuItemSchema),
@@ -1541,6 +1587,8 @@ export type CreateNotificationCampaignInput = z.infer<typeof createNotificationC
 export type NotificationCampaign = z.infer<typeof notificationCampaignSchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;
+export type ItemModifierSummary = z.infer<typeof itemModifierSchema>;
+export type ItemModifierGroupSummary = z.infer<typeof itemModifierGroupSchema>;
 export type RiderLocation = z.infer<typeof riderLocationSchema>;
 export type RiderInfo = z.infer<typeof riderInfoSchema>;
 export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;
