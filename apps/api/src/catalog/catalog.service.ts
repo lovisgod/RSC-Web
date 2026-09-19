@@ -132,6 +132,11 @@ export class CatalogService {
         latitude: input.latitude ?? null,
         longitude: input.longitude ?? null,
         deliveryRadiusKm: input.deliveryRadiusKm ?? 15,
+        deliveryPricingModel: input.deliveryPricingModel ?? "FLAT",
+        deliveryFeeMinor: input.deliveryFeeMinor ?? 150000,
+        deliveryBaseFeeMinor: input.deliveryBaseFeeMinor ?? 0,
+        deliveryPricePerKmMinor: input.deliveryPricePerKmMinor ?? 0,
+        deliveryLocationFees: input.deliveryLocationFees ?? [],
         settlementSubaccountCode,
       }),
     );

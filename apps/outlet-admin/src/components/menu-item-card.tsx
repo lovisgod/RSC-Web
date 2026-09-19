@@ -104,6 +104,15 @@ export function MenuItemCard({
             currentPriceMinor={item.currentPriceMinor}
             isDiscountActive={item.isDiscountActive}
           />
+          {item.isDiscountActive &&
+            item.discountPriceMinor &&
+            item.discountPriceMinor < item.priceMinor && (
+              <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                🔥 Daily Special (
+                {Math.round(((item.priceMinor - item.discountPriceMinor) / item.priceMinor) * 100)}%
+                off)
+              </span>
+            )}
         </div>
       </button>
 

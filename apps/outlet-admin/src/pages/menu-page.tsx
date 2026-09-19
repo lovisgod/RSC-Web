@@ -34,6 +34,30 @@ function toLocalDateTime(value: string): string {
   return local.toISOString().slice(0, 16);
 }
 
+function formatLocalYMDHM(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const mins = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${mins}`;
+}
+
+function getDayBounds(offsetDays = 0): { startsAt: string; endsAt: string } {
+  const start = new Date();
+  start.setDate(start.getDate() + offsetDays);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date();
+  end.setDate(end.getDate() + offsetDays);
+  end.setHours(23, 59, 59, 999);
+
+  return {
+    startsAt: formatLocalYMDHM(start),
+    endsAt: formatLocalYMDHM(end),
+  };
+}
+
 // ─── Sortable wrapper ─────────────────────────────────────────────────────────
 
 function SortableMenuItemCard({
@@ -126,12 +150,47 @@ function AddItemModal({
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
   const [price, setPrice] = useState("");
   const [discountPrice, setDiscountPrice] = useState("");
+  const [discountPercent, setDiscountPercent] = useState("");
   const [discountStartsAt, setDiscountStartsAt] = useState("");
   const [discountEndsAt, setDiscountEndsAt] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [isAvailable, setIsAvailable] = useState(true);
   const [selectedModifierGroupIds, setSelectedModifierGroupIds] = useState<string[]>([]);
   const [shaking, setShaking] = useState(false);
+
+  function handlePriceChange(val: string) {
+    setPrice(val);
+    const numPrice = parseFloat(val);
+    const numPct = parseFloat(discountPercent);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
+      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+    } else if (!val) {
+      setDiscountPrice("");
+      setDiscountPercent("");
+    }
+  }
+
+  function handleDiscountPriceChange(val: string) {
+    setDiscountPrice(val);
+    const numPrice = parseFloat(price);
+    const numDisc = parseFloat(val);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numDisc) && numDisc > 0 && numDisc < numPrice) {
+      setDiscountPercent(String(Math.round(((numPrice - numDisc) / numPrice) * 100)));
+    } else {
+      setDiscountPercent("");
+    }
+  }
+
+  function handleDiscountPercentChange(val: string) {
+    setDiscountPercent(val);
+    const numPrice = parseFloat(price);
+    const numPct = parseFloat(val);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
+      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+    } else if (!val) {
+      setDiscountPrice("");
+    }
+  }
 
   function triggerShake() {
     setShaking(true);
@@ -287,47 +346,110 @@ function AddItemModal({
                 type="number"
                 required
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="e.g. 4500"
+                onChange={(e) => handlePriceChange(e.target.value)}
+                placeholder="e.g. 8000"
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               />
             </FormField>
           </div>
 
-          <div className="rounded-xl border border-slate-200 p-4">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
-              Daily special
-            </p>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/30 p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+                <span>🔥</span> Daily Special (Given Day)
+              </p>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bounds = getDayBounds(0);
+                    setDiscountStartsAt(bounds.startsAt);
+                    setDiscountEndsAt(bounds.endsAt);
+                  }}
+                  className="rounded-md border border-emerald-300 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-700 shadow-xs transition hover:bg-emerald-50"
+                >
+                  Set for Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bounds = getDayBounds(1);
+                    setDiscountStartsAt(bounds.startsAt);
+                    setDiscountEndsAt(bounds.endsAt);
+                  }}
+                  className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Tomorrow
+                </button>
+                {(discountPrice || discountStartsAt || discountEndsAt) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscountPrice("");
+                      setDiscountPercent("");
+                      setDiscountStartsAt("");
+                      setDiscountEndsAt("");
+                    }}
+                    className="ml-1 text-xs text-slate-400 underline hover:text-red-500"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FormField label="Discount price (₦)">
                 <input
                   type="number"
                   min="0"
                   value={discountPrice}
-                  onChange={(e) => setDiscountPrice(e.target.value)}
-                  placeholder="Optional"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm"
+                  onChange={(e) => handleDiscountPriceChange(e.target.value)}
+                  placeholder="e.g. 6800"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:ring-2 focus:ring-emerald-300"
                 />
               </FormField>
-              <FormField label="Starts">
+
+              <FormField label="Percentage discount (%)">
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={discountPercent}
+                    onChange={(e) => handleDiscountPercentChange(e.target.value)}
+                    placeholder="e.g. 15"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-10 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:ring-2 focus:ring-emerald-300"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                    %
+                  </span>
+                </div>
+              </FormField>
+
+              <FormField label="Active From (Starts)">
                 <input
                   type="datetime-local"
                   value={discountStartsAt}
                   onChange={(e) => setDiscountStartsAt(e.target.value)}
-                  disabled={!discountPrice}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm disabled:opacity-50"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:ring-2 focus:ring-emerald-300 disabled:opacity-50"
                 />
               </FormField>
-              <FormField label="Ends">
+
+              <FormField label="Active Until (Ends)">
                 <input
                   type="datetime-local"
                   value={discountEndsAt}
                   onChange={(e) => setDiscountEndsAt(e.target.value)}
-                  disabled={!discountPrice}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm disabled:opacity-50"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:ring-2 focus:ring-emerald-300 disabled:opacity-50"
                 />
               </FormField>
             </div>
+
+            <p className="mt-2 text-[11px] text-emerald-700/80">
+              Discounts scheduled for the current day will show up directly in the customer Daily
+              Specials section.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -449,6 +571,14 @@ function EditItemModal({
   const [discountPrice, setDiscountPrice] = useState(
     item.discountPriceMinor ? String(item.discountPriceMinor / 100) : "",
   );
+  const [discountPercent, setDiscountPercent] = useState(() => {
+    if (item.discountPriceMinor && item.priceMinor > 0) {
+      return String(
+        Math.round(((item.priceMinor - item.discountPriceMinor) / item.priceMinor) * 100),
+      );
+    }
+    return "";
+  });
   const [discountStartsAt, setDiscountStartsAt] = useState(
     item.discountStartsAt ? toLocalDateTime(item.discountStartsAt) : "",
   );
@@ -457,6 +587,40 @@ function EditItemModal({
   );
   const [categoryId, setCategoryId] = useState(item.categoryId);
   const [isAvailable, setIsAvailable] = useState(item.isAvailable);
+
+  function handlePriceChange(val: string) {
+    setPrice(val);
+    const numPrice = parseFloat(val);
+    const numPct = parseFloat(discountPercent);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
+      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+    } else if (!val) {
+      setDiscountPrice("");
+      setDiscountPercent("");
+    }
+  }
+
+  function handleDiscountPriceChange(val: string) {
+    setDiscountPrice(val);
+    const numPrice = parseFloat(price);
+    const numDisc = parseFloat(val);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numDisc) && numDisc > 0 && numDisc < numPrice) {
+      setDiscountPercent(String(Math.round(((numPrice - numDisc) / numPrice) * 100)));
+    } else {
+      setDiscountPercent("");
+    }
+  }
+
+  function handleDiscountPercentChange(val: string) {
+    setDiscountPercent(val);
+    const numPrice = parseFloat(price);
+    const numPct = parseFloat(val);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
+      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+    } else if (!val) {
+      setDiscountPrice("");
+    }
+  }
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
   const [selectedModifierGroupIds, setSelectedModifierGroupIds] =
     useState<string[]>(assignedModifierGroupIds);
@@ -616,46 +780,109 @@ function EditItemModal({
                 type="number"
                 required
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e) => handlePriceChange(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
               />
             </FormField>
           </div>
 
-          <div className="rounded-xl border border-slate-200 p-4">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
-              Daily special
-            </p>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/30 p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+                <span>🔥</span> Daily Special (Given Day)
+              </p>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bounds = getDayBounds(0);
+                    setDiscountStartsAt(bounds.startsAt);
+                    setDiscountEndsAt(bounds.endsAt);
+                  }}
+                  className="rounded-md border border-emerald-300 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-700 shadow-xs transition hover:bg-emerald-50"
+                >
+                  Set for Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bounds = getDayBounds(1);
+                    setDiscountStartsAt(bounds.startsAt);
+                    setDiscountEndsAt(bounds.endsAt);
+                  }}
+                  className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Tomorrow
+                </button>
+                {(discountPrice || discountStartsAt || discountEndsAt) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscountPrice("");
+                      setDiscountPercent("");
+                      setDiscountStartsAt("");
+                      setDiscountEndsAt("");
+                    }}
+                    className="ml-1 text-xs text-slate-400 underline hover:text-red-500"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FormField label="Discount price (₦)">
                 <input
                   type="number"
                   min="0"
                   value={discountPrice}
-                  onChange={(e) => setDiscountPrice(e.target.value)}
-                  placeholder="Optional"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm"
+                  onChange={(e) => handleDiscountPriceChange(e.target.value)}
+                  placeholder="e.g. 6800"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:ring-2 focus:ring-emerald-300"
                 />
               </FormField>
-              <FormField label="Starts">
+
+              <FormField label="Percentage discount (%)">
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={discountPercent}
+                    onChange={(e) => handleDiscountPercentChange(e.target.value)}
+                    placeholder="e.g. 15"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-10 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:ring-2 focus:ring-emerald-300"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                    %
+                  </span>
+                </div>
+              </FormField>
+
+              <FormField label="Active From (Starts)">
                 <input
                   type="datetime-local"
                   value={discountStartsAt}
                   onChange={(e) => setDiscountStartsAt(e.target.value)}
-                  disabled={!discountPrice}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm disabled:opacity-50"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:ring-2 focus:ring-emerald-300 disabled:opacity-50"
                 />
               </FormField>
-              <FormField label="Ends">
+
+              <FormField label="Active Until (Ends)">
                 <input
                   type="datetime-local"
                   value={discountEndsAt}
                   onChange={(e) => setDiscountEndsAt(e.target.value)}
-                  disabled={!discountPrice}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm disabled:opacity-50"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:ring-2 focus:ring-emerald-300 disabled:opacity-50"
                 />
               </FormField>
             </div>
+
+            <p className="mt-2 text-[11px] text-emerald-700/80">
+              Discounts scheduled for the current day will show up directly in the customer Daily
+              Specials section.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

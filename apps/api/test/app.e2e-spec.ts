@@ -103,7 +103,7 @@ describe("API bootstrap", () => {
       paths?: Record<string, unknown>;
     };
 
-    expect(document.info).toMatchObject({ title: "RSC Platform API", version: "test-sha" });
+    expect(document.info).toMatchObject({ title: "DineOutNG Platform API", version: "test-sha" });
     expect(document.openapi).toMatch(/^3\./);
     expect(document.paths?.["/api/v1"]).toBeTypeOf("object");
     expect(document.paths?.["/api/v1/auth/register"]).toBeTypeOf("object");

@@ -9,6 +9,7 @@ import { PaymentsModule } from "../payments/payments.module";
 import { RealtimeModule } from "../realtime/realtime.module";
 import { MasterOrder } from "./master-order.entity";
 import { OrderLineItem } from "./order-line-item.entity";
+import { OrderRiderRejection } from "./order-rider-rejection.entity";
 import { OrdersController } from "./orders.controller";
 import { OrdersService } from "./orders.service";
 import { OrderStatusEvent } from "./order-status-event.entity";
@@ -27,6 +28,7 @@ import { SubOrder } from "./sub-order.entity";
       SubOrder,
       OrderLineItem,
       OrderStatusEvent,
+      OrderRiderRejection,
     ]),
   ],
   controllers: [OrdersController],

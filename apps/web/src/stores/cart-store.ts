@@ -4,6 +4,10 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { Cart, CartItem } from "@/src/lib/data/cart";
+import {
+  resolveCartItemUnitPriceMinor,
+  type OutletDeliveryPricingInfo,
+} from "@/src/hooks/use-platform-charges";
 
 interface AddItemParams {
   outletId: string;
@@ -21,6 +25,7 @@ interface CartState {
   claimActiveSessionOwner: (userId: string) => void;
   reconcileOwner: (userId: string) => void;
   releaseActiveSessionOwner: () => void;
+  reconcileItemPrices: (outlets: OutletDeliveryPricingInfo[]) => void;
   clear: () => void;
 }
 
@@ -259,6 +264,35 @@ export const useCartStore = create<CartState>()(
             ownerUserId: null,
             cartsByUserId: withCurrentCartSaved(state),
           };
+        }),
+
+      reconcileItemPrices: (outlets) =>
+        set((state) => {
+          let changed = false;
+          const outletMap = new Map(
+            outlets
+              .filter((o): o is OutletDeliveryPricingInfo & { id: string } => !!o.id)
+              .map((o) => [o.id, o]),
+          );
+          const groups = state.cart.groups.map((group) => {
+            const outlet = outletMap.get(group.outletId);
+            if (!outlet || !outlet.menuItems) return group;
+
+            const items = group.items.map((item) => {
+              const expectedUnitPrice = resolveCartItemUnitPriceMinor(item, outlet);
+              if (item.unitPriceMinor !== expectedUnitPrice) {
+                changed = true;
+                return { ...item, unitPriceMinor: expectedUnitPrice };
+              }
+              return item;
+            });
+
+            return { ...group, items };
+          });
+
+          if (!changed) return state;
+
+          return withActiveCartCommitted(state, { ...state.cart, groups });
         }),
 
       clear: () =>

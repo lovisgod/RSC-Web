@@ -1,6 +1,6 @@
 "use client";
 
-import type { MenuItemSummary, OutletSummary, Promo } from "@rsc/contracts";
+import { getMenuItemCurrentPriceMinor, type MenuItemSummary } from "@rsc/contracts";
 import { useQuery } from "@tanstack/react-query";
 import {
   AwardIcon,
@@ -22,11 +22,11 @@ import {
   UtensilsIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
-import { usePromoNotifications } from "@/src/hooks/use-notifications";
 import { cartItemCount, formatNaira } from "@/src/lib/data/cart";
+import { getDailySpecials, resolveSpecialImage } from "@/src/lib/data/daily-specials";
 import { formatOutletRating, toDisplayOutlet } from "@/src/lib/data/outlets";
 import { useAuthStore } from "@/src/stores/auth-store";
 import { useCartStore } from "@/src/stores/cart-store";
@@ -58,40 +58,40 @@ const trustPillars = [
 const steps = [
   {
     step: "01",
-    title: "Pick kitchens",
+    title: "Pick Outlets",
     subtitle: "Explore live outlets",
-    copy: "Browse our curated network of live DineOut NG kitchens. Discover specialized menus from authentic Nigerian delicacies to artisanal continental favorites.",
+    copy: "Browse our curated network of live DineOut NG. Discover specialized menus from authentic Nigerian delicacies to artisanal continental favorites.",
     icon: UtensilsIcon,
   },
   {
     step: "02",
     title: "Build one cart",
     subtitle: "Mix & match freely",
-    copy: "Add Jollof from Kitchen A and Lebanese Mezze from Kitchen B into one single cart. No split app orders or juggling separate deliveries.",
+    copy: "Add Jollof from Outlet A and Lebanese Mezze from Outlet B into one single cart. No split app orders or juggling separate deliveries.",
     icon: ShoppingBagIcon,
   },
   {
     step: "03",
     title: "Pay & track live",
     subtitle: "Single checkout & updates",
-    copy: "Pay once securely. Watch each kitchen prepare your dishes in real-time, then track your unified dispatch right to your doorstep.",
+    copy: "Pay once securely. Watch each kitchen prepare your meals in real-time, then track your unified dispatch right to your doorstep.",
     icon: TruckIcon,
   },
 ] as const;
 
 const faqItems = [
   {
-    question: "Can I really order from multiple DineOut NG kitchens in one transaction?",
+    question: "Can I really order from multiple DineOut NG Outlets in one transaction?",
     answer:
-      "Yes! DineOut NG enables you to add dishes from different kitchens into a single master cart and pay once. Our dispatch coordination system manages the cooking and pickup so your complete order arrives together.",
+      "Yes! DineOut NG enables you to add meals from different outlets into a single master cart and pay once. Our dispatch coordination system manages the cooking and pickup so your complete order arrives together.",
   },
   {
-    question: "How does delivery pricing work for multi-kitchen orders?",
+    question: "How does delivery pricing work for multi-outlets orders?",
     answer:
       "You pay a transparent delivery fee calculated for your overall trip, without having to pay full separate delivery charges for every single kitchen you order from.",
   },
   {
-    question: "How do I track my order if kitchens prepare food at different speeds?",
+    question: "How do I track my order if outlets prepare food at different speeds?",
     answer:
       "Our live order tracking screen breaks down the progress of each kitchen in real-time — from kitchen prep and cooking to driver dispatch and final delivery.",
   },
@@ -102,34 +102,11 @@ const faqItems = [
   },
 ] as const;
 
-function isPromoLive(promo: Promo): boolean {
-  const now = Date.now();
-  const startsAt = new Date(promo.startsAt).getTime();
-  const endsAt = new Date(promo.endsAt).getTime();
-
-  return promo.isActive && startsAt <= now && now <= endsAt;
-}
-
-function topSpecials(outlets: OutletSummary[]): Array<MenuItemSummary & { outletName: string }> {
-  return outlets
-    .flatMap((outlet) =>
-      outlet.menuItems
-        .filter((item) => item.isAvailable)
-        .map((item) => ({ ...item, outletName: outlet.name })),
-    )
-    .sort((a, b) => {
-      const aDiscount = a.isDiscountActive ? 1 : 0;
-      const bDiscount = b.isDiscountActive ? 1 : 0;
-
-      return bDiscount - aDiscount || b.ratingAverage - a.ratingAverage;
-    })
-    .slice(0, 10);
-}
-
 export function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [addedToast, setAddedToast] = useState<string | null>(null);
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [activeDailyPage, setActiveDailyPage] = useState(0);
+  const dailyScrollerRef = useRef<HTMLDivElement | null>(null);
 
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
   const cart = useCartStore((s) => s.cart);
@@ -137,20 +114,18 @@ export function LandingPage() {
   const totalCartCount = cartItemCount(cart);
 
   const outletsQuery = useQuery(OUTLETS_QUERY);
-  const promosQuery = usePromoNotifications();
 
   const outlets = (outletsQuery.data ?? []).map((outlet, index) => toDisplayOutlet(outlet, index));
   const featuredOutlets = outlets.slice(0, 4);
-  const specials = topSpecials(outletsQuery.data ?? []);
-  const promos = (promosQuery.data ?? []).filter(isPromoLive);
+  const dailySpecials = getDailySpecials(outletsQuery.data ?? []);
+  const dailyPageCount = Math.max(1, Math.ceil(dailySpecials.length / 3));
+  // Clamp active page so it never exceeds the current page count (avoids setState-in-effect)
+  const clampedActivePage = Math.min(activeDailyPage, dailyPageCount - 1);
 
-  function handleCopyPromoCode(code: string) {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      void navigator.clipboard.writeText(code);
-      setCopiedCode(code);
-      setTimeout(() => setCopiedCode(null), 2500);
-    }
-  }
+  useEffect(() => {
+    // Only update external DOM (scroll position) — no setState here
+    dailyScrollerRef.current?.scrollTo({ left: 0 });
+  }, [dailyPageCount]);
 
   function handleQuickAddSpecial(special: MenuItemSummary & { outletName: string }) {
     addItemToCart({
@@ -161,13 +136,40 @@ export function LandingPage() {
         name: special.name,
         notes: "",
         quantity: 1,
-        unitPriceMinor: special.currentPriceMinor ?? special.priceMinor,
+        unitPriceMinor: getMenuItemCurrentPriceMinor(special),
         modifiers: [],
       },
     });
 
     setAddedToast(`Added "${special.name}" to cart!`);
     setTimeout(() => setAddedToast(null), 2500);
+  }
+
+  function handleDailyScroll() {
+    const scroller = dailyScrollerRef.current;
+    if (!scroller) return;
+
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    if (maxScrollLeft <= 0) {
+      setActiveDailyPage(0);
+      return;
+    }
+
+    const scrollProgress = scroller.scrollLeft / maxScrollLeft;
+    const nextPage = Math.round(scrollProgress * (dailyPageCount - 1));
+    setActiveDailyPage(Math.min(Math.max(nextPage, 0), dailyPageCount - 1));
+  }
+
+  function scrollDailySpecials(page: number) {
+    const scroller = dailyScrollerRef.current;
+    if (!scroller) return;
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    const targetLeft = dailyPageCount <= 1 ? 0 : (maxScrollLeft / (dailyPageCount - 1)) * page;
+
+    scroller.scrollTo({
+      left: targetLeft,
+      behavior: "smooth",
+    });
   }
 
   return (
@@ -186,7 +188,7 @@ export function LandingPage() {
       {/* Top Banner Accent */}
       <div className="landing-top-banner" aria-label="Announcement">
         <span className="landing-top-banner__badge">NEW</span>
-        <span>Order across multiple DineOut NG kitchens with one single checkout & delivery!</span>
+        <span>Order across multiple DineOut NG outlets with one single checkout & delivery!</span>
         <Link href="#how-it-works" className="landing-top-banner__link">
           Learn how it works →
         </Link>
@@ -237,7 +239,7 @@ export function LandingPage() {
           </div>
         ) : (
           <div className="grab-outlets-portrait-grid">
-            {featuredOutlets.map((outlet, idx) => {
+            {featuredOutlets.map((outlet) => {
               const isOffline = outlet.isOnline === false;
               const hasImageUrl =
                 outlet.image && (outlet.image.startsWith("/") || outlet.image.startsWith("http"));
@@ -266,7 +268,9 @@ export function LandingPage() {
                         data-online={outlet.isOnline !== false}
                       >
                         <span className="grab-portrait-card__status-dot" />
-                        {outlet.isOnline !== false ? "Open" : "Closed"}
+                        <span className="grab-portrait-card__status-label">
+                          {outlet.isOnline !== false ? "Open" : "Closed"}
+                        </span>
                       </span>
                       <span className="grab-portrait-card__rating">
                         <StarIcon className="w-3 h-3 fill-amber-400 text-amber-400" />
@@ -295,7 +299,14 @@ export function LandingPage() {
                       aria-label={`Order now from ${outlet.name}`}
                     >
                       <span className="grab-order-now-btn__text">
-                        {isOffline ? "CLOSED" : "ORDER NOW"}
+                        {isOffline ? (
+                          "Closed"
+                        ) : (
+                          <>
+                            <span className="grab-order-now-btn__label-full">Order Now</span>
+                            <span className="grab-order-now-btn__label-mobile">Order</span>
+                          </>
+                        )}
                       </span>
                       <span className="grab-order-now-btn__circle">
                         <ChevronRightIcon className="w-4 h-4" />
@@ -309,168 +320,154 @@ export function LandingPage() {
         )}
       </section>
 
-      {/* ── SECTION 2: POPULAR MENUS (Portrait & Scrollable, no Today's Pick badge) ── */}
-      <section className="grab-section" id="menus" aria-labelledby="grab-menus-heading">
-        <div className="grab-section__header">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xl" role="img" aria-label="Plate">
-              🍽️
-            </span>
-            <h2 id="grab-menus-heading" className="grab-section__title">
-              POPULAR MENUS
-            </h2>
-          </div>
-          <Link href="/menu" className="grab-section__view-all">
-            <span>View All</span>
-            <ChevronRightIcon className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {specials.length === 0 ? (
-          <div className="grab-empty">
-            <UtensilsIcon className="w-8 h-8 text-emerald-500 mb-2" />
-            <p>Menu items will appear here once kitchens publish them.</p>
-          </div>
-        ) : (
-          <div className="grab-menus-scroll">
-            {specials.map((special) => (
-              <div key={special.id} className="grab-menu-portrait-card">
-                {/* Food Photo with Floating Quick Add + button */}
-                <div className="grab-menu-portrait-card__image-wrap">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={special.imageUrl ?? "/images/images/fire_1f525.png"}
-                    alt={special.name}
-                    className="grab-menu-portrait-card__image"
-                    loading="lazy"
-                  />
-                  <button
-                    type="button"
-                    className="grab-menu-portrait-card__add-btn"
-                    aria-label={`Add ${special.name} to cart`}
-                    onClick={() => handleQuickAddSpecial(special)}
-                  >
-                    <PlusIcon className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-
-                {/* Card Body */}
-                <div className="grab-menu-portrait-card__body">
-                  <h3 className="grab-menu-portrait-card__title" title={special.name}>
-                    {special.name}
-                  </h3>
-                  <p className="grab-menu-portrait-card__outlet">{special.outletName}</p>
-
-                  <div className="grab-menu-portrait-card__price-row">
-                    <span className="grab-menu-portrait-card__price">
-                      {formatNaira(special.currentPriceMinor ?? special.priceMinor)}
-                    </span>
-                    {special.isDiscountActive && (
-                      <span className="grab-menu-portrait-card__strike-price">
-                        {formatNaira(special.priceMinor)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── SECTION 3: DAILY SPECIALS (Scrollable banner promos from backend) ── */}
+      {/* Daily specials */}
       <section className="grab-section" id="specials" aria-labelledby="grab-specials-heading">
         <div className="grab-section__header">
           <div className="flex items-center gap-1.5">
             <span className="text-xl" role="img" aria-label="Fire">
-              🔥
+              &#128293;
             </span>
             <h2 id="grab-specials-heading" className="grab-section__title">
               DAILY SPECIALS
             </h2>
           </div>
+          <Link href="/daily-specials" className="grab-section__view-all">
+            <span>View All</span>
+            <ChevronRightIcon className="w-4 h-4" />
+          </Link>
         </div>
 
-        {promos.length === 0 ? (
-          <div className="grab-promo-banner">
-            <div className="grab-promo-banner__content">
-              <div className="grab-promo-banner__title-lockup">
-                <span className="grab-promo-banner__heading-white">HUNGRY FOR</span>
-                <span className="grab-promo-banner__heading-green">MORE?</span>
-              </div>
-              <p className="grab-promo-banner__copy">
-                Check back soon for fresh daily specials and exclusive kitchen discounts!
-              </p>
-            </div>
-            <div className="grab-promo-banner__graphic">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
-                alt="Delicious DineOut specials"
-                className="grab-promo-banner__food-img"
-                loading="lazy"
-              />
-            </div>
+        {dailySpecials.length === 0 ? (
+          <div className="grab-empty">
+            <UtensilsIcon className="w-8 h-8 text-emerald-500 mb-2" />
+            <p>
+              No daily specials set for today. Kitchens will publish today&apos;s specials soon!
+            </p>
           </div>
         ) : (
-          <div className="grab-promo-banners-scroll">
-            {promos.map((promo) => (
-              <div key={promo.id} className="grab-promo-banner-card">
-                <div className="grab-promo-banner__content">
-                  <div className="grab-promo-banner__title-lockup">
-                    <span className="grab-promo-banner__heading-white">
-                      {promo.title.toUpperCase()}
-                    </span>
-                    <span className="grab-promo-banner__heading-green">SPECIALS!</span>
-                  </div>
-                  <p className="grab-promo-banner__copy">{promo.body}</p>
+          <>
+            <div
+              ref={dailyScrollerRef}
+              className="grab-daily-specials-scroll"
+              onScroll={handleDailyScroll}
+              aria-label="Daily specials carousel"
+            >
+              {dailySpecials.map((special, idx) => {
+                const discountPrice =
+                  special.discountPriceMinor ?? special.currentPriceMinor ?? special.priceMinor;
+                const originalPrice = special.priceMinor;
+                const imageUrl = resolveSpecialImage(special);
+                const isFirst = idx === 0;
 
-                  {/* Modern Coupon Ticket */}
-                  <div className="grab-promo-ticket mt-1">
-                    <div className="grab-promo-ticket__code-section">
-                      <TagIcon className="w-4 h-4 text-amber-300 shrink-0" />
-                      <div className="flex flex-col">
-                        <span className="grab-promo-ticket__label">PROMO CODE</span>
-                        <span className="grab-promo-ticket__code">{promo.code}</span>
-                      </div>
-                      <span className="grab-promo-ticket__discount-pill">
-                        {promo.discountPercent}% OFF
-                      </span>
+                return (
+                  <article key={special.id} className="grab-daily-special-card">
+                    <div className="grab-daily-special-card__badge">
+                      {isFirst ? (
+                        "TODAY'S PICK"
+                      ) : (
+                        <>
+                          <strong>{special.discountPercent}%</strong>
+                          <span>OFF</span>
+                        </>
+                      )}
                     </div>
+
+                    <div className="grab-daily-special-card__copy">
+                      <h3 title={special.name}>{special.name}</h3>
+                      <p>{special.description || special.outletName}</p>
+                      <div className="grab-daily-special-card__prices">
+                        <strong>{formatNaira(discountPrice)}</strong>
+                        {originalPrice > discountPrice && <span>{formatNaira(originalPrice)}</span>}
+                      </div>
+                    </div>
+
+                    <div className="grab-daily-special-card__image-wrap">
+                      <img
+                        src={imageUrl}
+                        alt={special.name}
+                        className="grab-daily-special-card__image"
+                        loading="lazy"
+                      />
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => handleCopyPromoCode(promo.code)}
-                      className="grab-promo-ticket__copy-btn"
-                      title="Click to copy coupon code"
+                      className="grab-daily-special-card__add-btn"
+                      aria-label={`Add ${special.name} to cart`}
+                      onClick={() => handleQuickAddSpecial(special)}
                     >
-                      {copiedCode === promo.code ? "COPIED!" : "COPY"}
+                      <PlusIcon className="w-5 h-5 stroke-[2.5]" />
                     </button>
-                  </div>
-                </div>
+                  </article>
+                );
+              })}
+            </div>
 
-                <div className="grab-promo-banner__graphic">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      promo.imageUrl ||
-                      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80"
-                    }
-                    alt={promo.title}
-                    className="grab-promo-banner__food-img"
-                    loading="lazy"
+            {dailySpecials.length > 0 && (
+              <div className="grab-pagination-dots" aria-label="Daily specials pages">
+                {Array.from({ length: dailyPageCount }).map((_, page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    aria-label={`Show daily specials page ${page + 1}`}
+                    aria-current={clampedActivePage === page ? "true" : undefined}
+                    className={`grab-pagination-dot${
+                      clampedActivePage === page ? " grab-pagination-dot--active" : ""
+                    }`}
+                    onClick={() => scrollDailySpecials(page)}
                   />
-
-                  {/* Circular Discount Callout Badge */}
-                  <div className="grab-promo-banner__circle-badge">
-                    <small>UP TO</small>
-                    <strong>{promo.discountPercent}%</strong>
-                    <small>OFF</small>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
+      </section>
+
+      {/* Exclusive discounts */}
+      <section
+        className="grab-section"
+        id="exclusive-discounts"
+        aria-labelledby="grab-exclusive-discounts-heading"
+      >
+        <div className="grab-section__header">
+          <div className="flex items-center gap-1.5">
+            <TagIcon className="h-6 w-6 text-[var(--rsc-orange)]" aria-hidden="true" />
+            <h2 id="grab-exclusive-discounts-heading" className="grab-section__title">
+              EXCLUSIVE DISCOUNTS
+            </h2>
+          </div>
+          <Link href="/notifications" className="grab-section__view-all">
+            <span>View All</span>
+            <ChevronRightIcon className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grab-promo-banner">
+          <div className="grab-promo-banner__content">
+            <div className="grab-promo-banner__title-lockup">
+              <span className="grab-promo-banner__heading-white">HUNGRY FOR</span>
+              <span className="grab-promo-banner__heading-green">MORE?</span>
+            </div>
+            <p className="grab-promo-banner__copy">
+              Enjoy amazing deals from your favorite outlets daily!
+            </p>
+          </div>
+          <div className="grab-promo-banner__graphic">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/promo-burger-cutout.png"
+              alt="Delicious DineOut deals"
+              className="grab-promo-banner__food-img"
+              loading="lazy"
+            />
+            <div className="grab-promo-banner__circle-badge" aria-label="Up to 30 percent off">
+              <small>UP TO</small>
+              <strong>30%</strong>
+              <small>OFF</small>
+            </div>
+            <span className="grab-promo-banner__limited-ribbon">LIMITED TIME ONLY!</span>
+          </div>
+        </div>
       </section>
 
       {/* ── SECTION 4: 4-PILLAR TRUST & BENEFIT GRID ── */}
@@ -500,7 +497,7 @@ export function LandingPage() {
               How one DineOut NG order works
             </h2>
             <p className="grab-steps-desc">
-              Ordering from multiple kitchens used to mean multiple delivery fees and separate app
+              Ordering from multiple outlets used to mean multiple delivery fees and separate app
               checkouts. DineOut NG simplifies everything into 3 steps.
             </p>
           </div>
@@ -576,7 +573,7 @@ export function LandingPage() {
             <BrandLogo className="w-32" priority />
             <p className="grab-footer__tagline">
               One app. Many flavors. Endless choices. The smartest way to order food across
-              specialized DineOut NG kitchens in Nigeria.
+              specialized DineOut NG outlets in Nigeria.
             </p>
             <p className="grab-footer__copy">
               © {new Date().getFullYear()} DineOut Group Ltd. All rights reserved.
@@ -587,34 +584,19 @@ export function LandingPage() {
             <h4>Quick Links</h4>
             <ul>
               <li>
-                <Link href="/outlets">All Kitchens</Link>
+                <Link href="/outlets">All outlets</Link>
               </li>
               <li>
                 <Link href="#specials">Daily Specials</Link>
+              </li>
+              <li>
+                <Link href="#exclusive-discounts">Exclusive Discounts</Link>
               </li>
               <li>
                 <Link href="/cart">Your Cart</Link>
               </li>
               <li>
                 <Link href="/sign-in">Customer Sign In</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="grab-footer__links-col">
-            <h4>Kitchen Network</h4>
-            <ul>
-              <li>
-                <Link href="/outlets">Lagos Outlets</Link>
-              </li>
-              <li>
-                <Link href="/outlets">Abuja Outlets</Link>
-              </li>
-              <li>
-                <Link href="/outlets">Port Harcourt Hubs</Link>
-              </li>
-              <li>
-                <Link href="/outlets">Ibadan Kitchens</Link>
               </li>
             </ul>
           </div>

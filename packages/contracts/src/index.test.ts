@@ -5,9 +5,12 @@ import {
   adminOrderLineItemSchema,
   adminOrdersQuerySchema,
   adminOrdersResultSchema,
+  calculateOutletDeliveryFee,
   createAdminInputSchema,
   customerOrderSchema,
+  getMenuItemCurrentPriceMinor,
   initiatePaymentInputSchema,
+  isMenuItemDiscountActive,
   loginInputSchema,
   menuItemsPageSchema,
   loginResultSchema,
@@ -212,6 +215,56 @@ describe("menu item discounts", () => {
       discountPriceMinor: null,
       isDiscountActive: false,
     });
+  });
+
+  it("calculates active discount when discountPriceMinor is lower and within date range", () => {
+    const item = {
+      priceMinor: 180000,
+      discountPriceMinor: 90300,
+      discountStartsAt: null,
+      discountEndsAt: null,
+    };
+    expect(isMenuItemDiscountActive(item)).toBe(true);
+    expect(getMenuItemCurrentPriceMinor(item)).toBe(90300);
+
+    const parsed = menuItemSchema.parse({
+      id: "45ef3252-b96f-4308-b40e-391623b25ac9",
+      outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      categoryId: "35df7fe2-f6cd-483e-a0a2-b2331c4f4fb9",
+      name: "Garlic Bread",
+      description: null,
+      imageUrl: null,
+      priceMinor: 180000,
+      discountPriceMinor: 90300,
+      currency: "NGN",
+      isAvailable: true,
+      sortOrder: 0,
+      createdAt: "2026-07-27T08:00:00.000Z",
+      updatedAt: "2026-07-27T08:00:00.000Z",
+      deletedAt: null,
+    });
+
+    expect(parsed.isDiscountActive).toBe(true);
+    expect(parsed.currentPriceMinor).toBe(90300);
+  });
+
+  it("identifies expired or invalid discounts correctly", () => {
+    const pastItem = {
+      priceMinor: 180000,
+      discountPriceMinor: 90300,
+      discountStartsAt: "2026-01-01T00:00:00.000Z",
+      discountEndsAt: "2026-01-02T00:00:00.000Z",
+    };
+    expect(isMenuItemDiscountActive(pastItem, new Date("2026-02-01T00:00:00.000Z"))).toBe(false);
+    expect(getMenuItemCurrentPriceMinor(pastItem, new Date("2026-02-01T00:00:00.000Z"))).toBe(
+      180000,
+    );
+
+    const higherDiscount = {
+      priceMinor: 180000,
+      discountPriceMinor: 200000,
+    };
+    expect(isMenuItemDiscountActive(higherDiscount)).toBe(false);
   });
 });
 
@@ -660,7 +713,90 @@ describe("customer registration contracts", () => {
       itemModifierGroups: [],
       itemModifiers: [],
       menuItemModifierGroups: [],
+      deliveryPricingModel: "FLAT",
+      deliveryFeeMinor: 150_000,
+      deliveryBaseFeeMinor: 0,
+      deliveryPricePerKmMinor: 0,
+      deliveryLocationFees: [],
     });
+  });
+
+  it("calculates outlet delivery fees across FLAT, PER_KM, and PER_LOCATION models", () => {
+    // FLAT model
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "FLAT",
+        flatFeeMinor: 120_000,
+      }),
+    ).toBe(120_000);
+
+    // PER_KM model with coordinates
+    // Victoria Island to Lekki Phase 1 (~5 km)
+    const outletLat = 6.4281;
+    const outletLng = 3.4219;
+    const deliveryLat = 6.4474;
+    const deliveryLng = 3.4716;
+    const feePerKm = calculateOutletDeliveryFee({
+      pricingModel: "PER_KM",
+      baseFeeMinor: 50_000, // ₦500 base
+      pricePerKmMinor: 20_000, // ₦200/km
+      outletLatitude: outletLat,
+      outletLongitude: outletLng,
+      deliveryLatitude: deliveryLat,
+      deliveryLongitude: deliveryLng,
+    });
+    // Distance is ~5.9 km -> 50_000 + round(5.9 * 20_000) ~ 168_000
+    expect(feePerKm).toBeGreaterThan(150_000);
+    expect(feePerKm).toBeLessThan(190_000);
+
+    // PER_KM fallback when coords are missing
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "PER_KM",
+        baseFeeMinor: 50_000,
+        flatFeeMinor: 100_000,
+      }),
+    ).toBe(50_000);
+
+    // PER_LOCATION model matching zoneId or zoneName
+    const locationFees = [
+      {
+        locationName: "Lekki Phase 1",
+        zoneId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        feeMinor: 100_000,
+      },
+      { locationName: "Ikeja GRA", zoneId: null, feeMinor: 250_000 },
+    ];
+
+    // Match by zoneId
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "PER_LOCATION",
+        baseFeeMinor: 80_000,
+        locationFees,
+        zoneId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+      }),
+    ).toBe(100_000);
+
+    // Match by zoneName
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "PER_LOCATION",
+        baseFeeMinor: 80_000,
+        locationFees,
+        zoneName: "Ikeja GRA",
+      }),
+    ).toBe(250_000);
+
+    // Unmatched zone falls back to baseFeeMinor
+    expect(
+      calculateOutletDeliveryFee({
+        pricingModel: "PER_LOCATION",
+        baseFeeMinor: 80_000,
+        locationFees,
+        zoneName: "Ajah",
+      }),
+    ).toBe(80_000);
   });
 
   it("documents admin order list contracts", () => {

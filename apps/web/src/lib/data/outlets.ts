@@ -1,4 +1,10 @@
-import type { OutletSummary } from "@rsc/contracts";
+import type {
+  DeliveryLocationFee,
+  DeliveryPricingModel,
+  ItemModifierSummary,
+  MenuItemSummary,
+  OutletSummary,
+} from "@rsc/contracts";
 
 import { computeOutletMetrics } from "@/src/lib/data/outlet-menu";
 
@@ -20,6 +26,15 @@ export interface Outlet {
   bannerImage?: string;
   isOnline?: boolean;
   vatBps: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  deliveryPricingModel?: DeliveryPricingModel;
+  deliveryFeeMinor?: number;
+  deliveryBaseFeeMinor?: number;
+  deliveryPricePerKmMinor?: number;
+  deliveryLocationFees?: DeliveryLocationFee[];
+  menuItems?: MenuItemSummary[];
+  itemModifiers?: ItemModifierSummary[];
   // Optional — not yet returned by the API
   rating?: number;
   deliveryTime?: string;
@@ -58,6 +73,15 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     ...(summary.bannerUrl ? { bannerImage: summary.bannerUrl } : {}),
     isOnline: summary.isOnline,
     vatBps: summary.vatBps,
+    latitude: (summary as unknown as { latitude?: number | null }).latitude ?? null,
+    longitude: (summary as unknown as { longitude?: number | null }).longitude ?? null,
+    deliveryPricingModel: summary.deliveryPricingModel,
+    deliveryFeeMinor: summary.deliveryFeeMinor,
+    deliveryBaseFeeMinor: summary.deliveryBaseFeeMinor,
+    deliveryPricePerKmMinor: summary.deliveryPricePerKmMinor,
+    deliveryLocationFees: summary.deliveryLocationFees,
+    menuItems: summary.menuItems,
+    itemModifiers: summary.itemModifiers,
     ...(!summary.isOnline ? { tag: "Offline" } : {}),
     ...metrics,
   };

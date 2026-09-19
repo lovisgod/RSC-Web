@@ -1,4 +1,9 @@
-import type { MenuItemSummary, OutletSummary } from "@rsc/contracts";
+import {
+  getMenuItemCurrentPriceMinor,
+  isMenuItemDiscountActive,
+  type MenuItemSummary,
+  type OutletSummary,
+} from "@rsc/contracts";
 
 import type { Outlet } from "@/src/lib/data/outlets";
 
@@ -71,6 +76,9 @@ export function toDisplayMenuItem(
   index: number,
   modifierGroups: DisplayModifierGroup[] = [],
 ): MenuItem {
+  const currentPrice = getMenuItemCurrentPriceMinor(item);
+  const isDiscountActive = isMenuItemDiscountActive(item);
+
   return {
     id: item.id,
     outletId: item.outletId,
@@ -78,9 +86,9 @@ export function toDisplayMenuItem(
     name: item.name,
     description: item.description ?? "",
     imageUrl: item.imageUrl,
-    priceMinor: item.currentPriceMinor,
+    priceMinor: currentPrice,
     originalPriceMinor: item.priceMinor,
-    isDiscountActive: item.isDiscountActive,
+    isDiscountActive,
     isAvailable: item.isAvailable,
     image: item.imageUrl ?? FOOD_EMOJIS[index % FOOD_EMOJIS.length]!,
     bgColor: BG_COLORS[index % BG_COLORS.length]!,

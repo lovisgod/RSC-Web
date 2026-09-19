@@ -508,6 +508,7 @@ export const initiatePaymentInputSchema = z
       .min(1),
     deliveryMode: z.enum(["DELIVERY", "TAKEOUT"]),
     deliveryAddress: z.string().optional(),
+    landmark: z.string().trim().max(255).optional(),
     deliveryLatitude: z.number().optional(),
     deliveryLongitude: z.number().optional(),
     recipientPhone: nigerianPhoneNumberSchema.optional(),
@@ -625,6 +626,44 @@ export const menuCategorySchema = z.object({
   isActive: z.boolean(),
 });
 
+export interface MenuItemPricingFields {
+  priceMinor: number;
+  discountPriceMinor?: number | null;
+  discountStartsAt?: string | Date | null;
+  discountEndsAt?: string | Date | null;
+}
+
+export function isMenuItemDiscountActive(
+  item: MenuItemPricingFields,
+  at: Date = new Date(),
+): boolean {
+  if (
+    item.discountPriceMinor === null ||
+    item.discountPriceMinor === undefined ||
+    item.discountPriceMinor <= 0 ||
+    item.discountPriceMinor >= item.priceMinor
+  ) {
+    return false;
+  }
+
+  const atTime = at.getTime();
+  const startsAt = item.discountStartsAt
+    ? new Date(item.discountStartsAt).getTime()
+    : Number.NEGATIVE_INFINITY;
+  const endsAt = item.discountEndsAt
+    ? new Date(item.discountEndsAt).getTime()
+    : Number.POSITIVE_INFINITY;
+
+  return atTime >= startsAt && atTime <= endsAt;
+}
+
+export function getMenuItemCurrentPriceMinor(
+  item: MenuItemPricingFields,
+  at: Date = new Date(),
+): number {
+  return isMenuItemDiscountActive(item, at) ? item.discountPriceMinor! : item.priceMinor;
+}
+
 export const menuItemSchema = z
   .object({
     id: z.uuid(),
@@ -649,10 +688,18 @@ export const menuItemSchema = z
     updatedAt: z.iso.datetime(),
     deletedAt: z.iso.datetime().nullable(),
   })
-  .transform((item) => ({
-    ...item,
-    currentPriceMinor: item.currentPriceMinor ?? item.priceMinor,
-  }));
+  .transform((item) => {
+    const active = item.isDiscountActive || isMenuItemDiscountActive(item);
+    const currentPriceMinor = active
+      ? (item.discountPriceMinor ?? item.currentPriceMinor ?? item.priceMinor)
+      : (item.currentPriceMinor ?? item.priceMinor);
+
+    return {
+      ...item,
+      isDiscountActive: active,
+      currentPriceMinor,
+    };
+  });
 
 export const menuItemsPageSchema = z.object({
   items: z.array(menuItemSchema),
@@ -703,6 +750,101 @@ export const menuItemModifierGroupSchema = z.object({
   sortOrder: z.int().nonnegative(),
 });
 
+export const deliveryPricingModelSchema = z.enum(["FLAT", "PER_KM", "PER_LOCATION"]);
+export type DeliveryPricingModel = z.infer<typeof deliveryPricingModelSchema>;
+
+export const deliveryLocationFeeSchema = z.object({
+  locationName: z.string().min(1).max(120),
+  zoneId: z.string().uuid().nullable().optional(),
+  feeMinor: z.number().int().nonnegative(),
+});
+export type DeliveryLocationFee = z.infer<typeof deliveryLocationFeeSchema>;
+
+export function calculateDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export interface CalculateOutletDeliveryFeeParams {
+  pricingModel?: DeliveryPricingModel | string | null | undefined;
+  flatFeeMinor?: number | null | undefined;
+  baseFeeMinor?: number | null | undefined;
+  pricePerKmMinor?: number | null | undefined;
+  locationFees?: DeliveryLocationFee[] | null | undefined;
+  outletLatitude?: number | null | undefined;
+  outletLongitude?: number | null | undefined;
+  deliveryLatitude?: number | null | undefined;
+  deliveryLongitude?: number | null | undefined;
+  zoneId?: string | null | undefined;
+  zoneName?: string | null | undefined;
+  fallbackFeeMinor?: number | undefined;
+}
+
+export function calculateOutletDeliveryFee(params: CalculateOutletDeliveryFeeParams): number {
+  const model = params.pricingModel ?? "FLAT";
+  const fallback = params.fallbackFeeMinor ?? 150_000;
+
+  if (model === "PER_KM") {
+    const baseFee = params.baseFeeMinor ?? 0;
+    const pricePerKm = params.pricePerKmMinor ?? 0;
+    if (
+      params.outletLatitude != null &&
+      params.outletLongitude != null &&
+      params.deliveryLatitude != null &&
+      params.deliveryLongitude != null
+    ) {
+      const distanceKm = calculateDistanceKm(
+        params.outletLatitude,
+        params.outletLongitude,
+        params.deliveryLatitude,
+        params.deliveryLongitude,
+      );
+      return Math.max(0, baseFee + Math.round(distanceKm * pricePerKm));
+    }
+    return Math.max(0, baseFee || (params.flatFeeMinor ?? fallback));
+  }
+
+  if (model === "PER_LOCATION") {
+    const baseFallback = params.baseFeeMinor ?? params.flatFeeMinor ?? fallback;
+    const locationFees = params.locationFees ?? [];
+    if (locationFees.length > 0) {
+      if (params.zoneId) {
+        const matchByZone = locationFees.find(
+          (loc) => loc.zoneId && loc.zoneId.toLowerCase() === params.zoneId?.toLowerCase(),
+        );
+        if (matchByZone) return matchByZone.feeMinor;
+      }
+      if (params.zoneName) {
+        const target = params.zoneName.trim().toLowerCase();
+        const matchByName = locationFees.find(
+          (loc) =>
+            loc.locationName.trim().toLowerCase() === target ||
+            target.includes(loc.locationName.trim().toLowerCase()) ||
+            loc.locationName.trim().toLowerCase().includes(target),
+        );
+        if (matchByName) return matchByName.feeMinor;
+      }
+    }
+    return baseFallback;
+  }
+
+  return params.flatFeeMinor ?? fallback;
+}
+
 export const outletSummarySchema = z
   .object({
     id: z.uuid(),
@@ -717,6 +859,11 @@ export const outletSummarySchema = z
     ratingAverage: z.coerce.number().min(0).max(5).default(0),
     ratingCount: z.int().nonnegative().default(0),
     vatBps: z.int().min(0).max(10_000).default(0),
+    deliveryPricingModel: deliveryPricingModelSchema.default("FLAT"),
+    deliveryFeeMinor: z.number().int().nonnegative().default(150_000),
+    deliveryBaseFeeMinor: z.number().int().nonnegative().default(0),
+    deliveryPricePerKmMinor: z.number().int().nonnegative().default(0),
+    deliveryLocationFees: z.array(deliveryLocationFeeSchema).default([]),
     menuCategories: z.array(menuCategorySchema).default([]),
     menuItems: z.array(menuItemSchema).default([]),
     itemModifierGroups: z.array(itemModifierGroupSchema).default([]),
@@ -1440,6 +1587,8 @@ export type CreateNotificationCampaignInput = z.infer<typeof createNotificationC
 export type NotificationCampaign = z.infer<typeof notificationCampaignSchema>;
 export type MenuCategorySummary = z.infer<typeof menuCategorySchema>;
 export type MenuItemSummary = z.infer<typeof menuItemSchema>;
+export type ItemModifierSummary = z.infer<typeof itemModifierSchema>;
+export type ItemModifierGroupSummary = z.infer<typeof itemModifierGroupSchema>;
 export type RiderLocation = z.infer<typeof riderLocationSchema>;
 export type RiderInfo = z.infer<typeof riderInfoSchema>;
 export type OrderStatusEvent = z.infer<typeof orderStatusEventSchema>;

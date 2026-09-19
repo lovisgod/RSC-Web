@@ -61,7 +61,7 @@ describe(SlingSmsSender.name, () => {
         },
         body: JSON.stringify({
           to: "2348031234567",
-          message: "Your RSC verification code is 482901. It expires in 10 minutes.",
+          message: "Your DineOutNG verification code is 482901. It expires in 10 minutes.",
           sender: "RSCApp",
           type: "transactional",
         }),
@@ -89,7 +89,7 @@ describe(SlingSmsSender.name, () => {
       expect.objectContaining({
         body: JSON.stringify({
           to: "2348031234567",
-          message: "Your RSC password reset code is 193745. It expires in 10 minutes.",
+          message: "Your DineOutNG password reset code is 193745. It expires in 10 minutes.",
           sender: "RSCApp",
           type: "transactional",
         }),

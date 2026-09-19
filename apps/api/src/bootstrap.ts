@@ -40,8 +40,8 @@ export function configureApplication(app: INestApplication): void {
 
   if (swaggerEnabled) {
     const swaggerConfig = new DocumentBuilder()
-      .setTitle("RSC Platform API")
-      .setDescription("Backend API for the RSC multi-outlet food ordering platform.")
+      .setTitle("DineOutNG Platform API")
+      .setDescription("Backend API for the DineOutNG multi-outlet food ordering platform.")
       .setVersion(version)
       .addBearerAuth()
       .build();

@@ -786,6 +786,10 @@ body {
   text-transform: uppercase;
 }
 
+.grab-order-now-btn__label-mobile {
+  display: none;
+}
+
 .grab-order-now-btn__circle {
   display: flex;
   align-items: center;
@@ -942,6 +946,151 @@ body {
   text-decoration: line-through;
 }
 
+/* ── SECTION 2: DAILY SPECIALS (Cards matching reference design) ── */
+.grab-daily-specials-scroll {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.15rem;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .grab-daily-specials-scroll {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.25rem 0.15rem 0.5rem;
+    scrollbar-width: none;
+  }
+  .grab-daily-specials-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.grab-daily-special-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 24px;
+  background: radial-gradient(circle at 80% 20%, #17271e 0%, #0d1712 60%, #080f0b 100%);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  padding: 1.15rem 1.15rem 1.15rem 1.25rem;
+  min-height: 200px;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (max-width: 1024px) {
+    flex: 0 0 280px;
+    min-width: 280px;
+    max-width: 280px;
+    scroll-snap-align: start;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(52, 211, 153, 0.45);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.grab-daily-special-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(6, 44, 25, 0.9);
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  color: #34d399;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.grab-daily-special-badge-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(6, 44, 25, 0.9);
+  border: 1.5px solid rgba(52, 211, 153, 0.45);
+  color: #34d399;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.grab-daily-special-badge-circle__pct {
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.grab-daily-special-badge-circle__off {
+  font-size: 0.54rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.grab-daily-special-image-wrap {
+  position: absolute;
+  top: 15px;
+  right: -15px;
+  width: 145px;
+  height: 145px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 2px solid rgba(52, 211, 153, 0.15);
+  box-shadow: -4px 6px 20px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.grab-daily-special-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+
+  .grab-daily-special-card:hover & {
+    transform: scale(1.08);
+  }
+}
+
+.grab-daily-special-add-btn {
+  position: absolute;
+  bottom: 0.85rem;
+  right: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #00b14f;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 177, 79, 0.4);
+  cursor: pointer;
+  color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: #009643;
+    transform: scale(1.12);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
 /* Pagination Dots */
 .grab-pagination-dots {
   display: flex;
@@ -964,6 +1113,343 @@ body {
 .grab-pagination-dot--active {
   width: 22px;
   background: #00b14f;
+}
+
+/* ── DAILY SPECIALS MENU CAROUSEL ───────────────────────────── */
+.grab-daily-specials-scroll {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.35rem 0.25rem 1.1rem;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0.25rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.grab-daily-specials-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.grab-daily-special-card {
+  position: relative;
+  flex: 0 0 calc((100% - 2.5rem) / 3);
+  min-width: calc((100% - 2.5rem) / 3);
+  min-height: 210px;
+  scroll-snap-align: start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8.75rem, 38%);
+  align-items: stretch;
+  gap: 1.15rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--rsc-main) 28%, transparent);
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(
+      circle at 88% 18%,
+      color-mix(in srgb, var(--rsc-main) 24%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(145deg, #071a0f 0%, #0d1a12 55%, #0a130e 100%);
+  box-shadow: 0 22px 46px color-mix(in srgb, var(--rsc-main) 18%, transparent);
+  color: #fff;
+  padding: 1.45rem 1.35rem 1.35rem;
+}
+
+.grab-daily-special-card__badge {
+  position: absolute;
+  left: 1.45rem;
+  top: 1.25rem;
+  z-index: 2;
+  display: inline-flex;
+  min-width: 5.75rem;
+  min-height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--rsc-brand) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rsc-brand) 10%, transparent);
+  color: #34d399;
+  font-size: 0.72rem;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.grab-daily-special-card:first-child .grab-daily-special-card__badge {
+  min-width: 6.85rem;
+  flex-direction: row;
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.grab-daily-special-card__badge strong {
+  font-size: 1rem;
+}
+
+.grab-daily-special-card__badge span {
+  margin-top: 0.12rem;
+  font-size: 0.62rem;
+}
+
+.grab-daily-special-card__copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: 3.65rem;
+  padding-right: 0.15rem;
+}
+
+.grab-daily-special-card__copy h3 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.05rem, 1.35vw, 1.28rem);
+  font-weight: 950;
+  line-height: 1.18;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grab-daily-special-card__copy p {
+  margin: 0.38rem 0 0;
+  color: color-mix(in srgb, white 72%, var(--rsc-main));
+  font-size: 0.88rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.grab-daily-special-card__prices {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-top: auto;
+  padding-top: 1.35rem;
+}
+
+.grab-daily-special-card__prices strong {
+  color: #34d399;
+  font-size: 1.18rem;
+  font-weight: 950;
+}
+
+.grab-daily-special-card__prices span {
+  color: color-mix(in srgb, white 55%, transparent);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: line-through;
+}
+
+.grab-daily-special-card__image-wrap {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  justify-self: end;
+  width: 100%;
+  max-width: 10.75rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 3px solid color-mix(in srgb, var(--rsc-main) 55%, transparent);
+  border-radius: 999px;
+  box-shadow: 0 18px 36px rgb(0 0 0 / 32%);
+}
+
+.grab-daily-special-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.grab-daily-special-card__add-btn {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1.15rem;
+  z-index: 3;
+  display: grid;
+  width: 3.15rem;
+  height: 3.15rem;
+  place-items: center;
+  border: 2px solid color-mix(in srgb, white 30%, transparent);
+  border-radius: 999px;
+  background: var(--rsc-brand);
+  color: #fff;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--rsc-brand) 45%, transparent);
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+.grab-daily-special-card__add-btn:hover {
+  transform: translateY(-1px) scale(1.04);
+  filter: brightness(1.05);
+}
+
+@media (max-width: 1180px) {
+  .grab-daily-special-card {
+    flex-basis: min(86vw, 34rem);
+    min-width: min(86vw, 34rem);
+  }
+}
+
+/* ── MOBILE: show 3 cards at once ───────────────────────────── */
+@media (max-width: 768px) {
+  .grab-daily-specials-scroll {
+    gap: 0.6rem;
+  }
+
+  .grab-daily-special-card {
+    flex-basis: calc((100% - 2 * 0.6rem) / 3);
+    min-width: calc((100% - 2 * 0.6rem) / 3);
+    /* Switch to single-column layout — image won't fit at this width */
+    grid-template-columns: 1fr;
+    min-height: 160px;
+    padding: 0.75rem 0.65rem 2.8rem;
+  }
+
+  /* Hide the circular image: too wide for a 1/3-screen card */
+  .grab-daily-special-card__image-wrap {
+    display: none;
+  }
+
+  .grab-daily-special-card__badge {
+    left: 0.65rem;
+    top: 0.65rem;
+    min-width: 3rem;
+    min-height: 1.75rem;
+    font-size: 0.62rem;
+  }
+
+  .grab-daily-special-card:first-child .grab-daily-special-card__badge {
+    min-width: unset;
+    max-width: calc(100% - 1.3rem);
+    padding: 0.28rem 0.45rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .grab-daily-special-card:not(:first-child) .grab-daily-special-card__badge {
+    min-width: unset;
+    max-width: calc(100% - 1.3rem);
+    flex-direction: row;
+    gap: 0.18rem;
+    white-space: nowrap;
+    padding: 0.28rem 0.45rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.01em;
+  }
+
+  .grab-daily-special-card:not(:first-child) .grab-daily-special-card__badge strong,
+  .grab-daily-special-card:not(:first-child) .grab-daily-special-card__badge span {
+    font-size: inherit;
+    font-weight: inherit;
+    margin-top: 0;
+    line-height: 1;
+  }
+
+  .grab-daily-special-card__copy {
+    padding-top: 2.6rem;
+    padding-right: 0;
+  }
+
+  .grab-daily-special-card__copy h3 {
+    font-size: 0.78rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .grab-daily-special-card__copy p {
+    font-size: 0.68rem;
+    -webkit-line-clamp: 1;
+    margin-top: 0.15rem;
+  }
+
+  .grab-daily-special-card__prices {
+    padding-top: 0.5rem;
+    gap: 0.35rem;
+  }
+
+  .grab-daily-special-card__prices strong {
+    font-size: 0.88rem;
+  }
+
+  .grab-daily-special-card__prices span {
+    font-size: 0.72rem;
+  }
+
+  .grab-daily-special-card__add-btn {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+}
+
+/* 520px tweaks — inherit 3-per-view layout from 768px block above */
+@media (max-width: 520px) {
+  .grab-daily-special-card {
+    /* Keep single-column / 3-per-view — no grid override needed */
+    min-height: 150px;
+    padding: 0.7rem 0.55rem 2.6rem;
+  }
+
+  .grab-daily-special-card__badge {
+    left: 0.55rem;
+    top: 0.55rem;
+    min-width: 2.8rem;
+    min-height: 1.6rem;
+  }
+
+  .grab-daily-special-card:first-child .grab-daily-special-card__badge {
+    min-width: unset;
+    max-width: calc(100% - 1.1rem);
+    padding: 0.2rem 0.35rem;
+    font-size: 0.52rem;
+    letter-spacing: 0;
+  }
+
+  .grab-daily-special-card:not(:first-child) .grab-daily-special-card__badge {
+    min-width: unset;
+    max-width: calc(100% - 1.1rem);
+    padding: 0.2rem 0.35rem;
+    font-size: 0.52rem;
+    letter-spacing: 0;
+  }
+
+  .grab-daily-special-card__copy {
+    padding-top: 2.4rem;
+  }
+
+  .grab-daily-special-card__copy h3 {
+    font-size: 0.72rem;
+  }
+
+  .grab-daily-special-card__copy p {
+    font-size: 0.64rem;
+  }
+
+  .grab-daily-special-card__prices strong {
+    font-size: 0.82rem;
+  }
+
+  .grab-daily-special-card__add-btn {
+    right: 0.4rem;
+    bottom: 0.4rem;
+    width: 1.9rem;
+    height: 1.9rem;
+  }
 }
 
 /* ── SECTION 3: PROMO BANNER & SCROLLABLE SPECIALS ───────────── */
@@ -992,12 +1478,15 @@ body {
   max-width: 100%;
   scroll-snap-align: center;
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: minmax(0, 0.9fr) minmax(300px, 1.05fr);
   align-items: center;
-  gap: 2rem;
-  padding: 2.25rem;
+  gap: clamp(0.75rem, 1.8vw, 1.35rem);
+  min-height: 250px;
+  padding: 2.25rem 2.45rem;
   border-radius: 28px;
-  background: radial-gradient(circle at 85% 15%, #0f4f2c 0%, #072816 70%, #041a0e 100%);
+  background:
+    radial-gradient(circle at 72% 48%, rgba(52, 211, 153, 0.18) 0%, transparent 34%),
+    linear-gradient(105deg, #04150c 0%, #052412 43%, #073b1d 66%, #03150a 100%);
   color: #ffffff;
   box-shadow: 0 20px 60px rgba(4, 26, 14, 0.35);
   border: 1px solid rgba(52, 211, 153, 0.25);
@@ -1009,19 +1498,38 @@ body {
 .grab-promo-banner::before {
   content: "";
   position: absolute;
-  top: -50px;
-  right: -50px;
-  width: 250px;
-  height: 250px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(0, 177, 79, 0.22) 0%, transparent 70%);
+  inset: 0;
+  background:
+    radial-gradient(circle at 13% 30%, rgba(255, 137, 0, 0.18) 0 0.4rem, transparent 0.45rem),
+    radial-gradient(circle at 25% 62%, rgba(52, 211, 153, 0.15) 0 0.32rem, transparent 0.38rem),
+    linear-gradient(135deg, transparent 0 42%, rgba(52, 211, 153, 0.07) 42% 48%, transparent 48%),
+    repeating-linear-gradient(
+      -18deg,
+      transparent 0 2.4rem,
+      rgba(255, 255, 255, 0.035) 2.4rem 2.48rem
+    );
+  opacity: 0.85;
   pointer-events: none;
+}
+
+.grab-promo-banner::after {
+  content: "%";
+  position: absolute;
+  left: 23%;
+  top: 29%;
+  z-index: 1;
+  color: rgba(52, 211, 153, 0.12);
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 950;
+  line-height: 1;
+  transform: rotate(-13deg);
 }
 
 .grab-promo-banner__content {
   display: flex;
   flex-direction: column;
   gap: 0.95rem;
+  max-width: 30rem;
   z-index: 2;
 }
 
@@ -1032,14 +1540,14 @@ body {
 }
 
 .grab-promo-banner__heading-white {
-  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-size: clamp(2rem, 4.2vw, 3.65rem);
   font-weight: 950;
   letter-spacing: -0.02em;
   color: #ffffff;
 }
 
 .grab-promo-banner__heading-green {
-  font-size: clamp(2rem, 3.8vw, 3rem);
+  font-size: clamp(2.45rem, 5.2vw, 4.55rem);
   font-weight: 950;
   letter-spacing: -0.02em;
   color: #34d399;
@@ -1047,10 +1555,10 @@ body {
 
 .grab-promo-banner__copy {
   margin: 0;
-  font-size: 0.92rem;
-  color: rgba(255, 255, 255, 0.82);
+  font-size: clamp(0.95rem, 1.2vw, 1.15rem);
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.5;
-  max-width: 440px;
+  max-width: 24rem;
 }
 
 /* ── Modern Coupon Ticket Component ─────────────────────────── */
@@ -1135,38 +1643,47 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
-  height: 220px;
+  height: 225px;
+  z-index: 2;
+  isolation: isolate;
 }
 
 .grab-promo-banner__food-img {
-  width: 100%;
+  width: min(72%, 560px);
   height: 100%;
-  max-height: 220px;
-  object-fit: cover;
-  border-radius: 20px;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-height: 225px;
+  object-fit: contain;
+  object-position: center;
+  border: 0;
+  border-radius: 0;
+  filter: drop-shadow(0 26px 34px rgba(0, 0, 0, 0.45)) saturate(1.08) contrast(1.04);
+  mix-blend-mode: normal;
 }
 
 .grab-promo-banner__circle-badge {
   position: absolute;
-  top: -12px;
-  right: -8px;
+  top: 50%;
+  right: 1.15rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 76px;
-  height: 76px;
+  width: clamp(5.4rem, 8vw, 7.6rem);
+  height: clamp(5.4rem, 8vw, 7.6rem);
   border-radius: 999px;
-  background: #00b14f;
-  border: 3px solid #ffffff;
-  color: #ffffff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  background:
+    radial-gradient(circle at 38% 30%, rgba(52, 211, 153, 0.28), transparent 34%),
+    rgba(2, 20, 10, 0.88);
+  border: 2px solid #34d399;
+  color: #34d399;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
   text-align: center;
   line-height: 1;
+  transform: translateY(-50%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 
   small {
     font-size: 0.58rem;
@@ -1175,27 +1692,72 @@ body {
   }
 
   strong {
-    font-size: 1.18rem;
+    font-size: clamp(1.5rem, 2.9vw, 2.45rem);
     font-weight: 950;
     margin-block: 2px;
   }
+}
+
+.grab-promo-banner__limited-ribbon {
+  position: absolute;
+  right: 1.15rem;
+  bottom: 1rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-4deg);
+  border-radius: 0.35rem;
+  background: #6cc531;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 @media (max-width: 768px) {
   .grab-promo-banner-card,
   .grab-promo-banner {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
-    padding: 1.4rem;
+    gap: 0.45rem;
+    min-height: auto;
+    padding: 1.25rem 1.1rem 1rem;
     border-radius: 22px;
   }
 
+  .grab-promo-banner__content {
+    gap: 0.45rem;
+    max-width: 16.5rem;
+  }
+
+  .grab-promo-banner__heading-white {
+    font-size: clamp(1.45rem, 7vw, 1.85rem);
+    line-height: 0.98;
+  }
+
+  .grab-promo-banner__heading-green {
+    font-size: clamp(1.75rem, 8.5vw, 2.2rem);
+    line-height: 0.98;
+  }
+
+  .grab-promo-banner__copy {
+    max-width: 17rem;
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+
   .grab-promo-banner__graphic {
-    height: 175px;
+    height: 140px;
+    justify-content: center;
+    margin-top: -0.2rem;
   }
 
   .grab-promo-banner__food-img {
-    max-height: 175px;
+    width: min(88%, 280px);
+    max-height: 140px;
   }
 
   .grab-promo-ticket {
@@ -1203,14 +1765,24 @@ body {
   }
 
   .grab-promo-banner__circle-badge {
-    width: 68px;
-    height: 68px;
-    top: -10px;
-    right: -6px;
+    right: 0.65rem;
+    width: 3.85rem;
+    height: 3.85rem;
 
     strong {
       font-size: 1.05rem;
     }
+
+    small {
+      font-size: 0.48rem;
+    }
+  }
+
+  .grab-promo-banner__limited-ribbon {
+    right: 1.25rem;
+    bottom: 0.4rem;
+    padding: 0.26rem 0.52rem;
+    font-size: 0.48rem;
   }
 }
 
@@ -1601,7 +2173,8 @@ body {
 
 .grab-footer__inner {
   display: grid;
-  grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(280px, 1.5fr) repeat(2, minmax(180px, 1fr));
+  align-items: start;
   gap: 2.5rem;
 }
 
@@ -1796,6 +2369,10 @@ body {
   .grab-footer__inner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .grab-footer__brand-col {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1815,50 +2392,107 @@ body {
 
   .grab-outlets-portrait-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    overflow: visible;
+    padding: 0;
   }
 
   .grab-portrait-card {
-    min-height: 280px;
-    padding: 0.85rem 0.75rem 0.75rem;
-    border-radius: 18px;
+    min-width: 0;
+    min-height: 178px;
+    padding: 0.5rem 0.4rem 0.4rem;
+    border-radius: 14px;
+  }
+
+  .grab-portrait-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.72) 0%,
+      rgba(0, 0, 0, 0.16) 42%,
+      rgba(0, 0, 0, 0.88) 100%
+    );
+    pointer-events: none;
   }
 
   .grab-portrait-card__spacer {
-    min-height: 60px;
+    min-height: 54px;
   }
 
   .grab-portrait-card__title {
-    font-size: 1rem;
+    display: -webkit-box;
+    font-size: 0.72rem;
+    line-height: 1.08;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .grab-portrait-card__cuisine {
-    font-size: 0.72rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 100%;
+    display: none;
   }
 
   .grab-portrait-card__status,
   .grab-portrait-card__rating {
-    font-size: 0.68rem;
-    padding: 0.15rem 0.45rem;
+    font-size: 0.5rem;
+    padding: 0.12rem 0.24rem;
+  }
+
+  .grab-portrait-card__status {
+    width: auto;
+    height: auto;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+    backdrop-filter: none;
+    color: #ef4444;
+    border-radius: 999px;
+  }
+
+  .grab-portrait-card__status-dot {
+    width: 0.52rem;
+    height: 0.52rem;
+  }
+
+  .grab-portrait-card__status[data-online="true"] {
+    color: #22c55e;
+  }
+
+  .grab-portrait-card__status-label {
+    display: none;
+  }
+
+  .grab-portrait-card__rating svg {
+    width: 0.55rem;
+    height: 0.55rem;
   }
 
   .grab-order-now-btn {
-    height: 36px;
-    padding: 0 0.35rem 0 0.75rem;
+    height: 26px;
+    padding: 0 0.18rem 0 0.42rem;
   }
 
   .grab-order-now-btn__text {
-    font-size: 0.72rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.01em;
+  }
+
+  .grab-order-now-btn__label-full {
+    display: none;
+  }
+
+  .grab-order-now-btn__label-mobile {
+    display: inline;
   }
 
   .grab-order-now-btn__circle {
-    width: 26px;
-    height: 26px;
+    width: 21px;
+    height: 21px;
   }
 
   .grab-specials-grid {
@@ -1883,39 +2517,44 @@ body {
   .grab-footer__inner {
     grid-template-columns: 1fr;
     gap: 2rem;
+    text-align: left;
+  }
+
+  .grab-footer__brand-col {
+    grid-column: auto;
   }
 }
 
 @media (max-width: 480px) {
   .grab-outlets-portrait-grid {
-    gap: 0.5rem;
+    gap: 0.4rem;
   }
 
   .grab-portrait-card {
-    min-height: 250px;
-    padding: 0.75rem 0.55rem 0.55rem;
-    border-radius: 16px;
+    min-height: 158px;
+    padding: 0.4rem 0.32rem 0.32rem;
+    border-radius: 12px;
   }
 
   .grab-portrait-card__title {
-    font-size: 0.92rem;
+    font-size: 0.6rem;
   }
 
   .grab-portrait-card__cuisine {
-    font-size: 0.68rem;
+    display: none;
   }
 
   .grab-order-now-btn {
-    height: 34px;
-    padding: 0 0.25rem 0 0.55rem;
+    height: 23px;
+    padding: 0 0.14rem 0 0.3rem;
   }
 
   .grab-order-now-btn__text {
-    font-size: 0.68rem;
+    font-size: 0.54rem;
   }
 
   .grab-order-now-btn__circle {
-    width: 24px;
-    height: 24px;
+    width: 19px;
+    height: 19px;
   }
 }

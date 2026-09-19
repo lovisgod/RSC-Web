@@ -14,6 +14,7 @@ import { ConfirmationStep } from "@/src/components/checkout/steps/confirmation-s
 const EMPTY_DELIVERY: DeliveryForm = {
   mode: "delivery",
   address: "",
+  landmark: "",
   latitude: null,
   longitude: null,
   zone: null,
@@ -61,7 +62,6 @@ export function CheckoutView() {
           {step === 1 && (
             <FulfillmentStep
               initial={delivery}
-              onModeChange={(mode) => setDelivery((current) => ({ ...current, mode }))}
               onComplete={(d, id, snap, url) => {
                 setDelivery(d);
                 setOrderId(id);

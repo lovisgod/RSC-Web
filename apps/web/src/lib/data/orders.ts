@@ -24,7 +24,9 @@ export function isCompletedOrder(order: Order): boolean {
 }
 
 export function isCancelledOrder(order: Order): boolean {
-  return order.status.toUpperCase() === "CANCELLED";
+  const s = order.status.toUpperCase();
+  // REJECTED = all sub-orders rejected by outlets; PARTIALLY_FULFILLED = some rejected, rest done
+  return s === "CANCELLED" || s === "REJECTED" || s === "PARTIALLY_FULFILLED";
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -37,6 +39,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   OUT_FOR_DELIVERY: { label: "Out for delivery", color: "#fff", bg: "var(--rsc-brand)" },
   DELIVERED: { label: "Delivered", color: "#fff", bg: "var(--rsc-main)" },
   CANCELLED: { label: "Cancelled", color: "#fff", bg: "#6b7280" },
+  REJECTED: { label: "Rejected", color: "#fff", bg: "#6b7280" },
 };
 
 export function getStatusConfig(status: string) {

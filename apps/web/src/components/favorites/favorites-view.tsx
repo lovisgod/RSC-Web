@@ -1,32 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Plus, ShoppingBag, Store, Utensils } from "lucide-react";
+import { Heart, Plus, ShoppingBag, Utensils } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
-import { toDisplayOutlet } from "@/src/lib/data/outlets";
-import { OutletCard } from "@/src/components/outlets/outlet-card";
 import { useFavoritesStore } from "@/src/stores/favorites-store";
 import { useCartStore } from "@/src/stores/cart-store";
 import { formatNaira } from "@/src/lib/data/cart";
-import type { MenuItemSummary } from "@rsc/contracts";
+import { getMenuItemCurrentPriceMinor, type MenuItemSummary } from "@rsc/contracts";
 
 export function FavoritesView() {
   const { data: rawSummaries = [], isPending } = useQuery(OUTLETS_QUERY);
-  const favoriteOutletIds = useFavoritesStore((s) => s.outletIds);
   const favoriteItemIds = useFavoritesStore((s) => s.itemIds);
   const toggleItem = useFavoritesStore((s) => s.toggleItem);
   const addItemToCart = useCartStore((s) => s.addItem);
-  const [activeTab, setActiveTab] = useState<"kitchens" | "dishes">("kitchens");
   const [addedToast, setAddedToast] = useState<string | null>(null);
-
-  const outlets = useMemo(() => rawSummaries.map((s, i) => toDisplayOutlet(s, i)), [rawSummaries]);
-
-  const favoriteOutlets = useMemo(() => {
-    return outlets.filter((outlet) => favoriteOutletIds.includes(outlet.id));
-  }, [outlets, favoriteOutletIds]);
 
   const favoriteItems = useMemo(() => {
     const list: Array<MenuItemSummary & { outletName: string }> = [];
@@ -49,7 +39,7 @@ export function FavoritesView() {
         name: item.name,
         notes: "",
         quantity: 1,
-        unitPriceMinor: item.currentPriceMinor ?? item.priceMinor,
+        unitPriceMinor: getMenuItemCurrentPriceMinor(item),
         modifiers: [],
       },
     });
@@ -69,69 +59,29 @@ export function FavoritesView() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 dark:border-gray-800 gap-6">
-        <button
-          type="button"
-          onClick={() => setActiveTab("kitchens")}
-          className={`pb-3 text-sm font-bold transition-colors relative flex items-center gap-2 ${
-            activeTab === "kitchens"
-              ? "text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400"
-              : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
-          }`}
+      {/* Header Info */}
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
+        <div className="flex items-center gap-2">
+          <Utensils className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span className="text-sm font-bold text-gray-900 dark:text-white">
+            Saved Dishes ({favoriteItems.length})
+          </span>
+        </div>
+        <Link
+          href="/menu"
+          className="text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
         >
-          <Store className="w-4 h-4" />
-          <span>Kitchens ({favoriteOutlets.length})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("dishes")}
-          className={`pb-3 text-sm font-bold transition-colors relative flex items-center gap-2 ${
-            activeTab === "dishes"
-              ? "text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400"
-              : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
-          }`}
-        >
-          <Utensils className="w-4 h-4" />
-          <span>Dishes ({favoriteItems.length})</span>
-        </button>
+          Browse Menu →
+        </Link>
       </div>
 
       {/* Content */}
       {isPending ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-44 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-56 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl" />
           ))}
         </div>
-      ) : activeTab === "kitchens" ? (
-        favoriteOutlets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 grid place-items-center mb-4">
-              <Heart className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              No favorite kitchens yet
-            </h2>
-            <p className="text-sm text-gray-500 max-w-sm mt-1 mb-6">
-              Tap the heart icon on any kitchen to save it here for fast reordering.
-            </p>
-            <Link
-              href="/outlets"
-              className="rsc-button rsc-button--primary inline-flex items-center gap-2"
-            >
-              <Store className="w-4 h-4" />
-              <span>Explore Kitchens</span>
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-x-3 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
-            {favoriteOutlets.map((outlet) => (
-              <OutletCard key={outlet.id} outlet={outlet} />
-            ))}
-          </div>
-        )
       ) : favoriteItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 grid place-items-center mb-4">
@@ -141,10 +91,10 @@ export function FavoritesView() {
             No favorite dishes yet
           </h2>
           <p className="text-sm text-gray-500 max-w-sm mt-1 mb-6">
-            Save your go-to meals from kitchen menus to quickly add them to your cart in one tap.
+            Tap the heart icon on any menu dish to save it here for fast one-tap ordering.
           </p>
           <Link
-            href="/outlets"
+            href="/menu"
             className="rsc-button rsc-button--primary inline-flex items-center gap-2"
           >
             <ShoppingBag className="w-4 h-4" />

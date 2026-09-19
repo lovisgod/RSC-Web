@@ -72,6 +72,30 @@ function toLocalDateTime(value: string): string {
   return local.toISOString().slice(0, 16);
 }
 
+function formatLocalYMDHM(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const mins = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${mins}`;
+}
+
+function getDayBounds(offsetDays = 0): { startsAt: string; endsAt: string } {
+  const start = new Date();
+  start.setDate(start.getDate() + offsetDays);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date();
+  end.setDate(end.getDate() + offsetDays);
+  end.setHours(23, 59, 59, 999);
+
+  return {
+    startsAt: formatLocalYMDHM(start),
+    endsAt: formatLocalYMDHM(end),
+  };
+}
+
 function formatPrice(minor: number): string {
   return `₦${(minor / 100).toLocaleString("en-NG", { minimumFractionDigits: 0 })}`;
 }
@@ -252,7 +276,32 @@ function MenuItemCard({
           {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <span>🍽️</span>}
         </span>
         <span className="admin-menu-item-copy">
-          <strong>{item.name}</strong>
+          <span style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+            <strong>{item.name}</strong>
+            {item.isDiscountActive &&
+              item.discountPriceMinor &&
+              item.discountPriceMinor < item.priceMinor && (
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    backgroundColor: "rgba(16, 185, 129, 0.15)",
+                    color: "#059669",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "2px",
+                  }}
+                >
+                  🔥 Special (
+                  {Math.round(
+                    ((item.priceMinor - item.discountPriceMinor) / item.priceMinor) * 100,
+                  )}
+                  % off)
+                </span>
+              )}
+          </span>
           <DiscountPrice
             priceMinor={item.priceMinor}
             currentPriceMinor={item.currentPriceMinor}
@@ -342,6 +391,14 @@ function MenuItemModal({
   const [discountPrice, setDiscountPrice] = useState(
     item?.discountPriceMinor ? String(item.discountPriceMinor / 100) : "",
   );
+  const [discountPercent, setDiscountPercent] = useState(() => {
+    if (item?.discountPriceMinor && item.priceMinor > 0) {
+      return String(
+        Math.round(((item.priceMinor - item.discountPriceMinor) / item.priceMinor) * 100),
+      );
+    }
+    return "";
+  });
   const [discountStartsAt, setDiscountStartsAt] = useState(
     item?.discountStartsAt ? toLocalDateTime(item.discountStartsAt) : "",
   );
@@ -352,6 +409,40 @@ function MenuItemModal({
   const [deliveryTimeRange, setDeliveryTimeRange] = useState("");
   const [isAvailable, setIsAvailable] = useState(item?.isAvailable ?? true);
   const [modifierGroupIds, setModifierGroupIds] = useState(assignedModifierGroupIds);
+
+  function handlePriceChange(val: string) {
+    setPrice(val);
+    const numPrice = parseFloat(val);
+    const numPct = parseFloat(discountPercent);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
+      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+    } else if (!val) {
+      setDiscountPrice("");
+      setDiscountPercent("");
+    }
+  }
+
+  function handleDiscountPriceChange(val: string) {
+    setDiscountPrice(val);
+    const numPrice = parseFloat(price);
+    const numDisc = parseFloat(val);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numDisc) && numDisc > 0 && numDisc < numPrice) {
+      setDiscountPercent(String(Math.round(((numPrice - numDisc) / numPrice) * 100)));
+    } else {
+      setDiscountPercent("");
+    }
+  }
+
+  function handleDiscountPercentChange(val: string) {
+    setDiscountPercent(val);
+    const numPrice = parseFloat(price);
+    const numPct = parseFloat(val);
+    if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
+      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+    } else if (!val) {
+      setDiscountPrice("");
+    }
+  }
 
   const save = useMutation({
     mutationFn: async () => {
@@ -478,43 +569,176 @@ function MenuItemModal({
               <input
                 type="number"
                 value={price}
-                onChange={(event) => setPrice(event.target.value)}
+                onChange={(event) => handlePriceChange(event.target.value)}
                 required
               />
             </FormField>
           </div>
-          <div className="admin-menu-discount-fields">
-            <p>Daily special</p>
+          <div
+            className="admin-menu-discount-fields"
+            style={{
+              borderColor: "rgba(16, 185, 129, 0.4)",
+              backgroundColor: "rgba(16, 185, 129, 0.03)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "0.75rem",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  color: "#065f46",
+                  fontWeight: 700,
+                  fontSize: "0.8rem",
+                  textTransform: "uppercase",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <span>🔥</span> Daily Special (Given Day)
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bounds = getDayBounds(0);
+                    setDiscountStartsAt(bounds.startsAt);
+                    setDiscountEndsAt(bounds.endsAt);
+                  }}
+                  style={{
+                    padding: "3px 8px",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    borderRadius: "4px",
+                    border: "1px solid #a7f3d0",
+                    backgroundColor: "#ecfdf5",
+                    color: "#047857",
+                    cursor: "pointer",
+                  }}
+                >
+                  Set for Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bounds = getDayBounds(1);
+                    setDiscountStartsAt(bounds.startsAt);
+                    setDiscountEndsAt(bounds.endsAt);
+                  }}
+                  style={{
+                    padding: "3px 8px",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    borderRadius: "4px",
+                    border: "1px solid var(--rsc-line)",
+                    backgroundColor: "transparent",
+                    color: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  Tomorrow
+                </button>
+                {(discountPrice || discountStartsAt || discountEndsAt) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscountPrice("");
+                      setDiscountPercent("");
+                      setDiscountStartsAt("");
+                      setDiscountEndsAt("");
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      fontSize: "0.75rem",
+                      color: "var(--rsc-muted)",
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      padding: "2px 4px",
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="admin-menu-form-grid">
               <FormField
                 label="Discount price (₦)"
-                tooltip="Optional item-level special. This is separate from promo codes."
+                tooltip="Special discounted price. Auto-updates percentage discount."
               >
                 <input
                   type="number"
                   min="0"
                   value={discountPrice}
-                  onChange={(event) => setDiscountPrice(event.target.value)}
-                  placeholder="Optional"
+                  onChange={(event) => handleDiscountPriceChange(event.target.value)}
+                  placeholder="e.g. 3500"
                 />
               </FormField>
-              <FormField label="Starts">
+              <FormField
+                label="Percentage discount (%)"
+                tooltip="Bi-directional discount percent. Auto-updates discount price."
+              >
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={discountPercent}
+                    onChange={(event) => handleDiscountPercentChange(event.target.value)}
+                    placeholder="e.g. 20"
+                    style={{ paddingRight: "28px" }}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      color: "var(--rsc-muted)",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    %
+                  </span>
+                </div>
+              </FormField>
+              <FormField label="Active From (Starts)">
                 <input
                   type="datetime-local"
                   value={discountStartsAt}
                   onChange={(event) => setDiscountStartsAt(event.target.value)}
-                  disabled={!discountPrice}
                 />
               </FormField>
-              <FormField label="Ends">
+              <FormField label="Active Until (Ends)">
                 <input
                   type="datetime-local"
                   value={discountEndsAt}
                   onChange={(event) => setDiscountEndsAt(event.target.value)}
-                  disabled={!discountPrice}
                 />
               </FormField>
             </div>
+            <small
+              style={{
+                display: "block",
+                marginTop: "8px",
+                color: "var(--rsc-muted)",
+                fontSize: "0.75rem",
+              }}
+            >
+              💡 Discounts active for the current day will be showcased in the customer{" "}
+              <strong>Daily Specials</strong> section.
+            </small>
           </div>
           <div className="admin-menu-form-grid">
             <FormField label="Category *">
@@ -680,6 +904,39 @@ function MenuItemDetail({
             showBadge
           />
         </DetailRow>
+        {item.isDiscountActive &&
+          item.discountPriceMinor &&
+          item.discountPriceMinor < item.priceMinor && (
+            <DetailRow label="Daily Special">
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "3px 8px",
+                  borderRadius: "6px",
+                  backgroundColor: "rgba(16, 185, 129, 0.12)",
+                  color: "#059669",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                }}
+              >
+                🔥{" "}
+                {Math.round(((item.priceMinor - item.discountPriceMinor) / item.priceMinor) * 100)}%
+                off
+                {item.discountStartsAt && item.discountEndsAt && (
+                  <span style={{ fontWeight: 400, color: "inherit", opacity: 0.8 }}>
+                    {" "}
+                    · until{" "}
+                    {new Date(item.discountEndsAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
+              </span>
+            </DetailRow>
+          )}
         {categoryName && <DetailRow label="Category">{categoryName}</DetailRow>}
         {item.description && <DetailRow label="Description">{item.description}</DetailRow>}
         <DetailRow label="Sort Order">{item.sortOrder}</DetailRow>

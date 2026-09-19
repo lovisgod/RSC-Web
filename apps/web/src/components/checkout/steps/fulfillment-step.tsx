@@ -3,7 +3,7 @@
 import { nigerianPhoneNumberSchema, type DeliveryAddressSummary } from "@rsc/contracts";
 import { Button } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Star, Tag, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, LocateFixed, Star, Tag, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { apiClient } from "@/src/lib/api";
@@ -16,12 +16,12 @@ import {
   type OrderSnapshot,
 } from "@/src/lib/data/checkout";
 import type { GooglePlaceSuggestion } from "@/src/lib/google-places";
-import { geocodeAddress } from "@/src/lib/geocoding";
+import { geocodeAddress, reverseGeocode } from "@/src/lib/geocoding";
 import { useCart } from "@/src/hooks/use-cart";
 import { useDeliveryAddresses } from "@/src/hooks/use-delivery-addresses";
 import { useGooglePlacesAutocomplete } from "@/src/hooks/use-google-places-autocomplete";
 import { useOutlets } from "@/src/hooks/use-outlets";
-import { usePlatformCharges } from "@/src/hooks/use-platform-charges";
+import { calculateCartFees, usePlatformCharges } from "@/src/hooks/use-platform-charges";
 import { useCartStore } from "@/src/stores/cart-store";
 
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
@@ -45,11 +45,9 @@ function SectionLabel({ icon, text }: { icon: string; text: string }) {
 
 export function FulfillmentStep({
   initial,
-  onModeChange,
   onComplete,
 }: {
   initial: DeliveryForm;
-  onModeChange?: (mode: FulfillmentMode) => void;
   onComplete: (
     data: DeliveryForm,
     orderId: string,
@@ -67,8 +65,10 @@ export function FulfillmentStep({
   const { data: savedAddresses = [] } = useDeliveryAddresses();
   const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? null;
 
-  const [mode, setMode] = useState<FulfillmentMode>(initial.mode);
+  const mode: FulfillmentMode = "delivery";
   const [addressText, setAddressText] = useState(initial.address);
+  const [landmark, setLandmark] = useState(initial.landmark ?? "");
+  const [isLocating, setIsLocating] = useState(false);
   const [onBehalf, setOnBehalf] = useState(initial.onBehalf);
   const [recipientPhone, setRecipientPhone] = useState(initial.recipientPhone);
   const [recipientPhoneError, setRecipientPhoneError] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export function FulfillmentStep({
   const [showDropdown, setShowDropdown] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const addressSuggestions = useGooglePlacesAutocomplete(addressText, mode === "delivery");
+  const addressSuggestions = useGooglePlacesAutocomplete(addressText, true);
 
   const filteredAddresses = savedAddresses.filter((addr) => {
     if (!addressText.trim()) return true;
@@ -154,6 +154,51 @@ export function FulfillmentStep({
     } else {
       setShowNoDefaultHint(true);
     }
+  }
+
+  function handleUseCurrentLocation() {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+    setShowNoDefaultHint(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const result = await reverseGeocode(latitude, longitude);
+          setIsLocating(false);
+          if (!result) {
+            setLocationError("Could not determine address for your current location.");
+            return;
+          }
+          setAddressText(result.displayName || result.addressLine);
+          setSelectedSavedId(null);
+          setShowDropdown(false);
+          handleResolvedAddress(result);
+        } catch {
+          setIsLocating(false);
+          setLocationError("Could not resolve your location address. Please enter it manually.");
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError(
+            "Location access was denied. Please allow permission or type your address.",
+          );
+        } else {
+          setLocationError(
+            "Unable to retrieve your current location. Please try again or type your address.",
+          );
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
   }
 
   function handleAddressChange(value: string) {
@@ -254,29 +299,27 @@ export function FulfillmentStep({
     };
   }, []);
 
-  const subtotal = cart ? cartSubtotalMinor(cart) : 0;
-  const deliveryFee = mode === "delivery" && platformCharges ? platformCharges.deliveryFeeMinor : 0;
-  const serviceFee = platformCharges?.serviceFeeMinor ?? 0;
-
-  const vat = cart
-    ? cart.groups.reduce((sum, group) => {
-        const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
-        const outletVatBps = outletById.get(group.outletId)?.vatBps ?? 0;
-        const defaultVatBps = platformCharges?.defaultVatBps ?? 750;
-        const vatBps = outletVatBps > 0 ? outletVatBps : defaultVatBps;
-        return sum + Math.round((groupSubtotal * vatBps) / 10_000);
-      }, 0)
-    : 0;
-
-  const platformCommission = cart
-    ? cart.groups.reduce((sum, group) => {
-        const groupSubtotal = group.items.reduce((s, i) => s + i.unitPriceMinor * i.quantity, 0);
-        const commissionBps = platformCharges?.platformCommissionBps ?? 1000;
-        return sum + Math.round((groupSubtotal * commissionBps) / 10_000);
-      }, 0)
-    : 0;
-
-  const grandTotal = subtotal + deliveryFee + serviceFee + vat + platformCommission;
+  const fees =
+    cart && platformCharges
+      ? calculateCartFees({
+          cart,
+          charges: platformCharges,
+          outletById,
+          options: {
+            includeDelivery: true,
+            deliveryLatitude: coords?.latitude,
+            deliveryLongitude: coords?.longitude,
+            zoneId: zone?.id,
+            zoneName: zone?.name,
+          },
+        })
+      : null;
+  const subtotal = fees?.subtotal ?? (cart ? cartSubtotalMinor(cart) : 0);
+  const deliveryFee = fees?.delivery ?? 0;
+  const serviceFee = fees?.service ?? platformCharges?.serviceFeeMinor ?? 0;
+  const vat = fees?.vat ?? 0;
+  const platformCommission = fees?.commission ?? 0;
+  const grandTotal = fees?.total ?? 0;
 
   const [idempotencyKey] = useState<string>(() =>
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -308,7 +351,7 @@ export function FulfillmentStep({
 
       const base = {
         items,
-        deliveryMode: mode === "delivery" ? ("DELIVERY" as const) : ("TAKEOUT" as const),
+        deliveryMode: "DELIVERY" as const,
         ...(onBehalf ? { recipientPhone: recipientPhone.trim() } : {}),
         subtotalMinor: subtotal,
         deliveryFeeMinor: deliveryFee,
@@ -325,14 +368,13 @@ export function FulfillmentStep({
       };
 
       return apiClient.initiatePayment(
-        mode === "delivery"
-          ? {
-              ...base,
-              deliveryAddress: addressText,
-              deliveryLatitude: coords!.latitude,
-              deliveryLongitude: coords!.longitude,
-            }
-          : base,
+        {
+          ...base,
+          deliveryAddress: addressText,
+          deliveryLatitude: coords!.latitude,
+          deliveryLongitude: coords!.longitude,
+          ...(landmark.trim() ? { landmark: landmark.trim() } : {}),
+        },
         { idempotencyKey },
       );
     },
@@ -360,6 +402,7 @@ export function FulfillmentStep({
         {
           mode,
           address: addressText,
+          landmark: landmark.trim(),
           latitude: coords?.latitude ?? null,
           longitude: coords?.longitude ?? null,
           zone,
@@ -377,34 +420,28 @@ export function FulfillmentStep({
   const isValidating = geocoding || addressSuggestions.isLoading || validateMutation.isPending;
   const isValidated = zone !== null;
   const cartItemCount = cart.groups.reduce((n, g) => n + g.items.length, 0);
-  const canProceed = cartItemCount > 0 && (mode === "takeout" || isValidated);
+  const canProceed = cartItemCount > 0 && isValidated;
 
   return (
     <div className="space-y-6">
-      {/* Delivery / Takeout toggle */}
-      <div className="flex bg-gray-100 rounded-2xl p-1 gap-1">
-        {(["delivery", "takeout"] as FulfillmentMode[]).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => {
-              setMode(m);
-              onModeChange?.(m);
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
-              mode === m ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <span className="capitalize">{m}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Delivery address — only shown in delivery mode */}
-      {mode === "delivery" && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <SectionLabel icon="/icons/png/round-pushpin_1f4cd.png" text="Delivery Address" />
+      {/* Delivery address */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <SectionLabel icon="/icons/png/round-pushpin_1f4cd.png" text="Delivery Address" />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleUseCurrentLocation}
+              disabled={isLocating}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-[var(--rsc-main)] text-[var(--rsc-main)] hover:bg-[var(--rsc-main)]/5 transition-all disabled:opacity-60"
+            >
+              {isLocating ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <LocateFixed className="w-3 h-3" />
+              )}
+              <span>{isLocating ? "Locating…" : "Current location"}</span>
+            </button>
             <button
               type="button"
               onClick={handleUseDefault}
@@ -418,201 +455,217 @@ export function FulfillmentStep({
               {defaultAddress ? `Use ${defaultAddress.label}` : "No Default Set"}
             </button>
           </div>
+        </div>
 
-          <div className="space-y-3 rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-main)_15%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))] p-4 shadow-sm">
-            {/* No-default hint */}
-            {showNoDefaultHint && !defaultAddress && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs font-medium text-amber-600">
-                Type your address below — once verified it will be saved as your default.
-              </div>
-            )}
+        <div className="space-y-3 rounded-2xl border border-[color:color-mix(in_srgb,var(--rsc-main)_15%,var(--rsc-line))] bg-[color:color-mix(in_srgb,var(--rsc-main)_5%,var(--rsc-panel))] p-4 shadow-sm">
+          {/* No-default hint */}
+          {showNoDefaultHint && !defaultAddress && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs font-medium text-amber-600">
+              Type your address below — once verified it will be saved as your default.
+            </div>
+          )}
 
-            {/* Address combobox */}
-            <div className="relative">
-              <div
-                className={`flex items-center gap-3 rounded-xl border bg-[var(--rsc-panel)] px-4 py-3 shadow-sm transition-colors ${
-                  isValidated
-                    ? "border-green-400"
-                    : locationError
-                      ? "border-red-300"
-                      : "border-[var(--rsc-line)] focus-within:border-[var(--rsc-main)]"
-                }`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/icons/png/house_1f3e0.png"
-                  alt="Address"
-                  className="w-5 h-5 object-contain flex-shrink-0"
-                />
-                <input
-                  value={addressText}
-                  onChange={(e) => handleAddressChange(e.target.value)}
-                  onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
-                  placeholder="e.g. 8 Abiola Sanusi Street, off Admiralty Way"
-                  className="flex-1 bg-transparent text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] focus:outline-none"
-                />
-                {isValidating && (
-                  <Loader2 className="w-5 h-5 animate-spin text-gray-400 flex-shrink-0" />
-                )}
-                {isValidated && !isValidating && (
-                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                )}
-              </div>
-
-              {/* Address dropdown */}
-              {showDropdown &&
-                (filteredAddresses.length > 0 || addressSuggestions.suggestions.length > 0) && (
-                  <div
-                    onMouseDown={handleDropdownMouseDown}
-                    className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] shadow-lg"
-                  >
-                    {filteredAddresses.map((addr) => (
-                      <button
-                        key={addr.id}
-                        type="button"
-                        onClick={() => selectSavedAddress(addr)}
-                        className={`flex w-full items-start gap-3 border-b border-[var(--rsc-line)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] ${
-                          selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/10" : ""
-                        }`}
-                      >
-                        <span className="mt-0.5 flex-shrink-0 text-[var(--rsc-muted)]">
-                          {addr.isDefault ? (
-                            <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                          ) : (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src="/icons/png/round-pushpin_1f4cd.png"
-                              alt=""
-                              className="w-5 h-5 object-contain"
-                            />
-                          )}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-[var(--rsc-ink)]">
-                            {addr.label}
-                          </p>
-                          <p className="truncate text-xs text-[var(--rsc-muted)]">
-                            {addr.addressLine}, {addr.city}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
-                    {addressSuggestions.suggestions.map((suggestion) => (
-                      <button
-                        key={`${suggestion.provider}:${suggestion.id}`}
-                        type="button"
-                        onClick={() => void selectAddressSuggestion(suggestion)}
-                        className="flex w-full items-start gap-3 border-b border-[var(--rsc-line)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))]"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/icons/png/round-pushpin_1f4cd.png"
-                          alt=""
-                          className="w-5 h-5 object-contain mt-0.5 flex-shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-[var(--rsc-ink)]">
-                            {suggestion.description}
-                          </p>
-                          <p className="truncate text-xs text-[var(--rsc-muted)]">
-                            {suggestion.provider === "google"
-                              ? "Google exact address"
-                              : "Address match"}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {/* Address combobox */}
+          <div className="relative">
+            <div
+              className={`flex items-center gap-3 rounded-xl border bg-[var(--rsc-panel)] px-4 py-3 shadow-sm transition-colors ${
+                isValidated
+                  ? "border-green-400"
+                  : locationError
+                    ? "border-red-300"
+                    : "border-[var(--rsc-line)] focus-within:border-[var(--rsc-main)]"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/icons/png/house_1f3e0.png"
+                alt="Address"
+                className="w-5 h-5 object-contain flex-shrink-0"
+              />
+              <input
+                value={addressText}
+                onChange={(e) => handleAddressChange(e.target.value)}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+                placeholder="e.g. 8 Abiola Sanusi Street, off Admiralty Way"
+                className="flex-1 bg-transparent text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] focus:outline-none"
+              />
+              {isValidating && (
+                <Loader2 className="w-5 h-5 animate-spin text-gray-400 flex-shrink-0" />
+              )}
+              {isValidated && !isValidating && (
+                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+              )}
             </div>
 
-            {/* Validation success */}
-            {isValidated && zone && (
-              <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
-                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-green-600">Deliverable</p>
-                  <p className="text-xs text-green-500 mt-0.5">{zone.name} zone</p>
+            {/* Address dropdown */}
+            {showDropdown &&
+              (filteredAddresses.length > 0 || addressSuggestions.suggestions.length > 0) && (
+                <div
+                  onMouseDown={handleDropdownMouseDown}
+                  className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] shadow-lg"
+                >
+                  {filteredAddresses.map((addr) => (
+                    <button
+                      key={addr.id}
+                      type="button"
+                      onClick={() => selectSavedAddress(addr)}
+                      className={`flex w-full items-start gap-3 border-b border-[var(--rsc-line)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))] ${
+                        selectedSavedId === addr.id ? "bg-[var(--rsc-main)]/10" : ""
+                      }`}
+                    >
+                      <span className="mt-0.5 flex-shrink-0 text-[var(--rsc-muted)]">
+                        {addr.isDefault ? (
+                          <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src="/icons/png/round-pushpin_1f4cd.png"
+                            alt=""
+                            className="w-5 h-5 object-contain"
+                          />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--rsc-ink)]">
+                          {addr.label}
+                        </p>
+                        <p className="truncate text-xs text-[var(--rsc-muted)]">
+                          {addr.addressLine}, {addr.city}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                  {addressSuggestions.suggestions.map((suggestion) => (
+                    <button
+                      key={`${suggestion.provider}:${suggestion.id}`}
+                      type="button"
+                      onClick={() => void selectAddressSuggestion(suggestion)}
+                      className="flex w-full items-start gap-3 border-b border-[var(--rsc-line)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--rsc-brand)_8%,var(--rsc-panel))]"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/icons/png/round-pushpin_1f4cd.png"
+                        alt=""
+                        className="w-5 h-5 object-contain mt-0.5 flex-shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--rsc-ink)]">
+                          {suggestion.description}
+                        </p>
+                        <p className="truncate text-xs text-[var(--rsc-muted)]">
+                          {suggestion.provider === "google"
+                            ? "Google exact address"
+                            : "Address match"}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              </div>
-            )}
-
-            {/* Validation error */}
-            {locationError && (
-              <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-                <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-red-500 leading-relaxed">{locationError}</p>
-              </div>
-            )}
-
-            {/* Idle hint */}
-            {!isValidated && !locationError && !isValidating && !addressText && (
-              <p className="text-center text-xs font-medium text-[var(--rsc-muted)]">
-                Include your house number, street name and a nearby route, if needed.
-              </p>
-            )}
-
-            {geocoding && (
-              <p className="text-center text-xs font-medium text-[var(--rsc-muted)]">
-                Finding your address…
-              </p>
-            )}
-
-            {/* On behalf checkbox */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={onBehalf}
-                onChange={(e) => {
-                  setOnBehalf(e.target.checked);
-                  setRecipientPhoneError(null);
-                  if (!e.target.checked) setRecipientPhone("");
-                }}
-                className="w-5 h-5 rounded border-gray-300 accent-[var(--rsc-main)]"
-              />
-              <span className="text-sm font-medium text-[var(--rsc-ink)]">
-                Order on behalf of someone else
-              </span>
-            </label>
-
-            {onBehalf && (
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-[var(--rsc-muted)]">
-                  Recipient phone number
-                </label>
-                <input
-                  type="tel"
-                  value={recipientPhone}
-                  onChange={(event) => {
-                    setRecipientPhone(event.target.value);
-                    setRecipientPhoneError(null);
-                  }}
-                  onBlur={() => {
-                    if (!recipientPhone.trim()) {
-                      setRecipientPhoneError("Recipient phone number is required.");
-                      return;
-                    }
-
-                    const parsedPhone = nigerianPhoneNumberSchema.safeParse(recipientPhone);
-                    setRecipientPhoneError(
-                      parsedPhone.success
-                        ? null
-                        : (parsedPhone.error.issues[0]?.message ?? "Enter a valid phone number."),
-                    );
-                  }}
-                  placeholder="08031234567"
-                  aria-invalid={Boolean(recipientPhoneError)}
-                  className="w-full rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] px-4 py-3 text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] focus:border-[var(--rsc-main)] focus:outline-none"
-                />
-                {recipientPhoneError && (
-                  <p className="text-xs text-red-500">{recipientPhoneError}</p>
-                )}
-              </div>
-            )}
+              )}
           </div>
+
+          {/* Landmark / directions */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="checkout-landmark"
+              className="block text-xs font-semibold text-[var(--rsc-muted)]"
+            >
+              Landmark / Navigation details (Optional)
+            </label>
+            <input
+              id="checkout-landmark"
+              type="text"
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+              placeholder="e.g. Opposite mega chicken, black gate, beside pharmacy"
+              className="w-full rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] px-4 py-2.5 text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] shadow-sm focus:border-[var(--rsc-main)] focus:outline-none transition-colors"
+            />
+          </div>
+
+          {/* Validation success */}
+          {isValidated && zone && (
+            <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
+              <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-green-600">Deliverable</p>
+                <p className="text-xs text-green-500 mt-0.5">{zone.name} zone</p>
+              </div>
+            </div>
+          )}
+
+          {/* Validation error */}
+          {locationError && (
+            <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+              <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-red-500 leading-relaxed">{locationError}</p>
+            </div>
+          )}
+
+          {/* Idle hint */}
+          {!isValidated && !locationError && !isValidating && !addressText && (
+            <p className="text-center text-xs font-medium text-[var(--rsc-muted)]">
+              Include your house number, street name and a nearby route, if needed.
+            </p>
+          )}
+
+          {geocoding && (
+            <p className="text-center text-xs font-medium text-[var(--rsc-muted)]">
+              Finding your address…
+            </p>
+          )}
+
+          {/* On behalf checkbox */}
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={onBehalf}
+              onChange={(e) => {
+                setOnBehalf(e.target.checked);
+                setRecipientPhoneError(null);
+                if (!e.target.checked) setRecipientPhone("");
+              }}
+              className="w-5 h-5 rounded border-gray-300 accent-[var(--rsc-main)]"
+            />
+            <span className="text-sm font-medium text-[var(--rsc-ink)]">
+              Order on behalf of someone else
+            </span>
+          </label>
+
+          {onBehalf && (
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[var(--rsc-muted)]">
+                Recipient phone number
+              </label>
+              <input
+                type="tel"
+                value={recipientPhone}
+                onChange={(event) => {
+                  setRecipientPhone(event.target.value);
+                  setRecipientPhoneError(null);
+                }}
+                onBlur={() => {
+                  if (!recipientPhone.trim()) {
+                    setRecipientPhoneError("Recipient phone number is required.");
+                    return;
+                  }
+
+                  const parsedPhone = nigerianPhoneNumberSchema.safeParse(recipientPhone);
+                  setRecipientPhoneError(
+                    parsedPhone.success
+                      ? null
+                      : (parsedPhone.error.issues[0]?.message ?? "Enter a valid phone number."),
+                  );
+                }}
+                placeholder="08031234567"
+                aria-invalid={Boolean(recipientPhoneError)}
+                className="w-full rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] px-4 py-3 text-sm font-medium text-[var(--rsc-ink)] placeholder:text-[var(--rsc-muted)] focus:border-[var(--rsc-main)] focus:outline-none"
+              />
+              {recipientPhoneError && <p className="text-xs text-red-500">{recipientPhoneError}</p>}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Price breakdown — mobile only */}
       <div className="space-y-2 lg:hidden">
@@ -673,7 +726,7 @@ export function FulfillmentStep({
             Have an offer? Enter the code before continuing to payment.
           </p>
         </div>
-        {mode === "delivery" && !isValidated && !initiateMutation.isPending && (
+        {!isValidated && !initiateMutation.isPending && (
           <p className="text-xs text-center text-gray-400">
             Validate your delivery location to continue
           </p>

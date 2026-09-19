@@ -66,6 +66,12 @@ export class InitiatePaymentDto {
   @Length(5, 1_000)
   deliveryAddress?: string;
 
+  @ApiPropertyOptional({ example: "Opposite Mega Chicken, black gate" })
+  @IsOptional()
+  @IsString()
+  @Length(1, 255)
+  landmark?: string;
+
   @ApiPropertyOptional({ example: 6.4474 })
   @IsOptional()
   @IsLatitude()

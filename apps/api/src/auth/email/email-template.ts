@@ -57,8 +57,8 @@ export function renderEmailTemplate(input: EmailTemplateInput): string {
                 }
                 <tr>
                   <td style="padding: 22px 32px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
-                    <p style="margin: 0 0 8px; color: #4b5563; font-size: 13px; line-height: 1.6;">${escapeHtml(input.footerNote ?? "If you did not request this email, please ignore it or contact RSC support.")}</p>
-                    <p style="margin: 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">RSC Operations Team</p>
+                    <p style="margin: 0 0 8px; color: #4b5563; font-size: 13px; line-height: 1.6;">${escapeHtml(input.footerNote ?? "If you did not request this email, please ignore it or contact DineOutNG support.")}</p>
+                    <p style="margin: 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">DineOutNG Operations Team</p>
                   </td>
                 </tr>
               </table>

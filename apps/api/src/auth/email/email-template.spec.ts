@@ -15,6 +15,6 @@ describe(renderEmailTemplate.name, () => {
 
     expect(html).toContain("background: #f3f4f6");
     expect(html).toContain("482901");
-    expect(html).toContain("RSC Operations Team");
+    expect(html).toContain("DineOutNG Operations Team");
   });
 });

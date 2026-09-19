@@ -9,11 +9,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { ApiError } from "@rsc/api-client";
-import type {
-  InitiatePaymentInput,
-  OrderDetail,
-  OutletSummary,
-  SubOrderDetail,
+import {
+  getMenuItemCurrentPriceMinor,
+  type InitiatePaymentInput,
+  type OrderDetail,
+  type OutletSummary,
+  type SubOrderDetail,
 } from "@rsc/contracts";
 import { OUTLETS_QUERY } from "@/src/hooks/use-outlets";
 import { apiClient } from "@/src/lib/api";
@@ -79,7 +80,7 @@ function hydrateCartFromReorder(config: InitiatePaymentInput, outlets: OutletSum
         name: menuItem.name,
         notes: reorderItem.customerNote ?? "",
         quantity: reorderItem.quantity,
-        unitPriceMinor: menuItem.priceMinor + modifierTotal,
+        unitPriceMinor: getMenuItemCurrentPriceMinor(menuItem) + modifierTotal,
         modifiers: selectedModifiers,
       },
     });
