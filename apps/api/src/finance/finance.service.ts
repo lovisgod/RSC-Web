@@ -1,17 +1,11 @@
-import {
-  BadGatewayException,
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user";
-import type { ApplicationConfig } from "../config/configuration";
 import { Outlet } from "../outlets/outlet.entity";
 import { PaymentStatus } from "../payments/payment.entity";
+import { MomentSettlementReportClient } from "./moment-settlement-report.client";
 
 const COMPLETED_SUB_ORDER_STATUSES = ["COLLECTED", "DISPATCHED"];
 const SETTLEMENT_TIME_ZONE = "Africa/Lagos";
@@ -26,7 +20,7 @@ export interface OutletSettlementQuery {
 export class FinanceService {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly configService: ConfigService<ApplicationConfig, true>,
+    private readonly momentSettlementReports: MomentSettlementReportClient,
     @InjectRepository(Outlet)
     private readonly outlets: Repository<Outlet>,
   ) {}
@@ -155,40 +149,21 @@ export class FinanceService {
       throw new NotFoundException("Outlet not found");
     }
 
-    const momentConfig = this.configService.get("payments.moment", { infer: true });
-    if (!momentConfig.secretKey) {
-      throw new BadRequestException("Moment settlement report export is not configured");
+    if (outlet) {
+      throw new BadRequestException(
+        "Moment settlement reports are merchant-level; export all outlets for reconciliation",
+      );
     }
 
-    const path = momentConfig.settlementReportPath.trim();
-    if (!path) {
-      throw new BadRequestException("Moment settlement report path is not configured");
-    }
-
-    const url = new URL(path.startsWith("/") ? path : `/${path}`, momentConfig.baseUrl);
-    url.searchParams.set("date_from", window.dateFrom);
-    url.searchParams.set("date_to", window.dateTo);
-    url.searchParams.set("report_type", "settlement");
-    if (outlet?.settlementSubaccountCode) {
-      url.searchParams.set("subaccount_code", outlet.settlementSubaccountCode);
-    }
-
-    const response = await fetch(url, {
-      headers: {
-        accept: "text/csv, application/csv, application/json",
-        authorization: `Bearer ${momentConfig.secretKey}`,
-      },
-    });
-
-    const content = await response.text();
-    if (!response.ok) {
-      throw new BadGatewayException("Unable to retrieve settlement report from Moment");
-    }
+    const files = await this.momentSettlementReports.download(window.dateFrom, window.dateTo);
 
     return {
-      filename: this.momentReportFilename(response, window, outlet?.name ?? "all-outlets"),
-      contentType: response.headers.get("content-type") ?? "text/csv",
-      content,
+      filename:
+        files.length === 1
+          ? files[0]!.name
+          : `moment-settlements-${window.dateFrom}-to-${window.dateTo}.csv`,
+      contentType: "text/csv",
+      content: combineCsvFiles(files.map((file) => file.content)),
     };
   }
 
@@ -251,20 +226,6 @@ export class FinanceService {
       approvalUnavailableReason: "No completed paid sub-orders in this settlement window",
       latestApprovedAt: null,
     };
-  }
-
-  private momentReportFilename(
-    response: Response,
-    window: Required<Pick<OutletSettlementQuery, "dateFrom" | "dateTo">>,
-    outletName: string,
-  ): string {
-    const disposition = response.headers.get("content-disposition");
-    const match = disposition?.match(/filename="?([^";]+)"?/i);
-    if (match?.[1]) {
-      return match[1];
-    }
-
-    return `moment-settlements-${slugify(outletName)}-${window.dateFrom}-to-${window.dateTo}.csv`;
   }
 
   private normalizeSettlementWindow(
@@ -380,10 +341,14 @@ function lagosDateString(offsetDays: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-function slugify(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+function combineCsvFiles(contents: string[]): string {
+  return contents
+    .map((content, index) => {
+      const normalized = content.replace(/^\uFEFF/, "").trim();
+      if (index === 0) return normalized;
+      const newline = normalized.indexOf("\n");
+      return newline === -1 ? "" : normalized.slice(newline + 1);
+    })
+    .filter(Boolean)
+    .join("\n");
 }

@@ -4,9 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Download, ReceiptText, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { useOutletsLive } from "../hooks/use-outlets-live";
 import { useApproveOutletSettlement, useOutletSettlements } from "../hooks/use-outlet-settlements";
-import type { OutletSettlementQuery } from "../lib/api";
+import { exportOutletSettlements, type OutletSettlementQuery } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
 
 type ExportDateMode = "single" | "range";
@@ -67,14 +66,12 @@ function statusClass(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
 }
 
 function ExportSettlementsModal({
-  outlets,
   initialDate,
   isExporting,
   maxDate,
   onClose,
   onExport,
 }: {
-  outlets: Array<{ id: string; name: string }>;
   initialDate: string;
   isExporting: boolean;
   maxDate: string;
@@ -116,12 +113,8 @@ function ExportSettlementsModal({
               <span>Outlet</span>
               <select value={outletId} onChange={(event) => setOutletId(event.target.value)}>
                 <option value="all">All outlets</option>
-                {outlets.map((outlet) => (
-                  <option key={outlet.id} value={outlet.id}>
-                    {outlet.name}
-                  </option>
-                ))}
               </select>
+              <small>Moment provides merchant-level settlement files covering all outlets.</small>
             </label>
 
             <label className="settlement-field">
@@ -209,7 +202,6 @@ export function FinancialReconciliationPage() {
     () => ({ dateFrom: selectedDate, dateTo: selectedDate }),
     [selectedDate],
   );
-  const { data: outlets = [] } = useOutletsLive();
   const { data: settlements = [], isLoading } = useOutletSettlements(settlementQuery);
   const {
     mutate: approveSettlement,
@@ -217,11 +209,18 @@ export function FinancialReconciliationPage() {
     variables,
   } = useApproveOutletSettlement();
   const exportMutation = useMutation({
-    mutationFn: async (query: OutletSettlementQuery) => {
-      // TODO: Re-enable when the real CSV export endpoint is available.
-      // return exportOutletSettlements(query);
-      void query;
-      throw new Error("Settlement CSV export is not available yet.");
+    mutationFn: exportOutletSettlements,
+    onSuccess: (report) => {
+      const url = URL.createObjectURL(new Blob([report.content], { type: report.contentType }));
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = report.filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setExportOpen(false);
+      toastBus.emit("Settlement report downloaded", "success");
     },
     onError: (err: Error) => toastBus.emit(err.message, "error"),
   });
@@ -257,7 +256,6 @@ export function FinancialReconciliationPage() {
     <>
       {exportOpen && (
         <ExportSettlementsModal
-          outlets={outlets.map((outlet) => ({ id: outlet.id, name: outlet.name }))}
           initialDate={selectedDate}
           isExporting={exportMutation.isPending}
           maxDate={today}

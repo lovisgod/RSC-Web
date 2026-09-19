@@ -80,6 +80,10 @@ export interface ApplicationConfig {
       baseUrl: string;
       webhookSecret: string;
       webhookReplayLog: boolean;
+      sftpHost: string;
+      sftpPort: number;
+      sftpUsername: string;
+      sftpPassword: string;
       settlementReportPath: string;
     };
     platformCommissionBps: number;
@@ -236,7 +240,11 @@ export default function configuration(): ApplicationConfig {
         baseUrl: (process.env.MOMENT_BASE_URL ?? "https://api.momentpay.net").replace(/\/$/, ""),
         webhookSecret: process.env.MOMENT_WEBHOOK_SECRET ?? "",
         webhookReplayLog: process.env.MOMENT_WEBHOOK_REPLAY_LOG === "true",
-        settlementReportPath: process.env.MOMENT_SETTLEMENT_REPORT_PATH ?? "/settlements/report",
+        sftpHost: process.env.MOMENT_SFTP_HOST ?? "ftp.momentco.io",
+        sftpPort: Number(process.env.MOMENT_SFTP_PORT ?? 22),
+        sftpUsername: process.env.MOMENT_SFTP_USERNAME ?? "",
+        sftpPassword: process.env.MOMENT_SFTP_PASSWORD ?? "",
+        settlementReportPath: process.env.MOMENT_SETTLEMENT_REPORT_PATH ?? "/",
       },
       platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
       vatBps: Number(process.env.VAT_BPS ?? 750),
