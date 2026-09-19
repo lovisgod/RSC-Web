@@ -1,7 +1,7 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button, EmptyState } from "@rsc/ui";
 import { useMutation } from "@tanstack/react-query";
-import { Download, ReceiptText, X } from "lucide-react";
+import { Download, Info, ReceiptText, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useApproveOutletSettlement, useOutletSettlements } from "../hooks/use-outlet-settlements";
@@ -110,11 +110,20 @@ function ExportSettlementsModal({
         <div className="modal__body">
           <div className="settlement-export-card">
             <label className="settlement-field">
-              <span>Outlet</span>
+              <span className="settlement-field__label">
+                Outlet
+                <span
+                  className="settlement-field__info"
+                  role="img"
+                  aria-label="Moment provides merchant-level settlement files covering all outlets."
+                  title="Moment provides merchant-level settlement files covering all outlets."
+                >
+                  <Info aria-hidden="true" size={14} />
+                </span>
+              </span>
               <select value={outletId} onChange={(event) => setOutletId(event.target.value)}>
                 <option value="all">All outlets</option>
               </select>
-              <small>Moment provides merchant-level settlement files covering all outlets.</small>
             </label>
 
             <label className="settlement-field">

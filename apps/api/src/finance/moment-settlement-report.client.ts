@@ -34,6 +34,7 @@ export class MomentSettlementReportClient {
       });
 
       const entries = await client.list(remoteDirectory);
+      console.log("ENTRIES", JSON.stringify(entries));
       const files = entries
         .filter(
           (entry) => entry.type === "-" && isSettlementFileForWindow(entry.name, dateFrom, dateTo),

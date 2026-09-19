@@ -1710,6 +1710,23 @@ th {
   color: var(--rsc-muted);
 }
 
+.settlement-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.settlement-field__info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--rsc-muted);
+  cursor: help;
+}
+
 .settlement-main-filter select,
 .settlement-main-filter input,
 .settlement-field select,
