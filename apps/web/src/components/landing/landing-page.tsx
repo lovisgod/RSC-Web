@@ -634,61 +634,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      {/* <footer className="grab-footer" aria-label="Footer navigation">
-        <div className="grab-footer__inner">
-          <div className="grab-footer__brand-col">
-            <BrandLogo className="w-32" priority />
-            <p className="grab-footer__tagline">
-              One app. Many flavors. Endless choices. The smartest way to order food across
-              specialized DineOut NG outlets in Nigeria.
-            </p>
-            <p className="grab-footer__copy">
-              © {new Date().getFullYear()} DineOut Group Ltd. All rights reserved.
-            </p>
-          </div>
-
-          <div className="grab-footer__links-col">
-            <h4>Quick Links</h4>
-            <ul>
-              <li>
-                <Link href="/outlets">All outlets</Link>
-              </li>
-              <li>
-                <Link href="#specials">Daily Specials</Link>
-              </li>
-              <li>
-                <Link href="#exclusive-discounts">Exclusive Discounts</Link>
-              </li>
-              <li>
-                <Link href="/cart">Your Cart</Link>
-              </li>
-              <li>
-                <Link href="/sign-in">Customer Sign In</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="grab-footer__links-col">
-            <h4>Trust & Legal</h4>
-            <ul>
-              <li>
-                <span className="text-gray-400 text-sm">How It Works</span>
-              </li>
-              <li>
-                <span className="text-gray-400 text-sm">FAQs & Support</span>
-              </li>
-              <li>
-                <span className="text-gray-400 text-sm">Privacy & Terms</span>
-              </li>
-              <li>
-                <span className="text-gray-400 text-sm">DineOut NG Partner Outlets</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </footer> */}
-
       {/* ── MOBILE STICKY BOTTOM NAVIGATION BAR ── */}
       <nav className="grab-bottom-nav" aria-label="Mobile bottom navigation">
         <Link href="/" className="grab-bottom-nav__item grab-bottom-nav__item--active">
