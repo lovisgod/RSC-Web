@@ -110,7 +110,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  padding: 0.55rem 1rem;
+  padding: 0.55rem 2.75rem 0.55rem 1rem;
   background: linear-gradient(90deg, #073b1f 0%, #00b14f 100%);
   color: #ffffff;
   font-size: 0.82rem;
@@ -120,9 +120,33 @@ body {
   z-index: 60;
 }
 
-@media (max-width: 768px) {
-  .landing-top-banner {
-    display: none;
+.landing-top-banner__message {
+  text-wrap: balance;
+}
+
+.landing-top-banner__close {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ffcf1f;
+    outline-offset: 2px;
   }
 }
 
@@ -138,22 +162,10 @@ body {
   text-transform: uppercase;
 }
 
-.landing-top-banner__link {
-  color: #ffcf1f;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  font-weight: 800;
-
-  &:hover {
-    color: #ffffff;
-  }
-}
-
 /* ── Common Content Container Width ────────────────────────── */
 .landing-header,
 .grab-hero,
 .grab-section,
-.grab-trust-section,
 .grab-footer__inner {
   width: min(1200px, 92%);
   margin-inline: auto;
@@ -1933,25 +1945,186 @@ body {
   letter-spacing: 0.04em;
 }
 
-/* ── SECTION 4: 4-PILLAR TRUST GRID ─────────────────────────── */
-.grab-trust-section {
-  margin-top: 3.5rem;
+/* ── SECTION 4: TRUST & BENEFIT FAB (Why choose DineOut NG) ─── */
+.grab-help-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 999px;
+  background: #00b14f;
+  color: #ffffff;
+  box-shadow: 0 10px 28px rgba(0, 177, 79, 0.45);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+
+  &:hover {
+    background: #00c257;
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(0, 177, 79, 0.4);
+    outline-offset: 3px;
+  }
 }
 
-.grab-trust-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 26px;
+.grab-help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 89;
+  background: rgba(13, 23, 17, 0.35);
+  cursor: default;
+}
+
+.grab-help-popover {
+  position: fixed;
+  right: 1.25rem;
+  bottom: calc(1.25rem + 64px);
+  z-index: 90;
+  width: min(370px, calc(100vw - 2.5rem));
+  padding: 1.25rem;
+  border-radius: 20px;
   background: var(--rsc-panel);
   border: 1px solid var(--rsc-line);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+  animation: grab-help-pop 0.18s ease;
 }
 
-[data-theme="dark"] .grab-trust-grid {
+[data-theme="dark"] .grab-help-popover {
   background: #0e1711;
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+.grab-help-popover__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.grab-help-popover__title {
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rsc-ink);
+}
+
+.grab-help-popover__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--rsc-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.12);
+    color: var(--rsc-ink);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #00b14f;
+    outline-offset: 2px;
+  }
+}
+
+.grab-help-popover__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.grab-help-popover__grid .grab-trust-pillar {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.grab-help-popover__grid .grab-trust-pillar__icon-circle {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.5rem;
+}
+
+.grab-help-popover__scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rsc-line);
+  max-height: min(52vh, 440px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.grab-help-popover__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.grab-help-popover__heading {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.grab-help-popover__steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+.grab-help-popover__steps .grab-step-card {
+  padding: 1rem;
+  gap: 0.5rem;
+  border-radius: 18px;
+}
+
+.grab-help-popover__steps .grab-step-card__num {
+  font-size: 1.5rem;
+}
+
+.grab-help-popover__steps .grab-step-card__icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+}
+
+.grab-help-popover__steps .grab-step-card__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.grab-help-popover__steps .grab-step-card__copy {
+  font-size: 0.84rem;
+}
+
+@keyframes grab-help-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .grab-trust-pillar {
@@ -1988,25 +2161,6 @@ body {
 }
 
 /* ── SECTION 5: HOW IT WORKS (3 STEPS) ──────────────────────── */
-.grab-steps-wrapper {
-  padding: 3rem 2rem;
-  border-radius: 32px;
-  background: var(--rsc-panel);
-  border: 1px solid var(--rsc-line);
-}
-
-[data-theme="dark"] .grab-steps-wrapper {
-  background: #0d1711;
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.grab-steps-header {
-  text-align: center;
-  max-width: 600px;
-  margin-inline: auto;
-  margin-bottom: 2.5rem;
-}
-
 .grab-steps-title {
   margin: 0.35rem 0 0.75rem;
   font-size: clamp(1.6rem, 2.8vw, 2.2rem);
@@ -2019,12 +2173,6 @@ body {
   font-size: 0.95rem;
   color: var(--rsc-muted);
   line-height: 1.6;
-}
-
-.grab-steps-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.5rem;
 }
 
 .grab-step-card {
@@ -2155,6 +2303,68 @@ body {
     margin: 0;
     font-size: 0.92rem;
   }
+}
+
+/* ── Bottom Tagline Banner ──────────────────────────────────── */
+.grab-bottom-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.1rem;
+  margin-top: 3.5rem !important;
+  padding: 2.5rem 1.5rem;
+  border-radius: 30px;
+  background: linear-gradient(120deg, #073b1f 0%, #00b14f 100%);
+  color: #ffffff;
+  box-shadow: 0 16px 40px rgba(0, 177, 79, 0.25);
+}
+
+.grab-bottom-banner__lead {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 950;
+  line-height: 1.3;
+  max-width: 680px;
+  text-wrap: balance;
+
+  strong {
+    color: #ffcf1f;
+    font-weight: 950;
+  }
+}
+
+.grab-bottom-banner__steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.grab-bottom-banner__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.grab-bottom-banner__step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ffcf1f;
+  color: #073b1f;
+  font-size: 0.7rem;
+  font-weight: 900;
 }
 
 /* ── FOOTER ─────────────────────────────────────────────────── */
@@ -2361,11 +2571,6 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .grab-trust-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.5rem;
-  }
-
   .grab-footer__inner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2380,6 +2585,24 @@ body {
     padding: 0.6rem 1rem;
   }
 
+  .grab-help-fab {
+    right: 1rem;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0) + 1rem);
+    width: 50px;
+    height: 50px;
+  }
+
+  .grab-help-popover {
+    left: 1rem;
+    right: 1rem;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0) + 5rem);
+    width: auto;
+  }
+
+  .grab-help-popover__scroll {
+    max-height: min(54vh, 480px);
+  }
+
   .landing-header__nav,
   .landing-header__cta {
     display: none;
@@ -2388,6 +2611,11 @@ body {
   .landing-top-banner {
     font-size: 0.75rem;
     flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .landing-top-banner__close {
+    right: 0.35rem;
   }
 
   .grab-outlets-portrait-grid {
@@ -2502,16 +2730,6 @@ body {
   .grab-promo-banner {
     grid-template-columns: 1fr;
     padding: 1.5rem;
-  }
-
-  .grab-steps-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .grab-trust-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-    padding: 1.25rem 0.75rem;
   }
 
   .grab-footer__inner {

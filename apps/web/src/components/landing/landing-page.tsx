@@ -20,6 +20,7 @@ import {
   TruckIcon,
   UserIcon,
   UtensilsIcon,
+  XIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -98,12 +99,14 @@ const faqItems = [
   {
     question: "What payment methods do you accept?",
     answer:
-      "We accept all major debit cards, bank transfers, and digital wallets via Paystack and Moment payment gateways with instant payment confirmation.",
+      "We accept all major debit cards, bank transfers, and digital wallets with instant payment confirmation.",
   },
 ] as const;
 
 export function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const [activeDailyPage, setActiveDailyPage] = useState(0);
   const dailyScrollerRef = useRef<HTMLDivElement | null>(null);
@@ -126,6 +129,17 @@ export function LandingPage() {
     // Only update external DOM (scroll position) — no setState here
     dailyScrollerRef.current?.scrollTo({ left: 0 });
   }, [dailyPageCount]);
+
+  useEffect(() => {
+    if (!isHelpOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsHelpOpen(false);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isHelpOpen]);
 
   function handleQuickAddSpecial(special: MenuItemSummary & { outletName: string }) {
     addItemToCart({
@@ -186,13 +200,20 @@ export function LandingPage() {
       )}
 
       {/* Top Banner Accent */}
-      <div className="landing-top-banner" aria-label="Announcement">
-        <span className="landing-top-banner__badge">NEW</span>
-        <span>Order across multiple DineOut NG outlets with one single checkout & delivery!</span>
-        <Link href="#how-it-works" className="landing-top-banner__link">
-          Learn how it works →
-        </Link>
-      </div>
+      {!bannerDismissed && (
+        <div className="landing-top-banner" aria-label="Announcement">
+          <span className="landing-top-banner__message">Multiple orders, One payment,</span>
+          <span className="landing-top-banner__badge">One delivery</span>
+          <button
+            type="button"
+            className="landing-top-banner__close"
+            aria-label="Dismiss announcement"
+            onClick={() => setBannerDismissed(true)}
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Clean Full-Width Header Navigation */}
       <header className="landing-header" aria-label="DineOut NG navigation">
@@ -470,104 +491,151 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── SECTION 4: 4-PILLAR TRUST & BENEFIT GRID ── */}
-      <section className="grab-trust-section" aria-label="Why choose DineOut NG">
-        <div className="grab-trust-grid">
-          {trustPillars.map((item) => {
-            const IconComp = item.icon;
-            return (
-              <div key={item.title} className="grab-trust-pillar">
-                <div className="grab-trust-pillar__icon-circle">
-                  <IconComp className="w-5 h-5 text-emerald-400" />
-                </div>
-                <h3 className="grab-trust-pillar__title">{item.title}</h3>
-                <p className="grab-trust-pillar__subtitle">{item.subtitle}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {/* ── SECTION 4: TRUST & BENEFIT FAB (hidden by default) ── */}
+      <button
+        type="button"
+        className="grab-help-fab"
+        aria-label="Why choose DineOut NG"
+        aria-expanded={isHelpOpen}
+        aria-controls="grab-help-popover"
+        onClick={() => setIsHelpOpen((open) => !open)}
+      >
+        <HelpCircleIcon className="w-6 h-6" />
+      </button>
 
-      {/* ── SECTION 5: HOW ONE DINEOUT ORDER WORKS (3 STEPS) ── */}
-      <section className="grab-section" id="how-it-works" aria-labelledby="grab-how-heading">
-        <div className="grab-steps-wrapper">
-          <div className="grab-steps-header">
-            <span className="grab-section-eyebrow">SIMPLE 3-STEP PROCESS</span>
-            <h2 id="grab-how-heading" className="grab-steps-title">
-              How one DineOut NG order works
-            </h2>
-            <p className="grab-steps-desc">
-              Ordering from multiple outlets used to mean multiple delivery fees and separate app
-              checkouts. DineOut NG simplifies everything into 3 steps.
-            </p>
-          </div>
-
-          <div className="grab-steps-grid">
-            {steps.map((step) => {
-              const IconComp = step.icon;
-              return (
-                <article key={step.title} className="grab-step-card">
-                  <div className="grab-step-card__top">
-                    <span className="grab-step-card__num">{step.step}</span>
-                    <div className="grab-step-card__icon-box">
-                      <IconComp className="w-5 h-5" />
+      {isHelpOpen && (
+        <>
+          <div
+            className="grab-help-backdrop"
+            aria-hidden="true"
+            onClick={() => setIsHelpOpen(false)}
+          />
+          <div
+            id="grab-help-popover"
+            className="grab-help-popover"
+            role="dialog"
+            aria-label="Why choose DineOut NG"
+          >
+            <div className="grab-help-popover__header">
+              <span className="grab-help-popover__title">Why choose DineOut NG</span>
+              <button
+                type="button"
+                className="grab-help-popover__close"
+                aria-label="Close benefits"
+                onClick={() => setIsHelpOpen(false)}
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grab-help-popover__grid">
+              {trustPillars.map((item) => {
+                const IconComp = item.icon;
+                return (
+                  <div key={item.title} className="grab-trust-pillar">
+                    <div className="grab-trust-pillar__icon-circle">
+                      <IconComp className="w-5 h-5 text-emerald-400" />
                     </div>
+                    <h3 className="grab-trust-pillar__title">{item.title}</h3>
+                    <p className="grab-trust-pillar__subtitle">{item.subtitle}</p>
                   </div>
-                  <span className="grab-step-card__sub">{step.subtitle}</span>
-                  <h3 className="grab-step-card__title">{step.title}</h3>
-                  <p className="grab-step-card__copy">{step.copy}</p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+                );
+              })}
+            </div>
 
-      {/* ── SECTION 6: FAQ ACCORDION ── */}
-      <section className="grab-section" id="faq" aria-labelledby="grab-faq-heading">
-        <div className="grab-section__header">
-          <div>
-            <span className="grab-section-eyebrow">GOT QUESTIONS?</span>
-            <h2 id="grab-faq-heading" className="grab-section__title">
-              Frequently asked questions
-            </h2>
-          </div>
-        </div>
+            <div className="grab-help-popover__scroll">
+              <div className="grab-help-popover__block">
+                <span className="grab-section-eyebrow">SIMPLE 3-STEP PROCESS</span>
+                <h2 className="grab-steps-title grab-help-popover__heading">
+                  How DineOut NG order works
+                </h2>
+                <p className="grab-steps-desc">
+                  Ordering from multiple outlets used to mean multiple delivery fees and separate
+                  app checkouts. DineOut NG simplifies everything into 3 steps.
+                </p>
 
-        <div className="grab-faq-list">
-          {faqItems.map((item, idx) => {
-            const isOpen = openFaq === idx;
-            return (
-              <div key={item.question} className="grab-faq-item" data-open={isOpen}>
-                <button
-                  type="button"
-                  className="grab-faq-question"
-                  onClick={() => setOpenFaq(isOpen ? null : idx)}
-                  aria-expanded={isOpen}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <HelpCircleIcon className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{item.question}</span>
-                  </span>
-                  <ChevronDownIcon
-                    className={`w-5 h-5 transition-transform duration-200 ${
-                      isOpen ? "rotate-180 text-emerald-400" : "text-gray-400"
-                    }`}
-                  />
-                </button>
-                {isOpen && (
-                  <div className="grab-faq-answer">
-                    <p>{item.answer}</p>
-                  </div>
-                )}
+                <div className="grab-help-popover__steps">
+                  {steps.map((step) => {
+                    const IconComp = step.icon;
+                    return (
+                      <div key={step.title} className="grab-step-card">
+                        <div className="grab-step-card__top">
+                          <span className="grab-step-card__num">{step.step}</span>
+                          <div className="grab-step-card__icon-box">
+                            <IconComp className="w-5 h-5" />
+                          </div>
+                        </div>
+                        <span className="grab-step-card__sub">{step.subtitle}</span>
+                        <h3 className="grab-step-card__title">{step.title}</h3>
+                        <p className="grab-step-card__copy">{step.copy}</p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            );
-          })}
+
+              <div className="grab-help-popover__block">
+                <span className="grab-section-eyebrow">GOT QUESTIONS?</span>
+                <h2 className="grab-section__title grab-help-popover__heading">
+                  Frequently asked questions
+                </h2>
+
+                <div className="grab-faq-list">
+                  {faqItems.map((item, idx) => {
+                    const isOpen = openFaq === idx;
+                    return (
+                      <div key={item.question} className="grab-faq-item" data-open={isOpen}>
+                        <button
+                          type="button"
+                          className="grab-faq-question"
+                          onClick={() => setOpenFaq(isOpen ? null : idx)}
+                          aria-expanded={isOpen}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <HelpCircleIcon className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>{item.question}</span>
+                          </span>
+                          <ChevronDownIcon
+                            className={`w-5 h-5 transition-transform duration-200 ${
+                              isOpen ? "rotate-180 text-emerald-400" : "text-gray-400"
+                            }`}
+                          />
+                        </button>
+                        {isOpen && (
+                          <div className="grab-faq-answer">
+                            <p>{item.answer}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── BOTTOM TAGLINE BANNER ── */}
+      <section className="grab-section grab-bottom-banner" aria-label="Order in three steps">
+        <p className="grab-bottom-banner__lead">
+          Single or multiple orders, <strong>one payment</strong>, <strong>one delivery</strong> —
+          in 3 steps.
+        </p>
+        <div className="grab-bottom-banner__steps" aria-label="Ordering steps">
+          <span className="grab-bottom-banner__step">
+            <span className="grab-bottom-banner__step-num">1</span> Pick outlets
+          </span>
+          <span className="grab-bottom-banner__step">
+            <span className="grab-bottom-banner__step-num">2</span> Build one cart
+          </span>
+          <span className="grab-bottom-banner__step">
+            <span className="grab-bottom-banner__step-num">3</span> Pay & track live
+          </span>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="grab-footer" aria-label="Footer navigation">
+      {/* <footer className="grab-footer" aria-label="Footer navigation">
         <div className="grab-footer__inner">
           <div className="grab-footer__brand-col">
             <BrandLogo className="w-32" priority />
@@ -605,10 +673,10 @@ export function LandingPage() {
             <h4>Trust & Legal</h4>
             <ul>
               <li>
-                <Link href="#how-it-works">How It Works</Link>
+                <span className="text-gray-400 text-sm">How It Works</span>
               </li>
               <li>
-                <Link href="#faq">FAQs & Support</Link>
+                <span className="text-gray-400 text-sm">FAQs & Support</span>
               </li>
               <li>
                 <span className="text-gray-400 text-sm">Privacy & Terms</span>
@@ -619,7 +687,7 @@ export function LandingPage() {
             </ul>
           </div>
         </div>
-      </footer>
+      </footer> */}
 
       {/* ── MOBILE STICKY BOTTOM NAVIGATION BAR ── */}
       <nav className="grab-bottom-nav" aria-label="Mobile bottom navigation">
