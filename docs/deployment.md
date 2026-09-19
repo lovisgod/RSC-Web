@@ -164,6 +164,11 @@ SMTP_SECURE=false
 SMTP_USER=replace-with-gmail-address
 SMTP_PASS=replace-with-gmail-app-password
 SMTP_FROM=RSC <noreply@rscdev.tech>
+MOMENT_SFTP_HOST=ftp.momentco.io
+MOMENT_SFTP_PORT=22
+MOMENT_SFTP_USERNAME=replace-with-moment-provisioned-username
+MOMENT_SFTP_PASSWORD=replace-with-moment-provisioned-password
+MOMENT_SETTLEMENT_REPORT_PATH=/
 ```
 
 Generate the server-side passwords and security secrets locally, then paste the
@@ -194,6 +199,12 @@ is intentionally disabled.
 
 Do not put payment keys, database passwords, JWT secrets, or other server
 credentials into browser-prefixed variables.
+
+Moment delivers merchant settlement reports through SFTP rather than the
+payments API. `MOMENT_SETTLEMENT_REPORT_PATH` is the absolute remote directory
+containing the daily settlement CSV files. Keep the SFTP password in Dokploy's
+secret environment configuration. The finance export selects reports using the
+period-end date in Moment's documented filename.
 
 ## API, PostGIS, and Redis
 
