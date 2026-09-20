@@ -30,7 +30,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/outlets", icon: Home, label: "Home" },
+  { href: "/", icon: Home, label: "Home" },
   { href: "/orders", icon: Receipt, label: "Orders" },
   { href: "/cart", icon: ShoppingBag, label: "Cart" },
   { href: "/favorites", icon: Heart, label: "My Items" },
@@ -67,7 +67,7 @@ export function SideNav() {
     >
       {/* Brand */}
       <div className="border-b px-6 py-4" style={{ borderColor: "var(--rsc-sidebar-border)" }}>
-        <Link href="/outlets" className="inline-flex" aria-label="DineOut NG home">
+        <Link href="/" className="inline-flex" aria-label="DineOut NG home">
           <BrandLogo className="web-sidebar-logo w-28" mode="dark" priority />
         </Link>
         <p className="text-xs" style={{ color: "var(--rsc-sidebar-muted)" }}>
@@ -226,12 +226,7 @@ export function SideNavDrawer({ isOpen, onClose }: SideNavDrawerProps) {
           style={{ borderColor: "var(--rsc-sidebar-border)" }}
         >
           <div>
-            <Link
-              href="/outlets"
-              onClick={onClose}
-              className="inline-flex"
-              aria-label="DineOut NG home"
-            >
+            <Link href="/" onClick={onClose} className="inline-flex" aria-label="DineOut NG home">
               <BrandLogo className="web-sidebar-logo w-28" mode="dark" priority />
             </Link>
             <p className="text-xs mt-0.5" style={{ color: "var(--rsc-sidebar-muted)" }}>
