@@ -11,6 +11,7 @@ import {
   MapPin,
   Receipt,
   ShoppingBag,
+  Store,
   User,
   X,
   type LucideIcon,
@@ -31,6 +32,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/", icon: Home, label: "Home" },
+  { href: "/outlets", icon: Store, label: "Outlets" },
   { href: "/orders", icon: Receipt, label: "Orders" },
   { href: "/cart", icon: ShoppingBag, label: "Cart" },
   { href: "/favorites", icon: Heart, label: "My Items" },
