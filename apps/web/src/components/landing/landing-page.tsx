@@ -524,7 +524,7 @@ export function LandingPage() {
                 aria-label="Close benefits"
                 onClick={() => setIsHelpOpen(false)}
               >
-                <XIcon className="w-4 h-4" />
+                <XIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="grab-help-popover__grid">
