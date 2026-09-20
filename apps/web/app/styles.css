@@ -2619,11 +2619,11 @@ body {
   }
 
   .grab-help-popover {
+    top: 0.75rem;
     left: 1rem;
     right: 1rem;
-    bottom: calc(64px + env(safe-area-inset-bottom, 0) + 5rem);
+    bottom: calc(64px + env(safe-area-inset-bottom, 0) + 4.5rem);
     width: auto;
-    max-height: min(80vh, 720px);
   }
 
   .landing-header__nav,
