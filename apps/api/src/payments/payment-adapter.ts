@@ -1,5 +1,6 @@
 export interface PaymentSplitRoute {
   outletId: string;
+  outletName: string | null;
   subaccountCode: string | null;
   grossMinor: number;
   commissionMinor: number;

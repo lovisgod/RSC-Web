@@ -66,6 +66,7 @@ describe(MomentPaymentAdapter.name, () => {
         splitRoutes: [
           {
             outletId: "outlet_1",
+            outletName: "Farfallino",
             subaccountCode: "fafallino_423fsdz432",
             grossMinor: 22000,
             commissionMinor: 2000,
@@ -73,6 +74,7 @@ describe(MomentPaymentAdapter.name, () => {
           },
           {
             outletId: "outlet_2",
+            outletName: "Kilimanjaro",
             subaccountCode: "kilimanjaro_42vff453",
             grossMinor: 33000,
             commissionMinor: 3000,
@@ -96,8 +98,12 @@ describe(MomentPaymentAdapter.name, () => {
             type: "one_time",
             external_reference: "pmt_master_123",
             metadata: {
-              fafallino_423fsdz432: "20000",
-              kilimanjaro_42vff453: "30000",
+              BU1_Name: "Farfallino",
+              BU1_ID: "fafallino_423fsdz432",
+              BU1_Subamount: "20000",
+              BU2_Name: "Kilimanjaro",
+              BU2_ID: "kilimanjaro_42vff453",
+              BU2_Subamount: "30000",
             },
             options: {
               checkout_options: {
@@ -144,6 +150,7 @@ describe(MomentPaymentAdapter.name, () => {
         splitRoutes: [
           {
             outletId: "outlet_1",
+            outletName: "Salmas",
             subaccountCode: "salmas_423fsdz432",
             grossMinor: 660000,
             commissionMinor: 66000,
@@ -161,7 +168,9 @@ describe(MomentPaymentAdapter.name, () => {
             type: "one_time",
             external_reference: "pmt_master_mobile",
             metadata: {
-              salmas_423fsdz432: "594000",
+              BU1_Name: "Salmas",
+              BU1_ID: "salmas_423fsdz432",
+              BU1_Subamount: "594000",
             },
             options: {
               checkout_options: {

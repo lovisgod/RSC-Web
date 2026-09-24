@@ -410,6 +410,7 @@ export class PaymentsService {
 
         return {
           outletId,
+          outletName: outletById.get(outletId)?.name ?? null,
           subaccountCode: outletById.get(outletId)?.settlementSubaccountCode ?? null,
           grossMinor,
           commissionMinor,
@@ -642,6 +643,7 @@ export class PaymentsService {
     const outletById = new Map(outlets.map((outlet) => [outlet.id, outlet]));
     const splitRoutes: PaymentSplitRoute[] = subOrders.map((subOrder) => ({
       outletId: subOrder.outletId,
+      outletName: outletById.get(subOrder.outletId)?.name ?? null,
       subaccountCode: outletById.get(subOrder.outletId)?.settlementSubaccountCode ?? null,
       grossMinor: subOrder.subtotalMinor,
       commissionMinor: subOrder.commissionMinor,

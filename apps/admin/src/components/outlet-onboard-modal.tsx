@@ -431,7 +431,8 @@ function OutletOnboardModalContent({ onClose, outlet }: Omit<Props, "open">) {
             <input
               className={`field-input${fieldErrors.settlementSubaccountCode ? " field-input--error" : ""}`}
               type="text"
-              placeholder="Provider subaccount code (optional)"
+              required
+              placeholder="Provider subaccount code"
               value={form.settlementSubaccountCode}
               onChange={(event) =>
                 setForm((current) => ({

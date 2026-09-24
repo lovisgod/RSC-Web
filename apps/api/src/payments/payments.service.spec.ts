@@ -1044,6 +1044,7 @@ describe(PaymentsService.name, () => {
         splitRoutes: [
           {
             outletId,
+            outletName: "Lekki Kitchen",
             subaccountCode: "MOMENT_LEKKI",
             grossMinor: 450000,
             commissionMinor: 45000,

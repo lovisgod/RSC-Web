@@ -65,11 +65,14 @@ export class MomentPaymentAdapter implements PaymentAdapter {
 
   async initiate(input: InitiateProviderPaymentInput): Promise<InitiateProviderPaymentResult> {
     const metadata: Record<string, string> = {};
-    for (const route of input.splitRoutes) {
-      if (route.subaccountCode) {
-        metadata[route.subaccountCode] = String(route.netMinor);
-      }
-    }
+    input.splitRoutes
+      .filter((route) => route.subaccountCode)
+      .forEach((route, index) => {
+        const n = index + 1;
+        metadata[`BU${n}_Name`] = route.outletName ?? route.outletId;
+        metadata[`BU${n}_ID`] = route.subaccountCode!;
+        metadata[`BU${n}_Subamount`] = String(route.netMinor);
+      });
 
     const body = {
       amount: input.amountMinor,
