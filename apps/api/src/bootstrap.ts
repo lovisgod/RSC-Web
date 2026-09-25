@@ -52,5 +52,5 @@ export function configureApplication(app: INestApplication): void {
     });
   }
 
-  app.useLogger(new Logger("RSC API"));
+  app.useLogger(new Logger("DINEOUT API"));
 }

@@ -61,7 +61,7 @@ async function bootstrap(): Promise<void> {
     })}`,
     "Bootstrap",
   );
-  Logger.log(`RSC API listening on http://localhost:${port}/api/v1`, "Bootstrap");
+  Logger.log(`DINEOUT API listening on http://localhost:${port}/api/v1`, "Bootstrap");
 }
 
 void bootstrap();

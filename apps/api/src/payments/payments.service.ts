@@ -653,7 +653,7 @@ export class PaymentsService {
       (sum, route) => sum + route.commissionMinor,
       0,
     );
-    const reference = `RSC-${randomUUID()}`;
+    const reference = `DINEOUT-${randomUUID()}`;
     const returnUrl = this.normalizeReturnUrl(input.returnUrl);
     const providerPayment = await this.paymentAdapter.initiate({
       email: this.piiCrypto.decrypt(customer.emailEncrypted),
