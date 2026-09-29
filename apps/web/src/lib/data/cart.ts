@@ -27,15 +27,7 @@ export function cartSubtotalMinor(cart: Cart): number {
   return cart.groups.reduce((sum, g) => sum + outletSubtotalMinor(g), 0);
 }
 
-export function formatNaira(minor: number): string {
-  const hasKobo = Math.abs(minor % 100) > 0.001;
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: hasKobo ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(minor / 100);
-}
+export { formatNaira, hasKobo } from "@rsc/ui";
 
 export function itemLabel(item: CartItem): string {
   const qty = item.quantity > 1 ? ` x${item.quantity}` : "";

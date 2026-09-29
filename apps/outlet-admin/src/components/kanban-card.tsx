@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { MasterOrderStatus, SubOrderStatus } from "@rsc/contracts";
+import { formatNaira } from "@rsc/ui";
 import { GripVertical } from "lucide-react";
 import { useEffect, useState } from "react";
 import { printReceipt } from "../lib/native-bridge";
@@ -51,16 +52,6 @@ function getCountdownTone(secondsRemaining: number): string {
   }
 
   return "border-emerald-200 bg-emerald-50 text-emerald-700";
-}
-
-function formatNaira(minor: number): string {
-  const hasKobo = Math.abs(minor % 100) > 0.001;
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: hasKobo ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(minor / 100);
 }
 
 function itemLineTotalMinor(item: PosSubOrder["items"][number]): number {

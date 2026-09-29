@@ -1,5 +1,5 @@
 import Skeleton from "@mui/material/Skeleton";
-import { Button } from "@rsc/ui";
+import { Button, formatNaira } from "@rsc/ui";
 import type { RefundRequestItem } from "@rsc/contracts";
 import {
   ArrowLeft,
@@ -48,15 +48,7 @@ function dateBounds(date: string) {
   };
 }
 
-function formatMinor(amountMinor: number) {
-  const hasKobo = Math.abs(amountMinor % 100) > 0.001;
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: hasKobo ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(amountMinor / 100);
-}
+const formatMinor = formatNaira;
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-NG", {

@@ -1,20 +1,10 @@
+import { formatNaira } from "@rsc/ui";
 import { EarningsChart } from "../components/earnings-chart";
 import { OutletPageHeader } from "../components/outlet-page-header";
 import { useAuth } from "../hooks/use-auth";
 import { useOrdersQueue } from "../hooks/use-orders-queue";
 
 const COMPLETED_STATUSES = ["COLLECTED", "DISPATCHED"] as const;
-
-function formatNaira(minor: number) {
-  if (minor === 0) return "₦0";
-  const hasKobo = Math.abs(minor % 100) > 0.001;
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: hasKobo ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(minor / 100);
-}
 
 function MetricCard({
   label,

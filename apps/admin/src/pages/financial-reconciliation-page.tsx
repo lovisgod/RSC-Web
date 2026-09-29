@@ -1,5 +1,5 @@
 import Skeleton from "@mui/material/Skeleton";
-import { Button, EmptyState } from "@rsc/ui";
+import { Button, EmptyState, formatNaira } from "@rsc/ui";
 import { useMutation } from "@tanstack/react-query";
 import { Download, Info, ReceiptText, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -43,15 +43,7 @@ function normalizeDateRange(dateFrom: string, dateTo: string) {
   return dateFrom <= dateTo ? { dateFrom, dateTo } : { dateFrom: dateTo, dateTo: dateFrom };
 }
 
-function formatMinor(amountMinor: number) {
-  const hasKobo = Math.abs(amountMinor % 100) > 0.001;
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: hasKobo ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(amountMinor / 100);
-}
+const formatMinor = formatNaira;
 
 function statusLabel(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
   if (status === "APPROVED") return "Approved";

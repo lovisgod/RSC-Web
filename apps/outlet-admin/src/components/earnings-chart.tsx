@@ -1,4 +1,5 @@
 import type { SubOrderStatus } from "@rsc/contracts";
+import { formatNaira } from "@rsc/ui";
 import { ClipboardList, ReceiptText } from "lucide-react";
 
 interface TransactionItem {
@@ -25,17 +26,6 @@ const STATUS_STYLES: Record<SubOrderStatus, string> = {
   DISPATCHED: "bg-emerald-50 text-emerald-700 ring-emerald-100",
   REJECTED: "bg-red-50 text-red-700 ring-red-100",
 };
-
-function formatNaira(minor: number) {
-  if (minor === 0) return "₦0";
-  const hasKobo = Math.abs(minor % 100) > 0.001;
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: hasKobo ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(minor / 100);
-}
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-NG", {

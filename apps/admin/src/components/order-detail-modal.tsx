@@ -1,4 +1,4 @@
-import { Button } from "@rsc/ui";
+import { Button, formatNaira } from "@rsc/ui";
 import type { OutletSummary } from "@rsc/contracts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, X } from "lucide-react";
@@ -37,15 +37,7 @@ interface Props {
   onClose: () => void;
 }
 
-const fmt = (minor: number) => {
-  const hasKobo = Math.abs(minor % 100) > 0.001;
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: hasKobo ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(minor / 100);
-};
+const fmt = formatNaira;
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING_PAYMENT: "Awaiting Payment",
