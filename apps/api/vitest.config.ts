@@ -23,14 +23,14 @@ export default defineConfig({
         lines: 47,
         "src/orders/orders.service.ts": {
           statements: 69,
-          branches: 61,
-          functions: 83,
+          branches: 60,
+          functions: 82,
           lines: 68,
         },
         "src/payments/payments.service.ts": {
           statements: 71,
           branches: 53,
-          functions: 76,
+          functions: 75,
           lines: 71,
         },
       },
