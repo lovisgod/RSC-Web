@@ -89,6 +89,10 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     };
     const idempotencyKey = this.createIdempotencyKey(input.reference);
 
+    this.logger.log(
+      `[Moment] Outbound payment session request (reference: ${input.reference}, idempotency: ${idempotencyKey}): ${JSON.stringify(body, null, 2)}`,
+    );
+
     try {
       const response = await fetch(`${this.baseUrl}/collect/payment_sessions`, {
         method: "POST",
@@ -101,6 +105,10 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       });
 
       const payload = (await response.json().catch(() => ({}))) as MomentInitializeResponse;
+
+      this.logger.log(
+        `[Moment] Payment session response (reference: ${input.reference}, status: ${response.status}): ${JSON.stringify(payload, null, 2)}`,
+      );
 
       if (!response.ok || !payload.session_url) {
         this.logger.error(

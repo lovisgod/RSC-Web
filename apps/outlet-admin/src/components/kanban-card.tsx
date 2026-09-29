@@ -54,7 +54,13 @@ function getCountdownTone(secondsRemaining: number): string {
 }
 
 function formatNaira(minor: number): string {
-  return `₦${(minor / 100).toLocaleString("en-NG")}`;
+  const hasKobo = Math.abs(minor % 100) > 0.001;
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: hasKobo ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(minor / 100);
 }
 
 function itemLineTotalMinor(item: PosSubOrder["items"][number]): number {

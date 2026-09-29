@@ -28,7 +28,13 @@ const STATUS_STYLES: Record<SubOrderStatus, string> = {
 
 function formatNaira(minor: number) {
   if (minor === 0) return "₦0";
-  return `₦${(minor / 100).toLocaleString("en-NG")}`;
+  const hasKobo = Math.abs(minor % 100) > 0.001;
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: hasKobo ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(minor / 100);
 }
 
 function formatDateTime(value: string) {

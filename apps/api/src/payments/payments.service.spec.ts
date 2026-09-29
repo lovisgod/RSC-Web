@@ -1009,7 +1009,7 @@ describe(PaymentsService.name, () => {
       outletId,
       subtotalMinor: 450000,
       commissionMinor: 45000,
-      netMinor: 405000,
+      netMinor: 450000, // Commission charged to customer; outlet receives full gross
     });
     masterOrders.findOneBy.mockResolvedValue(order);
     subOrders.find.mockResolvedValue([subOrder]);
@@ -1048,7 +1048,7 @@ describe(PaymentsService.name, () => {
             subaccountCode: "MOMENT_LEKKI",
             grossMinor: 450000,
             commissionMinor: 45000,
-            netMinor: 405000,
+            netMinor: 450000, // Commission is charged to customer, not deducted from outlet payout
           },
         ],
       }),

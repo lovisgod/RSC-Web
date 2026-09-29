@@ -414,7 +414,7 @@ export class PaymentsService {
           subaccountCode: outletById.get(outletId)?.settlementSubaccountCode ?? null,
           grossMinor,
           commissionMinor,
-          netMinor: grossMinor - commissionMinor,
+          netMinor: grossMinor, // Commission is NOT deducted from outlet gross payout, only customers pay commission
         };
       });
 

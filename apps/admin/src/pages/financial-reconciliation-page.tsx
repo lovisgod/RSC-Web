@@ -50,7 +50,13 @@ function normalizeDateRange(dateFrom: string, dateTo: string) {
 }
 
 function formatMinor(amountMinor: number) {
-  return moneyFormatter.format(amountMinor / 100);
+  const hasKobo = Math.abs(amountMinor % 100) > 0.001;
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: hasKobo ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(amountMinor / 100);
 }
 
 function statusLabel(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {

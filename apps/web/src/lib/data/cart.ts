@@ -28,11 +28,12 @@ export function cartSubtotalMinor(cart: Cart): number {
 }
 
 export function formatNaira(minor: number): string {
+  const hasKobo = Math.abs(minor % 100) > 0.001;
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: hasKobo ? 2 : 0,
+    maximumFractionDigits: 2,
   }).format(minor / 100);
 }
 

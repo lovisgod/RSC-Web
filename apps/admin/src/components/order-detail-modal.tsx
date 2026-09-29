@@ -37,7 +37,15 @@ interface Props {
   onClose: () => void;
 }
 
-const fmt = (minor: number) => `₦${(minor / 100).toLocaleString("en-NG")}`;
+const fmt = (minor: number) => {
+  const hasKobo = Math.abs(minor % 100) > 0.001;
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: hasKobo ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(minor / 100);
+};
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING_PAYMENT: "Awaiting Payment",
@@ -183,7 +191,7 @@ export function OrderDetailModal({ item, outletById, onClose }: Props) {
           {subOrders.map((sub) => {
             const outlet = outletById[sub.outletId];
             const lines = linesBySubOrder[sub.id] ?? [];
-            const payOutAmount = sub.netMinor + sub.commissionMinor;
+            const payOutAmount = sub.netMinor;
             const outletNote =
               sub.status === "REJECTED" && typeof sub.rejectionReason === "string"
                 ? sub.rejectionReason.trim()
