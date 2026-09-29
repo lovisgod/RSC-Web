@@ -25,12 +25,6 @@ interface SettlementRow {
   approvalUnavailableReason: string | null;
 }
 
-const moneyFormatter = new Intl.NumberFormat("en-NG", {
-  style: "currency",
-  currency: "NGN",
-  maximumFractionDigits: 0,
-});
-
 function getTodayInputDate(): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Africa/Lagos",

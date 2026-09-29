@@ -19,12 +19,6 @@ import { useProcessRefundRequest, useRefundRequests } from "../hooks/use-refund-
 const PAGE_SIZE = 20;
 const TABLE_COLUMNS = 5;
 
-const moneyFormatter = new Intl.NumberFormat("en-NG", {
-  style: "currency",
-  currency: "NGN",
-  maximumFractionDigits: 0,
-});
-
 function getTodayInputDate(): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Africa/Lagos",
