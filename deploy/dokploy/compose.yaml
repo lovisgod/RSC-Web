@@ -246,6 +246,56 @@ services:
       start_period: 10s
       retries: 3
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: unless-stopped
+    volumes:
+      - ../../deploy/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - rsc-prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+        reservations:
+          memory: 64M
+    expose:
+      - "9090"
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    restart: unless-stopped
+    volumes:
+      - ../../deploy/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../deploy/observability/grafana/dashboards:/etc/grafana/dashboards:ro
+      - rsc-grafana-data:/var/lib/grafana
+    environment:
+      TZ: Africa/Lagos
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-dineout_admin_2026}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/dineout-slo-dashboard.json
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+        reservations:
+          memory: 64M
+    expose:
+      - "3000"
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      - prometheus
+
 volumes:
   rsc-postgres-data:
   rsc-redis-data:
+  rsc-prometheus-data:
+  rsc-grafana-data:
