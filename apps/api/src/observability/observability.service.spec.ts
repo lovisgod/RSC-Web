@@ -35,12 +35,12 @@ describe("ObservabilityService", () => {
 
     const metrics = await service.getMetrics();
 
-    expect(metrics).toContain("rsc_http_requests_total");
+    expect(metrics).toContain("dineout_http_requests_total");
     expect(metrics).toContain('method="GET"');
     expect(metrics).toContain('route="/api/v1/outlets"');
     expect(metrics).toContain('status_code="200"');
 
-    expect(metrics).toContain("rsc_http_request_duration_seconds");
-    expect(metrics).toContain("rsc_process_cpu_user_seconds_total");
+    expect(metrics).toContain("dineout_http_request_duration_seconds");
+    expect(metrics).toContain("dineout_process_cpu_user_seconds_total");
   });
 });

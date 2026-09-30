@@ -1,4 +1,4 @@
-import { Controller, Get, Header, Res } from "@nestjs/common";
+import { Controller, Get, Res } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
 import { RawResponse } from "../common/http/raw-response.decorator";

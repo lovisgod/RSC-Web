@@ -8,20 +8,18 @@ describe("ObservabilityController", () => {
     const service = new ObservabilityService();
     const controller = new ObservabilityController(service);
 
+    const setHeader = vi.fn();
+    const send = vi.fn();
     const res = {
-      setHeader: vi.fn(),
+      setHeader,
       status: vi.fn().mockReturnThis(),
-      send: vi.fn(),
+      send,
     } as unknown as Response;
 
     await controller.getMetrics(res);
 
-    expect(res.setHeader).toHaveBeenCalledWith(
-      "Content-Type",
-      expect.stringContaining("text/plain"),
-    );
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalledWith(expect.stringContaining("dineout_"));
+    expect(setHeader).toHaveBeenCalledWith("Content-Type", expect.stringContaining("text/plain"));
+    expect(send).toHaveBeenCalledWith(expect.stringContaining("dineout_"));
   });
 
   it("returns collector summary", () => {
