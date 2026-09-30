@@ -81,6 +81,10 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     const outletTotalMinor = routesWithSubaccount.reduce((sum, route) => sum + route.netMinor, 0);
     const dineoutSubamountMinor = input.amountMinor - outletTotalMinor;
 
+    this.logger.log(
+      `[Moment] Split calculation: amountMinor=${input.amountMinor}, outletTotalMinor=${outletTotalMinor}, dineoutSubamountMinor=${dineoutSubamountMinor}, dineoutAccountId=${this.dineoutAccountId ? `set(${this.dineoutAccountId})` : "EMPTY"}`,
+    );
+
     if (this.dineoutAccountId && dineoutSubamountMinor > 0) {
       const n = routesWithSubaccount.length + 1;
       metadata[`BU${n}_Name`] = "Dineout NG";
