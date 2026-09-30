@@ -29,7 +29,7 @@ export class DatabaseBackupsController {
   constructor(private readonly backups: DatabaseBackupsService) {}
 
   @Get("settings")
-  @ApiMessage("Database backup settings retrieved")
+  @ApiMessage("Database backup settings retrieved.")
   @ApiOperation({ summary: "Owner-only endpoint for reading database backup settings" })
   getSettings() {
     return this.backups.getSettings();
