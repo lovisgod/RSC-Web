@@ -16,6 +16,7 @@ import { DatabaseModule } from "./database/database.module";
 import { HealthModule } from "./health/health.module";
 import { MediaModule } from "./media/media.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { ObservabilityModule } from "./observability/observability.module";
 import { OrdersModule } from "./orders/orders.module";
 import { OutletsModule } from "./outlets/outlets.module";
 import { PaymentsModule } from "./payments/payments.module";
@@ -35,6 +36,7 @@ import { UsersModule } from "./users/users.module";
       load: [configuration],
       validate: validateEnvironment,
     }),
+    ObservabilityModule,
     DatabaseModule,
     RedisModule,
     SecurityModule,

@@ -6,6 +6,7 @@ import type { Observable } from "rxjs";
 import { map } from "rxjs";
 
 import { API_MESSAGE_METADATA } from "./api-message.decorator";
+import { RAW_RESPONSE_METADATA } from "./raw-response.decorator";
 
 export interface ApiResponse<T> {
   data: T;
@@ -14,10 +15,20 @@ export interface ApiResponse<T> {
 }
 
 @Injectable()
-export class ApiResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
+export class ApiResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T> | T> {
   constructor(private readonly reflector: Reflector) {}
 
-  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<ApiResponse<T>> {
+  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<ApiResponse<T> | T> {
+    const isRaw =
+      this.reflector.getAllAndOverride<boolean>(RAW_RESPONSE_METADATA, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? false;
+
+    if (isRaw) {
+      return next.handle();
+    }
+
     const response = context.switchToHttp().getResponse<Response>();
     const message =
       this.reflector.getAllAndOverride<string>(API_MESSAGE_METADATA, [

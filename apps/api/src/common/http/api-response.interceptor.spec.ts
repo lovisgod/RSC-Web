@@ -24,4 +24,20 @@ describe(ApiResponseInterceptor.name, () => {
       status: 201,
     });
   });
+
+  it("bypasses envelope wrapping when RAW_RESPONSE_METADATA is true", async () => {
+    const reflector = new Reflector();
+    reflector.getAllAndOverride = () => true;
+
+    const context = {
+      getClass: () => class {},
+      getHandler: () => () => undefined,
+      switchToHttp: () => ({ getResponse: () => ({ statusCode: 200 }) }),
+    } as unknown as ExecutionContext;
+    const rawMetrics = "# HELP dineout_http_requests_total\n";
+    const next = { handle: () => of(rawMetrics) } as CallHandler;
+    const interceptor = new ApiResponseInterceptor(reflector);
+
+    await expect(firstValueFrom(interceptor.intercept(context, next))).resolves.toBe(rawMetrics);
+  });
 });
