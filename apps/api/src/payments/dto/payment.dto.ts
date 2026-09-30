@@ -205,7 +205,7 @@ export class ListRefundRequestsQueryDto {
   status?: "PENDING" | "SUCCESS" | "FAILED";
 
   @ApiPropertyOptional({
-    example: "RSC-reference",
+    example: "Dineout-reference",
     description: "Search by refund reference or payment reference.",
   })
   @IsOptional()

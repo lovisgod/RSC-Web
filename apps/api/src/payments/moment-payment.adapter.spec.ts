@@ -25,6 +25,7 @@ describe(MomentPaymentAdapter.name, () => {
             secretKey,
             baseUrl,
             webhookSecret,
+            dineoutAccountId: "",
           };
         }
         if (key === "app.customerWebUrl") {
@@ -125,6 +126,106 @@ describe(MomentPaymentAdapter.name, () => {
           session_url: "https://moment.momentpay.io/checkout/ckt802zEb2P2uS4Ql",
         },
       });
+
+      fetchMock.mockRestore();
+    });
+
+    it("includes Dineout NG in metadata with the retained difference when dineoutAccountId is configured", async () => {
+      const adapterWithDineout = new MomentPaymentAdapter(
+        {
+          get: vi.fn().mockImplementation((key: string) => {
+            if (key === "payments.moment") {
+              return {
+                secretKey,
+                baseUrl,
+                webhookSecret,
+                dineoutAccountId: "bu_dineout_fin_123",
+              };
+            }
+            if (key === "app.customerWebUrl") {
+              return "https://customer.rscdev.tech";
+            }
+            return null;
+          }),
+        } as unknown as ConfigService<ApplicationConfig, true>,
+        dataSource,
+      );
+
+      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => {
+          await Promise.resolve();
+          return {
+            id: "ps_multi",
+            session_url: "https://moment.momentpay.io/checkout/ckt_multi",
+          };
+        },
+      } as unknown as Response);
+
+      await adapterWithDineout.initiate({
+        email: "customer@example.com",
+        amountMinor: 7349475,
+        currency: "NGN",
+        reference: "pmt_multi_outlet",
+        splitRoutes: [
+          {
+            outletId: "outlet_1",
+            outletName: "Cactus",
+            subaccountCode: "bu_cactus_1",
+            grossMinor: 4100000,
+            commissionMinor: 410000,
+            netMinor: 4100000,
+          },
+          {
+            outletId: "outlet_2",
+            outletName: "Farfallino Kitchen",
+            subaccountCode: "bu_farfallino_2",
+            grossMinor: 1630000,
+            commissionMinor: 163000,
+            netMinor: 1630000,
+          },
+          {
+            outletId: "outlet_3",
+            outletName: "Salma's Grill",
+            subaccountCode: "bu_salmas_3",
+            grossMinor: 536200,
+            commissionMinor: 53620,
+            netMinor: 536200,
+          },
+        ],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.momentpay.net/collect/payment_sessions",
+        expect.objectContaining({
+          body: JSON.stringify({
+            amount: 7349475,
+            currency: "NGN",
+            type: "one_time",
+            external_reference: "pmt_multi_outlet",
+            metadata: {
+              BU1_Name: "Cactus",
+              BU1_ID: "bu_cactus_1",
+              BU1_Subamount: "4100000",
+              BU2_Name: "Farfallino Kitchen",
+              BU2_ID: "bu_farfallino_2",
+              BU2_Subamount: "1630000",
+              BU3_Name: "Salma's Grill",
+              BU3_ID: "bu_salmas_3",
+              BU3_Subamount: "536200",
+              BU4_Name: "Dineout NG",
+              BU4_ID: "bu_dineout_fin_123",
+              BU4_Subamount: "1083275",
+            },
+            options: {
+              checkout_options: {
+                presentation_mode: { mode: "redirect" },
+                return_url: "https://customer.rscdev.tech/tracking?reference=pmt_multi_outlet",
+              },
+            },
+          }),
+        }),
+      );
 
       fetchMock.mockRestore();
     });

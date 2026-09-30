@@ -1164,7 +1164,7 @@ function aiPreparationSuggestionsHeaders(
   }
   if (input.provider === "openrouter") {
     headers["HTTP-Referer"] = appUrl;
-    headers["X-Title"] = "RSC";
+    headers["X-Title"] = "Dineout";
   }
 
   return headers;

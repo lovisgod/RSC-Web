@@ -71,7 +71,7 @@ describe("critical domain lifecycles", () => {
     });
     const payment = await createPayment(app, {
       masterOrderId: order.id,
-      reference: "RSC-INTEGRATION-PAYMENT",
+      reference: "Dineout-INTEGRATION-PAYMENT",
     });
     const event = {
       eventId: "integration-event-1",

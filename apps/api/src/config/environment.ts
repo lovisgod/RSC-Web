@@ -59,6 +59,7 @@ export interface Environment {
   MOMENT_SFTP_USERNAME?: string;
   MOMENT_SFTP_PASSWORD?: string;
   MOMENT_SETTLEMENT_REPORT_PATH: string;
+  DINEOUT_ACCOUNT_ID?: string;
   PLATFORM_COMMISSION_BPS: number;
   VAT_BPS: number;
   DELIVERY_FEE_MINOR: number;
@@ -235,6 +236,7 @@ const environmentSchema = Joi.object<Environment>({
   MOMENT_SFTP_USERNAME: Joi.string().optional().allow(""),
   MOMENT_SFTP_PASSWORD: Joi.string().optional().allow(""),
   MOMENT_SETTLEMENT_REPORT_PATH: Joi.string().min(1).default("/"),
+  DINEOUT_ACCOUNT_ID: Joi.string().optional().allow(""),
   PLATFORM_COMMISSION_BPS: Joi.number().integer().min(0).max(10_000).default(1_000),
   VAT_BPS: Joi.number().integer().min(0).max(10_000).default(750),
   DELIVERY_FEE_MINOR: Joi.number().integer().min(0).default(1_500_00),

@@ -549,7 +549,7 @@ describe(CatalogService.name, () => {
         headers: expect.objectContaining({
           authorization: "Bearer openrouter-api-key",
           "HTTP-Referer": "https://rscdev.tech",
-          "X-Title": "RSC",
+          "X-Title": "Dineout",
         }) as Record<string, string>,
       }),
     );

@@ -85,6 +85,7 @@ export interface ApplicationConfig {
       sftpUsername: string;
       sftpPassword: string;
       settlementReportPath: string;
+      dineoutAccountId: string;
     };
     platformCommissionBps: number;
     vatBps: number;
@@ -245,6 +246,7 @@ export default function configuration(): ApplicationConfig {
         sftpUsername: process.env.MOMENT_SFTP_USERNAME ?? "",
         sftpPassword: process.env.MOMENT_SFTP_PASSWORD ?? "",
         settlementReportPath: process.env.MOMENT_SETTLEMENT_REPORT_PATH ?? "/",
+        dineoutAccountId: process.env.DINEOUT_ACCOUNT_ID ?? "",
       },
       platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
       vatBps: Number(process.env.VAT_BPS ?? 750),

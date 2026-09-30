@@ -120,7 +120,7 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-RSC <noreply@rscapp.xyz>}
+      SMTP_FROM: ${SMTP_FROM:-DineOut NG <noreply@dineoutng.com>}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM: ${RESEND_FROM:-}
       RESEND_REPLY_TO: ${RESEND_REPLY_TO:-}

@@ -468,7 +468,7 @@ export class PaymentsService {
           `Total mismatch: expected ${totalMinor}, got ${input.totalMinor}`,
         );
       }
-      const reference = `RSC-${randomUUID()}`;
+      const reference = `Dineout-${randomUUID()}`;
       const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
       const recipientPhone = this.normalizeRecipientPhone(input.recipientPhone);
       const preparationNote = input.preparationNote?.trim() || null;

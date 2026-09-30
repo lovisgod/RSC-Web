@@ -51,6 +51,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
   private readonly baseUrl: string;
   private readonly webhookSecret: string;
   private readonly customerWebUrl: string;
+  private readonly dineoutAccountId: string;
 
   constructor(
     configService: ConfigService<ApplicationConfig, true>,
@@ -60,19 +61,29 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     this.secretKey = config.secretKey;
     this.baseUrl = config.baseUrl;
     this.webhookSecret = config.webhookSecret;
+    this.dineoutAccountId = config.dineoutAccountId;
     this.customerWebUrl = configService.get("app.customerWebUrl", { infer: true });
   }
 
   async initiate(input: InitiateProviderPaymentInput): Promise<InitiateProviderPaymentResult> {
     const metadata: Record<string, string> = {};
-    input.splitRoutes
-      .filter((route) => route.subaccountCode)
-      .forEach((route, index) => {
-        const n = index + 1;
-        metadata[`BU${n}_Name`] = route.outletName ?? route.outletId;
-        metadata[`BU${n}_ID`] = route.subaccountCode!;
-        metadata[`BU${n}_Subamount`] = String(route.netMinor);
-      });
+    const routesWithSubaccount = input.splitRoutes.filter((route) => route.subaccountCode);
+    routesWithSubaccount.forEach((route, index) => {
+      const n = index + 1;
+      metadata[`BU${n}_Name`] = route.outletName ?? route.outletId;
+      metadata[`BU${n}_ID`] = route.subaccountCode!;
+      metadata[`BU${n}_Subamount`] = String(route.netMinor);
+    });
+
+    const outletTotalMinor = routesWithSubaccount.reduce((sum, route) => sum + route.netMinor, 0);
+    const dineoutSubamountMinor = input.amountMinor - outletTotalMinor;
+
+    if (this.dineoutAccountId && dineoutSubamountMinor > 0) {
+      const n = routesWithSubaccount.length + 1;
+      metadata[`BU${n}_Name`] = "Dineout NG";
+      metadata[`BU${n}_ID`] = this.dineoutAccountId;
+      metadata[`BU${n}_Subamount`] = String(dineoutSubamountMinor);
+    }
 
     const body = {
       amount: input.amountMinor,

@@ -2,7 +2,7 @@ import { IsBoolean, IsNotEmpty, IsOptional, IsString, Length } from "class-valid
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class ProvisionSubaccountDto {
-  @ApiProperty({ example: "RSC Kitchen — Lekki" })
+  @ApiProperty({ example: "Dineout Kitchen — Lekki" })
   @IsString()
   @IsNotEmpty()
   @Length(2, 120)
