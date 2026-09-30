@@ -63,6 +63,9 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     this.webhookSecret = config.webhookSecret;
     this.dineoutAccountId = config.dineoutAccountId;
     this.customerWebUrl = configService.get("app.customerWebUrl", { infer: true });
+    this.logger.log(
+      `[Moment] dineoutAccountId configured: ${this.dineoutAccountId ? `yes (${this.dineoutAccountId.slice(0, 6)}…)` : "NO — DINEOUT_ACCOUNT_ID is missing or empty"}`,
+    );
   }
 
   async initiate(input: InitiateProviderPaymentInput): Promise<InitiateProviderPaymentResult> {
