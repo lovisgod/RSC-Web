@@ -1,0 +1,163 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: dineout-slo-alerts
+    folder: DineOut Alerts
+    interval: 1m
+    rules:
+      - uid: dineout-api-down
+        title: DineOut API Instance Down
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: Prometheus
+            model:
+              expr: up{job="dineout-api"} == 0
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              expression: A
+              refId: B
+              type: threshold
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: DineOut API backend is unreachable
+          description: Scrape job dineout-api is failing to reach /api/v1/observability/metrics.
+
+      - uid: dineout-high-5xx-rate
+        title: DineOut High 5xx Error Rate
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: Prometheus
+            model:
+              expr: (sum(rate(dineout_http_requests_total{status_code=~"5.."}[5m])) / sum(rate(dineout_http_requests_total[5m]))) * 100 > 1
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              expression: A
+              refId: B
+              type: threshold
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: DineOut API 5xx errors exceed 1% over 5m
+          description: Overall API 5xx error rate is currently burning the error budget.
+
+      - uid: dineout-checkout-failure-rate
+        title: DineOut Checkout Failure Rate Critical
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: Prometheus
+            model:
+              expr: (sum(rate(dineout_http_requests_total{route=~".*checkout.*|.*payments.*",status_code=~"5.."}[5m])) / sum(rate(dineout_http_requests_total{route=~".*checkout.*|.*payments.*"}[5m]))) * 100 > 0.5
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              expression: A
+              refId: B
+              type: threshold
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Checkout or Payment webhook failing > 0.5%
+          description: Rapid error budget consumption on critical payment/checkout flow.
+
+      - uid: dineout-p95-latency-exceeded
+        title: DineOut High API Latency P95
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: Prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(dineout_http_request_duration_seconds_bucket[5m])) by (le)) > 1.5
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              expression: A
+              refId: B
+              type: threshold
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: P95 API response time exceeds 1.5s
+          description: DineOut API latency is degraded, violating SLO target.

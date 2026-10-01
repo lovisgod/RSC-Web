@@ -1,0 +1,47 @@
+groups:
+  - name: dineout_reliability_alerts
+    rules:
+      - alert: DineoutApiDown
+        expr: up{job="dineout-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DineOut API instance is down"
+          description: "Prometheus cannot scrape api:4000/api/v1/observability/metrics for over 1 minute."
+
+      - alert: DineoutHigh5xxErrorRate
+        expr: (sum(rate(dineout_http_requests_total{status_code=~"5.."}[5m])) / sum(rate(dineout_http_requests_total[5m]))) * 100 > 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DineOut API 5xx error rate > 1%"
+          description: "Over 1% of all API requests are returning 5xx status codes over a 5m window."
+
+      - alert: DineoutCheckoutBurnRateCritical
+        expr: (sum(rate(dineout_http_requests_total{route=~".*checkout.*|.*payments.*",status_code=~"5.."}[5m])) / sum(rate(dineout_http_requests_total{route=~".*checkout.*|.*payments.*"}[5m]))) * 100 > 0.5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DineOut Checkout/Payment error burn rate critical"
+          description: "Checkout or payment webhook endpoint failure rate exceeded 0.5%, burning Tier 1 error budget."
+
+      - alert: DineoutHighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(dineout_http_request_duration_seconds_bucket[5m])) by (le)) > 1.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DineOut P95 API Latency > 1500ms"
+          description: "P95 latency across API routes exceeded 1.5 seconds for 3 consecutive minutes."
+
+      - alert: DineoutProcessMemoryHigh
+        expr: nodejs_heap_size_used_bytes{job="dineout-api"} > 400 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DineOut API memory saturation warning"
+          description: "Node.js heap size used has exceeded 400MB for 5 consecutive minutes."

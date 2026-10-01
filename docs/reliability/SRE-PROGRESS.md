@@ -86,11 +86,14 @@ Notes / Evidence:
 
 ## Module 4 — Alerting and operational runbooks
 
-- [ ] Configure Prometheus Alertmanager with multi-window multi-burn-rate rules.
+- [x] Configure Prometheus & Grafana alerting with multi-window multi-burn-rate rules (`deploy/observability/prometheus/alerts.yml`, `deploy/observability/grafana/provisioning/alerting/`).
+- [x] Configure email alert notifications routed via SMTP (`GF_SMTP_*`, `ALERT_EMAIL_RECIPIENT`).
 - [ ] Add saturation alerts (disk usage, Postgres connection pool exhaustion, Redis memory).
 - [ ] Author operational runbooks under `docs/reliability/runbooks/` for top 5 critical failure modes.
 
 Notes / Evidence:
+
+- 2026-10-01: Wired Prometheus alerting rules for `DineoutApiDown`, `DineoutHigh5xxErrorRate`, `DineoutCheckoutBurnRateCritical`, `DineoutHighLatencyP95`, and `DineoutProcessMemoryHigh`. Provisioned Grafana 11 unified alerting rules, default email contact point, and notification policy dispatching via existing SMTP relay to `${ALERT_EMAIL_RECIPIENT}`.
 
 ---
 
@@ -106,11 +109,13 @@ Notes / Evidence:
 
 ## Module 6 — Reproducible observability infrastructure
 
-- [ ] Create Dokploy-ready `deploy/observability/compose.yaml` (Prometheus, Loki, Promtail, Grafana).
-- [ ] Enforce strict RAM/CPU resource limits to prevent noisy neighbor degradation on the VPS.
+- [x] Create Dokploy-ready `deploy/observability/compose.yaml` (Prometheus, Grafana).
+- [x] Enforce strict RAM/CPU resource limits to prevent noisy neighbor degradation on the VPS.
 - [ ] Configure Traefik routing with TLS and access protection for Grafana/Prometheus.
 
 Notes / Evidence:
+
+- 2026-10-01: Standalone and Dokploy Compose services provisioned with strict 192MB RAM limits, internal Docker network communication, automated datasource provisioning, and dashboard auto-load.
 
 ---
 
