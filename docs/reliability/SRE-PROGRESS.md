@@ -70,7 +70,7 @@ Notes / Evidence:
 Notes / Evidence:
 
 - 2026-10-01: Added `prom-client` to `@rsc/api`. Built `ObservabilityModule`, `ObservabilityService`, `ObservabilityMiddleware`, and `ObservabilityController`. Implemented `dineout_http_requests_total`, `dineout_http_request_duration_seconds`, `dineout_orders_created_total`, `dineout_payment_sessions_total`, and `dineout_payment_amount_minor_total`.
-- 2026-10-01: Wired Prometheus scraper and Grafana service into `deploy/dokploy/compose.yaml` and created standalone `deploy/observability/compose.yaml`. Configured automated datasource provisioning and pre-loaded `dineout-slo-dashboard.json` displaying checkout/catalog availability & latency SLOs, request rates, 5xx faults, and memory saturation. Bound to `127.0.0.1:3001` (SSH tunnel ready) and exposed for Traefik routing.
+- 2026-10-01: Wired Prometheus scraper and Grafana service into `deploy/dokploy/compose.yaml` and created standalone `deploy/observability/compose.yaml`. Configured automated datasource provisioning and pre-loaded `dineout-slo-dashboard.json` displaying checkout/catalog availability & latency SLOs, request rates, 5xx faults, and memory saturation. Bound to `127.0.0.1:3001` (SSH tunnel ready) and exposed for Traefik routing. Added `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD` to `deploy/dokploy/staging.env.example`, `deploy/dokploy/development.env.example`, and `deploy/observability/.env.example`.
 
 ---
 
