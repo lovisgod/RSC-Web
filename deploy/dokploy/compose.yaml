@@ -43,7 +43,7 @@ services:
       TZ: Africa/Lagos
       NODE_ENV: production
       DEPLOY_ENV: ${DEPLOY_ENV:-development}
-      DATABASE_URL: postgresql://dineout:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/dinout
+      DATABASE_URL: postgresql://dineout:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/dineout
       DATABASE_SSL: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:?PII_ENCRYPTION_KEY is required}
