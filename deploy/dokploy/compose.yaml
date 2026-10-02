@@ -43,7 +43,7 @@ services:
       TZ: Africa/Lagos
       NODE_ENV: production
       DEPLOY_ENV: ${DEPLOY_ENV:-development}
-      DATABASE_URL: postgresql://rsc:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/rsc
+      DATABASE_URL: postgresql://dineout:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/dinout
       DATABASE_SSL: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:?PII_ENCRYPTION_KEY is required}
@@ -91,7 +91,7 @@ services:
       PORT: "4000"
       APP_VERSION: ${APP_VERSION:-dokploy}
       CORS_ORIGINS: ${CORS_ORIGINS:-https://dev.rscdev.tech,https://admin-dev.rscdev.tech,https://outlet-admin-dev.rscdev.tech}
-      DATABASE_URL: postgresql://rsc:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/rsc
+      DATABASE_URL: postgresql://dineout:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/dineout
       DATABASE_SSL: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
@@ -284,10 +284,10 @@ services:
       GF_SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}:${SMTP_PORT:-587}
       GF_SMTP_USER: ${SMTP_USER:-}
       GF_SMTP_PASSWORD: ${SMTP_PASS:-}
-      GF_SMTP_FROM_ADDRESS: ${ALERT_SMTP_FROM:-noreply@rscdev.tech}
+      GF_SMTP_FROM_ADDRESS: ${ALERT_SMTP_FROM:-noreply@dineout.ng}
       GF_SMTP_FROM_NAME: "DineOut Reliability Alerts"
       GF_SMTP_SKIP_VERIFY: "true"
-      ALERT_EMAIL_RECIPIENT: ${ALERT_EMAIL_RECIPIENT:-devops@rscdev.tech}
+      ALERT_EMAIL_RECIPIENT: ${ALERT_EMAIL_RECIPIENT:-devops@dineout.ng}
     deploy:
       resources:
         limits:
