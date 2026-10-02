@@ -7,7 +7,7 @@ contactPoints:
       - uid: dineout-email-contact
         type: email
         settings:
-          addresses: ${ALERT_EMAIL_RECIPIENT:-admin@rscdev.tech}
+          addresses: $ALERT_EMAIL_RECIPIENT
           singleEmail: true
 
 policies:
