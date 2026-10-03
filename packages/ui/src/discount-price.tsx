@@ -1,3 +1,5 @@
+import { hasKobo } from "./money";
+
 interface DiscountPriceProps {
   priceMinor: number;
   currentPriceMinor?: number;
@@ -11,8 +13,8 @@ function formatPrice(amountMinor: number, currency: string): string {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: hasKobo(amountMinor) ? 2 : 0,
+    maximumFractionDigits: 2,
   }).format(amountMinor / 100);
 }
 

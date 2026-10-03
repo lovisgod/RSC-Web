@@ -29,6 +29,30 @@ description: Safely plan, implement, review, and verify changes in the RSC monor
 - Keep external network calls outside long database transactions unless the provider contract requires otherwise.
 - Emit realtime events and send notifications after durable state commits.
 
+## Reuse before writing
+
+Before adding any helper (formatting, money math, dates, phone, validation, parsing), search the shared packages first:
+
+```bash
+grep -rn "export function\|export const" packages/ui/src packages/contracts/src packages/api-client/src
+grep -rniE "<concept>" packages/*/src apps/*/src   # e.g. kobo|naira|format|round
+```
+
+- If a shared helper exists, import it. Do not copy or re-implement it inline.
+- If the logic is needed in more than one app, add it to the owning package (`@rsc/ui` for presentation helpers, `@rsc/contracts` for schemas/enums) and export it from the package `index.ts`. Do not duplicate it per app.
+- If you find a local duplicate while working in a file you are already changing, replace it with the shared helper. Leave other duplicates alone and list them in your report.
+
+Known shared money helpers (`@rsc/ui`, `packages/ui/src/money.ts`):
+
+| Helper               | Use                                                       |
+| -------------------- | --------------------------------------------------------- |
+| `formatNaira(minor)` | Display a minor-unit amount; shows kobo only when present |
+| `formatMoney(money)` | Same, for `Money` contract objects                        |
+| `hasKobo(minor)`     | Whether a minor-unit amount has a fractional naira part   |
+| `roundToKobo(naira)` | Round a major-unit form value to 2 decimals               |
+
+Never format money with `maximumFractionDigits: 0`. It silently drops kobo.
+
 ## Verify
 
 Run `scripts/run-change-gate.sh`. Add focused integration, E2E, or browser tests when the change crosses a process boundary.

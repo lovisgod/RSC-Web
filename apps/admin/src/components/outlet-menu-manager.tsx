@@ -1,5 +1,5 @@
 import Skeleton from "@mui/material/Skeleton";
-import { Button, DiscountPrice, EmptyState } from "@rsc/ui";
+import { Button, DiscountPrice, EmptyState, formatNaira, roundToKobo } from "@rsc/ui";
 import {
   DndContext,
   PointerSensor,
@@ -97,7 +97,7 @@ function getDayBounds(offsetDays = 0): { startsAt: string; endsAt: string } {
 }
 
 function formatPrice(minor: number): string {
-  return `₦${(minor / 100).toLocaleString("en-NG", { minimumFractionDigits: 0 })}`;
+  return formatNaira(minor);
 }
 
 function useOutletMenuData(outletId: string) {
@@ -415,7 +415,7 @@ function MenuItemModal({
     const numPrice = parseFloat(val);
     const numPct = parseFloat(discountPercent);
     if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
-      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+      setDiscountPrice(String(roundToKobo(numPrice * (1 - numPct / 100))));
     } else if (!val) {
       setDiscountPrice("");
       setDiscountPercent("");
@@ -438,7 +438,7 @@ function MenuItemModal({
     const numPrice = parseFloat(price);
     const numPct = parseFloat(val);
     if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
-      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+      setDiscountPrice(String(roundToKobo(numPrice * (1 - numPct / 100))));
     } else if (!val) {
       setDiscountPrice("");
     }
@@ -568,6 +568,9 @@ function MenuItemModal({
             <FormField label="Price (₦) *">
               <input
                 type="number"
+                min="0.01"
+                step="0.01"
+                inputMode="decimal"
                 value={price}
                 onChange={(event) => handlePriceChange(event.target.value)}
                 required
@@ -678,6 +681,8 @@ function MenuItemModal({
                 <input
                   type="number"
                   min="0"
+                  step="0.01"
+                  inputMode="decimal"
                   value={discountPrice}
                   onChange={(event) => handleDiscountPriceChange(event.target.value)}
                   placeholder="e.g. 3500"
@@ -1275,7 +1280,13 @@ function ModifierOptionEditor({
       </FormField>
       <div className="admin-menu-form-grid">
         <FormField label="Price Delta (₦)">
-          <input type="number" value={price} onChange={(event) => setPrice(event.target.value)} />
+          <input
+            type="number"
+            step="0.01"
+            inputMode="decimal"
+            value={price}
+            onChange={(event) => setPrice(event.target.value)}
+          />
         </FormField>
         <FormField
           label="Sort Order"

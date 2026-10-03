@@ -9,4 +9,4 @@ export { MetricCard } from "./metric-card";
 export { PageHeader } from "./page-header";
 export { RouteNotFound } from "./route-not-found";
 export { ThemeProvider, ThemeToggle, initializeTheme, useTheme, type Theme } from "./theme";
-export { formatMoney, formatNaira, hasKobo } from "./money";
+export { formatMoney, formatNaira, hasKobo, roundToKobo } from "./money";

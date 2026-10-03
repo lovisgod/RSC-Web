@@ -61,6 +61,10 @@ Before coding, read:
 - Validate unknown network data with schemas from `@rsc/contracts`.
 - Represent money in integer minor units in application contracts
   (`amountMinor`); format only at the presentation edge.
+- Reuse before writing: search `packages/*/src` for an existing helper before
+  adding one (money: `formatNaira`, `formatMoney`, `hasKobo`, `roundToKobo` in
+  `@rsc/ui`). Shared logic belongs in the owning package, not copied per app.
+  See `rsc-change-safety` → "Reuse before writing".
 - Never import backend ORM/database entities into a frontend package.
 - Never enable TypeORM `synchronize`; all schema changes require migrations.
 - API routes use the `/api/v1` namespace. Breaking contracts require a new API

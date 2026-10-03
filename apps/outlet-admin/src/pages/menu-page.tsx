@@ -10,6 +10,7 @@ import {
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { MenuItem } from "@rsc/contracts";
+import { roundToKobo } from "@rsc/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 
@@ -163,7 +164,7 @@ function AddItemModal({
     const numPrice = parseFloat(val);
     const numPct = parseFloat(discountPercent);
     if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
-      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+      setDiscountPrice(String(roundToKobo(numPrice * (1 - numPct / 100))));
     } else if (!val) {
       setDiscountPrice("");
       setDiscountPercent("");
@@ -186,7 +187,7 @@ function AddItemModal({
     const numPrice = parseFloat(price);
     const numPct = parseFloat(val);
     if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
-      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+      setDiscountPrice(String(roundToKobo(numPrice * (1 - numPct / 100))));
     } else if (!val) {
       setDiscountPrice("");
     }
@@ -345,6 +346,9 @@ function AddItemModal({
               <input
                 type="number"
                 required
+                min="0.01"
+                step="0.01"
+                inputMode="decimal"
                 value={price}
                 onChange={(e) => handlePriceChange(e.target.value)}
                 placeholder="e.g. 8000"
@@ -403,6 +407,8 @@ function AddItemModal({
                 <input
                   type="number"
                   min="0"
+                  step="0.01"
+                  inputMode="decimal"
                   value={discountPrice}
                   onChange={(e) => handleDiscountPriceChange(e.target.value)}
                   placeholder="e.g. 6800"
@@ -593,7 +599,7 @@ function EditItemModal({
     const numPrice = parseFloat(val);
     const numPct = parseFloat(discountPercent);
     if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
-      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+      setDiscountPrice(String(roundToKobo(numPrice * (1 - numPct / 100))));
     } else if (!val) {
       setDiscountPrice("");
       setDiscountPercent("");
@@ -616,7 +622,7 @@ function EditItemModal({
     const numPrice = parseFloat(price);
     const numPct = parseFloat(val);
     if (!isNaN(numPrice) && numPrice > 0 && !isNaN(numPct) && numPct > 0 && numPct < 100) {
-      setDiscountPrice(String(Math.round(numPrice * (1 - numPct / 100))));
+      setDiscountPrice(String(roundToKobo(numPrice * (1 - numPct / 100))));
     } else if (!val) {
       setDiscountPrice("");
     }
@@ -779,6 +785,9 @@ function EditItemModal({
               <input
                 type="number"
                 required
+                min="0.01"
+                step="0.01"
+                inputMode="decimal"
                 value={price}
                 onChange={(e) => handlePriceChange(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-300"
@@ -836,6 +845,8 @@ function EditItemModal({
                 <input
                   type="number"
                   min="0"
+                  step="0.01"
+                  inputMode="decimal"
                   value={discountPrice}
                   onChange={(e) => handleDiscountPriceChange(e.target.value)}
                   placeholder="e.g. 6800"

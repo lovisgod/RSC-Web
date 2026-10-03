@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMoney, formatNaira, hasKobo } from "./money";
+import { formatMoney, formatNaira, hasKobo, roundToKobo } from "./money";
 
 describe("money helpers", () => {
   describe("hasKobo", () => {
@@ -32,6 +32,14 @@ describe("money helpers", () => {
     it("formats Money objects correctly", () => {
       expect(formatMoney({ amountMinor: 1735000, currency: "NGN" })).toBe("₦17,350");
       expect(formatMoney({ amountMinor: 130125, currency: "NGN" })).toBe("₦1,301.25");
+    });
+  });
+
+  describe("roundToKobo", () => {
+    it("rounds major-unit naira to two decimals", () => {
+      expect(roundToKobo(7.555)).toBe(7.56);
+      expect(roundToKobo(6.8)).toBe(6.8);
+      expect(roundToKobo(8000)).toBe(8000);
     });
   });
 });

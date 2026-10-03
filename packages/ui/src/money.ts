@@ -4,6 +4,11 @@ export function hasKobo(minor: number): boolean {
   return Math.abs(minor % 100) > 0.001;
 }
 
+/** Rounds a major-unit naira amount (e.g. form input) to kobo precision: 7.555 → 7.56. */
+export function roundToKobo(naira: number): number {
+  return Math.round(naira * 100) / 100;
+}
+
 export function formatNaira(minor: number, locale = "en-NG"): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
