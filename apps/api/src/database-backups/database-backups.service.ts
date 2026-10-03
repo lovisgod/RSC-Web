@@ -220,7 +220,7 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
 
     const timestamp = new Date().toISOString().replaceAll(/[:.]/g, "-");
     const directory = join(tmpdir(), "rsc-db-backups");
-    const fileName = `rsc-db-backup-${timestamp}.dump`;
+    const fileName = `dineout-db-backup-${timestamp}.dump`;
     const filePath = join(directory, fileName);
 
     await mkdir(directory, { recursive: true });

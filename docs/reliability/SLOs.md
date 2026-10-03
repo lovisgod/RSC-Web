@@ -1,4 +1,4 @@
-# RSC-Web Service Level Objectives (SLOs) & Reliability Contract
+# DineOut-Web Service Level Objectives (SLOs) & Reliability Contract
 
 **Document Version:** 1.0  
 **Effective Date:** 2026-10-01  
@@ -73,7 +73,7 @@ _Customer polls or connects to tracking endpoints to view delivery status._
 
 ## 3. Multi-Window Multi-Burn-Rate Alerting Architecture
 
-To avoid alert fatigue while catching catastrophic failures fast, RSC-Web utilizes Google SRE multi-window burn rate alerts:
+To avoid alert fatigue while catching catastrophic failures fast, DineOut-Web utilizes Google SRE multi-window burn rate alerts:
 
 | Severity           | Burn Rate | % Budget Consumed      | Short Window | Long Window | Target Channel                              | Action                                                             |
 | ------------------ | --------- | ---------------------- | ------------ | ----------- | ------------------------------------------- | ------------------------------------------------------------------ |
