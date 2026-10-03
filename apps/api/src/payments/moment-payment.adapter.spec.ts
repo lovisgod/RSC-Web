@@ -29,7 +29,7 @@ describe(MomentPaymentAdapter.name, () => {
           };
         }
         if (key === "app.customerWebUrl") {
-          return "https://customer.rscdev.tech";
+          return "https://customer.dineout.com.ng";
         }
         return null;
       }),
@@ -109,7 +109,7 @@ describe(MomentPaymentAdapter.name, () => {
             options: {
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
-                return_url: "https://customer.rscdev.tech/tracking?reference=pmt_master_123",
+                return_url: "https://customer.dineout.com.ng/tracking?reference=pmt_master_123",
               },
             },
           }),
@@ -143,7 +143,7 @@ describe(MomentPaymentAdapter.name, () => {
               };
             }
             if (key === "app.customerWebUrl") {
-              return "https://customer.rscdev.tech";
+              return "https://customer.dineout.com.ng";
             }
             return null;
           }),
@@ -220,7 +220,7 @@ describe(MomentPaymentAdapter.name, () => {
             options: {
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
-                return_url: "https://customer.rscdev.tech/tracking?reference=pmt_multi_outlet",
+                return_url: "https://customer.dineout.com.ng/tracking?reference=pmt_multi_outlet",
               },
             },
           }),

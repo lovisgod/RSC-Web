@@ -108,7 +108,7 @@ export function useOrders() {
 
 ### Dev proxy
 
-`VITE_API_BASE_URL` is intentionally **empty** in `.env.local`. All `/api/...` requests are proxied by Vite to `https://api-dev.rscdev.tech` (configured in `vite.config.ts`). This sidesteps cross-origin cookie restrictions in development.
+`VITE_API_BASE_URL` is intentionally **empty** in `.env.local`. All `/api/...` requests are proxied by Vite to `https://api-dev.dineout.com.ng` (configured in `vite.config.ts`). This sidesteps cross-origin cookie restrictions in development.
 
 **Always restart the dev server** after changing `vite.config.ts` or `.env.local`.
 
@@ -337,7 +337,7 @@ pnpm --filter @rsc/admin dev
 http://127.0.0.1:5173
 
 # API proxy target:
-https://api-dev.rscdev.tech
+https://api-dev.dineout.com.ng
 ```
 
 `.env.local` holds `VITE_API_BASE_URL=` (empty). Requests to `/api/...` are proxied by Vite — do not change this to a direct URL or cross-origin cookie auth will break.

@@ -26,7 +26,7 @@ export class UpdateDatabaseBackupSettingsDto {
   @Max(10080)
   intervalMinutes?: number;
 
-  @ApiPropertyOptional({ example: "owner@rscdev.tech" })
+  @ApiPropertyOptional({ example: "owner@dineout.com.ng" })
   @IsOptional()
   @Transform(trimLower)
   @IsEmail()
@@ -59,7 +59,7 @@ export class DatabaseBackupRunResultDto {
   @ApiProperty({ example: 412567 })
   fileSizeBytes!: number;
 
-  @ApiProperty({ example: "owner@rscdev.tech" })
+  @ApiProperty({ example: "owner@dineout.com.ng" })
   recipientEmail!: string;
 
   @ApiProperty({ example: "2026-07-22T12:00:00.000Z" })

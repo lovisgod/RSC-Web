@@ -16,7 +16,7 @@ Connect to the API host with the `/realtime` namespace:
 ```ts
 import { io } from "socket.io-client";
 
-const socket = io("https://api-dev.rscdev.tech/realtime", {
+const socket = io("https://api-dev.dineout.com.ng/realtime", {
   auth: { token: accessToken },
 });
 ```

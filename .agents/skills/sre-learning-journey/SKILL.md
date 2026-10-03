@@ -23,7 +23,7 @@ This is a hands-on curriculum against the real RSC-Web food ordering platform, n
 - **Admin portals:** Vite SPAs for central staff (`apps/admin`) and outlet operators (`apps/outlet-admin`).
 - **Payments:** Moment and Paystack split settlement with outlet subaccounts and platform retained fee allocations.
 - **Hosting / Compute:** Single Hostinger KVM VPS (`72.61.202.26`) with Dokploy managing Docker Compose services.
-- **Ingress / Edge:** Traefik reverse proxy handling Let's Encrypt TLS and domain routing (`staging.rscdev.tech`, `api-staging.rscdev.tech`, etc.).
+- **Ingress / Edge:** Traefik reverse proxy handling Let's Encrypt TLS and domain routing (`staging.dineout.com.ng`, `api-staging.dineout.com.ng`, etc.).
 - **Deployments:** GitHub webhooks trigger Dokploy Compose builds from `staging` (staging) or `main` (production).
 - **Existing operations:** Database backup/restore controller, request ID middleware (`x-request-id`), health endpoints (`/api/v1/health/live`, `/api/v1/health/ready`), and pre-push validation gates.
 
@@ -133,7 +133,7 @@ Produce `docs/reliability/RSC-PRODUCTION-READINESS.md` consolidating the reliabi
 ## Safety and operational constraints
 
 - **VPS Resource Preservation:** The Hostinger VPS has finite RAM and CPU. Observability tools must be lean (Prometheus + Loki with tight memory limits and scrape intervals).
-- **Staging-First Testing:** Run all load tests (k6), chaos injection, and experimental scrapers strictly against the staging environment (`staging.rscdev.tech`).
+- **Staging-First Testing:** Run all load tests (k6), chaos injection, and experimental scrapers strictly against the staging environment (`staging.dineout.com.ng`).
 - **No Production Money Movement:** Use provider sandbox/test credentials (e.g. `MOMENT_SECRET_KEY=sk_test_...`) for all synthetic journeys and load scripts.
 - **Cardinality Control:** Never use high-cardinality values (user IDs, order IDs, payment references, phone numbers) as Prometheus metric labels. Keep those strictly in logs (Loki) and traces.
 - **Redaction:** Never emit plaintext passwords, JWTs, cardholder data, or encryption keys in logs or metric scrapers.

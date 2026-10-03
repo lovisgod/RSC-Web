@@ -526,7 +526,7 @@ describe(CatalogService.name, () => {
         apiKey: "openrouter-api-key",
         timeoutMs: 500,
       })
-      .mockReturnValueOnce("https://rscdev.tech");
+      .mockReturnValueOnce("https://dineout.com.ng");
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -548,7 +548,7 @@ describe(CatalogService.name, () => {
         method: "POST",
         headers: expect.objectContaining({
           authorization: "Bearer openrouter-api-key",
-          "HTTP-Referer": "https://rscdev.tech",
+          "HTTP-Referer": "https://dineout.com.ng",
           "X-Title": "Dineout",
         }) as Record<string, string>,
       }),
@@ -573,7 +573,7 @@ describe(CatalogService.name, () => {
         apiKey: "openrouter-api-key",
         timeoutMs: 500,
       })
-      .mockReturnValueOnce("https://rscdev.tech");
+      .mockReturnValueOnce("https://dineout.com.ng");
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
         JSON.stringify({

@@ -9,7 +9,7 @@ import { normalizeNigerianPhoneNumber } from "./phone-number";
 import { UserRole } from "./user-role.enum";
 
 const defaultSuperAdmin = {
-  name: "RSC Super Admin",
+  name: "DineOut Super Admin",
   email: "super.admin@yopmail.com",
   phone: "08030000001",
   password: "password",

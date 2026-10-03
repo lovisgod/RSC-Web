@@ -76,6 +76,25 @@ services:
       postgres:
         condition: service_healthy
 
+  api-seed:
+    image: rsc-api-${DEPLOY_ENV:-development}:${APP_VERSION:-dokploy}
+    restart: "no"
+    profiles: ["seed"]
+    environment:
+      TZ: Africa/Lagos
+      NODE_ENV: production
+      DEPLOY_ENV: ${DEPLOY_ENV:-development}
+      DATABASE_URL: postgresql://dineout:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/dineout
+      DATABASE_SSL: "false"
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:?PII_ENCRYPTION_KEY is required}
+      PII_HASH_PEPPER: ${PII_HASH_PEPPER:?PII_HASH_PEPPER is required}
+      OTP_PEPPER: ${OTP_PEPPER:?OTP_PEPPER is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+    command: ["node", "dist/src/database/seed-demo-data.js"]
+    depends_on:
+      api-migrate:
+        condition: service_completed_successfully
+
   api:
     image: rsc-api-${DEPLOY_ENV:-development}:${APP_VERSION:-dokploy}
     build:
@@ -90,7 +109,7 @@ services:
       DEPLOY_ENV: ${DEPLOY_ENV:-development}
       PORT: "4000"
       APP_VERSION: ${APP_VERSION:-dokploy}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://dev.rscdev.tech,https://admin-dev.rscdev.tech,https://outlet-admin-dev.rscdev.tech}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://dev.dineout.com.ng,https://admin-dev.dineout.com.ng,https://outlet-admin-dev.dineout.com.ng}
       DATABASE_URL: postgresql://dineout:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/dineout
       DATABASE_SSL: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379

@@ -148,7 +148,7 @@ export class RealtimeController {
         },
       ],
       clientExample:
-        "const socket = io('https://api-dev.rscdev.tech/realtime', { auth: { token }, withCredentials: true }); socket.emit('room:subscribe', { room: `order:${masterOrderId}` }); socket.on('outlet:status_update', handler);",
+        "const socket = io('https://api-dev.dineout.com.ng/realtime', { auth: { token }, withCredentials: true }); socket.emit('room:subscribe', { room: `order:${masterOrderId}` }); socket.on('outlet:status_update', handler);",
     };
   }
 }

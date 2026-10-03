@@ -612,7 +612,7 @@ describe("registration API client", () => {
       ),
     );
     const client = createApiClient({
-      baseUrl: "https://api-dev.rscdev.tech",
+      baseUrl: "https://api-dev.dineout.com.ng",
       fetch: requestFetch,
     });
 
@@ -623,7 +623,7 @@ describe("registration API client", () => {
       longitude: 3.3792,
     });
     expect(requestFetch).toHaveBeenCalledWith(
-      "https://api-dev.rscdev.tech/api/v1/orders/4273e96c-2887-49a5-a6d5-269f007f04f0/rider-location",
+      "https://api-dev.dineout.com.ng/api/v1/orders/4273e96c-2887-49a5-a6d5-269f007f04f0/rider-location",
       expect.objectContaining({ credentials: "include" }),
     );
   });
@@ -683,7 +683,7 @@ describe("registration API client", () => {
       ),
     );
     const client = createApiClient({
-      baseUrl: "https://api-dev.rscdev.tech",
+      baseUrl: "https://api-dev.dineout.com.ng",
       fetch: requestFetch,
     });
 
@@ -693,17 +693,17 @@ describe("registration API client", () => {
 
     expect(requestFetch).toHaveBeenNthCalledWith(
       1,
-      "https://api-dev.rscdev.tech/api/v1/stats/operations/summary",
+      "https://api-dev.dineout.com.ng/api/v1/stats/operations/summary",
       expect.objectContaining({ credentials: "include" }),
     );
     expect(requestFetch).toHaveBeenNthCalledWith(
       2,
-      "https://api-dev.rscdev.tech/api/v1/stats/operations/order-pulse?range=LAST_7_DAYS",
+      "https://api-dev.dineout.com.ng/api/v1/stats/operations/order-pulse?range=LAST_7_DAYS",
       expect.objectContaining({ credentials: "include" }),
     );
     expect(requestFetch).toHaveBeenNthCalledWith(
       3,
-      "https://api-dev.rscdev.tech/api/v1/stats/operations/queue",
+      "https://api-dev.dineout.com.ng/api/v1/stats/operations/queue",
       expect.objectContaining({ credentials: "include" }),
     );
   });

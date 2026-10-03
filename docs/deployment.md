@@ -138,11 +138,11 @@ Open the Compose service's **Environment** tab and add:
 
 ```dotenv
 DEPLOY_ENV=development
-PUBLIC_API_URL=https://api-dev.rscdev.tech
+PUBLIC_API_URL=https://api-dev.dineout.com.ng
 APP_VERSION=development
 POSTGRES_PASSWORD=replace-with-a-long-random-value
 REDIS_PASSWORD=replace-with-a-different-long-random-value
-CORS_ORIGINS=https://dev.rscdev.tech,https://admin-dev.rscdev.tech,https://outlet-admin-dev.rscdev.tech
+CORS_ORIGINS=https://dev.dineout.com.ng,https://admin-dev.dineout.com.ng,https://outlet-admin-dev.dineout.com.ng
 SWAGGER_ENABLED=true
 PII_ENCRYPTION_KEY=replace-with-output-of-openssl-rand-base64-32
 PII_HASH_PEPPER=replace-with-output-of-openssl-rand-hex-32
@@ -163,7 +163,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=replace-with-gmail-address
 SMTP_PASS=replace-with-gmail-app-password
-SMTP_FROM=RSC <noreply@rscdev.tech>
+SMTP_FROM=RSC <noreply@dineout.com.ng>
 MOMENT_SFTP_HOST=ftp.momentco.io
 MOMENT_SFTP_PORT=22
 MOMENT_SFTP_USERNAME=replace-with-moment-provisioned-username
