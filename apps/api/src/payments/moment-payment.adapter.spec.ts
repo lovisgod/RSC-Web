@@ -110,6 +110,7 @@ describe(MomentPaymentAdapter.name, () => {
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
                 return_url: "https://customer.dineout.com.ng/tracking?reference=pmt_master_123",
+                visible_payment_methods: ["card"],
               },
             },
           }),
@@ -221,6 +222,7 @@ describe(MomentPaymentAdapter.name, () => {
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
                 return_url: "https://customer.dineout.com.ng/tracking?reference=pmt_multi_outlet",
+                visible_payment_methods: ["card"],
               },
             },
           }),
@@ -277,9 +279,64 @@ describe(MomentPaymentAdapter.name, () => {
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
                 return_url: "rsc://payment/return?reference=pmt_master_mobile",
+                visible_payment_methods: ["card"],
               },
             },
           }),
+        }),
+      );
+
+      fetchMock.mockRestore();
+    });
+
+    it("uses configured visible_payment_methods when provided in config", async () => {
+      const adapterWithCustomMethods = new MomentPaymentAdapter(
+        {
+          get: vi.fn().mockImplementation((key: string) => {
+            if (key === "payments.moment") {
+              return {
+                secretKey,
+                baseUrl,
+                webhookSecret,
+                dineoutAccountId: "",
+                visiblePaymentMethods: ["card", "bank_transfer"],
+              };
+            }
+            if (key === "app.customerWebUrl") {
+              return "https://customer.dineout.com.ng";
+            }
+            return null;
+          }),
+        } as unknown as ConfigService<ApplicationConfig, true>,
+        dataSource,
+      );
+
+      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          id: "ps_custom",
+          session_url: "https://moment.momentpay.io/checkout/ckt_custom",
+        }),
+      } as unknown as Response);
+
+      await adapterWithCustomMethods.initiate({
+        email: "customer@example.com",
+        amountMinor: 100000,
+        currency: "NGN",
+        reference: "pmt_custom_methods",
+        splitRoutes: [],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.momentpay.net/collect/payment_sessions",
+        expect.objectContaining({
+          body: expect.stringContaining(
+            JSON.stringify({
+              presentation_mode: { mode: "redirect" },
+              return_url: "https://customer.dineout.com.ng/tracking?reference=pmt_custom_methods",
+              visible_payment_methods: ["card", "bank_transfer"],
+            }).slice(1, -1),
+          ),
         }),
       );
 

@@ -52,6 +52,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
   private readonly webhookSecret: string;
   private readonly customerWebUrl: string;
   private readonly dineoutAccountId: string;
+  private readonly visiblePaymentMethods: string[];
 
   constructor(
     configService: ConfigService<ApplicationConfig, true>,
@@ -62,9 +63,15 @@ export class MomentPaymentAdapter implements PaymentAdapter {
     this.baseUrl = config.baseUrl;
     this.webhookSecret = config.webhookSecret;
     this.dineoutAccountId = config.dineoutAccountId;
+    this.visiblePaymentMethods = config.visiblePaymentMethods?.length
+      ? config.visiblePaymentMethods
+      : ["card"];
     this.customerWebUrl = configService.get("app.customerWebUrl", { infer: true });
     this.logger.log(
       `[Moment] dineoutAccountId configured: ${this.dineoutAccountId ? `yes (${this.dineoutAccountId.slice(0, 6)}…)` : "NO — DINEOUT_ACCOUNT_ID is missing or empty"}`,
+    );
+    this.logger.log(
+      `[Moment] visiblePaymentMethods configured: ${this.visiblePaymentMethods.join(", ")}`,
     );
   }
 
@@ -102,6 +109,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
         checkout_options: {
           presentation_mode: { mode: "redirect" },
           return_url: this.buildReturnUrl(input.reference, input.returnUrl),
+          visible_payment_methods: this.visiblePaymentMethods,
         },
       },
     };

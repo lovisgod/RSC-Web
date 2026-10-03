@@ -86,6 +86,7 @@ export interface ApplicationConfig {
       sftpPassword: string;
       settlementReportPath: string;
       dineoutAccountId: string;
+      visiblePaymentMethods: string[];
     };
     platformCommissionBps: number;
     vatBps: number;
@@ -248,6 +249,9 @@ export default function configuration(): ApplicationConfig {
         settlementReportPath: process.env.MOMENT_SETTLEMENT_REPORT_PATH ?? "/",
         dineoutAccountId:
           process.env.DINEOUT_ACCOUNT_ID ?? process.env.MOMENT_DINEOUT_ACCOUNT_ID ?? "",
+        visiblePaymentMethods: parseVisiblePaymentMethods(
+          process.env.MOMENT_VISIBLE_PAYMENT_METHODS ?? "card",
+        ),
       },
       platformCommissionBps: Number(process.env.PLATFORM_COMMISSION_BPS ?? 1_000),
       vatBps: Number(process.env.VAT_BPS ?? 750),
@@ -308,4 +312,13 @@ function preparationSuggestionsAiConfig(): ApplicationConfig["preparationSuggest
     apiKey: process.env.POLLINATIONS_API_KEY ?? "",
     timeoutMs: Number(process.env.PREPARATION_SUGGESTIONS_AI_TIMEOUT_MS ?? 4_000),
   };
+}
+
+function parseVisiblePaymentMethods(value: string): string[] {
+  const methods = value
+    .split(",")
+    .map((method) => method.trim().toLowerCase())
+    .filter(Boolean);
+
+  return methods.length > 0 ? methods : ["card"];
 }
