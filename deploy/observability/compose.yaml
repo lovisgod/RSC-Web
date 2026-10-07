@@ -42,7 +42,7 @@ services:
       GF_SMTP_FROM_ADDRESS: ${ALERT_SMTP_FROM:-noreply@dineout.com.ng}
       GF_SMTP_FROM_NAME: "DineOut Reliability Alerts"
       GF_SMTP_SKIP_VERIFY: "true"
-      ALERT_EMAIL_RECIPIENT: ${ALERT_EMAIL_RECIPIENT:-devops@dineout.com.ng}
+      ALERT_EMAIL_RECIPIENT: ${ALERT_EMAIL_RECIPIENT:-devops@dineout.ng}
     deploy:
       resources:
         limits:
