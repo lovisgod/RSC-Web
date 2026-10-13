@@ -29,6 +29,8 @@ interface MomentInitializeResponse {
   payment_outcome?: string;
   amount?: number;
   message?: string;
+  /** Moment customer ID returned when a payment method is saved */
+  customer_id?: string;
 }
 
 interface MomentWebhookPayload {
@@ -106,10 +108,16 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       external_reference: input.reference,
       metadata,
       options: {
+        customer: input.momentCustomerId
+          ? input.momentCustomerId
+          : input.customerName
+            ? { name: input.customerName }
+            : undefined,
         checkout_options: {
           presentation_mode: { mode: "redirect" },
           return_url: this.buildReturnUrl(input.reference, input.returnUrl),
           visible_payment_methods: this.visiblePaymentMethods,
+          save_payment_method: "prompt",
         },
       },
     };
@@ -153,6 +161,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
         checkoutUrl: payload.session_url,
         status: "PENDING",
         providerResponse: payload,
+        momentCustomerId: payload.customer_id ?? null,
       };
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;

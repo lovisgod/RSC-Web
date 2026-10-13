@@ -480,9 +480,19 @@ export class PaymentsService {
         currency: "NGN",
         reference,
         splitRoutes,
+        customerName: customer.name,
+        momentCustomerId: customer.momentCustomerId ?? null,
         ...(returnUrl ? { returnUrl } : {}),
       };
       const providerPayment = await this.paymentAdapter.initiate(providerPaymentInput);
+
+      // Persist the Moment customer ID so future checkouts present saved payment methods
+      if (providerPayment.momentCustomerId && !customer.momentCustomerId) {
+        await this.users.update(
+          { id: customer.id },
+          { momentCustomerId: providerPayment.momentCustomerId },
+        );
+      }
 
       const persisted = await this.dataSource.transaction(async (manager) => {
         const masterOrder = await manager.save(
@@ -661,8 +671,18 @@ export class PaymentsService {
       currency: order.currency,
       reference,
       splitRoutes,
+      customerName: customer.name,
+      momentCustomerId: customer.momentCustomerId ?? null,
       ...(returnUrl ? { returnUrl } : {}),
     });
+
+    // Persist the Moment customer ID so future checkouts present saved payment methods
+    if (providerPayment.momentCustomerId && !customer.momentCustomerId) {
+      await this.users.update(
+        { id: customer.id },
+        { momentCustomerId: providerPayment.momentCustomerId },
+      );
+    }
 
     await this.payments.update(
       { masterOrderId: order.id, status: PaymentStatus.PENDING },

@@ -14,6 +14,10 @@ export interface InitiateProviderPaymentInput {
   reference: string;
   splitRoutes: PaymentSplitRoute[];
   returnUrl?: string;
+  /** Customer's display name — sent on first checkout so Moment can create the customer record */
+  customerName?: string;
+  /** Moment customer ID from a previous checkout — enables saved-card fast-path */
+  momentCustomerId?: string | null;
 }
 
 export interface InitiateProviderPaymentResult {
@@ -22,6 +26,8 @@ export interface InitiateProviderPaymentResult {
   checkoutUrl: string | null;
   status: "PENDING" | "SUCCESS";
   providerResponse: unknown;
+  /** Moment customer ID returned by Moment after the session is created. Persist this on the customer record. */
+  momentCustomerId?: string | null;
 }
 
 export interface VerifyProviderPaymentResult {

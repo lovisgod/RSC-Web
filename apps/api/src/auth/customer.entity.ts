@@ -88,6 +88,10 @@ export class Customer {
   @Column({ name: "fcm_token", type: "varchar", length: 255, nullable: true })
   fcmToken!: string | null;
 
+  /** Moment payment gateway customer ID — persisted after first checkout to enable saved-card fast-path */
+  @Column({ name: "moment_customer_id", type: "varchar", length: 64, nullable: true })
+  momentCustomerId!: string | null;
+
   @Column({ name: "notification_preferences", type: "jsonb", default: () => "'{}'::jsonb" })
   notificationPreferences!: Record<string, unknown>;
 

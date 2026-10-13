@@ -107,10 +107,12 @@ describe(MomentPaymentAdapter.name, () => {
               BU2_Subamount: "30000",
             },
             options: {
+              customer: undefined,
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
                 return_url: "https://customer.dineout.com.ng/tracking?reference=pmt_master_123",
                 visible_payment_methods: ["card"],
+                save_payment_method: "prompt",
               },
             },
           }),
@@ -126,6 +128,7 @@ describe(MomentPaymentAdapter.name, () => {
           id: "ps_kfAWZgfQIoeG0q",
           session_url: "https://moment.momentpay.io/checkout/ckt802zEb2P2uS4Ql",
         },
+        momentCustomerId: null,
       });
 
       fetchMock.mockRestore();
@@ -219,10 +222,12 @@ describe(MomentPaymentAdapter.name, () => {
               BU4_Subamount: "1083275",
             },
             options: {
+              customer: undefined,
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
                 return_url: "https://customer.dineout.com.ng/tracking?reference=pmt_multi_outlet",
                 visible_payment_methods: ["card"],
+                save_payment_method: "prompt",
               },
             },
           }),
@@ -276,10 +281,12 @@ describe(MomentPaymentAdapter.name, () => {
               BU1_Subamount: "594000",
             },
             options: {
+              customer: undefined,
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
                 return_url: "rsc://payment/return?reference=pmt_master_mobile",
                 visible_payment_methods: ["card"],
+                save_payment_method: "prompt",
               },
             },
           }),
@@ -340,10 +347,12 @@ describe(MomentPaymentAdapter.name, () => {
             external_reference: "pmt_custom_methods",
             metadata: {},
             options: {
+              customer: undefined,
               checkout_options: {
                 presentation_mode: { mode: "redirect" },
                 return_url: "https://customer.dineout.com.ng/tracking?reference=pmt_custom_methods",
                 visible_payment_methods: ["card", "bank_transfer"],
+                save_payment_method: "prompt",
               },
             },
           }),
