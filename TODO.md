@@ -40,6 +40,8 @@ so another agent can safely pick the first unchecked task.
 
 ## P1 — Customer web
 
+- [x] Retire the redundant outlet listing and consolidate discovery on the landing page.
+- [x] Route outlet detail, menu search, and payment exit back buttons to the landing page.
 - [ ] Implement outlet discovery and outlet menu routes.
 - [ ] Implement modifier-aware cart with deterministic price calculation.
 - [ ] Persist cart safely and reconcile stale menu prices/availability.

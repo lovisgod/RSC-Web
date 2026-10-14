@@ -58,11 +58,11 @@ export function OutletDetailView({ id }: { id: string }) {
         <p className="font-semibold text-gray-700">Kitchen not found</p>
         <button
           type="button"
-          onClick={() => router.push("/outlets")}
+          onClick={() => router.push("/")}
           className="text-sm font-semibold hover:underline mt-1"
           style={{ color: "var(--rsc-brand)" }}
         >
-          Back to kitchens
+          Back to home
         </button>
       </div>
     );
@@ -100,8 +100,8 @@ export function OutletDetailView({ id }: { id: string }) {
 
         <button
           type="button"
-          onClick={() => router.push("/outlets")}
-          aria-label="Go back"
+          onClick={() => router.push("/")}
+          aria-label="Back to home"
           className="absolute top-3 left-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md border border-gray-200 text-gray-700 transition hover:bg-white hover:text-black dark:bg-gray-900/90 dark:border-gray-800 dark:text-gray-200"
         >
           <ArrowLeft className="h-5 w-5" />

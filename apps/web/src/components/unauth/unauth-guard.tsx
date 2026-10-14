@@ -12,7 +12,7 @@ export function UnauthGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hasHydrated) return;
-    if (isSignedIn) router.replace("/outlets");
+    if (isSignedIn) router.replace("/");
   }, [isSignedIn, hasHydrated, router]);
 
   if (!hasHydrated || isSignedIn) return null;

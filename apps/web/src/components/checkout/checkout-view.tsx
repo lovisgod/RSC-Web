@@ -76,7 +76,7 @@ export function CheckoutView() {
             <PaymentStep
               checkoutUrl={checkoutUrl}
               totalMinor={snapshot?.totals.totalMinor ?? null}
-              onBack={() => router.push("/outlets")}
+              onBack={() => router.push("/")}
             />
           )}
 

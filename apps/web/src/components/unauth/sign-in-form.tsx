@@ -52,7 +52,7 @@ export function SignInForm() {
     onSuccess: (result) => {
       const stored = localStorage.getItem(AUTH_REDIRECT_KEY);
       if (stored) localStorage.removeItem(AUTH_REDIRECT_KEY);
-      const redirectTarget = stored ?? searchParams.get("redirect") ?? "/outlets";
+      const redirectTarget = stored ?? searchParams.get("redirect") ?? "/";
 
       reconcileCartOwner(result.user.id);
 
