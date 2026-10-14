@@ -222,7 +222,7 @@ export function NotificationsView() {
             right here.
           </p>
           <Link
-            href="/outlets"
+            href="/"
             className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
           >
             <Utensils className="w-3.5 h-3.5" />
