@@ -27,34 +27,73 @@ export class FinanceService {
     const window = this.normalizeSettlementWindow(query);
     const rows = await this.dataSource.query<SettlementRow[]>(
       `
+        WITH successful_payments AS (
+          SELECT DISTINCT ON (payment.master_order_id)
+            payment.id,
+            payment.master_order_id,
+            payment.amount_minor
+          FROM payments payment
+          WHERE payment.status = $2::payment_status
+            AND (payment.succeeded_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
+          ORDER BY payment.master_order_id, payment.succeeded_at DESC, payment.id DESC
+        ),
+        allocation_base AS (
+          SELECT
+            so.*,
+            payment.id AS payment_id,
+            payment.amount_minor AS payment_amount_minor,
+            SUM(so.net_minor) OVER (PARTITION BY so.master_order_id)::int AS outlet_total_minor,
+            ROW_NUMBER() OVER (PARTITION BY so.master_order_id ORDER BY so.id) AS allocation_rank,
+            COUNT(*) OVER (PARTITION BY so.master_order_id) AS allocation_count
+          FROM sub_orders so
+          INNER JOIN successful_payments payment
+            ON payment.master_order_id = so.master_order_id
+          WHERE so.deleted_at IS NULL
+        ),
+        allocated_sub_orders AS (
+          SELECT
+            allocation_base.*,
+            CASE
+              WHEN outlet_total_minor <= 0 THEN 0
+              ELSE FLOOR(
+                GREATEST(payment_amount_minor - outlet_total_minor, 0)::numeric
+                * net_minor::numeric / outlet_total_minor::numeric
+              )::int
+            END AS base_dineout_minor
+          FROM allocation_base
+        ),
+        paid_sub_orders AS (
+          SELECT
+            allocated_sub_orders.*,
+            CASE
+              WHEN allocation_rank = allocation_count THEN
+                GREATEST(payment_amount_minor - outlet_total_minor, 0)
+                - SUM(base_dineout_minor) OVER (PARTITION BY master_order_id)
+                + base_dineout_minor
+              ELSE base_dineout_minor
+            END::int AS dineout_gross_minor
+          FROM allocated_sub_orders
+        )
         SELECT
           o.id AS "outletId",
           o.name AS "outletName",
           o.image_url AS "imageUrl",
           NULLIF(o.settlement_subaccount_code, '') AS "subaccountCode",
-          COUNT(so.id) FILTER (WHERE p.id IS NOT NULL)::int AS "completedSubOrders",
-          COUNT(so.id) FILTER (WHERE p.id IS NOT NULL AND osa.id IS NULL)::int AS "pendingSubOrders",
+          COUNT(so.id)::int AS "completedSubOrders",
+          COUNT(so.id) FILTER (WHERE osa.id IS NULL)::int AS "pendingSubOrders",
           COUNT(so.id) FILTER (
-            WHERE p.id IS NOT NULL AND NOT (so.status = ANY($1::sub_order_status[]))
+            WHERE NOT (so.status = ANY($1::sub_order_status[]))
           )::int AS "fulfillmentPendingSubOrders",
-          COALESCE(SUM(so.subtotal_minor) FILTER (WHERE p.id IS NOT NULL), 0)::int AS "grossMinor",
-          COALESCE(SUM(so.commission_minor) FILTER (WHERE p.id IS NOT NULL), 0)::int AS "commissionMinor",
-          COALESCE(SUM(so.net_minor) FILTER (WHERE p.id IS NOT NULL), 0)::int AS "netMinor",
-          COALESCE(MAX(so.currency) FILTER (WHERE p.id IS NOT NULL), 'NGN') AS "currency",
-          MAX(osa.approved_at) FILTER (WHERE p.id IS NOT NULL) AS "latestApprovedAt"
+          COALESCE(SUM(so.net_minor), 0)::int AS "grossMinor",
+          COALESCE(SUM(so.dineout_gross_minor), 0)::int AS "dineoutGrossMinor",
+          COALESCE(SUM(so.net_minor + so.dineout_gross_minor), 0)::int AS "totalCollectedMinor",
+          COALESCE(SUM(so.commission_minor), 0)::int AS "commissionMinor",
+          COALESCE(SUM(so.net_minor), 0)::int AS "netMinor",
+          COALESCE(MAX(so.currency), 'NGN') AS "currency",
+          MAX(osa.approved_at) AS "latestApprovedAt"
         FROM outlets o
-        LEFT JOIN sub_orders so
+        LEFT JOIN paid_sub_orders so
           ON so.outlet_id = o.id
-         AND so.deleted_at IS NULL
-        LEFT JOIN LATERAL (
-          SELECT payment.id
-          FROM payments payment
-          WHERE payment.master_order_id = so.master_order_id
-            AND payment.status = $2::payment_status
-            AND (payment.succeeded_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
-          ORDER BY payment.succeeded_at DESC, payment.id DESC
-          LIMIT 1
-        ) p ON TRUE
         LEFT JOIN outlet_settlement_approvals osa
           ON osa.sub_order_id = so.id
         WHERE o.deleted_at IS NULL
@@ -156,17 +195,71 @@ export class FinanceService {
 
     const rows = await this.dataSource.query<SettlementExportRow[]>(
       `
+        WITH successful_payments AS (
+          SELECT DISTINCT ON (payment.master_order_id)
+            payment.id,
+            payment.master_order_id,
+            payment.amount_minor,
+            payment.reference,
+            payment.gateway,
+            payment.succeeded_at
+          FROM payments payment
+          WHERE payment.status = $2::payment_status
+            AND (payment.succeeded_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
+          ORDER BY payment.master_order_id, payment.succeeded_at DESC, payment.id DESC
+        ),
+        allocation_base AS (
+          SELECT
+            so.*,
+            payment.amount_minor AS payment_amount_minor,
+            payment.reference AS payment_reference,
+            payment.gateway AS payment_gateway,
+            payment.succeeded_at AS payment_succeeded_at,
+            SUM(so.net_minor) OVER (PARTITION BY so.master_order_id)::int AS outlet_total_minor,
+            ROW_NUMBER() OVER (PARTITION BY so.master_order_id ORDER BY so.id) AS allocation_rank,
+            COUNT(*) OVER (PARTITION BY so.master_order_id) AS allocation_count
+          FROM sub_orders so
+          INNER JOIN successful_payments payment
+            ON payment.master_order_id = so.master_order_id
+          WHERE so.deleted_at IS NULL
+        ),
+        allocated_sub_orders AS (
+          SELECT
+            allocation_base.*,
+            CASE
+              WHEN outlet_total_minor <= 0 THEN 0
+              ELSE FLOOR(
+                GREATEST(payment_amount_minor - outlet_total_minor, 0)::numeric
+                * net_minor::numeric / outlet_total_minor::numeric
+              )::int
+            END AS base_dineout_minor
+          FROM allocation_base
+        ),
+        paid_sub_orders AS (
+          SELECT
+            allocated_sub_orders.*,
+            CASE
+              WHEN allocation_rank = allocation_count THEN
+                GREATEST(payment_amount_minor - outlet_total_minor, 0)
+                - SUM(base_dineout_minor) OVER (PARTITION BY master_order_id)
+                + base_dineout_minor
+              ELSE base_dineout_minor
+            END::int AS dineout_gross_minor
+          FROM allocated_sub_orders
+        )
         SELECT
-          (p.succeeded_at AT TIME ZONE $3)::date::text AS "settlementDate",
+          (so.payment_succeeded_at AT TIME ZONE $3)::date::text AS "settlementDate",
           o.id AS "outletId",
           o.name AS "outletName",
           NULLIF(o.settlement_subaccount_code, '') AS "subaccountCode",
           so.id AS "subOrderId",
           so.master_order_id AS "masterOrderId",
-          p.reference AS "paymentReference",
-          p.gateway AS "paymentGateway",
-          p.succeeded_at AS "completedAt",
-          so.subtotal_minor AS "grossMinor",
+          so.payment_reference AS "paymentReference",
+          so.payment_gateway AS "paymentGateway",
+          so.payment_succeeded_at AS "completedAt",
+          so.net_minor AS "grossMinor",
+          so.dineout_gross_minor AS "dineoutGrossMinor",
+          (so.net_minor + so.dineout_gross_minor) AS "totalCollectedMinor",
           so.commission_minor AS "commissionMinor",
           so.net_minor AS "netMinor",
           so.currency AS "currency",
@@ -176,24 +269,14 @@ export class FinanceService {
             ELSE 'APPROVED'
           END AS "payoutStatus",
           osa.approved_at AS "approvedAt"
-        FROM sub_orders so
+        FROM paid_sub_orders so
         INNER JOIN outlets o
           ON o.id = so.outlet_id
          AND o.deleted_at IS NULL
-        INNER JOIN LATERAL (
-          SELECT payment.reference, payment.gateway, payment.succeeded_at
-          FROM payments payment
-          WHERE payment.master_order_id = so.master_order_id
-            AND payment.status = $2::payment_status
-            AND (payment.succeeded_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
-          ORDER BY payment.succeeded_at DESC, payment.id DESC
-          LIMIT 1
-        ) p ON TRUE
         LEFT JOIN outlet_settlement_approvals osa
           ON osa.sub_order_id = so.id
-        WHERE so.deleted_at IS NULL
-          AND ($6::uuid IS NULL OR so.outlet_id = $6::uuid)
-        ORDER BY p.succeeded_at ASC, o.name ASC, so.id ASC
+        WHERE ($6::uuid IS NULL OR so.outlet_id = $6::uuid)
+        ORDER BY so.payment_succeeded_at ASC, o.name ASC, so.id ASC
       `,
       [
         COMPLETED_SUB_ORDER_STATUSES,
@@ -239,6 +322,8 @@ export class FinanceService {
       pendingSubOrders,
       fulfillmentPendingSubOrders,
       grossMinor: Number(row.grossMinor),
+      dineoutGrossMinor: Number(row.dineoutGrossMinor),
+      totalCollectedMinor: Number(row.totalCollectedMinor),
       commissionMinor: Number(row.commissionMinor),
       netMinor: Number(row.netMinor),
       currency: row.currency,
@@ -271,6 +356,8 @@ export class FinanceService {
       pendingSubOrders: 0,
       fulfillmentPendingSubOrders: 0,
       grossMinor: 0,
+      dineoutGrossMinor: 0,
+      totalCollectedMinor: 0,
       commissionMinor: 0,
       netMinor: 0,
       currency: "NGN",
@@ -349,6 +436,8 @@ interface SettlementRow {
   pendingSubOrders: number | string;
   fulfillmentPendingSubOrders: number | string;
   grossMinor: number | string;
+  dineoutGrossMinor: number | string;
+  totalCollectedMinor: number | string;
   commissionMinor: number | string;
   netMinor: number | string;
   currency: "NGN";
@@ -366,6 +455,8 @@ interface SettlementExportRow {
   paymentGateway: string;
   completedAt: Date | string;
   grossMinor: number | string;
+  dineoutGrossMinor: number | string;
+  totalCollectedMinor: number | string;
   commissionMinor: number | string;
   netMinor: number | string;
   currency: "NGN";
@@ -384,6 +475,8 @@ export interface OutletSettlementSummary {
   pendingSubOrders: number;
   fulfillmentPendingSubOrders: number;
   grossMinor: number;
+  dineoutGrossMinor: number;
+  totalCollectedMinor: number;
   commissionMinor: number;
   netMinor: number;
   currency: "NGN";
@@ -429,6 +522,8 @@ const SETTLEMENT_EXPORT_HEADERS = [
   "payment_gateway",
   "completed_at",
   "gross_minor",
+  "dineout_gross_minor",
+  "total_collected_minor",
   "commission_minor",
   "net_minor",
   "currency",
@@ -449,6 +544,8 @@ export function settlementRowsToCsv(rows: SettlementExportRow[]): string {
       row.paymentGateway,
       new Date(row.completedAt).toISOString(),
       Number(row.grossMinor),
+      Number(row.dineoutGrossMinor),
+      Number(row.totalCollectedMinor),
       Number(row.commissionMinor),
       Number(row.netMinor),
       row.currency,

@@ -678,6 +678,8 @@ describe("customer registration contracts", () => {
         pendingSubOrders: 3,
         fulfillmentPendingSubOrders: 0,
         grossMinor: 5029600,
+        dineoutGrossMinor: 1083275,
+        totalCollectedMinor: 6112875,
         commissionMinor: 251500,
         netMinor: 4778100,
         currency: "NGN",

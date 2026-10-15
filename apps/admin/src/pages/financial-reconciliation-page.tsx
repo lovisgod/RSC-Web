@@ -20,6 +20,8 @@ interface SettlementRow {
   pendingSubOrders: number;
   fulfillmentPendingSubOrders: number;
   grossMinor: number;
+  dineoutGrossMinor: number;
+  totalCollectedMinor: number;
   commissionMinor: number;
   netMinor: number;
   status: "NO_ACTIVITY" | "PENDING" | "APPROVED";
@@ -237,6 +239,8 @@ export function FinancialReconciliationPage() {
         pendingSubOrders: settlement.pendingSubOrders,
         fulfillmentPendingSubOrders: settlement.fulfillmentPendingSubOrders,
         grossMinor: settlement.grossMinor,
+        dineoutGrossMinor: settlement.dineoutGrossMinor,
+        totalCollectedMinor: settlement.totalCollectedMinor,
         commissionMinor: settlement.commissionMinor,
         netMinor: settlement.netMinor,
         status: settlement.status,
@@ -316,7 +320,9 @@ export function FinancialReconciliationPage() {
                   <th>Settlement Subaccount</th>
                   <th>Paid Sub-Orders</th>
                   <th>Awaiting Fulfillment</th>
-                  <th>Gross Volume</th>
+                  <th>Outlet Gross</th>
+                  <th>Dineout Gross</th>
+                  <th>Total Collected</th>
                   <th>DineOut NG Commission</th>
                   <th>Net Payable</th>
                   <th>Payout Status</th>
@@ -327,7 +333,7 @@ export function FinancialReconciliationPage() {
                 {isLoading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        {Array.from({ length: 9 }).map((_, j) => (
+                        {Array.from({ length: 11 }).map((_, j) => (
                           <td key={j}>
                             <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
                           </td>
@@ -364,6 +370,16 @@ export function FinancialReconciliationPage() {
                           <td>{settlement.fulfillmentPendingSubOrders}</td>
                           <td>
                             <span className="amount">{formatMinor(settlement.grossMinor)}</span>
+                          </td>
+                          <td>
+                            <span className="amount">
+                              {formatMinor(settlement.dineoutGrossMinor)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="amount">
+                              {formatMinor(settlement.totalCollectedMinor)}
+                            </span>
                           </td>
                           <td>
                             <span className="amount amount--negative">

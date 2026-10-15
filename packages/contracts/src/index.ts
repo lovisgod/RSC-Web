@@ -602,6 +602,8 @@ export const outletSettlementSummarySchema = z.object({
   pendingSubOrders: z.int().nonnegative(),
   fulfillmentPendingSubOrders: z.int().nonnegative(),
   grossMinor: z.int().nonnegative(),
+  dineoutGrossMinor: z.int().nonnegative(),
+  totalCollectedMinor: z.int().nonnegative(),
   commissionMinor: z.int().nonnegative(),
   netMinor: z.int().nonnegative(),
   currency: currencySchema,

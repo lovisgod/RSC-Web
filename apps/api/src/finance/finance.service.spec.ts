@@ -16,6 +16,8 @@ describe("FinanceService outlet settlement matrix", () => {
         pendingSubOrders: "2",
         fulfillmentPendingSubOrders: "2",
         grossMinor: "1400",
+        dineoutGrossMinor: "2573",
+        totalCollectedMinor: "3973",
         commissionMinor: "70",
         netMinor: "1330",
         currency: "NGN",
@@ -37,6 +39,8 @@ describe("FinanceService outlet settlement matrix", () => {
       completedSubOrders: 2,
       fulfillmentPendingSubOrders: 2,
       grossMinor: 1400,
+      dineoutGrossMinor: 2573,
+      totalCollectedMinor: 3973,
       status: "PENDING",
       approvalAvailable: false,
       approvalUnavailableReason: "2 paid sub-order(s) are awaiting fulfillment",
@@ -58,6 +62,8 @@ describe("settlementRowsToCsv", () => {
         paymentGateway: "moment",
         completedAt: "2026-10-14T13:00:00.000Z",
         grossMinor: "2181875",
+        dineoutGrossMinor: 250000,
+        totalCollectedMinor: 2431875,
         commissionMinor: 86750,
         netMinor: 2095125,
         currency: "NGN",
@@ -66,9 +72,11 @@ describe("settlementRowsToCsv", () => {
       },
     ]);
 
-    expect(csv.split("\n")[0]).toContain("gross_minor,commission_minor,net_minor");
+    expect(csv.split("\n")[0]).toContain(
+      "gross_minor,dineout_gross_minor,total_collected_minor,commission_minor,net_minor",
+    );
     expect(csv).toContain('"Cactus, Lagos"');
-    expect(csv).toContain("2181875,86750,2095125,NGN,APPROVED");
+    expect(csv).toContain("2181875,250000,2431875,86750,2095125,NGN,APPROVED");
   });
 
   it("keeps an empty export useful and prevents spreadsheet formula execution", () => {
@@ -86,6 +94,8 @@ describe("settlementRowsToCsv", () => {
         paymentGateway: "moment",
         completedAt: "2026-10-14T13:00:00.000Z",
         grossMinor: 100,
+        dineoutGrossMinor: 20,
+        totalCollectedMinor: 120,
         commissionMinor: 10,
         netMinor: 90,
         currency: "NGN",
