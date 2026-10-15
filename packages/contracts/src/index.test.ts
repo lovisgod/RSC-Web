@@ -665,7 +665,7 @@ describe("customer registration contracts", () => {
     });
   });
 
-  it("documents outlet settlement summary and Moment export contracts", () => {
+  it("documents outlet settlement summary and RSC export contracts", () => {
     expect(
       outletSettlementSummarySchema.parse({
         outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
@@ -689,9 +689,9 @@ describe("customer registration contracts", () => {
 
     expect(
       outletSettlementExportSchema.parse({
-        filename: "20260712_Moment_RSC_Settlement_batch_20260711.csv",
-        contentType: "text/csv",
-        content: "transaction_type,merchant_reference_id\nPayment,RSC-123",
+        filename: "rsc-outlet-settlements-2026-07-11-to-2026-07-11.csv",
+        contentType: "text/csv; charset=utf-8",
+        content: "settlement_date,payment_reference\n2026-07-11,RSC-123",
       }),
     ).toBeTruthy();
   });

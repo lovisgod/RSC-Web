@@ -35,9 +35,9 @@ export class FinanceController {
   @Get("outlet-settlements/export")
   @ApiMessage("Outlet settlement export retrieved")
   @ApiOperation({
-    summary: "Export outlet settlement report from Moment",
+    summary: "Export outlet settlement report from RSC",
     description:
-      "Fetches the provider settlement report for the selected date window and optional outlet.",
+      "Exports completed, successfully paid sub-orders and their persisted settlement approval status for the selected date window and optional outlet.",
   })
   exportOutletSettlements(
     @Query("dateFrom") dateFrom?: string,

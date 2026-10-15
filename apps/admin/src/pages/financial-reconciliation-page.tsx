@@ -1,9 +1,10 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button, EmptyState, formatNaira } from "@rsc/ui";
 import { useMutation } from "@tanstack/react-query";
-import { Download, Info, ReceiptText, X } from "lucide-react";
+import { Download, ReceiptText, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useOutletsLive } from "../hooks/use-outlets-live";
 import { useApproveOutletSettlement, useOutletSettlements } from "../hooks/use-outlet-settlements";
 import { exportOutletSettlements, type OutletSettlementQuery } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
@@ -58,12 +59,14 @@ function statusClass(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
 }
 
 function ExportSettlementsModal({
+  outlets,
   initialDate,
   isExporting,
   maxDate,
   onClose,
   onExport,
 }: {
+  outlets: Array<{ id: string; name: string }>;
   initialDate: string;
   isExporting: boolean;
   maxDate: string;
@@ -102,19 +105,14 @@ function ExportSettlementsModal({
         <div className="modal__body">
           <div className="settlement-export-card">
             <label className="settlement-field">
-              <span className="settlement-field__label">
-                Outlet
-                <span
-                  className="settlement-field__info"
-                  role="img"
-                  aria-label="Moment provides merchant-level settlement files covering all outlets."
-                  title="Moment provides merchant-level settlement files covering all outlets."
-                >
-                  <Info aria-hidden="true" size={14} />
-                </span>
-              </span>
+              <span>Outlet</span>
               <select value={outletId} onChange={(event) => setOutletId(event.target.value)}>
                 <option value="all">All outlets</option>
+                {outlets.map((outlet) => (
+                  <option key={outlet.id} value={outlet.id}>
+                    {outlet.name}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -203,6 +201,7 @@ export function FinancialReconciliationPage() {
     () => ({ dateFrom: selectedDate, dateTo: selectedDate }),
     [selectedDate],
   );
+  const { data: outlets = [] } = useOutletsLive();
   const { data: settlements = [], isLoading } = useOutletSettlements(settlementQuery);
   const {
     mutate: approveSettlement,
@@ -257,6 +256,7 @@ export function FinancialReconciliationPage() {
     <>
       {exportOpen && (
         <ExportSettlementsModal
+          outlets={outlets.map((outlet) => ({ id: outlet.id, name: outlet.name }))}
           initialDate={selectedDate}
           isExporting={exportMutation.isPending}
           maxDate={today}

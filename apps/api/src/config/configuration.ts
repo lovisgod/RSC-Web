@@ -80,11 +80,6 @@ export interface ApplicationConfig {
       baseUrl: string;
       webhookSecret: string;
       webhookReplayLog: boolean;
-      sftpHost: string;
-      sftpPort: number;
-      sftpUsername: string;
-      sftpPassword: string;
-      settlementReportPath: string;
       dineoutAccountId: string;
       visiblePaymentMethods: string[];
     };
@@ -242,11 +237,6 @@ export default function configuration(): ApplicationConfig {
         baseUrl: (process.env.MOMENT_BASE_URL ?? "https://api.momentpay.net").replace(/\/$/, ""),
         webhookSecret: process.env.MOMENT_WEBHOOK_SECRET ?? "",
         webhookReplayLog: process.env.MOMENT_WEBHOOK_REPLAY_LOG === "true",
-        sftpHost: process.env.MOMENT_SFTP_HOST ?? "ftp.momentco.io",
-        sftpPort: Number(process.env.MOMENT_SFTP_PORT ?? 22),
-        sftpUsername: process.env.MOMENT_SFTP_USERNAME ?? "",
-        sftpPassword: process.env.MOMENT_SFTP_PASSWORD ?? "",
-        settlementReportPath: process.env.MOMENT_SETTLEMENT_REPORT_PATH ?? "/",
         dineoutAccountId:
           process.env.DINEOUT_ACCOUNT_ID ?? process.env.MOMENT_DINEOUT_ACCOUNT_ID ?? "",
         visiblePaymentMethods: parseVisiblePaymentMethods(

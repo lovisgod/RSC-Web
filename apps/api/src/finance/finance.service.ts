@@ -5,7 +5,6 @@ import { DataSource, Repository } from "typeorm";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Outlet } from "../outlets/outlet.entity";
 import { PaymentStatus } from "../payments/payment.entity";
-import { MomentSettlementReportClient } from "./moment-settlement-report.client";
 
 const COMPLETED_SUB_ORDER_STATUSES = ["COLLECTED", "DISPATCHED"];
 const SETTLEMENT_TIME_ZONE = "Africa/Lagos";
@@ -20,7 +19,6 @@ export interface OutletSettlementQuery {
 export class FinanceService {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly momentSettlementReports: MomentSettlementReportClient,
     @InjectRepository(Outlet)
     private readonly outlets: Repository<Outlet>,
   ) {}
@@ -143,27 +141,62 @@ export class FinanceService {
     query: OutletSettlementQuery = {},
   ): Promise<OutletSettlementExport> {
     const window = this.normalizeSettlementWindow(query);
-    const outlet = query.outletId ? await this.outlets.findOneBy({ id: query.outletId }) : null;
-
-    if (query.outletId && !outlet) {
+    if (query.outletId && !(await this.outlets.existsBy({ id: query.outletId }))) {
       throw new NotFoundException("Outlet not found");
     }
 
-    if (outlet) {
-      throw new BadRequestException(
-        "Moment settlement reports are merchant-level; export all outlets for reconciliation",
-      );
-    }
-
-    const files = await this.momentSettlementReports.download(window.dateFrom, window.dateTo);
+    const rows = await this.dataSource.query<SettlementExportRow[]>(
+      `
+        SELECT
+          (so.updated_at AT TIME ZONE $3)::date::text AS "settlementDate",
+          o.id AS "outletId",
+          o.name AS "outletName",
+          NULLIF(o.settlement_subaccount_code, '') AS "subaccountCode",
+          so.id AS "subOrderId",
+          so.master_order_id AS "masterOrderId",
+          p.reference AS "paymentReference",
+          p.gateway AS "paymentGateway",
+          so.updated_at AS "completedAt",
+          so.subtotal_minor AS "grossMinor",
+          so.commission_minor AS "commissionMinor",
+          so.net_minor AS "netMinor",
+          so.currency AS "currency",
+          CASE WHEN osa.id IS NULL THEN 'PENDING' ELSE 'APPROVED' END AS "payoutStatus",
+          osa.approved_at AS "approvedAt"
+        FROM sub_orders so
+        INNER JOIN outlets o
+          ON o.id = so.outlet_id
+         AND o.deleted_at IS NULL
+        INNER JOIN LATERAL (
+          SELECT payment.reference, payment.gateway
+          FROM payments payment
+          WHERE payment.master_order_id = so.master_order_id
+            AND payment.status = $2::payment_status
+          ORDER BY payment.created_at DESC, payment.id DESC
+          LIMIT 1
+        ) p ON TRUE
+        LEFT JOIN outlet_settlement_approvals osa
+          ON osa.sub_order_id = so.id
+        WHERE so.deleted_at IS NULL
+          AND so.status = ANY($1::sub_order_status[])
+          AND (so.updated_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
+          AND ($6::uuid IS NULL OR so.outlet_id = $6::uuid)
+        ORDER BY so.updated_at ASC, o.name ASC, so.id ASC
+      `,
+      [
+        COMPLETED_SUB_ORDER_STATUSES,
+        PaymentStatus.SUCCESS,
+        SETTLEMENT_TIME_ZONE,
+        window.dateFrom,
+        window.dateTo,
+        query.outletId ?? null,
+      ],
+    );
 
     return {
-      filename:
-        files.length === 1
-          ? files[0]!.name
-          : `moment-settlements-${window.dateFrom}-to-${window.dateTo}.csv`,
-      contentType: "text/csv",
-      content: combineCsvFiles(files.map((file) => file.content)),
+      filename: `rsc-outlet-settlements-${window.dateFrom}-to-${window.dateTo}.csv`,
+      contentType: "text/csv; charset=utf-8",
+      content: settlementRowsToCsv(rows),
     };
   }
 
@@ -297,6 +330,24 @@ interface SettlementRow {
   latestApprovedAt: Date | string | null;
 }
 
+interface SettlementExportRow {
+  settlementDate: string;
+  outletId: string;
+  outletName: string;
+  subaccountCode: string | null;
+  subOrderId: string;
+  masterOrderId: string;
+  paymentReference: string;
+  paymentGateway: string;
+  completedAt: Date | string;
+  grossMinor: number | string;
+  commissionMinor: number | string;
+  netMinor: number | string;
+  currency: "NGN";
+  payoutStatus: "PENDING" | "APPROVED";
+  approvedAt: Date | string | null;
+}
+
 export interface OutletSettlementSummary {
   outletId: string;
   outletName: string;
@@ -341,14 +392,50 @@ function lagosDateString(offsetDays: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-function combineCsvFiles(contents: string[]): string {
-  return contents
-    .map((content, index) => {
-      const normalized = content.replace(/^\uFEFF/, "").trim();
-      if (index === 0) return normalized;
-      const newline = normalized.indexOf("\n");
-      return newline === -1 ? "" : normalized.slice(newline + 1);
-    })
-    .filter(Boolean)
-    .join("\n");
+const SETTLEMENT_EXPORT_HEADERS = [
+  "settlement_date",
+  "outlet_id",
+  "outlet_name",
+  "settlement_subaccount_code",
+  "sub_order_id",
+  "master_order_id",
+  "payment_reference",
+  "payment_gateway",
+  "completed_at",
+  "gross_minor",
+  "commission_minor",
+  "net_minor",
+  "currency",
+  "payout_status",
+  "approved_at",
+] as const;
+
+export function settlementRowsToCsv(rows: SettlementExportRow[]): string {
+  const lines = rows.map((row) =>
+    [
+      row.settlementDate,
+      row.outletId,
+      row.outletName,
+      row.subaccountCode ?? "",
+      row.subOrderId,
+      row.masterOrderId,
+      row.paymentReference,
+      row.paymentGateway,
+      new Date(row.completedAt).toISOString(),
+      Number(row.grossMinor),
+      Number(row.commissionMinor),
+      Number(row.netMinor),
+      row.currency,
+      row.payoutStatus,
+      row.approvedAt ? new Date(row.approvedAt).toISOString() : "",
+    ].map(escapeCsvCell),
+  );
+
+  return [SETTLEMENT_EXPORT_HEADERS.join(","), ...lines.map((line) => line.join(","))].join("\n");
+}
+
+function escapeCsvCell(value: string | number): string {
+  let text = String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
