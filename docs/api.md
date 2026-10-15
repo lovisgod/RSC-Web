@@ -357,6 +357,30 @@ node dist/src/database/seed-demo-data.js
 - Container orchestration should restart failed processes based on liveness and
   stop routing traffic when readiness fails.
 
+## Settlement reconciliation
+
+`GET /api/v1/finance/outlet-settlements` and its CSV export use the successful
+payment timestamp in `Africa/Lagos` as the settlement date. This keeps payment
+counts and outlet amounts aligned with the provider transaction view even when
+fulfillment happens on a later day. The response separately reports paid
+sub-orders that are still awaiting fulfillment. A settlement cannot be approved
+until every paid sub-order in the selected window is `DISPATCHED` or `COLLECTED`.
+
+Each outlet summary exposes three collection amounts. `grossMinor` is the outlet
+gross routed through the payment split. `dineoutGrossMinor` is the outlet's
+proportional share of the amount retained in the Dineout business unit (fees,
+taxes, delivery and platform charges); integer rounding remainder is assigned
+deterministically so it is never lost. `totalCollectedMinor` is their sum. Across
+all outlet rows for a day, `totalCollectedMinor` equals the successful payment
+amount recorded by the app, without counting a multi-outlet payment more than
+once.
+
+Successful payments persist `succeeded_at` from the provider event timestamp.
+When a provider omits that value, the API uses the authenticated webhook receipt
+time. Historical successful payments are backfilled during migration from the
+webhook event log, falling back to payment creation time only when no matching
+event exists.
+
 ## Next vertical slice
 
 Implement `outlets` and public catalog end to end:

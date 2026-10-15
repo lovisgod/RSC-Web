@@ -5,7 +5,6 @@ import { DataSource, Repository } from "typeorm";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { Outlet } from "../outlets/outlet.entity";
 import { PaymentStatus } from "../payments/payment.entity";
-import { MomentSettlementReportClient } from "./moment-settlement-report.client";
 
 const COMPLETED_SUB_ORDER_STATUSES = ["COLLECTED", "DISPATCHED"];
 const SETTLEMENT_TIME_ZONE = "Africa/Lagos";
@@ -20,7 +19,6 @@ export interface OutletSettlementQuery {
 export class FinanceService {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly momentSettlementReports: MomentSettlementReportClient,
     @InjectRepository(Outlet)
     private readonly outlets: Repository<Outlet>,
   ) {}
@@ -29,6 +27,53 @@ export class FinanceService {
     const window = this.normalizeSettlementWindow(query);
     const rows = await this.dataSource.query<SettlementRow[]>(
       `
+        WITH successful_payments AS (
+          SELECT DISTINCT ON (payment.master_order_id)
+            payment.id,
+            payment.master_order_id,
+            payment.amount_minor
+          FROM payments payment
+          WHERE payment.status = $2::payment_status
+            AND (payment.succeeded_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
+          ORDER BY payment.master_order_id, payment.succeeded_at DESC, payment.id DESC
+        ),
+        allocation_base AS (
+          SELECT
+            so.*,
+            payment.id AS payment_id,
+            payment.amount_minor AS payment_amount_minor,
+            SUM(so.net_minor) OVER (PARTITION BY so.master_order_id)::int AS outlet_total_minor,
+            ROW_NUMBER() OVER (PARTITION BY so.master_order_id ORDER BY so.id) AS allocation_rank,
+            COUNT(*) OVER (PARTITION BY so.master_order_id) AS allocation_count
+          FROM sub_orders so
+          INNER JOIN successful_payments payment
+            ON payment.master_order_id = so.master_order_id
+          WHERE so.deleted_at IS NULL
+        ),
+        allocated_sub_orders AS (
+          SELECT
+            allocation_base.*,
+            CASE
+              WHEN outlet_total_minor <= 0 THEN 0
+              ELSE FLOOR(
+                GREATEST(payment_amount_minor - outlet_total_minor, 0)::numeric
+                * net_minor::numeric / outlet_total_minor::numeric
+              )::int
+            END AS base_dineout_minor
+          FROM allocation_base
+        ),
+        paid_sub_orders AS (
+          SELECT
+            allocated_sub_orders.*,
+            CASE
+              WHEN allocation_rank = allocation_count THEN
+                GREATEST(payment_amount_minor - outlet_total_minor, 0)
+                - SUM(base_dineout_minor) OVER (PARTITION BY master_order_id)
+                + base_dineout_minor
+              ELSE base_dineout_minor
+            END::int AS dineout_gross_minor
+          FROM allocated_sub_orders
+        )
         SELECT
           o.id AS "outletId",
           o.name AS "outletName",
@@ -36,23 +81,19 @@ export class FinanceService {
           NULLIF(o.settlement_subaccount_code, '') AS "subaccountCode",
           COUNT(so.id)::int AS "completedSubOrders",
           COUNT(so.id) FILTER (WHERE osa.id IS NULL)::int AS "pendingSubOrders",
-          COALESCE(SUM(so.subtotal_minor), 0)::int AS "grossMinor",
+          COUNT(so.id) FILTER (
+            WHERE NOT (so.status = ANY($1::sub_order_status[]))
+          )::int AS "fulfillmentPendingSubOrders",
+          COALESCE(SUM(so.net_minor), 0)::int AS "grossMinor",
+          COALESCE(SUM(so.dineout_gross_minor), 0)::int AS "dineoutGrossMinor",
+          COALESCE(SUM(so.net_minor + so.dineout_gross_minor), 0)::int AS "totalCollectedMinor",
           COALESCE(SUM(so.commission_minor), 0)::int AS "commissionMinor",
           COALESCE(SUM(so.net_minor), 0)::int AS "netMinor",
           COALESCE(MAX(so.currency), 'NGN') AS "currency",
           MAX(osa.approved_at) AS "latestApprovedAt"
         FROM outlets o
-        LEFT JOIN sub_orders so
+        LEFT JOIN paid_sub_orders so
           ON so.outlet_id = o.id
-         AND so.deleted_at IS NULL
-         AND so.status = ANY($1::sub_order_status[])
-         AND (so.updated_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
-         AND EXISTS (
-           SELECT 1
-           FROM payments p
-           WHERE p.master_order_id = so.master_order_id
-             AND p.status = $2::payment_status
-         )
         LEFT JOIN outlet_settlement_approvals osa
           ON osa.sub_order_id = so.id
         WHERE o.deleted_at IS NULL
@@ -108,15 +149,20 @@ export class FinanceService {
             p.gateway,
             p.reference
           FROM sub_orders so
-          INNER JOIN payments p
-            ON p.master_order_id = so.master_order_id
+          INNER JOIN LATERAL (
+            SELECT payment.gateway, payment.reference
+            FROM payments payment
+            WHERE payment.master_order_id = so.master_order_id
+              AND payment.status = $4::payment_status
+              AND (payment.succeeded_at AT TIME ZONE $5)::date BETWEEN $6::date AND $7::date
+            ORDER BY payment.succeeded_at DESC, payment.id DESC
+            LIMIT 1
+          ) p ON TRUE
           LEFT JOIN outlet_settlement_approvals osa
             ON osa.sub_order_id = so.id
           WHERE so.outlet_id = $2
             AND so.deleted_at IS NULL
             AND so.status = ANY($3::sub_order_status[])
-            AND p.status = $4::payment_status
-            AND (so.updated_at AT TIME ZONE $5)::date BETWEEN $6::date AND $7::date
             AND osa.id IS NULL
           ON CONFLICT (sub_order_id) DO NOTHING
         `,
@@ -143,27 +189,109 @@ export class FinanceService {
     query: OutletSettlementQuery = {},
   ): Promise<OutletSettlementExport> {
     const window = this.normalizeSettlementWindow(query);
-    const outlet = query.outletId ? await this.outlets.findOneBy({ id: query.outletId }) : null;
-
-    if (query.outletId && !outlet) {
+    if (query.outletId && !(await this.outlets.existsBy({ id: query.outletId }))) {
       throw new NotFoundException("Outlet not found");
     }
 
-    if (outlet) {
-      throw new BadRequestException(
-        "Moment settlement reports are merchant-level; export all outlets for reconciliation",
-      );
-    }
-
-    const files = await this.momentSettlementReports.download(window.dateFrom, window.dateTo);
+    const rows = await this.dataSource.query<SettlementExportRow[]>(
+      `
+        WITH successful_payments AS (
+          SELECT DISTINCT ON (payment.master_order_id)
+            payment.id,
+            payment.master_order_id,
+            payment.amount_minor,
+            payment.reference,
+            payment.gateway,
+            payment.succeeded_at
+          FROM payments payment
+          WHERE payment.status = $2::payment_status
+            AND (payment.succeeded_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
+          ORDER BY payment.master_order_id, payment.succeeded_at DESC, payment.id DESC
+        ),
+        allocation_base AS (
+          SELECT
+            so.*,
+            payment.amount_minor AS payment_amount_minor,
+            payment.reference AS payment_reference,
+            payment.gateway AS payment_gateway,
+            payment.succeeded_at AS payment_succeeded_at,
+            SUM(so.net_minor) OVER (PARTITION BY so.master_order_id)::int AS outlet_total_minor,
+            ROW_NUMBER() OVER (PARTITION BY so.master_order_id ORDER BY so.id) AS allocation_rank,
+            COUNT(*) OVER (PARTITION BY so.master_order_id) AS allocation_count
+          FROM sub_orders so
+          INNER JOIN successful_payments payment
+            ON payment.master_order_id = so.master_order_id
+          WHERE so.deleted_at IS NULL
+        ),
+        allocated_sub_orders AS (
+          SELECT
+            allocation_base.*,
+            CASE
+              WHEN outlet_total_minor <= 0 THEN 0
+              ELSE FLOOR(
+                GREATEST(payment_amount_minor - outlet_total_minor, 0)::numeric
+                * net_minor::numeric / outlet_total_minor::numeric
+              )::int
+            END AS base_dineout_minor
+          FROM allocation_base
+        ),
+        paid_sub_orders AS (
+          SELECT
+            allocated_sub_orders.*,
+            CASE
+              WHEN allocation_rank = allocation_count THEN
+                GREATEST(payment_amount_minor - outlet_total_minor, 0)
+                - SUM(base_dineout_minor) OVER (PARTITION BY master_order_id)
+                + base_dineout_minor
+              ELSE base_dineout_minor
+            END::int AS dineout_gross_minor
+          FROM allocated_sub_orders
+        )
+        SELECT
+          (so.payment_succeeded_at AT TIME ZONE $3)::date::text AS "settlementDate",
+          o.id AS "outletId",
+          o.name AS "outletName",
+          NULLIF(o.settlement_subaccount_code, '') AS "subaccountCode",
+          so.id AS "subOrderId",
+          so.master_order_id AS "masterOrderId",
+          so.payment_reference AS "paymentReference",
+          so.payment_gateway AS "paymentGateway",
+          so.payment_succeeded_at AS "completedAt",
+          so.net_minor AS "grossMinor",
+          so.dineout_gross_minor AS "dineoutGrossMinor",
+          (so.net_minor + so.dineout_gross_minor) AS "totalCollectedMinor",
+          so.commission_minor AS "commissionMinor",
+          so.net_minor AS "netMinor",
+          so.currency AS "currency",
+          CASE
+            WHEN NOT (so.status = ANY($1::sub_order_status[])) THEN 'AWAITING_FULFILLMENT'
+            WHEN osa.id IS NULL THEN 'PENDING'
+            ELSE 'APPROVED'
+          END AS "payoutStatus",
+          osa.approved_at AS "approvedAt"
+        FROM paid_sub_orders so
+        INNER JOIN outlets o
+          ON o.id = so.outlet_id
+         AND o.deleted_at IS NULL
+        LEFT JOIN outlet_settlement_approvals osa
+          ON osa.sub_order_id = so.id
+        WHERE ($6::uuid IS NULL OR so.outlet_id = $6::uuid)
+        ORDER BY so.payment_succeeded_at ASC, o.name ASC, so.id ASC
+      `,
+      [
+        COMPLETED_SUB_ORDER_STATUSES,
+        PaymentStatus.SUCCESS,
+        SETTLEMENT_TIME_ZONE,
+        window.dateFrom,
+        window.dateTo,
+        query.outletId ?? null,
+      ],
+    );
 
     return {
-      filename:
-        files.length === 1
-          ? files[0]!.name
-          : `moment-settlements-${window.dateFrom}-to-${window.dateTo}.csv`,
-      contentType: "text/csv",
-      content: combineCsvFiles(files.map((file) => file.content)),
+      filename: `rsc-outlet-settlements-${window.dateFrom}-to-${window.dateTo}.csv`,
+      contentType: "text/csv; charset=utf-8",
+      content: settlementRowsToCsv(rows),
     };
   }
 
@@ -173,10 +301,15 @@ export class FinanceService {
   ): OutletSettlementSummary {
     const completedSubOrders = Number(row.completedSubOrders);
     const pendingSubOrders = Number(row.pendingSubOrders);
+    const fulfillmentPendingSubOrders = Number(row.fulfillmentPendingSubOrders);
     const approvalWindowOpen = this.isApprovalWindowOpen(window);
     const hasSubaccount = !!row.subaccountCode;
     const approvalAvailable =
-      !approvalWindowOpen && pendingSubOrders > 0 && completedSubOrders > 0 && hasSubaccount;
+      !approvalWindowOpen &&
+      pendingSubOrders > 0 &&
+      completedSubOrders > 0 &&
+      fulfillmentPendingSubOrders === 0 &&
+      hasSubaccount;
 
     return {
       outletId: row.outletId,
@@ -187,7 +320,10 @@ export class FinanceService {
       settlementDateTo: window.dateTo,
       completedSubOrders,
       pendingSubOrders,
+      fulfillmentPendingSubOrders,
       grossMinor: Number(row.grossMinor),
+      dineoutGrossMinor: Number(row.dineoutGrossMinor),
+      totalCollectedMinor: Number(row.totalCollectedMinor),
       commissionMinor: Number(row.commissionMinor),
       netMinor: Number(row.netMinor),
       currency: row.currency,
@@ -198,6 +334,7 @@ export class FinanceService {
         approvalWindowOpen,
         completedSubOrders,
         pendingSubOrders,
+        fulfillmentPendingSubOrders,
         hasSubaccount,
       }),
       latestApprovedAt: row.latestApprovedAt ? new Date(row.latestApprovedAt).toISOString() : null,
@@ -217,13 +354,16 @@ export class FinanceService {
       settlementDateTo: window.dateTo,
       completedSubOrders: 0,
       pendingSubOrders: 0,
+      fulfillmentPendingSubOrders: 0,
       grossMinor: 0,
+      dineoutGrossMinor: 0,
+      totalCollectedMinor: 0,
       commissionMinor: 0,
       netMinor: 0,
       currency: "NGN",
       status: "NO_ACTIVITY",
       approvalAvailable: false,
-      approvalUnavailableReason: "No completed paid sub-orders in this settlement window",
+      approvalUnavailableReason: "No successful payments in this settlement window",
       latestApprovedAt: null,
     };
   }
@@ -264,6 +404,7 @@ export class FinanceService {
     approvalWindowOpen: boolean;
     completedSubOrders: number;
     pendingSubOrders: number;
+    fulfillmentPendingSubOrders: number;
     hasSubaccount: boolean;
   }): string | null {
     if (input.approvalWindowOpen) {
@@ -273,7 +414,10 @@ export class FinanceService {
       return "Outlet is missing a settlement subaccount code";
     }
     if (input.completedSubOrders === 0) {
-      return "No completed paid sub-orders in this settlement window";
+      return "No successful payments in this settlement window";
+    }
+    if (input.fulfillmentPendingSubOrders > 0) {
+      return `${input.fulfillmentPendingSubOrders} paid sub-order(s) are awaiting fulfillment`;
     }
     if (input.pendingSubOrders === 0) {
       return "Settlement window is already approved";
@@ -290,11 +434,34 @@ interface SettlementRow {
   subaccountCode: string | null;
   completedSubOrders: number | string;
   pendingSubOrders: number | string;
+  fulfillmentPendingSubOrders: number | string;
   grossMinor: number | string;
+  dineoutGrossMinor: number | string;
+  totalCollectedMinor: number | string;
   commissionMinor: number | string;
   netMinor: number | string;
   currency: "NGN";
   latestApprovedAt: Date | string | null;
+}
+
+interface SettlementExportRow {
+  settlementDate: string;
+  outletId: string;
+  outletName: string;
+  subaccountCode: string | null;
+  subOrderId: string;
+  masterOrderId: string;
+  paymentReference: string;
+  paymentGateway: string;
+  completedAt: Date | string;
+  grossMinor: number | string;
+  dineoutGrossMinor: number | string;
+  totalCollectedMinor: number | string;
+  commissionMinor: number | string;
+  netMinor: number | string;
+  currency: "NGN";
+  payoutStatus: "AWAITING_FULFILLMENT" | "PENDING" | "APPROVED";
+  approvedAt: Date | string | null;
 }
 
 export interface OutletSettlementSummary {
@@ -306,7 +473,10 @@ export interface OutletSettlementSummary {
   settlementDateTo: string;
   completedSubOrders: number;
   pendingSubOrders: number;
+  fulfillmentPendingSubOrders: number;
   grossMinor: number;
+  dineoutGrossMinor: number;
+  totalCollectedMinor: number;
   commissionMinor: number;
   netMinor: number;
   currency: "NGN";
@@ -341,14 +511,54 @@ function lagosDateString(offsetDays: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-function combineCsvFiles(contents: string[]): string {
-  return contents
-    .map((content, index) => {
-      const normalized = content.replace(/^\uFEFF/, "").trim();
-      if (index === 0) return normalized;
-      const newline = normalized.indexOf("\n");
-      return newline === -1 ? "" : normalized.slice(newline + 1);
-    })
-    .filter(Boolean)
-    .join("\n");
+const SETTLEMENT_EXPORT_HEADERS = [
+  "settlement_date",
+  "outlet_id",
+  "outlet_name",
+  "settlement_subaccount_code",
+  "sub_order_id",
+  "master_order_id",
+  "payment_reference",
+  "payment_gateway",
+  "completed_at",
+  "gross_minor",
+  "dineout_gross_minor",
+  "total_collected_minor",
+  "commission_minor",
+  "net_minor",
+  "currency",
+  "payout_status",
+  "approved_at",
+] as const;
+
+export function settlementRowsToCsv(rows: SettlementExportRow[]): string {
+  const lines = rows.map((row) =>
+    [
+      row.settlementDate,
+      row.outletId,
+      row.outletName,
+      row.subaccountCode ?? "",
+      row.subOrderId,
+      row.masterOrderId,
+      row.paymentReference,
+      row.paymentGateway,
+      new Date(row.completedAt).toISOString(),
+      Number(row.grossMinor),
+      Number(row.dineoutGrossMinor),
+      Number(row.totalCollectedMinor),
+      Number(row.commissionMinor),
+      Number(row.netMinor),
+      row.currency,
+      row.payoutStatus,
+      row.approvedAt ? new Date(row.approvedAt).toISOString() : "",
+    ].map(escapeCsvCell),
+  );
+
+  return [SETTLEMENT_EXPORT_HEADERS.join(","), ...lines.map((line) => line.join(","))].join("\n");
+}
+
+function escapeCsvCell(value: string | number): string {
+  let text = String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }

@@ -188,6 +188,7 @@ describe("critical domain lifecycles", () => {
       masterOrderId: order.id,
       status: PaymentStatus.SUCCESS,
       amountMinor: 8_600,
+      succeededAt: settledAt,
     });
     const query = { dateFrom: settlementDate, dateTo: settlementDate };
 
@@ -217,6 +218,16 @@ describe("critical domain lifecycles", () => {
       pendingSubOrders: 0,
       approvalAvailable: false,
     });
+    const settlementExport = await finance.exportOutletSettlements({
+      ...query,
+      outletId: outlet.id,
+    });
+    expect(settlementExport).toMatchObject({
+      filename: `rsc-outlet-settlements-${settlementDate}-to-${settlementDate}.csv`,
+      contentType: "text/csv; charset=utf-8",
+    });
+    expect(settlementExport.content).toContain("Settlement outlet");
+    expect(settlementExport.content).toContain("8000,800,7200,NGN,APPROVED");
     const approvals = await dataSource.query<Array<{ count: string }>>(
       "SELECT COUNT(*)::text AS count FROM outlet_settlement_approvals",
     );

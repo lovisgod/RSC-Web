@@ -44,6 +44,9 @@ export class Payment {
   @Column({ name: "provider_response", type: "jsonb", nullable: true })
   providerResponse!: unknown;
 
+  @Column({ name: "succeeded_at", type: "timestamptz", nullable: true })
+  succeededAt!: Date | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 }

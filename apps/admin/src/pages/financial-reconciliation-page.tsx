@@ -1,9 +1,10 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button, EmptyState, formatNaira } from "@rsc/ui";
 import { useMutation } from "@tanstack/react-query";
-import { Download, Info, ReceiptText, X } from "lucide-react";
+import { Download, ReceiptText, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useOutletsLive } from "../hooks/use-outlets-live";
 import { useApproveOutletSettlement, useOutletSettlements } from "../hooks/use-outlet-settlements";
 import { exportOutletSettlements, type OutletSettlementQuery } from "../lib/api";
 import { toastBus } from "../lib/toast-bus";
@@ -17,7 +18,10 @@ interface SettlementRow {
   subaccountCode: string | null;
   completedSubOrders: number;
   pendingSubOrders: number;
+  fulfillmentPendingSubOrders: number;
   grossMinor: number;
+  dineoutGrossMinor: number;
+  totalCollectedMinor: number;
   commissionMinor: number;
   netMinor: number;
   status: "NO_ACTIVITY" | "PENDING" | "APPROVED";
@@ -48,7 +52,7 @@ const formatMinor = formatNaira;
 function statusLabel(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
   if (status === "APPROVED") return "Approved";
   if (status === "PENDING") return "Pending Approval";
-  return "No Completed Orders";
+  return "No Successful Payments";
 }
 
 function statusClass(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
@@ -58,12 +62,14 @@ function statusClass(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
 }
 
 function ExportSettlementsModal({
+  outlets,
   initialDate,
   isExporting,
   maxDate,
   onClose,
   onExport,
 }: {
+  outlets: Array<{ id: string; name: string }>;
   initialDate: string;
   isExporting: boolean;
   maxDate: string;
@@ -102,19 +108,14 @@ function ExportSettlementsModal({
         <div className="modal__body">
           <div className="settlement-export-card">
             <label className="settlement-field">
-              <span className="settlement-field__label">
-                Outlet
-                <span
-                  className="settlement-field__info"
-                  role="img"
-                  aria-label="Moment provides merchant-level settlement files covering all outlets."
-                  title="Moment provides merchant-level settlement files covering all outlets."
-                >
-                  <Info aria-hidden="true" size={14} />
-                </span>
-              </span>
+              <span>Outlet</span>
               <select value={outletId} onChange={(event) => setOutletId(event.target.value)}>
                 <option value="all">All outlets</option>
+                {outlets.map((outlet) => (
+                  <option key={outlet.id} value={outlet.id}>
+                    {outlet.name}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -203,6 +204,7 @@ export function FinancialReconciliationPage() {
     () => ({ dateFrom: selectedDate, dateTo: selectedDate }),
     [selectedDate],
   );
+  const { data: outlets = [] } = useOutletsLive();
   const { data: settlements = [], isLoading } = useOutletSettlements(settlementQuery);
   const {
     mutate: approveSettlement,
@@ -235,7 +237,10 @@ export function FinancialReconciliationPage() {
         subaccountCode: settlement.subaccountCode,
         completedSubOrders: settlement.completedSubOrders,
         pendingSubOrders: settlement.pendingSubOrders,
+        fulfillmentPendingSubOrders: settlement.fulfillmentPendingSubOrders,
         grossMinor: settlement.grossMinor,
+        dineoutGrossMinor: settlement.dineoutGrossMinor,
+        totalCollectedMinor: settlement.totalCollectedMinor,
         commissionMinor: settlement.commissionMinor,
         netMinor: settlement.netMinor,
         status: settlement.status,
@@ -257,6 +262,7 @@ export function FinancialReconciliationPage() {
     <>
       {exportOpen && (
         <ExportSettlementsModal
+          outlets={outlets.map((outlet) => ({ id: outlet.id, name: outlet.name }))}
           initialDate={selectedDate}
           isExporting={exportMutation.isPending}
           maxDate={today}
@@ -312,8 +318,11 @@ export function FinancialReconciliationPage() {
                 <tr>
                   <th>Outlet Name</th>
                   <th>Settlement Subaccount</th>
-                  <th>Completed Sub-Orders</th>
-                  <th>Gross Volume</th>
+                  <th>Paid Sub-Orders</th>
+                  <th>Awaiting Fulfillment</th>
+                  <th>Outlet Gross</th>
+                  <th>Dineout Gross</th>
+                  <th>Total Collected</th>
                   <th>DineOut NG Commission</th>
                   <th>Net Payable</th>
                   <th>Payout Status</th>
@@ -324,7 +333,7 @@ export function FinancialReconciliationPage() {
                 {isLoading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        {Array.from({ length: 8 }).map((_, j) => (
+                        {Array.from({ length: 11 }).map((_, j) => (
                           <td key={j}>
                             <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
                           </td>
@@ -358,8 +367,19 @@ export function FinancialReconciliationPage() {
                           </td>
                           <td className="text-mono">{settlement.subaccountCode ?? "—"}</td>
                           <td>{settlement.completedSubOrders}</td>
+                          <td>{settlement.fulfillmentPendingSubOrders}</td>
                           <td>
                             <span className="amount">{formatMinor(settlement.grossMinor)}</span>
+                          </td>
+                          <td>
+                            <span className="amount">
+                              {formatMinor(settlement.dineoutGrossMinor)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="amount">
+                              {formatMinor(settlement.totalCollectedMinor)}
+                            </span>
                           </td>
                           <td>
                             <span className="amount amount--negative">

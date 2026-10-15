@@ -570,6 +570,7 @@ export class PaymentsService {
             checkoutUrl: providerPayment.checkoutUrl,
             splitBreakdown: splitRoutes,
             providerResponse: providerPayment.providerResponse,
+            succeededAt: providerPayment.status === "SUCCESS" ? new Date() : null,
           }),
         );
 
@@ -701,6 +702,7 @@ export class PaymentsService {
         checkoutUrl: providerPayment.checkoutUrl,
         splitBreakdown: splitRoutes,
         providerResponse: providerPayment.providerResponse,
+        succeededAt: providerPayment.status === "SUCCESS" ? new Date() : null,
       }),
     );
 
@@ -805,6 +807,9 @@ export class PaymentsService {
       }
 
       payment.status = event.status === "SUCCESS" ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
+      payment.providerResponse = event.providerResponse;
+      payment.succeededAt =
+        event.status === "SUCCESS" ? parseProviderDate(event.succeededAt) : null;
       await paymentRepository.save(payment);
 
       order = await orderRepository.findOne({
@@ -1500,6 +1505,14 @@ export class PaymentsService {
       throw new BadRequestException("Payment return URL must be a valid absolute URL");
     }
   }
+}
+
+function parseProviderDate(value?: string): Date {
+  if (value) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return new Date();
 }
 
 function randomSixDigitCode(): string {
