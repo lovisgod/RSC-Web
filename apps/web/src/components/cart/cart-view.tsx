@@ -48,7 +48,7 @@ export function CartView() {
         body="Browse kitchens and add something delicious."
         action={
           <Link
-            href="/outlets"
+            href="/"
             className="text-sm font-semibold hover:underline"
             style={{ color: "var(--rsc-brand)" }}
           >

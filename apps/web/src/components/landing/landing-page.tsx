@@ -1,5 +1,7 @@
 "use client";
 
+import { RecentOrderRatingPrompt } from "@/src/components/ratings/recent-order-rating-prompt";
+
 import { getMenuItemCurrentPriceMinor, type MenuItemSummary } from "@rsc/contracts";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -119,7 +121,6 @@ export function LandingPage() {
   const outletsQuery = useQuery(OUTLETS_QUERY);
 
   const outlets = (outletsQuery.data ?? []).map((outlet, index) => toDisplayOutlet(outlet, index));
-  const featuredOutlets = outlets.slice(0, 4);
   const dailySpecials = getDailySpecials(outletsQuery.data ?? []);
   const dailyPageCount = Math.max(1, Math.ceil(dailySpecials.length / 3));
   // Clamp active page so it never exceeds the current page count (avoids setState-in-effect)
@@ -236,15 +237,13 @@ export function LandingPage() {
       </header>
 
       {/* ── SECTION 1: OUR OUTLETS (Portrait Cards with Full Image & Order Now CTA) ── */}
+      <RecentOrderRatingPrompt />
+
       <section className="grab-section" id="outlets" aria-labelledby="grab-outlets-heading">
         <div className="grab-section__header">
           <h2 id="grab-outlets-heading" className="grab-section__title">
             OUR OUTLETS
           </h2>
-          <Link href="/outlets" className="grab-section__view-all">
-            <span>View All</span>
-            <ChevronRightIcon className="w-4 h-4" />
-          </Link>
         </div>
 
         {outletsQuery.isPending ? (
@@ -253,14 +252,14 @@ export function LandingPage() {
               <div key={n} className="grab-portrait-card grab-skeleton" />
             ))}
           </div>
-        ) : outletsQuery.isError || featuredOutlets.length === 0 ? (
+        ) : outletsQuery.isError || outlets.length === 0 ? (
           <div className="grab-empty">
             <UtensilsIcon className="w-8 h-8 text-emerald-500 mb-2" />
             <p>No outlets are available right now. Please check back soon.</p>
           </div>
         ) : (
           <div className="grab-outlets-portrait-grid">
-            {featuredOutlets.map((outlet) => {
+            {outlets.map((outlet) => {
               const isOffline = outlet.isOnline === false;
               const hasImageUrl =
                 outlet.image && (outlet.image.startsWith("/") || outlet.image.startsWith("http"));

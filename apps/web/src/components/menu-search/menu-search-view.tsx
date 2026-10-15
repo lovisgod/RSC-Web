@@ -121,7 +121,7 @@ export function MenuSearchView() {
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-3 p-4">
             <Link
-              href="/outlets"
+              href="/"
               aria-label="Back to home"
               title="Back to home"
               className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 transition-colors hover:border-[var(--rsc-main)] hover:text-[var(--rsc-main)] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rsc-brand)]"

@@ -74,7 +74,7 @@ export function PaymentStep({
             onClick={onBack}
             className="text-sm text-gray-400 transition-colors hover:text-gray-600"
           >
-            Back to outlets
+            Back to home
           </button>
         </div>
       </div>
