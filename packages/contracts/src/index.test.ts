@@ -676,6 +676,7 @@ describe("customer registration contracts", () => {
         settlementDateTo: "2026-07-11",
         completedSubOrders: 3,
         pendingSubOrders: 3,
+        fulfillmentPendingSubOrders: 0,
         grossMinor: 5029600,
         commissionMinor: 251500,
         netMinor: 4778100,

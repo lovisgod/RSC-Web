@@ -18,6 +18,7 @@ interface SettlementRow {
   subaccountCode: string | null;
   completedSubOrders: number;
   pendingSubOrders: number;
+  fulfillmentPendingSubOrders: number;
   grossMinor: number;
   commissionMinor: number;
   netMinor: number;
@@ -49,7 +50,7 @@ const formatMinor = formatNaira;
 function statusLabel(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
   if (status === "APPROVED") return "Approved";
   if (status === "PENDING") return "Pending Approval";
-  return "No Completed Orders";
+  return "No Successful Payments";
 }
 
 function statusClass(status: "NO_ACTIVITY" | "PENDING" | "APPROVED") {
@@ -234,6 +235,7 @@ export function FinancialReconciliationPage() {
         subaccountCode: settlement.subaccountCode,
         completedSubOrders: settlement.completedSubOrders,
         pendingSubOrders: settlement.pendingSubOrders,
+        fulfillmentPendingSubOrders: settlement.fulfillmentPendingSubOrders,
         grossMinor: settlement.grossMinor,
         commissionMinor: settlement.commissionMinor,
         netMinor: settlement.netMinor,
@@ -312,7 +314,8 @@ export function FinancialReconciliationPage() {
                 <tr>
                   <th>Outlet Name</th>
                   <th>Settlement Subaccount</th>
-                  <th>Completed Sub-Orders</th>
+                  <th>Paid Sub-Orders</th>
+                  <th>Awaiting Fulfillment</th>
                   <th>Gross Volume</th>
                   <th>DineOut NG Commission</th>
                   <th>Net Payable</th>
@@ -324,7 +327,7 @@ export function FinancialReconciliationPage() {
                 {isLoading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        {Array.from({ length: 8 }).map((_, j) => (
+                        {Array.from({ length: 9 }).map((_, j) => (
                           <td key={j}>
                             <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
                           </td>
@@ -358,6 +361,7 @@ export function FinancialReconciliationPage() {
                           </td>
                           <td className="text-mono">{settlement.subaccountCode ?? "—"}</td>
                           <td>{settlement.completedSubOrders}</td>
+                          <td>{settlement.fulfillmentPendingSubOrders}</td>
                           <td>
                             <span className="amount">{formatMinor(settlement.grossMinor)}</span>
                           </td>

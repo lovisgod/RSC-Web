@@ -32,25 +32,29 @@ export class FinanceService {
           o.name AS "outletName",
           o.image_url AS "imageUrl",
           NULLIF(o.settlement_subaccount_code, '') AS "subaccountCode",
-          COUNT(so.id)::int AS "completedSubOrders",
-          COUNT(so.id) FILTER (WHERE osa.id IS NULL)::int AS "pendingSubOrders",
-          COALESCE(SUM(so.subtotal_minor), 0)::int AS "grossMinor",
-          COALESCE(SUM(so.commission_minor), 0)::int AS "commissionMinor",
-          COALESCE(SUM(so.net_minor), 0)::int AS "netMinor",
-          COALESCE(MAX(so.currency), 'NGN') AS "currency",
-          MAX(osa.approved_at) AS "latestApprovedAt"
+          COUNT(so.id) FILTER (WHERE p.id IS NOT NULL)::int AS "completedSubOrders",
+          COUNT(so.id) FILTER (WHERE p.id IS NOT NULL AND osa.id IS NULL)::int AS "pendingSubOrders",
+          COUNT(so.id) FILTER (
+            WHERE p.id IS NOT NULL AND NOT (so.status = ANY($1::sub_order_status[]))
+          )::int AS "fulfillmentPendingSubOrders",
+          COALESCE(SUM(so.subtotal_minor) FILTER (WHERE p.id IS NOT NULL), 0)::int AS "grossMinor",
+          COALESCE(SUM(so.commission_minor) FILTER (WHERE p.id IS NOT NULL), 0)::int AS "commissionMinor",
+          COALESCE(SUM(so.net_minor) FILTER (WHERE p.id IS NOT NULL), 0)::int AS "netMinor",
+          COALESCE(MAX(so.currency) FILTER (WHERE p.id IS NOT NULL), 'NGN') AS "currency",
+          MAX(osa.approved_at) FILTER (WHERE p.id IS NOT NULL) AS "latestApprovedAt"
         FROM outlets o
         LEFT JOIN sub_orders so
           ON so.outlet_id = o.id
          AND so.deleted_at IS NULL
-         AND so.status = ANY($1::sub_order_status[])
-         AND (so.updated_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
-         AND EXISTS (
-           SELECT 1
-           FROM payments p
-           WHERE p.master_order_id = so.master_order_id
-             AND p.status = $2::payment_status
-         )
+        LEFT JOIN LATERAL (
+          SELECT payment.id
+          FROM payments payment
+          WHERE payment.master_order_id = so.master_order_id
+            AND payment.status = $2::payment_status
+            AND (payment.succeeded_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
+          ORDER BY payment.succeeded_at DESC, payment.id DESC
+          LIMIT 1
+        ) p ON TRUE
         LEFT JOIN outlet_settlement_approvals osa
           ON osa.sub_order_id = so.id
         WHERE o.deleted_at IS NULL
@@ -106,15 +110,20 @@ export class FinanceService {
             p.gateway,
             p.reference
           FROM sub_orders so
-          INNER JOIN payments p
-            ON p.master_order_id = so.master_order_id
+          INNER JOIN LATERAL (
+            SELECT payment.gateway, payment.reference
+            FROM payments payment
+            WHERE payment.master_order_id = so.master_order_id
+              AND payment.status = $4::payment_status
+              AND (payment.succeeded_at AT TIME ZONE $5)::date BETWEEN $6::date AND $7::date
+            ORDER BY payment.succeeded_at DESC, payment.id DESC
+            LIMIT 1
+          ) p ON TRUE
           LEFT JOIN outlet_settlement_approvals osa
             ON osa.sub_order_id = so.id
           WHERE so.outlet_id = $2
             AND so.deleted_at IS NULL
             AND so.status = ANY($3::sub_order_status[])
-            AND p.status = $4::payment_status
-            AND (so.updated_at AT TIME ZONE $5)::date BETWEEN $6::date AND $7::date
             AND osa.id IS NULL
           ON CONFLICT (sub_order_id) DO NOTHING
         `,
@@ -148,7 +157,7 @@ export class FinanceService {
     const rows = await this.dataSource.query<SettlementExportRow[]>(
       `
         SELECT
-          (so.updated_at AT TIME ZONE $3)::date::text AS "settlementDate",
+          (p.succeeded_at AT TIME ZONE $3)::date::text AS "settlementDate",
           o.id AS "outletId",
           o.name AS "outletName",
           NULLIF(o.settlement_subaccount_code, '') AS "subaccountCode",
@@ -156,32 +165,35 @@ export class FinanceService {
           so.master_order_id AS "masterOrderId",
           p.reference AS "paymentReference",
           p.gateway AS "paymentGateway",
-          so.updated_at AS "completedAt",
+          p.succeeded_at AS "completedAt",
           so.subtotal_minor AS "grossMinor",
           so.commission_minor AS "commissionMinor",
           so.net_minor AS "netMinor",
           so.currency AS "currency",
-          CASE WHEN osa.id IS NULL THEN 'PENDING' ELSE 'APPROVED' END AS "payoutStatus",
+          CASE
+            WHEN NOT (so.status = ANY($1::sub_order_status[])) THEN 'AWAITING_FULFILLMENT'
+            WHEN osa.id IS NULL THEN 'PENDING'
+            ELSE 'APPROVED'
+          END AS "payoutStatus",
           osa.approved_at AS "approvedAt"
         FROM sub_orders so
         INNER JOIN outlets o
           ON o.id = so.outlet_id
          AND o.deleted_at IS NULL
         INNER JOIN LATERAL (
-          SELECT payment.reference, payment.gateway
+          SELECT payment.reference, payment.gateway, payment.succeeded_at
           FROM payments payment
           WHERE payment.master_order_id = so.master_order_id
             AND payment.status = $2::payment_status
-          ORDER BY payment.created_at DESC, payment.id DESC
+            AND (payment.succeeded_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
+          ORDER BY payment.succeeded_at DESC, payment.id DESC
           LIMIT 1
         ) p ON TRUE
         LEFT JOIN outlet_settlement_approvals osa
           ON osa.sub_order_id = so.id
         WHERE so.deleted_at IS NULL
-          AND so.status = ANY($1::sub_order_status[])
-          AND (so.updated_at AT TIME ZONE $3)::date BETWEEN $4::date AND $5::date
           AND ($6::uuid IS NULL OR so.outlet_id = $6::uuid)
-        ORDER BY so.updated_at ASC, o.name ASC, so.id ASC
+        ORDER BY p.succeeded_at ASC, o.name ASC, so.id ASC
       `,
       [
         COMPLETED_SUB_ORDER_STATUSES,
@@ -206,10 +218,15 @@ export class FinanceService {
   ): OutletSettlementSummary {
     const completedSubOrders = Number(row.completedSubOrders);
     const pendingSubOrders = Number(row.pendingSubOrders);
+    const fulfillmentPendingSubOrders = Number(row.fulfillmentPendingSubOrders);
     const approvalWindowOpen = this.isApprovalWindowOpen(window);
     const hasSubaccount = !!row.subaccountCode;
     const approvalAvailable =
-      !approvalWindowOpen && pendingSubOrders > 0 && completedSubOrders > 0 && hasSubaccount;
+      !approvalWindowOpen &&
+      pendingSubOrders > 0 &&
+      completedSubOrders > 0 &&
+      fulfillmentPendingSubOrders === 0 &&
+      hasSubaccount;
 
     return {
       outletId: row.outletId,
@@ -220,6 +237,7 @@ export class FinanceService {
       settlementDateTo: window.dateTo,
       completedSubOrders,
       pendingSubOrders,
+      fulfillmentPendingSubOrders,
       grossMinor: Number(row.grossMinor),
       commissionMinor: Number(row.commissionMinor),
       netMinor: Number(row.netMinor),
@@ -231,6 +249,7 @@ export class FinanceService {
         approvalWindowOpen,
         completedSubOrders,
         pendingSubOrders,
+        fulfillmentPendingSubOrders,
         hasSubaccount,
       }),
       latestApprovedAt: row.latestApprovedAt ? new Date(row.latestApprovedAt).toISOString() : null,
@@ -250,13 +269,14 @@ export class FinanceService {
       settlementDateTo: window.dateTo,
       completedSubOrders: 0,
       pendingSubOrders: 0,
+      fulfillmentPendingSubOrders: 0,
       grossMinor: 0,
       commissionMinor: 0,
       netMinor: 0,
       currency: "NGN",
       status: "NO_ACTIVITY",
       approvalAvailable: false,
-      approvalUnavailableReason: "No completed paid sub-orders in this settlement window",
+      approvalUnavailableReason: "No successful payments in this settlement window",
       latestApprovedAt: null,
     };
   }
@@ -297,6 +317,7 @@ export class FinanceService {
     approvalWindowOpen: boolean;
     completedSubOrders: number;
     pendingSubOrders: number;
+    fulfillmentPendingSubOrders: number;
     hasSubaccount: boolean;
   }): string | null {
     if (input.approvalWindowOpen) {
@@ -306,7 +327,10 @@ export class FinanceService {
       return "Outlet is missing a settlement subaccount code";
     }
     if (input.completedSubOrders === 0) {
-      return "No completed paid sub-orders in this settlement window";
+      return "No successful payments in this settlement window";
+    }
+    if (input.fulfillmentPendingSubOrders > 0) {
+      return `${input.fulfillmentPendingSubOrders} paid sub-order(s) are awaiting fulfillment`;
     }
     if (input.pendingSubOrders === 0) {
       return "Settlement window is already approved";
@@ -323,6 +347,7 @@ interface SettlementRow {
   subaccountCode: string | null;
   completedSubOrders: number | string;
   pendingSubOrders: number | string;
+  fulfillmentPendingSubOrders: number | string;
   grossMinor: number | string;
   commissionMinor: number | string;
   netMinor: number | string;
@@ -344,7 +369,7 @@ interface SettlementExportRow {
   commissionMinor: number | string;
   netMinor: number | string;
   currency: "NGN";
-  payoutStatus: "PENDING" | "APPROVED";
+  payoutStatus: "AWAITING_FULFILLMENT" | "PENDING" | "APPROVED";
   approvedAt: Date | string | null;
 }
 
@@ -357,6 +382,7 @@ export interface OutletSettlementSummary {
   settlementDateTo: string;
   completedSubOrders: number;
   pendingSubOrders: number;
+  fulfillmentPendingSubOrders: number;
   grossMinor: number;
   commissionMinor: number;
   netMinor: number;

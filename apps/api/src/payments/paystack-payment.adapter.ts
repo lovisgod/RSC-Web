@@ -227,6 +227,9 @@ export class PaystackPaymentAdapter implements PaymentAdapter {
       reference,
       status: eventType === "charge.success" ? "SUCCESS" : "FAILED",
       amountMinor: data.amount ?? 0,
+      ...(eventType === "charge.success" && typeof data.paid_at === "string"
+        ? { succeededAt: data.paid_at }
+        : {}),
       providerResponse: event,
     };
   }

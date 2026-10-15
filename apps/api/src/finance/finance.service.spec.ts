@@ -1,6 +1,48 @@
-import { describe, expect, it } from "vitest";
+import type { DataSource, Repository } from "typeorm";
+import { describe, expect, it, vi } from "vitest";
 
-import { settlementRowsToCsv } from "./finance.service";
+import type { Outlet } from "../outlets/outlet.entity";
+import { FinanceService, settlementRowsToCsv } from "./finance.service";
+
+describe("FinanceService outlet settlement matrix", () => {
+  it("uses successful payment time for visibility while blocking unfinished payouts", async () => {
+    const query = vi.fn().mockResolvedValue([
+      {
+        outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
+        outletName: "Salmas Grill",
+        imageUrl: null,
+        subaccountCode: "SALMAS_001",
+        completedSubOrders: "2",
+        pendingSubOrders: "2",
+        fulfillmentPendingSubOrders: "2",
+        grossMinor: "1400",
+        commissionMinor: "70",
+        netMinor: "1330",
+        currency: "NGN",
+        latestApprovedAt: null,
+      },
+    ]);
+    const service = new FinanceService(
+      { query } as unknown as DataSource,
+      {} as Repository<Outlet>,
+    );
+
+    const [summary] = await service.outletSettlements({
+      dateFrom: "2026-10-12",
+      dateTo: "2026-10-12",
+    });
+
+    expect(query.mock.calls[0]?.[0]).toContain("payment.succeeded_at");
+    expect(summary).toMatchObject({
+      completedSubOrders: 2,
+      fulfillmentPendingSubOrders: 2,
+      grossMinor: 1400,
+      status: "PENDING",
+      approvalAvailable: false,
+      approvalUnavailableReason: "2 paid sub-order(s) are awaiting fulfillment",
+    });
+  });
+});
 
 describe("settlementRowsToCsv", () => {
   it("exports app settlement rows with explicit minor-unit columns", () => {

@@ -42,6 +42,7 @@ interface MomentWebhookPayload {
     status?: string;
     amount?: number;
     payment_status?: string;
+    updated_at?: string;
     last_payment_error?: unknown;
   };
 }
@@ -337,6 +338,7 @@ export class MomentPaymentAdapter implements PaymentAdapter {
       reference,
       status,
       amountMinor: data.amount ?? 0,
+      ...(isSuccessful && data.updated_at ? { succeededAt: data.updated_at } : {}),
       providerResponse: event as unknown as Record<string, unknown>,
     };
   }

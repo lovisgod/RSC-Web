@@ -600,6 +600,7 @@ export const outletSettlementSummarySchema = z.object({
   settlementDateTo: z.iso.date(),
   completedSubOrders: z.int().nonnegative(),
   pendingSubOrders: z.int().nonnegative(),
+  fulfillmentPendingSubOrders: z.int().nonnegative(),
   grossMinor: z.int().nonnegative(),
   commissionMinor: z.int().nonnegative(),
   netMinor: z.int().nonnegative(),

@@ -188,6 +188,7 @@ describe("critical domain lifecycles", () => {
       masterOrderId: order.id,
       status: PaymentStatus.SUCCESS,
       amountMinor: 8_600,
+      succeededAt: settledAt,
     });
     const query = { dateFrom: settlementDate, dateTo: settlementDate };
 

@@ -167,6 +167,7 @@ export async function createPayment(
     status?: PaymentStatus;
     amountMinor?: number;
     reference?: string;
+    succeededAt?: Date;
   },
 ): Promise<Payment> {
   const repository = app.get(DataSource).getRepository(Payment);
@@ -182,6 +183,10 @@ export async function createPayment(
       checkoutUrl: null,
       splitBreakdown: [],
       providerResponse: null,
+      succeededAt:
+        (input.status ?? PaymentStatus.PENDING) === PaymentStatus.SUCCESS
+          ? (input.succeededAt ?? new Date())
+          : null,
     }),
   );
 }

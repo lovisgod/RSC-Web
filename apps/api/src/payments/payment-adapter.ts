@@ -60,6 +60,8 @@ export interface ParsedWebhookEvent {
   /** PENDING represents a non-terminal provider update, such as a retryable failed attempt. */
   status: "PENDING" | "SUCCESS" | "FAILED";
   amountMinor: number;
+  /** Provider-reported success time. Falls back to webhook receipt time when omitted. */
+  succeededAt?: string;
   providerResponse: unknown;
 }
 
