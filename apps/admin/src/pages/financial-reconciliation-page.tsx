@@ -250,6 +250,30 @@ export function FinancialReconciliationPage() {
     [settlements],
   );
 
+  const totals = useMemo(() => {
+    return rows.reduce(
+      (acc, row) => ({
+        completedSubOrders: acc.completedSubOrders + row.completedSubOrders,
+        fulfillmentPendingSubOrders:
+          acc.fulfillmentPendingSubOrders + row.fulfillmentPendingSubOrders,
+        grossMinor: acc.grossMinor + row.grossMinor,
+        dineoutGrossMinor: acc.dineoutGrossMinor + row.dineoutGrossMinor,
+        totalCollectedMinor: acc.totalCollectedMinor + row.totalCollectedMinor,
+        commissionMinor: acc.commissionMinor + row.commissionMinor,
+        netMinor: acc.netMinor + row.netMinor,
+      }),
+      {
+        completedSubOrders: 0,
+        fulfillmentPendingSubOrders: 0,
+        grossMinor: 0,
+        dineoutGrossMinor: 0,
+        totalCollectedMinor: 0,
+        commissionMinor: 0,
+        netMinor: 0,
+      },
+    );
+  }, [rows]);
+
   function handleExport(options: { outletId: string; dateFrom: string; dateTo: string }) {
     exportMutation.mutate({
       dateFrom: options.dateFrom,
@@ -417,6 +441,43 @@ export function FinancialReconciliationPage() {
                       );
                     })}
               </tbody>
+              {!isLoading && rows.length > 0 && (
+                <tfoot>
+                  <tr className="recon-total-row">
+                    <td>
+                      <strong>Grand Total</strong>
+                    </td>
+                    <td className="text-mono">—</td>
+                    <td>
+                      <strong>{totals.completedSubOrders}</strong>
+                    </td>
+                    <td>
+                      <strong>{totals.fulfillmentPendingSubOrders}</strong>
+                    </td>
+                    <td>
+                      <span className="amount">{formatMinor(totals.grossMinor)}</span>
+                    </td>
+                    <td>
+                      <span className="amount">{formatMinor(totals.dineoutGrossMinor)}</span>
+                    </td>
+                    <td>
+                      <span className="amount">{formatMinor(totals.totalCollectedMinor)}</span>
+                    </td>
+                    <td>
+                      <span className="amount amount--negative">
+                        {formatMinor(totals.commissionMinor)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="amount amount--positive">
+                        {formatMinor(totals.netMinor)}
+                      </span>
+                    </td>
+                    <td>—</td>
+                    <td>—</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         )}

@@ -153,8 +153,8 @@ export class FinanceService {
             SELECT payment.gateway, payment.reference
             FROM payments payment
             WHERE payment.master_order_id = so.master_order_id
-              AND payment.status = $4::payment_status
-              AND (payment.succeeded_at AT TIME ZONE $5)::date BETWEEN $6::date AND $7::date
+              AND payment.status = $3::payment_status
+              AND (payment.succeeded_at AT TIME ZONE $4)::date BETWEEN $5::date AND $6::date
             ORDER BY payment.succeeded_at DESC, payment.id DESC
             LIMIT 1
           ) p ON TRUE
@@ -162,14 +162,12 @@ export class FinanceService {
             ON osa.sub_order_id = so.id
           WHERE so.outlet_id = $2
             AND so.deleted_at IS NULL
-            AND so.status = ANY($3::sub_order_status[])
             AND osa.id IS NULL
           ON CONFLICT (sub_order_id) DO NOTHING
         `,
         [
           user.id,
           outletId,
-          COMPLETED_SUB_ORDER_STATUSES,
           PaymentStatus.SUCCESS,
           SETTLEMENT_TIME_ZONE,
           window.dateFrom,
@@ -264,9 +262,9 @@ export class FinanceService {
           so.net_minor AS "netMinor",
           so.currency AS "currency",
           CASE
+            WHEN osa.id IS NOT NULL THEN 'APPROVED'
             WHEN NOT (so.status = ANY($1::sub_order_status[])) THEN 'AWAITING_FULFILLMENT'
-            WHEN osa.id IS NULL THEN 'PENDING'
-            ELSE 'APPROVED'
+            ELSE 'PENDING'
           END AS "payoutStatus",
           osa.approved_at AS "approvedAt"
         FROM paid_sub_orders so
@@ -305,11 +303,7 @@ export class FinanceService {
     const approvalWindowOpen = this.isApprovalWindowOpen(window);
     const hasSubaccount = !!row.subaccountCode;
     const approvalAvailable =
-      !approvalWindowOpen &&
-      pendingSubOrders > 0 &&
-      completedSubOrders > 0 &&
-      fulfillmentPendingSubOrders === 0 &&
-      hasSubaccount;
+      !approvalWindowOpen && pendingSubOrders > 0 && completedSubOrders > 0 && hasSubaccount;
 
     return {
       outletId: row.outletId,
@@ -334,7 +328,6 @@ export class FinanceService {
         approvalWindowOpen,
         completedSubOrders,
         pendingSubOrders,
-        fulfillmentPendingSubOrders,
         hasSubaccount,
       }),
       latestApprovedAt: row.latestApprovedAt ? new Date(row.latestApprovedAt).toISOString() : null,
@@ -404,7 +397,6 @@ export class FinanceService {
     approvalWindowOpen: boolean;
     completedSubOrders: number;
     pendingSubOrders: number;
-    fulfillmentPendingSubOrders: number;
     hasSubaccount: boolean;
   }): string | null {
     if (input.approvalWindowOpen) {
@@ -415,9 +407,6 @@ export class FinanceService {
     }
     if (input.completedSubOrders === 0) {
       return "No successful payments in this settlement window";
-    }
-    if (input.fulfillmentPendingSubOrders > 0) {
-      return `${input.fulfillmentPendingSubOrders} paid sub-order(s) are awaiting fulfillment`;
     }
     if (input.pendingSubOrders === 0) {
       return "Settlement window is already approved";
@@ -553,6 +542,37 @@ export function settlementRowsToCsv(rows: SettlementExportRow[]): string {
       row.approvedAt ? new Date(row.approvedAt).toISOString() : "",
     ].map(escapeCsvCell),
   );
+
+  if (rows.length > 0) {
+    const totalGross = rows.reduce((sum, r) => sum + Number(r.grossMinor), 0);
+    const totalDineoutGross = rows.reduce((sum, r) => sum + Number(r.dineoutGrossMinor), 0);
+    const totalCollected = rows.reduce((sum, r) => sum + Number(r.totalCollectedMinor), 0);
+    const totalCommission = rows.reduce((sum, r) => sum + Number(r.commissionMinor), 0);
+    const totalNet = rows.reduce((sum, r) => sum + Number(r.netMinor), 0);
+    const currency = rows[0]?.currency ?? "NGN";
+
+    lines.push(
+      [
+        "**Grand Total**",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        `**${totalGross}**`,
+        `**${totalDineoutGross}**`,
+        `**${totalCollected}**`,
+        `**${totalCommission}**`,
+        `**${totalNet}**`,
+        `**${currency}**`,
+        "",
+        "",
+      ].map(escapeCsvCell),
+    );
+  }
 
   return [SETTLEMENT_EXPORT_HEADERS.join(","), ...lines.map((line) => line.join(","))].join("\n");
 }

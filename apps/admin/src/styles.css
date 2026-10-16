@@ -3819,6 +3819,12 @@ th {
   background: #fee2e2;
 }
 
+.recon-total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--rsc-line);
+  background: color-mix(in srgb, var(--rsc-navy) 4%, white);
+}
+
 .modal--settlement-export {
   width: min(560px, 100%);
 }

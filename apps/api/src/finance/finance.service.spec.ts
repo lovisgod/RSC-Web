@@ -5,7 +5,7 @@ import type { Outlet } from "../outlets/outlet.entity";
 import { FinanceService, settlementRowsToCsv } from "./finance.service";
 
 describe("FinanceService outlet settlement matrix", () => {
-  it("uses successful payment time for visibility while blocking unfinished payouts", async () => {
+  it("uses successful payment time for visibility and allows settlement approval for past dates", async () => {
     const query = vi.fn().mockResolvedValue([
       {
         outletId: "4273e96c-2887-49a5-a6d5-269f007f04f0",
@@ -42,8 +42,8 @@ describe("FinanceService outlet settlement matrix", () => {
       dineoutGrossMinor: 2573,
       totalCollectedMinor: 3973,
       status: "PENDING",
-      approvalAvailable: false,
-      approvalUnavailableReason: "2 paid sub-order(s) are awaiting fulfillment",
+      approvalAvailable: true,
+      approvalUnavailableReason: null,
     });
   });
 });
@@ -77,6 +77,9 @@ describe("settlementRowsToCsv", () => {
     );
     expect(csv).toContain('"Cactus, Lagos"');
     expect(csv).toContain("2181875,250000,2431875,86750,2095125,NGN,APPROVED");
+    expect(csv).toContain(
+      "**Grand Total**,,,,,,,,,**2181875**,**250000**,**2431875**,**86750**,**2095125**,**NGN**,,",
+    );
   });
 
   it("keeps an empty export useful and prevents spreadsheet formula execution", () => {

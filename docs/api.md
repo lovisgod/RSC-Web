@@ -363,8 +363,8 @@ node dist/src/database/seed-demo-data.js
 payment timestamp in `Africa/Lagos` as the settlement date. This keeps payment
 counts and outlet amounts aligned with the provider transaction view even when
 fulfillment happens on a later day. The response separately reports paid
-sub-orders that are still awaiting fulfillment. A settlement cannot be approved
-until every paid sub-order in the selected window is `DISPATCHED` or `COLLECTED`.
+sub-orders that are still awaiting fulfillment. A settlement can be approved
+from the next business day once the settlement window has closed.
 
 Each outlet summary exposes three collection amounts. `grossMinor` is the outlet
 gross routed through the payment split. `dineoutGrossMinor` is the outlet's
