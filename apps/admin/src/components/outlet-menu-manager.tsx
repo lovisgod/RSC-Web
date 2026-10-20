@@ -25,6 +25,7 @@ import {
   Lightbulb,
   Pencil,
   Plus,
+  Search,
   Trash2,
   Utensils,
 } from "lucide-react";
@@ -65,6 +66,7 @@ const menuItemKey = (itemId: string | null) => ["admin", "menu-item", itemId] as
 const modifierGroupsKey = (outletId: string) => ["admin", "modifier-groups", outletId] as const;
 
 const EMPTY_ITEMS: MenuItem[] = [];
+const ITEMS_PAGE_SIZE = 12;
 
 function toLocalDateTime(value: string): string {
   const date = new Date(value);
@@ -98,6 +100,66 @@ function getDayBounds(offsetDays = 0): { startsAt: string; endsAt: string } {
 
 function formatPrice(minor: number): string {
   return formatNaira(minor);
+}
+
+const TITLE_CHAR_LIMIT = 13;
+
+function TruncatedTitle({
+  text,
+  limit = TITLE_CHAR_LIMIT,
+  focusable = false,
+}: {
+  text: string;
+  limit?: number;
+  focusable?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (text.length <= limit) return <>{text}</>;
+
+  function toggle(event: React.MouseEvent<HTMLSpanElement> | React.KeyboardEvent<HTMLSpanElement>) {
+    event.stopPropagation();
+    setExpanded((value) => !value);
+  }
+
+  const body = (
+    <>
+      <span aria-hidden="true">{expanded ? text : `${text.slice(0, limit)}…`}</span>
+      <span className="sr-only">{text}</span>
+    </>
+  );
+
+  if (focusable) {
+    return (
+      <span
+        className={`admin-truncated-title${expanded ? " admin-truncated-title--expanded" : ""}`}
+        role="button"
+        tabIndex={0}
+        title={text}
+        aria-label={text}
+        aria-expanded={expanded}
+        onClick={toggle}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggle(event);
+          }
+        }}
+      >
+        {body}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`admin-truncated-title${expanded ? " admin-truncated-title--expanded" : ""}`}
+      title={text}
+      onClick={toggle}
+    >
+      {body}
+    </span>
+  );
 }
 
 function useOutletMenuData(outletId: string) {
@@ -191,6 +253,7 @@ function CategoryTabs({
         <button
           key={category.id}
           type="button"
+          title={category.name}
           className={`admin-menu-tab${
             activeCategoryId === category.id ? " admin-menu-tab--active" : ""
           }`}
@@ -276,8 +339,18 @@ function MenuItemCard({
           {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <span>🍽️</span>}
         </span>
         <span className="admin-menu-item-copy">
-          <span style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-            <strong>{item.name}</strong>
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              flexWrap: "wrap",
+              minWidth: 0,
+            }}
+          >
+            <strong>
+              <TruncatedTitle text={item.name} />
+            </strong>
             {item.isDiscountActive &&
               item.discountPriceMinor &&
               item.discountPriceMinor < item.priceMinor && (
@@ -1116,7 +1189,9 @@ function CategoryManagementCard({ outletId, outlet }: { outletId: string; outlet
               }`}
             >
               <div>
-                <strong>{category.name}</strong>
+                <strong>
+                  <TruncatedTitle text={category.name} focusable />
+                </strong>
                 <small>
                   {itemCount.get(category.id) ?? 0} items · Sort {category.sortOrder} ·{" "}
                   {category.isActive ? "Active" : "Inactive"}
@@ -1692,6 +1767,8 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [itemOrderByCategory, setItemOrderByCategory] = useState<Record<string, string[]>>({});
+  const [itemSearch, setItemSearch] = useState("");
+  const [itemPage, setItemPage] = useState(1);
 
   const items = outlet?.menuItems ?? EMPTY_ITEMS;
   const visibleItems = useMemo(
@@ -1718,6 +1795,25 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
 
     return [...orderedItems, ...newItems];
   }, [itemOrderByCategory, sortKey, visibleItems]);
+  const searchedItems = useMemo(() => {
+    const query = itemSearch.trim().toLowerCase();
+    if (!query) return sortedItems;
+    return sortedItems.filter((item) => item.name.toLowerCase().includes(query));
+  }, [itemSearch, sortedItems]);
+  const pageCount = Math.max(1, Math.ceil(searchedItems.length / ITEMS_PAGE_SIZE));
+  const currentPage = Math.min(itemPage, pageCount);
+  const pageStart = (currentPage - 1) * ITEMS_PAGE_SIZE;
+  const pagedItems = searchedItems.slice(pageStart, pageStart + ITEMS_PAGE_SIZE);
+
+  function handleSearchChange(value: string) {
+    setItemSearch(value);
+    setItemPage(1);
+  }
+
+  function handleCategoryChange(categoryId: string | undefined) {
+    setActiveCategoryId(categoryId);
+    setItemPage(1);
+  }
   const reorderItems = useMutation({
     mutationFn: async (nextItems: MenuItem[]) => {
       await Promise.all(
@@ -1852,12 +1948,33 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
           <CategoryTabs
             categories={outlet.menuCategories}
             activeCategoryId={activeCategoryId}
-            onChange={setActiveCategoryId}
+            onChange={handleCategoryChange}
           />
+
+          {sortedItems.length > 0 && (
+            <label className="orders-search admin-menu-item-search">
+              <Search size={16} aria-hidden="true" />
+              <span className="sr-only">Search menu items</span>
+              <input
+                type="search"
+                value={itemSearch}
+                placeholder="Search items by name"
+                onChange={(event) => handleSearchChange(event.target.value)}
+              />
+            </label>
+          )}
 
           {sortedItems.length === 0 ? (
             <div className="panel">
               <EmptyState icon={<Utensils size={30} />} heading="No items in this category" />
+            </div>
+          ) : searchedItems.length === 0 ? (
+            <div className="panel">
+              <EmptyState
+                icon={<Search size={30} />}
+                heading="No items match your search"
+                body="Try a different name or clear the search."
+              />
             </div>
           ) : (
             <DndContext
@@ -1866,11 +1983,11 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={sortedItems.map((item) => item.id)}
+                items={pagedItems.map((item) => item.id)}
                 strategy={rectSortingStrategy}
               >
                 <div className="admin-menu-grid">
-                  {sortedItems.map((item) => (
+                  {pagedItems.map((item) => (
                     <SortableMenuItemCard
                       key={`${item.id}:${item.isAvailable}`}
                       item={item}
@@ -1882,6 +1999,32 @@ export function OutletMenuManager({ outletId }: { outletId: string }) {
                 </div>
               </SortableContext>
             </DndContext>
+          )}
+
+          {searchedItems.length > ITEMS_PAGE_SIZE && (
+            <div className="orders-pagination" aria-label="Menu items pagination">
+              <button
+                type="button"
+                className="orders-pagination__button"
+                disabled={currentPage <= 1}
+                onClick={() => setItemPage(currentPage - 1)}
+              >
+                Previous
+              </button>
+              <p className="orders-pagination-hint">
+                Showing {pageStart + 1}-
+                {Math.min(pageStart + ITEMS_PAGE_SIZE, searchedItems.length)} of{" "}
+                {searchedItems.length} items
+              </p>
+              <button
+                type="button"
+                className="orders-pagination__button"
+                disabled={currentPage >= pageCount}
+                onClick={() => setItemPage(currentPage + 1)}
+              >
+                Next
+              </button>
+            </div>
           )}
         </>
       )}

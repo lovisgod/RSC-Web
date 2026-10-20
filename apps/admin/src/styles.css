@@ -3155,6 +3155,25 @@ th {
   background: var(--rsc-surface);
 }
 
+.admin-menu-item-search {
+  width: min(360px, 100%);
+}
+
+.admin-truncated-title {
+  cursor: pointer;
+}
+
+.admin-truncated-title--expanded {
+  overflow-wrap: anywhere;
+}
+
+.admin-menu-item-copy strong:has(.admin-truncated-title--expanded),
+.admin-category-card strong:has(.admin-truncated-title--expanded) {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+
 .admin-modifier-panel {
   display: grid;
   gap: 1rem;
