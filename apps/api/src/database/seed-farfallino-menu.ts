@@ -16,6 +16,7 @@ import { parseArgs } from "node:util";
 import { config as loadEnvironment } from "dotenv";
 
 import dataSource from "./data-source";
+import { Outlet } from "../outlets/outlet.entity";
 import { MenuCategory } from "../catalog/menu-category.entity";
 import { MenuItem } from "../catalog/menu-item.entity";
 import { ItemModifierGroup } from "../catalog/item-modifier-group.entity";
@@ -50,6 +51,7 @@ async function main(): Promise<void> {
   await dataSource.initialize();
 
   try {
+    const outletRepo = dataSource.getRepository(Outlet);
     const categoryRepo = dataSource.getRepository(MenuCategory);
     const itemRepo = dataSource.getRepository(MenuItem);
     const groupRepo = dataSource.getRepository(ItemModifierGroup);
@@ -57,14 +59,12 @@ async function main(): Promise<void> {
     const linkRepo = dataSource.getRepository(MenuItemModifierGroup);
 
     // 1. Check outlet exists
-    const rawOutlet = await dataSource.query(`SELECT id, name, code FROM outlets WHERE id = $1`, [
-      OUTLET_ID,
-    ]);
-    if (!rawOutlet || rawOutlet.length === 0) {
+    const outlet = await outletRepo.findOneBy({ id: OUTLET_ID });
+    if (!outlet) {
       console.warn(`⚠️  WARNING: Outlet with ID "${OUTLET_ID}" not found in "outlets" table.`);
       console.warn(`   Proceeding anyway (or make sure you specify the right --outlet=<id>).`);
     } else {
-      console.log(`✓ Outlet confirmed: ${rawOutlet[0].name} (${rawOutlet[0].code})`);
+      console.log(`✓ Outlet confirmed: ${outlet.name} (${outlet.code})`);
     }
 
     // 2. Upsert modifier groups and modifiers
