@@ -64,7 +64,7 @@ async function main(): Promise<void> {
       console.warn(`⚠️  WARNING: Outlet with ID "${OUTLET_ID}" not found in "outlets" table.`);
       console.warn(`   Proceeding anyway (or make sure you specify the right --outlet=<id>).`);
     } else {
-      console.log(`✓ Outlet confirmed: ${outlet.name} (${outlet.code})`);
+      console.log(`✓ Outlet confirmed: ${outlet.name} (${outlet.id})`);
     }
 
     // 2. Upsert modifier groups and modifiers
