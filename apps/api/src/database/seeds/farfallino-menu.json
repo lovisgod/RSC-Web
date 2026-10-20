@@ -1,0 +1,3609 @@
+{
+  "outletId": "bcbe3805-9bb5-42d6-b6aa-248010d64385",
+  "outletName": "Farfallino",
+  "modifierGroups": [
+    {
+      "name": "Secondi Side Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Roasted Potato",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "French Fries",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Vegetable Stirfry Rice",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Linguine Spicy Tomato",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Saut\u00e9ed Vegetables",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Pizza Meat Replacement",
+      "minSelections": 0,
+      "maxSelections": 1,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Replace Ham with Smoked Turkey",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Replace Ham with Beef Pepperoni",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Pizza Extra Toppings",
+      "minSelections": 0,
+      "maxSelections": 5,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Shrimps",
+          "priceDeltaMinor": 800000
+        },
+        {
+          "name": "Fresh Mozzarella",
+          "priceDeltaMinor": 600000
+        },
+        {
+          "name": "Turkey",
+          "priceDeltaMinor": 600000
+        },
+        {
+          "name": "Beef Pepperoni",
+          "priceDeltaMinor": 600000
+        }
+      ]
+    },
+    {
+      "name": "Cheesecake Sauce Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Caramel Sauce",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Chocolate Sauce",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Strawberry Sauce",
+          "priceDeltaMinor": 0
+        }
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "name": "Antipasti & Starters",
+      "sortOrder": 0,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Prosciutto al Tartufo con Mozzarella di Bufala",
+          "description": "Truffled ham, sun-dried tomato with Bufala Mozzarella",
+          "priceMinor": 3600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522075/rsc/farfallino/antipasti/prosciutto_al_tartufo_con_moz_di_bufala.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Carpaccio di Bresaola",
+          "description": "Bresaola with rocket salad, fresh mushroom, parmesan cheese and lemon oil dressing",
+          "priceMinor": 4350000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522001/rsc/farfallino/antipasti/carpaccio_di_bresaola.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Parmigiana di Melanzane",
+          "description": "Baked eggplant with homemade tomato sauce, smoked scamorza basil and parmesan",
+          "priceMinor": 3800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522054/rsc/farfallino/antipasti/parmigiana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Bruschetta Stracciatella e Pesto",
+          "description": "Toasted bread with Stracciatella cheese, pesto sauce and chopped tomato",
+          "priceMinor": 2100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792521934/rsc/farfallino/antipasti/bruschetta_alla_toscana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Bruschetta alla Toscana",
+          "description": "Garlic toasted bread with chopped tomato, basil and olive oil",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792521934/rsc/farfallino/antipasti/bruschetta_alla_toscana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Bruschetta Pollo e Avocado",
+          "description": "Creamy avocado and cheese topped with grilled chicken, tomatoes and balsamic glaze",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Calamari alla Romana",
+          "description": "Fried calamari served with tartar sauce",
+          "priceMinor": 2900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792514453/rsc/farfallino/antipasti/calamari.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Gamberetto Piccante",
+          "description": "Crispy shrimps in spicy creamy sauce",
+          "priceMinor": 2400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Crocchette con Pollo e Gamberi (Spicy)",
+          "description": "5 spicy potato croquettes stuffed with chicken and shrimp served with Arrabbiata sauce",
+          "priceMinor": 2600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522004/rsc/farfallino/antipasti/crochette_con_pollo_e_gamberi.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Bastoncini di Pollo Fritti",
+          "description": "Fried chicken breast with special homemade spicy sauce",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792521921/rsc/farfallino/antipasti/bastoncini.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Alette di Pollo Dolce Piccante (Spicy)",
+          "description": "Chicken wings served with an Italian sweet and spicy sauce",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792521874/rsc/farfallino/antipasti/alette_di_pollo_dolce_picante.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Assortimento di Affettati Misti e Parmigiano",
+          "description": "Assortment of Italian cold cuts:parma ham, truffle ham, speck, mortadella, spianata and truffle pecorino cheese",
+          "priceMinor": 6300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792521882/rsc/farfallino/antipasti/assortimento_di_affetati.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Prosciutto di Parama e Gorgonzola",
+          "description": "Parma ham and gorgonzola cheese spread on grilled toasted bread",
+          "priceMinor": 3600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        }
+      ]
+    },
+    {
+      "name": "Zuppe & Minestre (Soups)",
+      "sortOrder": 1,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Zuppa di Mare (spicy)",
+          "description": "A mix of prawns, calamari, fish, mussels served in a spicy broth",
+          "priceMinor": 4200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523960/rsc/farfallino/soup/zuppa_di_amre.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Vellutata di Asparagi con Pollo",
+          "description": "Creamy asparagus and chicken soup served with focaccia croutons",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523868/rsc/farfallino/soup/asparagi.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Minestrone alla Genovese",
+          "description": "Italian vegetable soup",
+          "priceMinor": 1700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523902/rsc/farfallino/soup/minestrone.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Focaccia",
+      "sortOrder": 2,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Focaccia al Rosmarino",
+          "description": "Focaccia with rosemary and olive oil",
+          "priceMinor": 1100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Focaccia del Contadino",
+          "description": "Cherry tomato, blak olives, oregano, olive oil",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Focaccia Bianca all'Aglio",
+          "description": "Mozzarella cheese, garlic & olive oil",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Focaccia Mediterranea",
+          "description": "Cherry tomato, straciatella, balsamic glaze",
+          "priceMinor": 3500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Insalate (Salads)",
+      "sortOrder": 3,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Avocado Ripieno",
+          "description": "Avocado filled with tomato, chicken, lemon mayonnaise, fresh basil and parmesan",
+          "priceMinor": 2800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523226/rsc/farfallino/salads/avocado_ripieno.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Insalata di Pollo al Balsamico con Avocado e Fragole",
+          "description": "Lettuce, rocket, cherry tomatoes, avocado, strawberries, grilled chicken and parmesan cheese finished with balsamic dressing",
+          "priceMinor": 2800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Insalata Italiana",
+          "description": "Chicken breast, lettuce, rocca, boiled eggs, avocado, focaccia croutons, tomatoes, slices of parmesan, olive and mayonnaise sauce",
+          "priceMinor": 3100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523385/rsc/farfallino/salads/insalata_italiana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Insalata Romana con Mozzarella di Bufala",
+          "description": "Assorted lettuce, sundried tomato, artichoke, parmesan and Bufala Mozzarella cheese",
+          "priceMinor": 3100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522781/rsc/farfallino/salads/insalata_romana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Caprese",
+          "description": "Fresh Bufala Mozzarella cheese, tomato, basil and oilve oil",
+          "priceMinor": 3950000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522779/rsc/farfallino/salads/caprese.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Panzanella con Salmone Affumicato",
+          "description": "Lettuce, tomato, cucumber, onion, focaccia croutons and smoked salmon with lemon oil dressing",
+          "priceMinor": 3300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523456/rsc/farfallino/salads/panzanella.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        }
+      ]
+    },
+    {
+      "name": "Burrata",
+      "sortOrder": 4,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Burrata delle Puglie",
+          "description": "Burrata with sundried tomato and pesto",
+          "priceMinor": 3300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Burrata con Scaglie di Tartufo all'Olio d'Oliva",
+          "description": "Burrata with sundried tomato, truffle flakes in olive oil",
+          "priceMinor": 4400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Burrata al Forno",
+          "description": "Baked burrata with tomato and pesto sauce",
+          "priceMinor": 4000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Primi Piatti (Pasta)",
+      "sortOrder": 5,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Lasagna al Forno",
+          "description": "Homemade lasagna with the traditional bolognaise and bechamel sauce",
+          "priceMinor": 2850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522493/rsc/farfallino/pasta/lasagna.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Linguine Carbonara",
+          "description": "Linguine, pork with pecorino cheese and egg yolks",
+          "priceMinor": 4100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522314/rsc/farfallino/pasta/carbonara.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Linguine ai Gamberoni",
+          "description": "Homemade fresh linguine with 3 pcs prawns sauteed in garlic, parsley, white wine and grandma's tomato sauce",
+          "priceMinor": 4500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522581/rsc/farfallino/pasta/linguine_gamberoni.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Linguine Puttanesca (spicy)",
+          "description": "Linguine with olive oil, garlic, parsley, caper, anchovy fillet, black oiive mixed in chili tomato sauce",
+          "priceMinor": 2350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Linguine con Polpette della Nonna in Salsa Picante (spicy)",
+          "description": "Linguine with grandma's meatballs in spicy sauce",
+          "priceMinor": 3550000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522775/rsc/farfallino/pasta/linguine_con_polpette.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Rigatoni alla Bolognese",
+          "description": "Homemade fresh rigatoni sauteed in a homemade beef ragout",
+          "priceMinor": 3000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522680/rsc/farfallino/pasta/rigatoni_alla_bolognese.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Linguine Cremose con Pollo e Gamberi",
+          "description": "Creamy linguine with grilled chicken, topped with crispy tempura shrimps",
+          "priceMinor": 3800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Linguine Frutti di Mare (spicy)",
+          "description": "Homemade fresh linguine cooked in garlic, parsley, olive oil, white wine and a spicy tomato sauce with calamari, shrimp, mussels",
+          "priceMinor": 4100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522571/rsc/farfallino/pasta/linguine_frutti_di_mare.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Penne ai 4 Formaggi",
+          "description": "Penne with cream, parmesan, provolone cheese, gorgonzola and Mozzarella",
+          "priceMinor": 3600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522259/rsc/farfallino/pasta/4_fromaggi.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Rigatoni Crema di Tartufo e Funghi",
+          "description": "Homemade fresh rigatoni with mushroom truffle cream",
+          "priceMinor": 3800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522725/rsc/farfallino/pasta/rigatoni_tartufo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Penne Arrabbiatissime (spicy)",
+          "description": "Penne with garlic, parsley, chili and tomato sauce",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522633/rsc/farfallino/pasta/penne_arrabbiatissime.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Spaghetti Pomodorini e Mozzarella di Bufala",
+          "description": "Spaghetti cooked in a basil cherry tomato sauce topped with Bufala Mozzarella and oilve oil",
+          "priceMinor": 3900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522733/rsc/farfallino/pasta/spaghetti_pomodorini_e_mozz.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Fettuccine al Pesto",
+          "description": "Homemade fresh fettuccine mixed in homemade fresh pesto sauce",
+          "priceMinor": 2800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522400/rsc/farfallino/pasta/fettucine_al_pesto.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Fettuccine Alfredo",
+          "description": "Homemade fresh fettuccine mixed in a butter creamy sauce",
+          "priceMinor": 3500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522284/rsc/farfallino/pasta/alfredo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        },
+        {
+          "name": "Fettuccine con Panna e Prosciutto con Petto di Pollo",
+          "description": "Homemade fresh fettuccine mixed with cream, ham, chicken breast and parmesan ceese",
+          "priceMinor": 3300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522435/rsc/farfallino/pasta/fettucine_con_panna_pollo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 14
+        },
+        {
+          "name": "Paccheri alla Calabrese (spicy)",
+          "description": "Fresh pasta paccheri with creamy nduja sauce (spicy prok sausage paste) served with slices of ventricina salami and parmesan cheese",
+          "priceMinor": 3900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522614/rsc/farfallino/pasta/paccheri_alla_calebrese.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 15
+        }
+      ]
+    },
+    {
+      "name": "Risotti",
+      "sortOrder": 6,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Risotto alla Marinara (spicy)",
+          "description": "Risotto with sauteed calamari, shrimp, garlic and homemade tomato sauce",
+          "priceMinor": 4300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523162/rsc/farfallino/risotto/risotto_marinara.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Risotto Cremoso con Pollo alla Griglia",
+          "description": "Creamy risotto topped with marinated glazed grilled chicken",
+          "priceMinor": 3200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Risotto ai Procini",
+          "description": "Risotto with procini cream and parmesan cheese",
+          "priceMinor": 3500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523199/rsc/farfallino/risotto/risotto_porcini.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Costine di Maiale alla Griglia",
+          "description": "Marinated bbq grilled pork ribs",
+          "priceMinor": 8500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Secondi Piatti (Meat & Fish)",
+      "sortOrder": 7,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Costlette d'Agnelo al Forno",
+          "description": "Roasted lamb chops with rosemary sauce and baked potatoes",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Tagliata di Manzo",
+          "description": "Grilled sliced beef marinated with rosemary gorgonzola sauce",
+          "priceMinor": 6600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523820/rsc/farfallino/secondi/tagliata_di_manzo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Bistecca Rib-eye",
+          "description": "350g grilled ribeye, served with your choice of sauce: gorgonzola, arabbiata or black pepper sauce",
+          "priceMinor": 7500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523543/rsc/farfallino/secondi/ribeye.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Milanese di Pollo",
+          "description": "Breaded chicken escalopes",
+          "priceMinor": 3200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523511/rsc/farfallino/secondi/milanese_di_pollo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 3
+        },
+        {
+          "name": "Petto di Pollo alla Diavola (spicy)",
+          "description": "Chicken breast cooked in a spicy tomato sauce, garlic with fresh mushrooms and black olives",
+          "priceMinor": 2800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523527/rsc/farfallino/secondi/pollo_cacciatora.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 4
+        },
+        {
+          "name": "Scaloppa di Pollo (spicy)",
+          "description": "Chicken milanese topped with turkey or ham, Mozzarella, Mozzarella, spicy Arrabbiata sauce and parmesan baked to perfection",
+          "priceMinor": 3900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523638/rsc/farfallino/secondi/scaloppa_di_pollo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 5
+        },
+        {
+          "name": "Petto di Pollo alla Cacciatora (spicy)",
+          "description": "Chicken breast topped with a rosemary and an onion tomato sauce",
+          "priceMinor": 2850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523527/rsc/farfallino/secondi/pollo_cacciatora.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 6
+        },
+        {
+          "name": "Sminuzzata di Pollo",
+          "description": "Italian stir fry with sheredded chicken, colored peppers, mushroom, garlic, spicy tomato sauce served with sauteed pasta",
+          "priceMinor": 3200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 7
+        },
+        {
+          "name": "Frittura di Calamari e Gamberi",
+          "description": "Fried calamari and prawns served with tartar sauce",
+          "priceMinor": 3950000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523474/rsc/farfallino/secondi/fritura_calamari_e_gamberi.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 8
+        },
+        {
+          "name": "Branzino alla Griglia",
+          "description": "Fresh mediterranean sea bass, marinated with aromatic herbs and charcoal grilled to perfection",
+          "priceMinor": 3600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 9
+        },
+        {
+          "name": "Branzino alla Siciliana",
+          "description": "Fresh mediterranean sea bass, cooked to perfection in a traditional sicilian tomato sauce with mediterranean herbs, a touch of chili, olive and capers",
+          "priceMinor": 4200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 10
+        },
+        {
+          "name": "Branzino al Limone",
+          "description": "Fresh mediterranean sea bass, delicately cooked in a fresh lemon sauce infused with ginger, creating a light, refreshing , and elegant flavor",
+          "priceMinor": 3900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 11
+        },
+        {
+          "name": "Trancio di Salmone",
+          "description": "Marinated grilled salmon served with chili arabiatta sauce",
+          "priceMinor": 5800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523620/rsc/farfallino/secondi/salmone.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 12
+        },
+        {
+          "name": "Salmone in Salsa Rosa (spicy)",
+          "description": "Grilled salmon with a homemade tomato creamy sauce with creamy baked potatoes",
+          "priceMinor": 5900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 13
+        },
+        {
+          "name": "Gamberoni alla Griglia",
+          "description": "Grilled marinated jumbo prawns with rosemary and garlic served with tartar sauce",
+          "priceMinor": 5800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523494/rsc/farfallino/secondi/gamberoni_alla_griglia.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 14
+        },
+        {
+          "name": "Pollo alla Griglia",
+          "description": "Half grilled chicken marinated with rosemary and garlic",
+          "priceMinor": 2850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523533/rsc/farfallino/secondi/pollo_griglia.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Secondi Side Choice"],
+          "sortOrder": 15
+        }
+      ]
+    },
+    {
+      "name": "Contorni (Side Dishes)",
+      "sortOrder": 8,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Verdure Saltate",
+          "description": "Sauteed vegetables",
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Cestino di Patate Fritte",
+          "description": "French fries basket",
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Insalata di Contorno",
+          "description": "Side salad",
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Mozzarella di Bufala",
+          "description": "Fresh Mozzarella",
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Gorgonzola",
+          "description": null,
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Gamberi",
+          "description": "Shrimp",
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Gamberoni",
+          "description": "Prawns",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Petto di Pollo",
+          "description": "Chicken breast",
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Prosciutto di Parma",
+          "description": "Parma ham",
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Bresaola",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Prosciutto Cotto",
+          "description": "Ham",
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Burrata",
+          "description": null,
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        }
+      ]
+    },
+    {
+      "name": "Panuozzo & Puccia",
+      "sortOrder": 9,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Panuozzo al Prosciutto con Stracciatella",
+          "description": "Panuozzo bread with pesto sauce, ham, Stracciatella cheese, rocca, sundried tomato and olive oil",
+          "priceMinor": 3800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522219/rsc/farfallino/panuozzo/stracciatella.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Panuozzo Rustico",
+          "description": "Panuozzo bread, grilled chicken breast, sliced tomato, Stracciatella cheese, rocca, lettuce and olive oil",
+          "priceMinor": 3600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522200/rsc/farfallino/panuozzo/rustico.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Puccia Toscana",
+          "description": "Chicken escalope, mayonnaise, iceberg, rocca, tomato and balsamic vinegar",
+          "priceMinor": 2800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522224/rsc/farfallino/panuozzo/toscana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Pizze (Pizzas)",
+      "sortOrder": 10,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Pizza Margherita",
+          "description": "Tomato sauce, Mozzarella, basil",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522879/rsc/farfallino/pizza/margherita.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Pizza Prosciutto e Funghi",
+          "description": "Tomato sauce, Mozzarella, ham and fresh mushroom",
+          "priceMinor": 4300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522999/rsc/farfallino/pizza/prosciutto_e_funghi.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Pizza Capricciosa",
+          "description": "Tomato sauce, Mozzarella, ham and fresh mushroom, black olives and artichoke",
+          "priceMinor": 3850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522831/rsc/farfallino/pizza/capricciosa.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Pizza 4 Formaggi",
+          "description": "Mozzarella, gorgonzola, provolone and parmesan cheese",
+          "priceMinor": 3850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522259/rsc/farfallino/pasta/4_fromaggi.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 3
+        },
+        {
+          "name": "Pizza al Tartufo",
+          "description": "Mascarpone with truffle and mushroom cream, Mozzarella, ham, truffle and rocca",
+          "priceMinor": 4300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523040/rsc/farfallino/pizza/tartufo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 4
+        },
+        {
+          "name": "Pizza Vald'Ostana",
+          "description": "Tomato sauce, Mozzarella, rocca, bresaola and parmesan slices",
+          "priceMinor": 4250000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523077/rsc/farfallino/pizza/vald_ostana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 5
+        },
+        {
+          "name": "Pizza Napoletana",
+          "description": "Tomato sauce, capers, black olive, anchovy fillet, gralic and oregano",
+          "priceMinor": 2700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522904/rsc/farfallino/pizza/napoletana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 6
+        },
+        {
+          "name": "Pizza Ortolana",
+          "description": "Mozzarella, zucchni, eggplant, sweet pepper and mushroom option:add tomato sauce",
+          "priceMinor": 2450000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522927/rsc/farfallino/pizza/ortolana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 7
+        },
+        {
+          "name": "Pizza Pollo Picante (spicy)",
+          "description": "Chili tomato sauce, chicken breast, red and yellow pepperers, mushroom and Mozzarella cheese",
+          "priceMinor": 3600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522949/rsc/farfallino/pizza/pollo_picante.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 8
+        },
+        {
+          "name": "Pizza Farfallino",
+          "description": "Creamy pistachio, Mozzarella, mortadella and pistachios with burrata",
+          "priceMinor": 4800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522866/rsc/farfallino/pizza/farfalllino.heic",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 9
+        },
+        {
+          "name": "Pizza Emiliana (spicy)",
+          "description": "Spicy Bolognese sauce, Mozzarella, peperoncino, Calabrese and parmesan slices",
+          "priceMinor": 3450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 10
+        },
+        {
+          "name": "Pizza I Due Mari",
+          "description": "Tomato sauce, garlic, parsley, Mozzarella, shrimps, calamari and mussels",
+          "priceMinor": 4600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522861/rsc/farfallino/pizza/due_mare.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 11
+        },
+        {
+          "name": "Pizza Pazza",
+          "description": "Mozzarella cheese, sundried tomato pesto, rocca, chicken, cherry tomato and Stracciatella cheese",
+          "priceMinor": 4200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522941/rsc/farfallino/pizza/pazza.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 12
+        },
+        {
+          "name": "Calzone al Forno",
+          "description": "Mozzarello, ham, tomato sauce and mushroom",
+          "priceMinor": 3800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 13
+        },
+        {
+          "name": "Calzone Piccante (spicy)",
+          "description": "Tomato sauce, peperoncino, Calabrese, hot salami ventricina, scamorza affumicata and Mozzarella",
+          "priceMinor": 4200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522761/rsc/farfallino/pizza/calzone_picante.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 14
+        },
+        {
+          "name": "Pizza Burrata di Parma",
+          "description": "Tomato sauce, Mozzarella, parma ham, burrata and pesto basil",
+          "priceMinor": 4500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522747/rsc/farfallino/pizza/burrata_di_parma.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 15
+        },
+        {
+          "name": "Pizza Vesuviana (spicy)",
+          "description": "Tomato sauce, Mozzarella, hot salami, provolone cheese and fresh basil",
+          "priceMinor": 4350000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792523102/rsc/farfallino/pizza/vesuviana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 16
+        },
+        {
+          "name": "Add Extras:",
+          "description": "Grilled chicken",
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Meat Replacement", "Pizza Extra Toppings"],
+          "sortOrder": 17
+        }
+      ]
+    },
+    {
+      "name": "Dolci (Desserts)",
+      "sortOrder": 11,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Tiramisu Classico",
+          "description": "Mascarpone cream, savoyard biscuits, coffeee and cocoa powder",
+          "priceMinor": 2100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522182/rsc/farfallino/dolce/tiramisu.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Brownies al Cioccolato con Gelato e Salsa Amerena",
+          "description": "Chocolate brownies with vanilla gelato and cherry syrup",
+          "priceMinor": 2500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Fondente al Cioccolato con Gelato alla Vaniglia",
+          "description": "Chocolate fondant cake served with vanilla ice cream",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522148/rsc/farfallino/dolce/fondant.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Cannoli alla Crema di Pistacchio",
+          "description": "Cannoli stuffed with mascarpone cheese and pistachio cream",
+          "priceMinor": 2450000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522100/rsc/farfallino/dolce/cannoli_pistachio.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Cheesecake al Caramello",
+          "description": "Creamy cheesecake finished with caramel sauce",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Cheesecake all'Italiana",
+          "description": "Baked creamy Italian cheesecake served with your choice of sauce: caramel, chocolate or strawberry",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522137/rsc/farfallino/dolce/cheesecake_italiana.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Cheesecake Sauce Choice"],
+          "sortOrder": 5
+        },
+        {
+          "name": "Pan Perso con Gelato alla Vaniglia e Salsa Caramello",
+          "description": "Bread pudding served with vanilla ice cream and caramel sauce",
+          "priceMinor": 2000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522170/rsc/farfallino/dolce/pan_perso.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Affogato All Caffe",
+          "description": "Vanilla ice cream and espresso coffee",
+          "priceMinor": 2100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "name": "Milkshakes",
+      "sortOrder": 12,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Latte Milkshake",
+          "description": null,
+          "priceMinor": 2200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Vanilla Milkshake",
+          "description": null,
+          "priceMinor": 2100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Cappuccino Milkshake",
+          "description": null,
+          "priceMinor": 2200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Amarena Cherry Milkshake",
+          "description": null,
+          "priceMinor": 2100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Chocolate Pistachio Milkshake",
+          "description": null,
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522185/rsc/farfallino/milkshake/choc_pistachio.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Strawberry Milkshake",
+          "description": null,
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792522189/rsc/farfallino/milkshake/strawberry.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Ginger Milkshake",
+          "description": null,
+          "priceMinor": 2100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        }
+      ]
+    },
+    {
+      "name": "Caff\u00e8 & Hot Drinks",
+      "sortOrder": 13,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Espresso",
+          "description": null,
+          "priceMinor": 450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Double Espresso",
+          "description": null,
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Cappuccino",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Caff\u00e8 Latte",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Mochaccino",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Farppuccino",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Hot Chocolate",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Tea Bag Selection",
+          "description": null,
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "name": "Bevande (Beverages)",
+      "sortOrder": 14,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Water Small",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Water Large",
+          "description": null,
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Evian 750ml",
+          "description": null,
+          "priceMinor": 1000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Perrier",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Saint Pellegrino",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Energy Drinks",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Malta Guinness",
+          "description": null,
+          "priceMinor": 400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Soft Drinks",
+          "description": null,
+          "priceMinor": 400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "name": "Succhi (Juices)",
+      "sortOrder": 15,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Fresh Orange Juice",
+          "description": null,
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Packed Juice Glass",
+          "description": "Orange, pineapple, apple",
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Packed Juice",
+          "description": "Orange, pineapple, apple",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Cranberry Juice",
+          "description": "Packet",
+          "priceMinor": 2000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Birre (Beers)",
+      "sortOrder": 16,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Star",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Guinness",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Gulder",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Heineken",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Signature Cocktails",
+      "sortOrder": 17,
+      "isActive": true,
+      "items": [
+        {
+          "name": "The Macallan Rebel",
+          "description": "The Macallan 18 yo double cask, chocolate bitters, ginger syrup, vanilla liqueur, Schweppes soda",
+          "priceMinor": 6000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Tennessee Honey Smash",
+          "description": "Jack Daniel's Tennessee honey, triple sec, lemon juice, Schweppes mojito garnished with mint leaves",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Mediterranean Negroni",
+          "description": "Gin Mare, sweet vermouth, Campari",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Etna",
+          "description": "Tequila, pineapple juice, fresh chili, lemon juice, angostura bitters, foam",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "La Dolce Vita",
+          "description": "Mandarino liqueur, vodka, elderflower syrup, lemon juice, grenadine, soda water",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Luna di Miele",
+          "description": "Tequila, limoncello, lemon juice, honey",
+          "priceMinor": 1850000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Tramonto",
+          "description": "Bacardi carta oro, Campari, pineapple, cinnamon syrup, lemon juice",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Alba",
+          "description": "Bourbon, passion fruit solution, lime juice, angostura bitters, foam",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Costa Azzurra",
+          "description": "Gin, blue curacao, lime juice, foam",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "\u00c8 Tonico Gin",
+          "description": "Gin, tonic, vermouth",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        }
+      ]
+    },
+    {
+      "name": "Spritz",
+      "sortOrder": 18,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Aperol Spritz",
+          "description": "Aperol, Prosecco, Campari",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Hugo Spritz",
+          "description": "Elderflower, Prosecco, Campari",
+          "priceMinor": 2200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Limoncello Spritz",
+          "description": "Limoncello, Prosecco, soda",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Ginger Spritz",
+          "description": "Triple sec, Prosecco, fresh ginger, soda",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Cocktails",
+      "sortOrder": 19,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Negroni",
+          "description": "Gin / vermouth / Campari",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Negroni Sbagliato",
+          "description": "Vermouth / Campari / soda",
+          "priceMinor": 1850000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Americano",
+          "description": "Vermouth / Campari / soda",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Bellini",
+          "description": "Prosecco / peach juice",
+          "priceMinor": 2200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Amaretto Sour",
+          "description": "Amaretto / lemon juice / bourbon whisky /sugar syrup / angostura",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Angelo Azzuro",
+          "description": "Gin / triple sec / blue caracao /lemon juice",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Margarita",
+          "description": "Tequila / lime juice / triple sec",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Strawberry Daiquiri",
+          "description": "Rum / lime juice / strawberry puree",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Garibaldi",
+          "description": "Campari / orange juice",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Boulevardier",
+          "description": "Campari / red Martini / bourbon",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Caffe Shekerato",
+          "description": "Double espresso / baileys",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Moscow Mule",
+          "description": "Vodka / ginger beer / lemon juice",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Espresso Martini",
+          "description": "Vodka / kahlua / espresso / sugar syrup",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Long Island",
+          "description": "Vodka / tequila / rum / triple sec / gin / splash of cola",
+          "priceMinor": 2000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        },
+        {
+          "name": "Mojito",
+          "description": "Rum / lime / mint leave / brown sugar / soda water",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 14
+        },
+        {
+          "name": "Whiskey Sour",
+          "description": "Bourbon whiskey / lemon juice / brown sugar",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 15
+        }
+      ]
+    },
+    {
+      "name": "Mocktails",
+      "sortOrder": 20,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Virgin Mojito",
+          "description": "Lime / brown sugar / mint / soda",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Virgin Colada",
+          "description": "Coconut cream / pineapple juice",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Virgin Tropical",
+          "description": "Pineapple juice / orange juice / papaya juice / lemon juice /soda",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Shirley Temple",
+          "description": "Grenadine / sprite ginger ale",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Chapman",
+          "description": "Our traditional chapman",
+          "priceMinor": 1100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        }
+      ]
+    },
+    {
+      "name": "Grappa",
+      "sortOrder": 21,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Grappa di Amarone Carati di Rover - Glass",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Grappa di Amarone Carati di Rover - Bottle",
+          "description": null,
+          "priceMinor": 9000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Grappa Antico Castello 1.5L",
+          "description": "6000",
+          "priceMinor": 13100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Grappa di Amarone Marcati",
+          "description": "10000",
+          "priceMinor": 11800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Grappa Bianca Antico Castello 1.5L",
+          "description": "6000",
+          "priceMinor": 12800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Grappa Colli Veneti Marcati",
+          "description": "7500",
+          "priceMinor": 8500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Grappa Riserva Bacio delle Muse 1.5L",
+          "description": "8000",
+          "priceMinor": 15800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Grappa Riserva Bacio delle Muse 700ml",
+          "description": "10000",
+          "priceMinor": 11400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Grappa Riserva Marcati",
+          "description": "8000",
+          "priceMinor": 9200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "name": "Digestivi (Digestifs & Liqueurs)",
+      "sortOrder": 22,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Sambuca",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Vodka Melon",
+          "description": null,
+          "priceMinor": 400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Bitter Casoni",
+          "description": null,
+          "priceMinor": 450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Crema Mandorla",
+          "description": null,
+          "priceMinor": 400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Cremovo Eti Noir",
+          "description": null,
+          "priceMinor": 400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Mandarino",
+          "description": null,
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Alchermes",
+          "description": null,
+          "priceMinor": 450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Amaro Amaro",
+          "description": null,
+          "priceMinor": 750000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Amaretto",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Aperitivi X Spritz",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Limoncello",
+          "description": null,
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "China e Gagliano",
+          "description": null,
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Marendry",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Vin Santo",
+          "description": null,
+          "priceMinor": 1200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        }
+      ]
+    },
+    {
+      "name": "Whisky & Whiskey",
+      "sortOrder": 23,
+      "isActive": true,
+      "items": [
+        {
+          "name": "The Macallan Double Cask 12 Y",
+          "description": "Bottle: \u20a6260, 000 | shot / glass: \u20a619, 000",
+          "priceMinor": 26000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "The Macallan Double Cask 15y",
+          "description": "Bottle: \u20a6490, 000 | shot / glass: \u20a638, 000",
+          "priceMinor": 49000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "The Macallan Double Cask 18y",
+          "description": "Bottle: \u20a6920, 000 | shot / glass: \u20a665, 000",
+          "priceMinor": 92000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "The Macallan Rare Cask",
+          "description": null,
+          "priceMinor": 100000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Highland Park 12 YO",
+          "description": "Bottle: \u20a6220, 000 | shot / glass: \u20a620, 000",
+          "priceMinor": 22000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Highland Park 15 YO",
+          "description": "Bottle: \u20a6360, 000 | shot / glass: \u20a630, 000",
+          "priceMinor": 36000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Highland Park 18 YO",
+          "description": "Bottle: \u20a6460, 000 | shot / glass: \u20a638, 000",
+          "priceMinor": 46000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Jack Daniel'S Tennessee Honey",
+          "description": "Bottle: \u20a6100, 000 | shot / glass: \u20a68, 000",
+          "priceMinor": 10000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Jack Daniel'S Tennessee Apple",
+          "description": "Bottle: \u20a6100, 000 | shot / glass: \u20a68, 000",
+          "priceMinor": 10000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Jack Daniel'S Tennessee Fire",
+          "description": "Bottle: \u20a6100, 000 | shot / glass: \u20a68, 000",
+          "priceMinor": 10000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Gentleman Jack",
+          "description": "Bottle: \u20a6145, 000 | shot / glass: \u20a611, 500",
+          "priceMinor": 14500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Jack Daniel'S Single Barrel",
+          "description": "Bottle: \u20a6180, 000 | shot / glass: \u20a615, 000",
+          "priceMinor": 18000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Jack Daniel'S Sinatra Select",
+          "description": null,
+          "priceMinor": 78000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Woodford Reserve",
+          "description": "Bottle: \u20a6150, 000 | shot / glass: \u20a612, 000",
+          "priceMinor": 15000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        },
+        {
+          "name": "Jameson",
+          "description": "Bottle: \u20a690, 000 | shot / glass: \u20a68, 000",
+          "priceMinor": 9000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 14
+        },
+        {
+          "name": "Monkey Shoulder",
+          "description": "Bottle: \u20a6130, 000 | shot / glass: \u20a611, 000",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 15
+        },
+        {
+          "name": "Johnnie Walker Black Label",
+          "description": "Bottle: \u20a6145, 000 | shot / glass: \u20a611, 500",
+          "priceMinor": 14500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 16
+        },
+        {
+          "name": "Johnnie Walker Gold Label",
+          "description": "Bottle: \u20a6200, 000 | shot / glass: \u20a616, 000",
+          "priceMinor": 20000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 17
+        },
+        {
+          "name": "Johnnie Walker Bule Label",
+          "description": "Bottle: \u20a6830, 000 | shot / glass: \u20a665, 000",
+          "priceMinor": 83000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 18
+        },
+        {
+          "name": "Johnnie Walker Green Label",
+          "description": "Bottle: \u20a6250, 000 | shot / glass: \u20a618, 000",
+          "priceMinor": 25000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 19
+        },
+        {
+          "name": "Chivas 12y",
+          "description": "Bottle: \u20a6120, 000 | shot / glass: \u20a612, 000",
+          "priceMinor": 12000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 20
+        },
+        {
+          "name": "Chivas 15y",
+          "description": "Bottle: \u20a6200, 000 | shot / glass: \u20a615, 000",
+          "priceMinor": 20000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 21
+        },
+        {
+          "name": "Chivas 18y",
+          "description": "Bottle: \u20a6280, 000 | shot / glass: \u20a622, 000",
+          "priceMinor": 28000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 22
+        },
+        {
+          "name": "Chivas Royal Salute 21y",
+          "description": "Bottle: \u20a6400, 000 | shot / glass: \u20a632, 000",
+          "priceMinor": 40000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 23
+        },
+        {
+          "name": "Glenfiddich 12 Y",
+          "description": "Bottle: \u20a6190, 000 | shot / glass: \u20a615, 000",
+          "priceMinor": 19000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 24
+        },
+        {
+          "name": "Glenfiddich 15y",
+          "description": "Bottle: \u20a6240, 000 | shot / glass: \u20a619, 000",
+          "priceMinor": 24000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 25
+        },
+        {
+          "name": "Glenfiddich 18y",
+          "description": "Bottle: \u20a6345, 000 | shot / glass: \u20a625, 000",
+          "priceMinor": 34500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 26
+        },
+        {
+          "name": "Glenfiddich 21y",
+          "description": "Bottle: \u20a6760, 000 | shot / glass: \u20a655, 000",
+          "priceMinor": 76000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 27
+        },
+        {
+          "name": "Glenfiddich 23y Grand Cru",
+          "description": null,
+          "priceMinor": 100000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 28
+        }
+      ]
+    },
+    {
+      "name": "Tequila & Mezcal",
+      "sortOrder": 24,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Clase Azul Plata",
+          "description": "Bottle: \u20a6500, 000 | shot / glass: \u20a640, 000",
+          "priceMinor": 50000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Clase Azul Gold",
+          "description": null,
+          "priceMinor": 160000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Clase Azul Reposado",
+          "description": null,
+          "priceMinor": 85000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Clase Azul Anejo",
+          "description": null,
+          "priceMinor": 240000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Don Ramon Mezcal",
+          "description": "Bottle: \u20a6390, 000 | shot / glass: \u20a628, 000",
+          "priceMinor": 39000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Vivir Blanco",
+          "description": "Bottle: \u20a6200, 000 | shot / glass: \u20a616, 500",
+          "priceMinor": 20000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Don Julio 1942",
+          "description": null,
+          "priceMinor": 120000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Casamigos",
+          "description": "Bottle: \u20a6390, 000 | shot / glass: \u20a632, 000",
+          "priceMinor": 39000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Casamigos Reposado",
+          "description": "Bottle: \u20a6420, 000 | shot / glass: \u20a634, 000",
+          "priceMinor": 42000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "name": "Gin",
+      "sortOrder": 25,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Hendrick'S",
+          "description": "Bottle: \u20a6180, 000 | shot / glass: \u20a617, 000",
+          "priceMinor": 18000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Gin Mare",
+          "description": "Bottle: \u20a6160, 000 | shot / glass: \u20a615, 000",
+          "priceMinor": 16000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Drumshanbo Gunpowder Irish Gin",
+          "description": "Bottle: \u20a6130, 000 | shot / glass: \u20a611, 000",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Drumshanbo Citrus",
+          "description": "Bottle: \u20a6140, 000 | shot / glass: \u20a612, 000",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Vodka",
+      "sortOrder": 26,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Ciroc",
+          "description": "Bottle: \u20a6130, 000 | shot / glass: \u20a69, 000",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Grey Goose",
+          "description": "Bottle: \u20a6130, 000 | shot / glass: \u20a69, 000",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Belvedere",
+          "description": "Bottle: \u20a6210, 000 | shot / glass: \u20a612, 000",
+          "priceMinor": 21000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Cognac",
+      "sortOrder": 27,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Hennessy VSOP",
+          "description": "Bottle: \u20a6290, 000 | shot / glass: \u20a622, 000",
+          "priceMinor": 29000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Hennessy XO",
+          "description": "Bottle: \u20a6750, 000 | shot / glass: \u20a658, 000",
+          "priceMinor": 75000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Martell Blue Swift",
+          "description": "Bottle: \u20a6220, 000 | shot / glass: \u20a620, 000",
+          "priceMinor": 22000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Martell XO",
+          "description": "Bottle: \u20a6650, 000 | shot / glass: \u20a650, 000",
+          "priceMinor": 65000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Remy Martin VSOP",
+          "description": "Bottle: \u20a6240, 000 | shot / glass: \u20a619, 000",
+          "priceMinor": 24000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Remy Martin XO",
+          "description": "Bottle: \u20a6800, 000 | shot / glass: \u20a663, 000",
+          "priceMinor": 80000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        }
+      ]
+    },
+    {
+      "name": "Vermut & Aperitivi",
+      "sortOrder": 28,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Martini Bianco",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Martini Rosso",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Martini Extra Dry",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Vermouth Rosso",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Vermouth Bianco",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Campari",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        }
+      ]
+    },
+    {
+      "name": "Champagne",
+      "sortOrder": 29,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Moet & Chandon Brut",
+          "description": null,
+          "priceMinor": 29000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Moet & Chandon Rose",
+          "description": null,
+          "priceMinor": 34000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Laurent Perrier Brut",
+          "description": null,
+          "priceMinor": 30000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Laurent Perrier Rose",
+          "description": null,
+          "priceMinor": 34000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Veuve Clicquot Brut",
+          "description": null,
+          "priceMinor": 33000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Veuve Clicquot Rose",
+          "description": null,
+          "priceMinor": 37000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Dom Perignon Brut",
+          "description": null,
+          "priceMinor": 130000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Dom Perignon Rose",
+          "description": null,
+          "priceMinor": 200000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Segura Viudas Reserva Heredad Brut",
+          "description": null,
+          "priceMinor": 27500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "name": "Vini al Calice (Wine by the Glass)",
+      "sortOrder": 30,
+      "isActive": true,
+      "items": [
+        {
+          "name": "House Wine Dry or Semi Sweet By Glass",
+          "description": "By the glass",
+          "priceMinor": 900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Prosecco Sparkling Wine Dry or Rose By Glass",
+          "description": "By the glass",
+          "priceMinor": 850000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "name": "Vini Bianchi Italiani (Italian White Wines)",
+      "sortOrder": 31,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Stoan Cantina Tramin 2023",
+          "description": "Region: trentino",
+          "priceMinor": 16500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Oropasso Biscardo 2022",
+          "description": "Region: veneto",
+          "priceMinor": 7800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Gavidel Comune di Gavi 2022",
+          "description": "Region: piemonte",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Gavi Villa Sparina",
+          "description": "Region: piemonte",
+          "priceMinor": 10500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Collavini Pinot Grigio",
+          "description": "Region: friuli venezia giulia",
+          "priceMinor": 9300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Sauvignon Blanc Friuli Lorenzon",
+          "description": "Region: friuli venezia giulia",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Pinot Grigio Isonzo",
+          "description": "Region: friuli venezia giulia",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Orvieto Coli 2021",
+          "description": "Region: umbria",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Orvieto Classico Rocca delle Macie 2022",
+          "description": "Region: umbria",
+          "priceMinor": 7200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Pipoli Bianco Basilicata 2022",
+          "description": "Region: basilicata",
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Frascati San Marco 2022",
+          "description": "Region: lazio",
+          "priceMinor": 6800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Ciro Bianco Tenuta Iuzzolini 2023",
+          "description": "Region: calabria",
+          "priceMinor": 7800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Vermentino di Sardegna 2022",
+          "description": "Region: sardegna",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Evento Vermentino di Sardegna 2022",
+          "description": "Region: sardegna",
+          "priceMinor": 10000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        },
+        {
+          "name": "Molenta Nuragus di Cagliari 2022",
+          "description": "Region: sardegna",
+          "priceMinor": 7600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 14
+        },
+        {
+          "name": "Mandrarossa Bertolino Soprano 2020",
+          "description": "Region: sicilia",
+          "priceMinor": 13900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 15
+        },
+        {
+          "name": "Settesoli Bio Grillo Sicilia 2022",
+          "description": "Region: sicilia",
+          "priceMinor": 7600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 16
+        },
+        {
+          "name": "Grillo Bio Sicilia DOC Tenute Orestiadi",
+          "description": "Region: sicilia",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 17
+        },
+        {
+          "name": "Passimento Bianco Baglio Gibellina 2022",
+          "description": "Region: sicilia",
+          "priceMinor": 8800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 18
+        },
+        {
+          "name": "Cantine Fina Miral Grillo",
+          "description": "Region: sicilia",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 19
+        },
+        {
+          "name": "Villa Antinori",
+          "description": "Region: Toscana",
+          "priceMinor": 12500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 20
+        }
+      ]
+    },
+    {
+      "name": "Vini Rosati Italiani (Italian Ros\u00e9 Wines)",
+      "sortOrder": 32,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Rosapasso Biscardo 750ml 2022",
+          "description": "Region: veneto",
+          "priceMinor": 7300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Rosapasso Biscardo 1.5L 2020",
+          "description": "Region: veneto",
+          "priceMinor": 12200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Calalenta Merlot Fantini 2022",
+          "description": "Region: abruzzo",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Settesoli Syrah Rose 2022",
+          "description": "Region: sicilia",
+          "priceMinor": 6300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Vini Rossi Italiani (Italian Red Wines)",
+      "sortOrder": 33,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Barolo Alberto Ballarin 2021",
+          "description": "Region: piemonte",
+          "priceMinor": 16500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Dolcetto d'Alba Gioso 2021",
+          "description": "Region: piemonte",
+          "priceMinor": 8800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Barbaresco Serrboella Angelo Pastura 2022",
+          "description": "Region: piemonte",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Amarone della Valpolicella Zenato 2018",
+          "description": "Region: veneto",
+          "priceMinor": 27500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Amarone della Valpolicella Corte Manara 2020",
+          "description": "Region: veneto",
+          "priceMinor": 16800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Neropasso Biscardo 2021",
+          "description": "Region: veneto",
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Terraza della Luna Pinot Nero",
+          "description": "Region: friuli venezia giulia",
+          "priceMinor": 8600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Fantinel Cabernet Sauvignon 2018",
+          "description": "Region: friuli venezia giulia",
+          "priceMinor": 10000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Pinot Nero Feudi di Romans",
+          "description": "Region: friuli venezia giulia",
+          "priceMinor": 8600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Sangiovese Rubicone La Boscona",
+          "description": "Region: emilia romagna",
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Lambrusco Grasparossa Amabile Sweet",
+          "description": "Region: emilia romagna",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Chiarli Grasparossa Lambrusco Secco (Dry)",
+          "description": "Region: emilia romagna",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Montepulciano d'Abruzzo Rubiolo",
+          "description": "Region: abruzzo",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Fantini Sangiovese 2022",
+          "description": "Region: abruzzo",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        },
+        {
+          "name": "Fantini Montepulciano d'Abruzzo 2022",
+          "description": "Region: abruzzo",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 14
+        },
+        {
+          "name": "Chianti Villa Chigi 2020",
+          "description": "Region: Toscana",
+          "priceMinor": 6500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 15
+        },
+        {
+          "name": "Villa Antinori",
+          "description": "Region: Toscana",
+          "priceMinor": 12500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 16
+        },
+        {
+          "name": "La Braccesca Nobile di Montepulciano 2020",
+          "description": "Region: Toscana",
+          "priceMinor": 14500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 17
+        },
+        {
+          "name": "Il Bruciato Bolgheri Tenuta 2022",
+          "description": "Region: Toscana",
+          "priceMinor": 17500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 18
+        },
+        {
+          "name": "Cantina Brunello di Montepulciano 2019",
+          "description": "Region: Toscana",
+          "priceMinor": 17500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 19
+        },
+        {
+          "name": "Chianti Leonardo da Vinci 2021",
+          "description": "Region: Toscana",
+          "priceMinor": 7800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 20
+        },
+        {
+          "name": "Chianti Flasco Poggio",
+          "description": "Region: Toscana",
+          "priceMinor": 8500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 21
+        },
+        {
+          "name": "Nobile di Montepulciano della Seta 2022",
+          "description": "Region: Toscana",
+          "priceMinor": 10000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 22
+        },
+        {
+          "name": "Tignanello Antinori 2020",
+          "description": "Region: Toscana",
+          "priceMinor": 45000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 23
+        },
+        {
+          "name": "Solaia Antinori 2018",
+          "description": "Region: Toscana",
+          "priceMinor": 120000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 24
+        },
+        {
+          "name": "Vin Santo Leonardo da Vinci Dolce",
+          "description": "Region: Toscana",
+          "priceMinor": 11500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 25
+        },
+        {
+          "name": "Salice Salentino Leone De Castris 2019",
+          "description": "Region: puglia",
+          "priceMinor": 10000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 26
+        },
+        {
+          "name": "Pipoli Aglianico del Vulture 2020",
+          "description": "Region: basilicata",
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 27
+        },
+        {
+          "name": "Paternum Tenuta Iuzzolini 2017",
+          "description": "Region: calabria",
+          "priceMinor": 26200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 28
+        },
+        {
+          "name": "Muranera Tenuta Iuzzolini 2021",
+          "description": "Region: calabria",
+          "priceMinor": 12500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 29
+        },
+        {
+          "name": "Bon Aria Monica di Sardegna 2022",
+          "description": "Region: sardegna",
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 30
+        },
+        {
+          "name": "Chea Monica di Sardegna 2022",
+          "description": "Region: sardegna",
+          "priceMinor": 9800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 31
+        },
+        {
+          "name": "Etna Rosso La Gelsomina Orestiadi",
+          "description": "Region: sicilia",
+          "priceMinor": 11500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 32
+        },
+        {
+          "name": "Nero d'Avola Le Morre",
+          "description": "Region: sicilia",
+          "priceMinor": 6200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 33
+        },
+        {
+          "name": "Nero d'Avola Cusomano",
+          "description": "Region: sicilia",
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 34
+        },
+        {
+          "name": "Nero d'Avola Sicilia Baglio di Vincenzo 2021",
+          "description": "Region: sicilia",
+          "priceMinor": 7100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 35
+        },
+        {
+          "name": "Cantine Fina Miral Nero d'Avola",
+          "description": "Region: sicilia",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 36
+        }
+      ]
+    },
+    {
+      "name": "Vini Bianchi Francesi (French White Wines)",
+      "sortOrder": 34,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Pouilly Fuisse Domaine Pascal Renaud 2022",
+          "description": null,
+          "priceMinor": 13600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Domaine Lalande Chardonnay Vielles Vignes 2022",
+          "description": null,
+          "priceMinor": 7200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Chablis Coquillage Moillard",
+          "description": null,
+          "priceMinor": 15300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Ventoux Passe Colline Blanc 2021",
+          "description": null,
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Sancerre Pure Henri Bourgeois 2022",
+          "description": null,
+          "priceMinor": 12900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Sancerre Chateau Crezancy 2022",
+          "description": null,
+          "priceMinor": 10500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Pouilly Fume Hubert Venteau 2022",
+          "description": null,
+          "priceMinor": 10500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        }
+      ]
+    },
+    {
+      "name": "Vini Rosati Francesi (French Ros\u00e9 Wines)",
+      "sortOrder": 35,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Ventoux Passe Colline Rose 2023",
+          "description": null,
+          "priceMinor": 6700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Cuvee Cesar Brezillou 2022",
+          "description": null,
+          "priceMinor": 8100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "name": "Vini Rossi Francesi (French Red Wines)",
+      "sortOrder": 36,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Le Chatelin Brouilly 2022",
+          "description": null,
+          "priceMinor": 8900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Chateau Auzias Cabardes 2020",
+          "description": null,
+          "priceMinor": 7100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Benoit Sordet Pommard 2020",
+          "description": null,
+          "priceMinor": 21800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Ventoux Passe Colline Rouge 2022",
+          "description": null,
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Chateau Brane Cantenac Margaux 2018",
+          "description": null,
+          "priceMinor": 48500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Domaine Lalande Merlot Vielles Vignes 2020",
+          "description": null,
+          "priceMinor": 7300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Pauillac Famille J-m Cazes 2018",
+          "description": null,
+          "priceMinor": 19800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Margaux Denis Lurton 2017",
+          "description": null,
+          "priceMinor": 12900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Chateau Gruaud Larose 2018",
+          "description": null,
+          "priceMinor": 62500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Eleonore Du Chateau Teynac Saint-julien 2017",
+          "description": null,
+          "priceMinor": 13500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Saint-emilion Grand Cru Riou De Thaillas 2020",
+          "description": null,
+          "priceMinor": 11300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Chateau De Pizay Beaujolais 2022",
+          "description": null,
+          "priceMinor": 8700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Domaine De Rochebin Macon Aze 2022",
+          "description": null,
+          "priceMinor": 8700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "l'Etoile De Villegeorge Haut Medoc 2021",
+          "description": null,
+          "priceMinor": 9200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        }
+      ]
+    },
+    {
+      "name": "Prosecco",
+      "sortOrder": 37,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Prosecco Tre Ville Treviso Extra Dry",
+          "description": null,
+          "priceMinor": 7100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Prosecco Casa Rinaldi Extra Dry",
+          "description": null,
+          "priceMinor": 7100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Prosecco Extra Dry Biscardo Millesimato 375ml",
+          "description": null,
+          "priceMinor": 7100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Prosecco Superiore Valdobbiadene",
+          "description": null,
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Prosecco Extra Dry Biscardo Millesimato 700ml",
+          "description": null,
+          "priceMinor": 8800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Prosecco Extra Dry Canel Millesimato",
+          "description": null,
+          "priceMinor": 8600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Prosecco Tintoretto Rose Millesimato",
+          "description": null,
+          "priceMinor": 7800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        }
+      ]
+    },
+    {
+      "name": "Spumante",
+      "sortOrder": 38,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Vino Spumante Extra Dry Grande Cuvee",
+          "description": null,
+          "priceMinor": 7100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Casali Spumante Spergola Millesimato",
+          "description": null,
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Santero Asti Dolci",
+          "description": null,
+          "priceMinor": 7400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Santero Moscato d'Asti",
+          "description": null,
+          "priceMinor": 7400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Santero Moscato Dolce",
+          "description": null,
+          "priceMinor": 6400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        }
+      ]
+    }
+  ]
+}
