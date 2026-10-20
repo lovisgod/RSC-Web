@@ -70,3 +70,8 @@ so another agent can safely pick the first unchecked task.
 - [ ] Define performance budgets and monitor customer LCP/INP.
 - [ ] Add mock service worker fixtures for independent frontend development.
 - [ ] Document release, rollback, incident, and support procedures.
+
+## Production catalog import
+
+- [x] Document the production catalog import structure and example in docs/production-catalog-seed.md.
+- [ ] Implement and test the dedicated catalog importer with validation, dry run, stable IDs, and transactional reruns.
