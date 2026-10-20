@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "outlets": [
+    {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "name": "Example Kitchen",
+      "description": "Illustrative catalog only. Replace before production import.",
+      "address": "Replace with the real outlet address",
+      "cuisineType": "Nigerian",
+      "imageUrl": "https://example.com/outlet.jpg",
+      "logoUrl": "https://example.com/logo.png",
+      "bannerUrl": "https://example.com/banner.jpg",
+      "isOnline": false,
+      "vatBps": 0,
+      "latitude": null,
+      "longitude": null,
+      "deliveryRadiusKm": 15,
+      "settlementSubaccountCode": null,
+      "deliveryPricingModel": "FLAT",
+      "deliveryFeeMinor": 150000,
+      "deliveryBaseFeeMinor": 0,
+      "deliveryPricePerKmMinor": 0,
+      "deliveryLocationFees": []
+    }
+  ],
+  "menuCategories": [
+    {
+      "id": "20000000-0000-4000-8000-000000000001",
+      "outletId": "10000000-0000-4000-8000-000000000001",
+      "name": "Starters",
+      "sortOrder": 0,
+      "isActive": true
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000002",
+      "outletId": "10000000-0000-4000-8000-000000000001",
+      "name": "Main Meals",
+      "sortOrder": 1,
+      "isActive": true
+    }
+  ],
+  "modifierGroups": [
+    {
+      "id": "30000000-0000-4000-8000-000000000001",
+      "outletId": "10000000-0000-4000-8000-000000000001",
+      "name": "Add-ons",
+      "minSelections": 0,
+      "maxSelections": 2,
+      "isRequired": false,
+      "sortOrder": 0
+    }
+  ],
+  "modifiers": [
+    {
+      "id": "40000000-0000-4000-8000-000000000001",
+      "outletId": "10000000-0000-4000-8000-000000000001",
+      "groupId": "30000000-0000-4000-8000-000000000001",
+      "name": "Extra Chicken",
+      "priceDeltaMinor": 150000,
+      "isAvailable": true,
+      "sortOrder": 0
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000002",
+      "outletId": "10000000-0000-4000-8000-000000000001",
+      "groupId": "30000000-0000-4000-8000-000000000001",
+      "name": "Extra Plantain",
+      "priceDeltaMinor": 50000,
+      "isAvailable": true,
+      "sortOrder": 1
+    }
+  ],
+  "menuItems": [
+    {
+      "id": "50000000-0000-4000-8000-000000000001",
+      "outletId": "10000000-0000-4000-8000-000000000001",
+      "categoryId": "20000000-0000-4000-8000-000000000001",
+      "name": "Spring Rolls",
+      "description": "Four vegetable spring rolls.",
+      "imageUrl": "https://example.com/spring-rolls.jpg",
+      "deliveryTimeRange": "20-30 mins",
+      "priceMinor": 200000,
+      "discountPriceMinor": null,
+      "discountStartsAt": null,
+      "discountEndsAt": null,
+      "isAvailable": true,
+      "sortOrder": 0,
+      "modifierGroupIds": []
+    },
+    {
+      "id": "50000000-0000-4000-8000-000000000002",
+      "outletId": "10000000-0000-4000-8000-000000000001",
+      "categoryId": "20000000-0000-4000-8000-000000000002",
+      "name": "Jollof Rice",
+      "description": "One portion of jollof rice. Protein is an optional extra.",
+      "imageUrl": "https://example.com/jollof-rice.jpg",
+      "deliveryTimeRange": "25-35 mins",
+      "priceMinor": 450000,
+      "discountPriceMinor": null,
+      "discountStartsAt": null,
+      "discountEndsAt": null,
+      "isAvailable": true,
+      "sortOrder": 0,
+      "modifierGroupIds": ["30000000-0000-4000-8000-000000000001"]
+    }
+  ],
+  "preparationSuggestions": [
+    {
+      "id": "60000000-0000-4000-8000-000000000001",
+      "text": "Less pepper",
+      "outletId": "10000000-0000-4000-8000-000000000001",
+      "menuItemId": "50000000-0000-4000-8000-000000000002",
+      "isActive": true,
+      "sortOrder": 0
+    }
+  ]
+}
