@@ -1,0 +1,3231 @@
+{
+  "outletId": "cdd3920c-b3b9-40e8-9d58-b7fb32c67328",
+  "outletName": "Cactus",
+  "modifierGroups": [
+    {
+      "name": "Breakfast Boosters",
+      "minSelections": 0,
+      "maxSelections": 10,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Bacon",
+          "priceDeltaMinor": 450000
+        },
+        {
+          "name": "Ham or Turkey",
+          "priceDeltaMinor": 450000
+        },
+        {
+          "name": "Cheese",
+          "priceDeltaMinor": 450000
+        },
+        {
+          "name": "Grilled Sausage",
+          "priceDeltaMinor": 300000
+        },
+        {
+          "name": "Tuna",
+          "priceDeltaMinor": 600000
+        },
+        {
+          "name": "Shrimp",
+          "priceDeltaMinor": 700000
+        },
+        {
+          "name": "Grilled Vegetables",
+          "priceDeltaMinor": 300000
+        },
+        {
+          "name": "Porridge Beans",
+          "priceDeltaMinor": 300000
+        },
+        {
+          "name": "Baked Beans",
+          "priceDeltaMinor": 300000
+        },
+        {
+          "name": "Extra Egg",
+          "priceDeltaMinor": 200000
+        },
+        {
+          "name": "Homemade Sausage",
+          "priceDeltaMinor": 300000
+        }
+      ]
+    },
+    {
+      "name": "Main Course Side Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "French Fries",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Yam Fries",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Mashed Potato",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Steamed Rice",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Jollof Rice",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Saut\u00e9ed Vegetables",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Fried Rice",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Coleslaw",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Spicy Pasta",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Sandwich Side Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "French Fries",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Fried Yam",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Fried Sweet Potatoes",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Side Salad",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Salad Dressing Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Lemon Oil",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Thousand Island",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Balsamic Vinaigrette",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Lemon Mayonnaise",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Pasta Shape Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Spaghetti",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Tagliatelle",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Penne",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Pasta Add-ons",
+      "minSelections": 0,
+      "maxSelections": 1,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Add Fresh Parmesan",
+          "priceDeltaMinor": 400000
+        }
+      ]
+    },
+    {
+      "name": "Pizza Toppers",
+      "minSelections": 0,
+      "maxSelections": 8,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Extra Ham",
+          "priceDeltaMinor": 450000
+        },
+        {
+          "name": "Extra Turkey",
+          "priceDeltaMinor": 400000
+        },
+        {
+          "name": "Chorizo",
+          "priceDeltaMinor": 400000
+        },
+        {
+          "name": "Sausage",
+          "priceDeltaMinor": 400000
+        },
+        {
+          "name": "Chicken",
+          "priceDeltaMinor": 400000
+        },
+        {
+          "name": "Black Olives",
+          "priceDeltaMinor": 200000
+        },
+        {
+          "name": "Fresh Parmesan",
+          "priceDeltaMinor": 400000
+        },
+        {
+          "name": "Smoked Salmon",
+          "priceDeltaMinor": 900000
+        },
+        {
+          "name": "Shrimps",
+          "priceDeltaMinor": 700000
+        },
+        {
+          "name": "Pepperoni",
+          "priceDeltaMinor": 400000
+        }
+      ]
+    },
+    {
+      "name": "Chicken Sauce Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Spicy Mushroom Sauce",
+          "priceDeltaMinor": 500000
+        },
+        {
+          "name": "Oga Sauce",
+          "priceDeltaMinor": 500000
+        },
+        {
+          "name": "Cactus Sauce",
+          "priceDeltaMinor": 700000
+        },
+        {
+          "name": "No Sauce",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Coffee Syrups & Boosters",
+      "minSelections": 0,
+      "maxSelections": 3,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Hazelnut Syrup",
+          "priceDeltaMinor": 200000
+        },
+        {
+          "name": "Vanilla Syrup",
+          "priceDeltaMinor": 200000
+        },
+        {
+          "name": "Caramel Syrup",
+          "priceDeltaMinor": 200000
+        },
+        {
+          "name": "Chocolate Syrup",
+          "priceDeltaMinor": 200000
+        },
+        {
+          "name": "Mint Syrup",
+          "priceDeltaMinor": 200000
+        },
+        {
+          "name": "Coconut Syrup",
+          "priceDeltaMinor": 200000
+        }
+      ]
+    },
+    {
+      "name": "Teriyaki Noodles Add-ons",
+      "minSelections": 0,
+      "maxSelections": 2,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Add Chicken",
+          "priceDeltaMinor": 450000
+        },
+        {
+          "name": "Add Shrimps",
+          "priceDeltaMinor": 700000
+        }
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "name": "Breakfast (Eggs & Omelettes)",
+      "sortOrder": 0,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Philly Steak Omelette",
+          "description": "3 eggs omelette with mushroom, bell pepper, shredded steak, barbecue sauce, onion, double cheese served with mashed potato and sausage",
+          "priceMinor": 2700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792531969/rsc/cactus/breakfast_eggs_bfast/philly_steak.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Lagos Passion",
+          "description": "A red pepper and onion omelette served with a side of porridge beans, sausage, fried plantain and fresh tomato stew",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792531959/rsc/cactus/breakfast_eggs_bfast/lagos_passion.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 1
+        },
+        {
+          "name": "English Breakfast",
+          "description": "3 fried eggs, served with bacon, traditional homemade sausage, hash brown, baked beans, and grilled tomatoes",
+          "priceMinor": 2000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792531956/rsc/cactus/breakfast_eggs_bfast/english.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Country Man",
+          "description": "3 eggs omelette with sausage, green pepper, mozzarella, and cheddar served with hashbrown, a side of sausage and bacon",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792531952/rsc/cactus/breakfast_eggs_bfast/country_man.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 3
+        },
+        {
+          "name": "Craft Your Own Omelette",
+          "description": null,
+          "priceMinor": 1900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 4
+        }
+      ]
+    },
+    {
+      "name": "Breakfast (Savory)",
+      "sortOrder": 1,
+      "isActive": true,
+      "items": [
+        {
+          "name": "The Breakfast Sandwich",
+          "description": "2 fried eggs, sausage, bacon, onions, grilled tomatoes and melted cheddar cheese served in our sliced bread with French fries",
+          "priceMinor": 2550000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532015/rsc/cactus/breakfast_savory/breakfast_sandwich.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Salmon Avocado Toast",
+          "description": "Multicereal bread , smoked salmon, cream cheese, avocado salsa with a side salad",
+          "priceMinor": 2900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792531973/rsc/cactus/breakfast_savory/avocado_toast_1.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 1
+        },
+        {
+          "name": "The Ultimate",
+          "description": "Waffle, pancake, fried eggs, sausages and French fries served with chocolate sauce and fresh strawberries",
+          "priceMinor": 2500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532048/rsc/cactus/breakfast_savory/ultimate.heic",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Omelette Noodles",
+          "description": "Veggie omelette stuffed with sausages stir-fried noodles cooked to perfection",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532027/rsc/cactus/breakfast_savory/omelette_noodle.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Breakfast Boosters"],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Breakfast (Sweet Touch)",
+      "sortOrder": 2,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Pancake",
+          "description": "Order the number of pancake you want ! add chocolate spread, peanut butter or caramel sauce.",
+          "priceMinor": 500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532072/rsc/cactus/breakfast_sweet_touch/pancake.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Waffles",
+          "description": "Homemade waffles served with nutella, caramel sauce, chocolate sauce, caramel nuts and strawberries",
+          "priceMinor": 2000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532088/rsc/cactus/breakfast_sweet_touch/waffles.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "name": "Sharing is Caring (Starters & Platters)",
+      "sortOrder": 3,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Fish Pepper Soup",
+          "description": "Fish with Lagos spicy aromas",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533354/rsc/cactus/sharing/fish_pepper_soup.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Spicy Beef Stiks",
+          "description": "10 mini marinated beef chilli sticks onions and tomatoes",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533312/rsc/cactus/sharing/beef_sticks.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Garlic Cheese Bread",
+          "description": "Roasted garlic, butter and parsley spread on a baguette topped with cheese",
+          "priceMinor": 1400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533362/rsc/cactus/sharing/garlic_bread.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Shi Hummus",
+          "description": "Our special hommos topped with shrimp provencal green chili with pita bread",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533424/rsc/cactus/sharing/shi_hummus.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Crispy Calamari",
+          "description": "Deep fried fresh calamari served with a spicy mayo sauce",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533336/rsc/cactus/sharing/crispy_calamari.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Avocado Bruschetta",
+          "description": "Marinated diced tomato mixed with avocado, feta cheese, oregano, basillic topped on cripsy bread",
+          "priceMinor": 1400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533309/rsc/cactus/sharing/avocado_bruschetta.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Mac and Cheese Poppers",
+          "description": "Deep fried mac cheese cubes served with tomato sauce",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533396/rsc/cactus/sharing/mac__b_cheese_popeprs.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Buffalo Bites",
+          "description": "Deep fried marinated chicken bites mixed with our homemade sauce",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Big House Wings",
+          "description": "12 house chicken wings coated with your choice of hot buffalo, mild BBQ sauce or red hot sauce",
+          "priceMinor": 2150000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533326/rsc/cactus/sharing/big_house_wings.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Hummus Meatballs",
+          "description": "Our special hummus topped with meatballs, parsley and sesame seeds",
+          "priceMinor": 1200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533368/rsc/cactus/sharing/hummus_meatballs.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "The Party",
+          "description": "Chicken tender, mozzarella bites, glazed chicken & beef, fried yam, sweet potato&plantain served with BBQ and chili sauce",
+          "priceMinor": 4600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533454/rsc/cactus/sharing/the_party.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Beef or Chicken Suya",
+          "description": "Char-grilled, marinated beef or chicken skewers served with garlic mayo sauce",
+          "priceMinor": 2250000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532916/rsc/cactus/pizza/suya.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Trio Mare",
+          "description": "Deep fries shrimp, calamari and crab sticks served with tartar sauce",
+          "priceMinor": 2300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533482/rsc/cactus/sharing/trio_mare.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Shrimpy Mango Crostini",
+          "description": "Cream cheese, mango, avocado and shrimps on a toast served with a fancy dipping sauce",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533430/rsc/cactus/sharing/shrimp_mango_crostini.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        },
+        {
+          "name": "Nachos Shrimp Tempura",
+          "description": "Homemade tortilla French fries topped with shrimp tempura, served with guacamole hummus dip, sour cream &pico salsa",
+          "priceMinor": 2300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533400/rsc/cactus/sharing/nacho_shrimp.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 14
+        },
+        {
+          "name": "Gizdodo",
+          "description": "Gizzard plantain mix in a special pepper sauce",
+          "priceMinor": 1700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533365/rsc/cactus/sharing/gizdodo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 15
+        },
+        {
+          "name": "Summer Rolls",
+          "description": "Fresh and healthy blend of chinese cabbage, rocket leaves, carrot, avocado, mango, cucumber, bell pepper, spring onion and rice noodles wrapped in a rice paper roll, served with our special sauce",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533445/rsc/cactus/sharing/summer_rolls.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 16
+        },
+        {
+          "name": "Dynamite Shrimp",
+          "description": "Our signature battered shrimps with a spicy sauce",
+          "priceMinor": 2300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533349/rsc/cactus/sharing/dynamite_shrimps.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 17
+        },
+        {
+          "name": "9ja Bites",
+          "description": "Fried sweet potato, yam and plantain served with stew sauce",
+          "priceMinor": 1200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533297/rsc/cactus/sharing/9ja_bites.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 18
+        }
+      ]
+    },
+    {
+      "name": "Salads",
+      "sortOrder": 4,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Salad Toppers:",
+          "description": "Tnna",
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Kale Strawberry",
+          "description": "Nutritious kale leaves, quinoa, strawberry, feta cheese garnished with dried cranberry, almond flakes and sunflower seeds, served with our homemade balsamic sauce",
+          "priceMinor": 2000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533069/rsc/cactus/salads/kale_strawberry.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Festival",
+          "description": "Grilled chicken breast, turkey and mozzarella rolls, boiled eggs, tomatoes and shredded carrots on a bed of lettuce and cabbage",
+          "priceMinor": 1900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Caesar with a Twist",
+          "description": "Fresh iceberg lettuce tossed with our special caesar dressing and house croutons",
+          "priceMinor": 1900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533006/rsc/cactus/salads/caesar.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 3
+        },
+        {
+          "name": "Tuna Freshness",
+          "description": "Tomato, sweetcorn, avocado, red beans, tuna, spring onions, boiled egg and lettuce mix with lemon mayo dressing",
+          "priceMinor": 2600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533154/rsc/cactus/salads/tuna_freshness.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 4
+        },
+        {
+          "name": "Norge Salad",
+          "description": "Mixed lettuce, rocca, cherry tomato, capers, fresh onion, cucumber, smoked salmon, avocado served with lemon oil dressing",
+          "priceMinor": 3100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533081/rsc/cactus/salads/norge.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 5
+        },
+        {
+          "name": "Quinoa",
+          "description": "Quinoa , chinese cabbage, chickpeas, cucumber, tomato, onions, parsley, red pepper, kale and avocado served with lemon oil sauce",
+          "priceMinor": 1900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533096/rsc/cactus/salads/quinoa.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 6
+        },
+        {
+          "name": "Atlantic Shrimp & Crab",
+          "description": "Shrimp, carbstick, sweet corn, rice noodles, lettuce, cherry tomato and cabbage mixed with a thousand island dressing",
+          "priceMinor": 2700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532977/rsc/cactus/salads/atlantic.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 7
+        },
+        {
+          "name": "Cobb Salad",
+          "description": "Lettuce mix, tomato, onion, cripsy bacon, grilled chicken, boiled egg and avocado with dressing of choice",
+          "priceMinor": 1850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533024/rsc/cactus/salads/cobb.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 8
+        },
+        {
+          "name": "Ruby",
+          "description": "Iceberg lettuce, rocca, cherry tomato, mixed nuts, shrimp, watermelon and feta cheese served with mandarin sauce",
+          "priceMinor": 3500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533110/rsc/cactus/salads/ruby.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 9
+        },
+        {
+          "name": "Traditonal Cactus Salad",
+          "description": "Grilled chicken breast , sweet corn, tomato, parmesan on a bed of mixed lettuce",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533143/rsc/cactus/salads/traditional_cactus.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Salad Dressing Choice"],
+          "sortOrder": 10
+        }
+      ]
+    },
+    {
+      "name": "Sandwiches",
+      "sortOrder": 5,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Shrimp Bun Delight",
+          "description": "Shrimp, mayonnaise, coleslaw, crispy potato",
+          "priceMinor": 3500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533274/rsc/cactus/sandwiches/shrimpy_bun_delight.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Sandwich Side Choice"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Club Sandwich",
+          "description": "Classic club with chicken breast , mozzarella cheese, bacon, tomatoes, lettuce and boiled egg with mayo sauce",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533185/rsc/cactus/sandwiches/club_sandwich.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Sandwich Side Choice"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Grilled Chicken Avocado",
+          "description": "Chicken, avocado, lettuce, mozzarella cheese, cayenne pepper and garlic mayo sauce served in panini bread",
+          "priceMinor": 2600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533210/rsc/cactus/sandwiches/grilled_chicken_avocado.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Sandwich Side Choice"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Mushroom Steak Sandwich",
+          "description": "Imported beef, crispy potato, cheddar cheese, mushrooms, grilled onions and a special BBQ sauce",
+          "priceMinor": 3500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533236/rsc/cactus/sandwiches/mushroom_steak_sandwich.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Sandwich Side Choice"],
+          "sortOrder": 3
+        },
+        {
+          "name": "Chicken Warp",
+          "description": "Deep fried BBQ chciken breast served with our garlic mayo sauce with lettuce, pickles cheese and potato sticks",
+          "priceMinor": 2850000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Sandwich Side Choice"],
+          "sortOrder": 4
+        },
+        {
+          "name": "Chicken Pizza Panini",
+          "description": "Fresh pizza dough, garlic mayo, sweetcorn, chicken, pickles, iceberg, mozarella and tomatoes",
+          "priceMinor": 2600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533166/rsc/cactus/sandwiches/chicken_pizza_panini.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Sandwich Side Choice"],
+          "sortOrder": 5
+        },
+        {
+          "name": "Ny Prawn Warp",
+          "description": "Deep fired dynamite prawn wrapped in tortilla bread with thousand island sauce, avocado, lettuce, pickles and spring onions",
+          "priceMinor": 2900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792533269/rsc/cactus/sandwiches/ny_prawn_wrap.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Sandwich Side Choice"],
+          "sortOrder": 6
+        },
+        {
+          "name": "Chicken Suya Wrap",
+          "description": "Chciken suya served with onions, tomatoes, coleslaw and a garlic mayo sauce in a pita bread",
+          "priceMinor": 2300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Sandwich Side Choice"],
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "name": "Burgers",
+      "sortOrder": 6,
+      "isActive": true,
+      "items": [
+        {
+          "name": "The Classic Burger",
+          "description": "200grams beef patty with lettuce, onions, pickles and Cactus burger sauce with a side of coleslaw &French fries",
+          "priceMinor": 1900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532181/rsc/cactus/burgers/the_classic.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Add Cheese:",
+          "description": "Cheese",
+          "priceMinor": 450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Mac & Beef",
+          "description": "200g of beef patty topped with bacon, mighty mac & cheese mix, served with loaded fries topped with BBQ sauce and bacon.no coleslaw side",
+          "priceMinor": 3800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532097/rsc/cactus/burgers/mac___beef.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Add Cheese:",
+          "description": "Cheese",
+          "priceMinor": 450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Street Style Burger",
+          "description": "200gram patty, smoked BBQ sauce, mayo, lettuce, tomato, grilled onion, bacon, double cheese& fried jalapeno served with fries and coleslaw",
+          "priceMinor": 2250000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532180/rsc/cactus/burgers/street_style.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Mighty Chicken Burger",
+          "description": "Depp fried chicken garlic mayo, honey mustard, tomato, cheddar cheese, coleslaw&pickles served with fries and coleslaw",
+          "priceMinor": 2100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532110/rsc/cactus/burgers/mighty_chicken.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Cactus Signature",
+          "description": "200gram beef patty topped with our special Cactus mushroom gravy and melted swiss cheese served with pickles and onions",
+          "priceMinor": 2500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532129/rsc/cactus/burgers/signature.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Smashy Burger",
+          "description": "2 smashed patties, special homemade sauce, grilled tomato, onion, mozzarella served with fries and coleslaw",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532171/rsc/cactus/burgers/smashy.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Smashed Sizzling Burger",
+          "description": "2 smashed beef patties, fried onion rings, double cheddar cheese, bacon, and chili mayo sauce, served cut in half on a sizzling plate with creamy truffle gravy",
+          "priceMinor": 3100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532131/rsc/cactus/burgers/smashed_sizzling.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "name": "Pasta",
+      "sortOrder": 7,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Spaghetti Bolognaise",
+          "description": "The traditional Italian slow cooked tomato and minced meat sauce",
+          "priceMinor": 2000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532725/rsc/cactus/pasta/bolognaise.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pasta Shape Choice", "Pasta Add-ons"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Chicken and Shrimp",
+          "description": "Creamy chicken and shrimp, our take on a surf and turf pasta",
+          "priceMinor": 3150000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532747/rsc/cactus/pasta/chicken_and_shrimps.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pasta Shape Choice", "Pasta Add-ons"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Arrabbiata",
+          "description": "The traditional Italian tomato sauce, basil, parsley, garlic and chill flakes",
+          "priceMinor": 1750000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532719/rsc/cactus/pasta/arrabiata.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pasta Shape Choice", "Pasta Add-ons"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Alfedo",
+          "description": "The rich homemade creamy white sauce with chicken and mushrooms",
+          "priceMinor": 2700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532695/rsc/cactus/pasta/alfredo.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pasta Shape Choice", "Pasta Add-ons"],
+          "sortOrder": 3
+        },
+        {
+          "name": "Ocean Marinara",
+          "description": "Sauteed seafood, shrimps, calamari and fish, in a special spicy tomato sauce.",
+          "priceMinor": 2800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532795/rsc/cactus/pasta/ocean_marinara.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pasta Shape Choice", "Pasta Add-ons"],
+          "sortOrder": 4
+        },
+        {
+          "name": "Prawns Firelli",
+          "description": "3pcs prawn in hot spicy tomato sauce, mushroom, green pepper served with spaghetti",
+          "priceMinor": 4500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532753/rsc/cactus/pasta/firelli.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pasta Shape Choice", "Pasta Add-ons"],
+          "sortOrder": 5
+        },
+        {
+          "name": "White Marinara",
+          "description": "Sauteed seafood with garlic and white wine in a creamy sauce",
+          "priceMinor": 3400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532798/rsc/cactus/pasta/white_marinara.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pasta Shape Choice", "Pasta Add-ons"],
+          "sortOrder": 6
+        },
+        {
+          "name": "Plantain Lasagna",
+          "description": "Layers of creamy bolognese sauce and fried plantain. A 9ja twist to the traditional Italian lasagna",
+          "priceMinor": 2900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532755/rsc/cactus/pasta/lasagna.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pasta Shape Choice", "Pasta Add-ons"],
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "name": "Pizzas",
+      "sortOrder": 8,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Margarita",
+          "description": "Tomato sauce with cheese and oregano",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Pepperoni",
+          "description": "Tomato sauce with mozzarella cheese, pepperoni and oregano",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532872/rsc/cactus/pizza/peperroni.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Vegetarian",
+          "description": "Tomato sauce, mozzarella, brocolli, sweet corn, green pepper, onion, mushroom, olives and oregano",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532945/rsc/cactus/pizza/vegetarian.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Four Seasons",
+          "description": "Tomato sauce, mozzarella, fresh mushroom, green pepper, black olives, ham and oregano",
+          "priceMinor": 2700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532835/rsc/cactus/pizza/four_season.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 3
+        },
+        {
+          "name": "Ozumba",
+          "description": "Tomato sauce, mozzarella cheese, chicken and beef, suya, sausage, onion, tomato, BBQ sauce and egg",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532856/rsc/cactus/pizza/ozumba.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 4
+        },
+        {
+          "name": "Suya",
+          "description": "Tomato sauce, mozzarella, chciekn or beef suya, onions topped with tomato, green chili & a thousand island sauce",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532916/rsc/cactus/pizza/suya.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 5
+        },
+        {
+          "name": "Seafood",
+          "description": "Tomato sauce, mozzarella, shrimps, crab, garlic, parsley, olive oil, green chili topped with thousand island drizzling",
+          "priceMinor": 3000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532892/rsc/cactus/pizza/seafood.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 6
+        },
+        {
+          "name": "BBQ Chicken",
+          "description": "Tomato sauce, mozzarella, BBQ chicken, red pepper, pineapple, mushroom, onions and oregano",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532815/rsc/cactus/pizza/bbq_chicken.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 7
+        },
+        {
+          "name": "Omokurin",
+          "description": "Tomato sauce , mozzarella , pepperoni , sausage, chicken , BBQ sauce",
+          "priceMinor": 3000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532837/rsc/cactus/pizza/omokurin.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Pizza Toppers"],
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "name": "Main Event (Meat & Seafood)",
+      "sortOrder": 9,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Pork Ribs",
+          "description": "1kg grilled pork ribs served with BBQ sauce",
+          "priceMinor": 8300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Rib-eye",
+          "description": "350grams imported rib-eye served with your choice of mushroom or pepper sauce",
+          "priceMinor": 6800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Center-cut Filet Mignon",
+          "description": "Imported medaillon filet served with your choice of black pepper sauce, mushroom sauce or tomato stew",
+          "priceMinor": 5600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532543/rsc/cactus/main_event/centrecut.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Spicy Shredded Beef",
+          "description": "Imported shredded beef sauteed with onions, mushrooms, green pepper, light soy sauce and spicy herbs",
+          "priceMinor": 3800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532655/rsc/cactus/main_event/spicy_shredded_beef.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 3
+        },
+        {
+          "name": "3d Fajitas",
+          "description": "Build your own wrap:chicken, beef, shrimp, mixed vegetables(onion, bell pepper), cheese mix, pico salsa, hommos guacamole and sour cream served with tortillas on a sizzling plate",
+          "priceMinor": 3900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532528/rsc/cactus/main_event/3p_fajita.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 4
+        },
+        {
+          "name": "Spicy Thai Shrimp",
+          "description": "Shrimp sauteed in a spicy vegetable thai sauce",
+          "priceMinor": 3200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532676/rsc/cactus/main_event/spicy_thai_shrimp.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 5
+        },
+        {
+          "name": "Jumbo Prawns",
+          "description": "Fresh from sea, marinated and char-grilled with tartar sauce",
+          "priceMinor": 5900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 6
+        },
+        {
+          "name": "Marinated Grilled Fish",
+          "description": "Grilled grouper filet served with your choice of side dishesh",
+          "priceMinor": 3000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 7
+        },
+        {
+          "name": "Fish and Chips",
+          "description": "The ultimate and traditional english fish and French fries served with French fries and tartar sauce",
+          "priceMinor": 2750000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 8
+        },
+        {
+          "name": "Grilled Salmon Filet",
+          "description": "250gr fresh salmon filet chargrilled served with garlic aioli sauce",
+          "priceMinor": 5300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532590/rsc/cactus/main_event/grilled_salmon.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 9
+        },
+        {
+          "name": "Teriyaki Noodles",
+          "description": "Egg noodles stir fried with vegetables",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532679/rsc/cactus/main_event/teriyaki_noodles.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Teriyaki Noodles Add-ons"],
+          "sortOrder": 10
+        }
+      ]
+    },
+    {
+      "name": "Extra Side Dishes",
+      "sortOrder": 10,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Fried Rice",
+          "description": "Side dishesh",
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Sweet Potato Fries",
+          "description": "Side dishesh",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Jollof Rice",
+          "description": "Side dishesh",
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Fried Yam",
+          "description": "Side dishesh",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "White Rice",
+          "description": "Side dishesh",
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Sauteed Vegetables",
+          "description": "Side dishesh",
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "French Fries",
+          "description": "Side dishesh",
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Mashed Potatoes",
+          "description": "Side dishesh",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Fried Plantain",
+          "description": "Side dishesh",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Egg Shrimp Fried Rice",
+          "description": "Side dishesh",
+          "priceMinor": 900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Broccoli",
+          "description": "Side dishesh",
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Add Sauce",
+          "description": "Side dishesh",
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Coleslaw",
+          "description": "Side dishesh",
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        }
+      ]
+    },
+    {
+      "name": "Cactus Signature Dishes",
+      "sortOrder": 11,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Lamb & Rosemary Potatoes",
+          "description": "Lamb chops with gravy sauce served with provencal potatoes",
+          "priceMinor": 7200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532211/rsc/cactus/cactus_signature/lamb___rosemary_potato.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Whole Catch Grilled Fish",
+          "description": "Whole marinated grilled fish served with grilled plantain and a special spicy fusion sauce",
+          "priceMinor": 6900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532255/rsc/cactus/cactus_signature/whole_catch.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Cactus Medley",
+          "description": "1 shrimp kebab, 1 chicken tandoori skewer, 1 beef kebab, 1 fish kebab, 6 plain chicken wings served with choice of side dishes",
+          "priceMinor": 4100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Main Course Side Choice"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Seafood Rice Fiesta",
+          "description": "Fresh crab, shrimp, chicken stir-fried with tasty rice",
+          "priceMinor": 6500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532238/rsc/cactus/cactus_signature/seafood_rice_fiesta.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Pacific",
+          "description": "2 grilled jumbo prawns, 2 deep fried prawns, 2 shrimps kebab, 8 rings fried calamari served with tartar sauce",
+          "priceMinor": 8200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532634/rsc/cactus/main_event/pacific.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        }
+      ]
+    },
+    {
+      "name": "Chicken (Make Your Own Plate)",
+      "sortOrder": 12,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Boneless Half Chicken Grilled",
+          "description": "Choose your chicken style, sauce, and side dishesh",
+          "priceMinor": 2200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Chicken Sauce Choice", "Main Course Side Choice"],
+          "sortOrder": 0
+        },
+        {
+          "name": "2 Chicken Breasts Grilled",
+          "description": "Choose your chicken style, sauce, and side dishesh",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532548/rsc/cactus/main_event/chicken_breast.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Chicken Sauce Choice", "Main Course Side Choice"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Boneless Half Chicken Fried",
+          "description": "Choose your chicken style, sauce, and side dishesh",
+          "priceMinor": 2200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Chicken Sauce Choice", "Main Course Side Choice"],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Kids Menu",
+      "sortOrder": 13,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Burgers",
+          "description": "Mini beef patties served with French fries",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532477/rsc/cactus/kids/burgers.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Nuggets",
+          "description": "Breaded chicken bites served with French fries",
+          "priceMinor": 1100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Spaghetti Pomodoro",
+          "description": "Spaghetti served with our house tomato sauce",
+          "priceMinor": 1000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Piezzaro",
+          "description": "Meat pie freshly baked in pizza dough",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532509/rsc/cactus/kids/piezzaro.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Hot Dog",
+          "description": "Our little kids hot sandwich served with French fries",
+          "priceMinor": 1000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532496/rsc/cactus/kids/hotdog.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Happy Kids",
+          "description": "1 mini burger, 2 nuggets, 1 sausage, 1 donut",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        }
+      ]
+    },
+    {
+      "name": "Desserts",
+      "sortOrder": 14,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Molten Chocolate Cake",
+          "description": "Hot chocolate cake with vanilla artisan gelato",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Brownie",
+          "description": "Chocolate brownie served with vanilla ice cream, caramel sauce and caramel nuts",
+          "priceMinor": 1400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532402/rsc/cactus/dessert/brownie.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Milkshake",
+          "description": "Our homemade milkshake are made using the finest Italian gelato cacuts has to offer. Choose from our flavors: vanilla, strawberry, chocolate or caramel",
+          "priceMinor": 1400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532455/rsc/cactus/dessert/milkshake.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Chocolat Mou",
+          "description": "3 scoops of chocolate gelato served with whipped cream and chocolate sauce",
+          "priceMinor": 1400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532416/rsc/cactus/dessert/chocolat_mou.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Frosty Waffle",
+          "description": "Waffle topped with vanilla ice cream chocolate and fresh strawberries",
+          "priceMinor": 1900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532423/rsc/cactus/dessert/frosty_waffle.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Banana Split",
+          "description": "Fresh banana, 2 scoops vanilla ice cream, whipped cream, chocolate chip topped with chocolate",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532387/rsc/cactus/dessert/banana_split.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Cookie Skillet",
+          "description": "Chocolate chip cookie baked in a skillet topped with vanilla ice cream and chocolate sauce",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Baileys Trifle",
+          "description": "Layers of vanilla sponge cake, Baileys mousse, chocolate French fries and cocoa powder",
+          "priceMinor": 4100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532378/rsc/cactus/dessert/baileys_cup.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "name": "Coffee & Hot Drinks",
+      "sortOrder": 15,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Espresso",
+          "description": null,
+          "priceMinor": 450000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532295/rsc/cactus/coffee/espresso.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 0
+        },
+        {
+          "name": "Double Espresso",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532295/rsc/cactus/coffee/espresso.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 1
+        },
+        {
+          "name": "Americano",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 2
+        },
+        {
+          "name": "Black Coffee",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 3
+        },
+        {
+          "name": "Cappuccino",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532282/rsc/cactus/coffee/cappuccino.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 4
+        },
+        {
+          "name": "Caff\u00e8 Latte",
+          "description": null,
+          "priceMinor": 750000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532328/rsc/cactus/coffee/latte.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 5
+        },
+        {
+          "name": "Caff\u00e8 Mocha",
+          "description": null,
+          "priceMinor": 900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 6
+        },
+        {
+          "name": "Irish Coffee",
+          "description": null,
+          "priceMinor": 1200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 7
+        },
+        {
+          "name": "Hot Chocolate",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 8
+        },
+        {
+          "name": "Iced Caramel Latte",
+          "description": "Double shot of espresso, milk&caramel syrup",
+          "priceMinor": 900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 9
+        },
+        {
+          "name": "Frappuccino",
+          "description": null,
+          "priceMinor": 1000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532313/rsc/cactus/coffee/frappuccino.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 10
+        },
+        {
+          "name": "Iced Tea",
+          "description": null,
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 11
+        },
+        {
+          "name": "Flavored Tea",
+          "description": null,
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": ["Coffee Syrups & Boosters"],
+          "sortOrder": 12
+        }
+      ]
+    },
+    {
+      "name": "Beverages & Soft Drinks",
+      "sortOrder": 16,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Aquafina Water (Small)",
+          "description": null,
+          "priceMinor": 250000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Aquafina Water (Large)",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "7Up",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "7Up Zero Sugar",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Pepsi",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Diet Pepsi",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Mirinda",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Schweppes Bitter Lemon",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Schweppes Soda Water",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Schweppes Tonic Water",
+          "description": null,
+          "priceMinor": 350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Perrier Sparkling Water",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Malta Guinness",
+          "description": null,
+          "priceMinor": 400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Cactus Chapman",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Energy Drink",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        },
+        {
+          "name": "Fruit Juice (Glass)",
+          "description": "Apple, orange, pineapple (glass)",
+          "priceMinor": 450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 14
+        },
+        {
+          "name": "Fruit Juice (1l Pack)",
+          "description": "Apple, orange, or pineapple",
+          "priceMinor": 950000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 15
+        },
+        {
+          "name": "Cranberry Juice (Glass)",
+          "description": null,
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 16
+        },
+        {
+          "name": "Cranberry Juice (1.5L Pack)",
+          "description": "Pure cranberry juice pack",
+          "priceMinor": 2500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 17
+        }
+      ]
+    },
+    {
+      "name": "Fresh Juices",
+      "sortOrder": 17,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Fresh Orange or Pineapple Juice",
+          "description": null,
+          "priceMinor": 850000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Add Fresh Ginger Booster",
+          "description": null,
+          "priceMinor": 150000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Fresh Apple & Carrot Juice",
+          "description": null,
+          "priceMinor": 1000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Smoothies",
+      "sortOrder": 18,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Mint Mango Smoothie",
+          "description": null,
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Strawberry Smoothie",
+          "description": null,
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "African Smoothie",
+          "description": "Coconut milk, lime juice, ginger fresh, and club soda",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Royal Cactus",
+          "description": "Fresh avocado, fresh bananas, milk and honey blended into a creamy goodness",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Coconut Lemonade",
+          "description": "Coconut syrup, lemon juice, and orange juice",
+          "priceMinor": 1200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Frozen Lemonade",
+          "description": "Freshly homemade frozen lemonade",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Frozen Ginger Lemonade",
+          "description": "Fresh ginger, sugar syrup, and lemon juice",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Coconut Smoothie",
+          "description": "Coconut milk, fresh pineapple juice, coconut syrup, and banana",
+          "priceMinor": 1200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "name": "Signature Mocktails",
+      "sortOrder": 19,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Ginger Punch",
+          "description": "Pineapple juice, lemon juice, ginger, and mint",
+          "priceMinor": 1200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Iced Ginger Peach",
+          "description": "Bitter lemon, fresh ginger, peach syrup, fresh lemon, and grenadine",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Raspberry Ginger Cooler",
+          "description": "Raspberry paste, fresh ginger, sugar syrup, lime juice, and soda water",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Pineapple Coconut Nojito",
+          "description": "Fresh mint leaves, lime juice, fresh pineapple juice, sugar syrup, and coconut paste",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Banana Strawberry Delight",
+          "description": "Banana, orange, milk, and strawberry paste",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Kiwi Madness",
+          "description": "Kiwi paste, fresh apple, cream, sugar syrup, mango paste, and lemon juice",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Virgin Mule",
+          "description": "Fresh ginger, cucumber, lemon juice, bitter angostura, bitter lemon, and soda water",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Banana Colada",
+          "description": "Milk, coconut syrup, fresh banana, and fresh pineapple juice",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Planters Punch",
+          "description": "Fresh orange, pineapple, lemon juice, and raspberry paste",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Classic Nojito",
+          "description": "Fresh mint leaves, lime juice, sugar syrup, club soda, crushed ice",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Virgin Colada",
+          "description": "Coconut milk, pineapple juice, and crushed ice",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Sweet Sunrise",
+          "description": "Orange juice, grenadine, club soda, and crushed ice",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Star",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        }
+      ]
+    },
+    {
+      "name": "Beers & Ciders",
+      "sortOrder": 20,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Gulder",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Heineken",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Guinness",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Budweiser",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Orijin Beer",
+          "description": null,
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Mexican Beer",
+          "description": "Beer, lemon & salt",
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Campabeer",
+          "description": "Beer, Campari, orange & lemon",
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Beerojito",
+          "description": "Beer, white rum, fresh lime juice, mint & brown sugar",
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Blue Spirit",
+          "description": "Beer, blue curacao, 7Up, lemon",
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Strong Beeretto",
+          "description": "Beer, Tequila, vodka, gin, whiskey & lemon",
+          "priceMinor": 1100000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Black Velvet Beer",
+          "description": "Stout & red wine",
+          "priceMinor": 900000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        }
+      ]
+    },
+    {
+      "name": "Vermouth & Bitters",
+      "sortOrder": 21,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Martini Bianco",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Martini Rosso",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Martini Extra Dry",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Campari",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 6000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Liqueurs",
+      "sortOrder": 22,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Bailey'S",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 7000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532378/rsc/cactus/dessert/baileys_cup.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Jagermeister",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Bacardi",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Tequila",
+      "sortOrder": 23,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Camino",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Azul Reposado",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 85000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Jose Cuervo",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Don Julio",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 120000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Casamigos Blanco",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 37000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Casamigos Reposado",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 41000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Patron Silver",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 16000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        }
+      ]
+    },
+    {
+      "name": "Gin",
+      "sortOrder": 24,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Gordon",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 4500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Bombay Sapphire",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Hendricks",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 16000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Gin Mare",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Drumshambo",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        }
+      ]
+    },
+    {
+      "name": "Cognac",
+      "sortOrder": 25,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Hennessy VS",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 16200000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Hennessy VSOP",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 29000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Hennessy XO",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 75000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Martell XO",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 65000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Martell Blue Swift",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 22000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        }
+      ]
+    },
+    {
+      "name": "Vodka",
+      "sortOrder": 26,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Ciroc",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 15000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Grey Goose",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Absolut Vodka",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Whiskey",
+      "sortOrder": 27,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Johnnie Walker Red Label",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Johnnie Walker Black Label",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 14500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Johnnie Walker Green Label",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 18500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Johnnie Walker Gold Label",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 23000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Johnnie Walker Blue Label",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 75000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Jack Daniel's",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 9500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Jameson",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 8500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Glenfiddich 12",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 18000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Glenfiddich 18",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 29000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Chivas 12",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 11000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Chivas 18",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 26000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "The Macallan 12",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 24000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "The Macallan 15",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 47500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "The Macallan 18",
+          "description": "STOUT & RED WINE",
+          "priceMinor": 80000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        }
+      ]
+    },
+    {
+      "name": "Classic Cocktails",
+      "sortOrder": 28,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Margarita",
+          "description": "Tequila, lime juice, triple sec",
+          "priceMinor": 1350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Old Fashioned",
+          "description": "Bourbon or rye whiskey, sugar, bitters, orange peel",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Negroni",
+          "description": "Gin, Campari, sweet vermouth",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Daiquiri",
+          "description": "White rum, lime juice, simple syrup",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Martini",
+          "description": "Gin (or vodka), dry vermouth, olive or lemon twist.",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Cuba Libre",
+          "description": "White rum, cola, lime juice",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Gin Basil",
+          "description": "Gordon's gin, sugar syrup, fresh lime juice",
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Blue Lagoon",
+          "description": "Blue curacao, lemonade vodka and rum",
+          "priceMinor": 1350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Tequila Sunrise",
+          "description": "Tequila, orange juice and grenadine syrup",
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        },
+        {
+          "name": "Pi\u00f1a Colada",
+          "description": "White rum, coconut cream, pineapple juice",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 9
+        },
+        {
+          "name": "Mojito",
+          "description": "White rum, mint, lime, sugar, soda water",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 10
+        },
+        {
+          "name": "Zombie",
+          "description": "A mix of rums, lime, passionfruit, grenadine, bitters.",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 11
+        },
+        {
+          "name": "Aperol Spritz",
+          "description": "Aperol, Prosecco, soda water.",
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 12
+        },
+        {
+          "name": "Gin Tonic",
+          "description": "Gin, tonic water, lime or lemon",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 13
+        },
+        {
+          "name": "Paloma",
+          "description": "Tequila, grapefruit soda, lime juice",
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 14
+        },
+        {
+          "name": "Tom Collins",
+          "description": "Gin, lemon juice, sugar, soda water.",
+          "priceMinor": 1350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 15
+        },
+        {
+          "name": "Strawberry Daiquiri",
+          "description": "Rum, lime, strawberry pur\u00e9e",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 16
+        },
+        {
+          "name": "Mojito",
+          "description": "White rum, fresh lime juice, fresh mint leaves, brown sugar",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 17
+        },
+        {
+          "name": "Espresso Martini",
+          "description": "Vodka, coffee liqueur, espresso",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792532295/rsc/cactus/coffee/espresso.jpg",
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 18
+        },
+        {
+          "name": "Mudslide",
+          "description": "Vodka, coffee liqueur, irish cream, cream.",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 19
+        },
+        {
+          "name": "White Russian",
+          "description": "Vodka, coffee liqueur, cream or milk.",
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 20
+        },
+        {
+          "name": "Manhattan",
+          "description": "Rye whiskey, sweet vermouth, bitters",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 21
+        },
+        {
+          "name": "Boulevardier",
+          "description": "Bourbon, Campari, sweet vermouth",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 22
+        },
+        {
+          "name": "Sazerac",
+          "description": "Rye whiskey, sugar, absinthe rinse, bitters",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 23
+        },
+        {
+          "name": "El Diablo",
+          "description": "Tequila, lime juice, cr\u00e8me de cassis, ginger beer",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 24
+        },
+        {
+          "name": "Long Island",
+          "description": "Vodka, gin, rum, Tequila, triple sec.",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 25
+        },
+        {
+          "name": "Whiskey Sour",
+          "description": "Whiskey, lemon, brown sugar.",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 26
+        },
+        {
+          "name": "Jungle Juice",
+          "description": "Vodka, Tequila, gin, rum, whisky, triple sec, pineapple juice and grenadine syrup",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 27
+        },
+        {
+          "name": "Dark 'N' Stormy",
+          "description": "Dark rum, ginger beer, lime",
+          "priceMinor": 1350000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 28
+        },
+        {
+          "name": "Rob Roy",
+          "description": "Scotch whisky, sweet vermouth, bitters",
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 29
+        },
+        {
+          "name": "Painkiller",
+          "description": "Dark rum, pineapple juice, orange juice, coconut cream",
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 30
+        },
+        {
+          "name": "Cactus on Fire",
+          "description": "Vodka, rum, blue cura\u00e7ao, lemonade, grenadine syrup.",
+          "priceMinor": 2000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 31
+        },
+        {
+          "name": "Mimosa",
+          "description": "Champagne, orange juice",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 32
+        },
+        {
+          "name": "French 75",
+          "description": "Gin, lemon juice, sugar, Champagne",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 33
+        },
+        {
+          "name": "Bloody Mary",
+          "description": "Vodka, tomato juice, spices, hot sauce",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 34
+        },
+        {
+          "name": "Hot Toddy",
+          "description": "Whiskey, honey, lemon, hot water.",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 35
+        }
+      ]
+    },
+    {
+      "name": "White Wines",
+      "sortOrder": 29,
+      "isActive": true,
+      "items": [
+        {
+          "name": "House White Wine",
+          "description": "Bottle: \u20a640,000 | Glass: \u20a67,500",
+          "priceMinor": 4000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Roche Mazet Muscadet",
+          "description": "France 2019",
+          "priceMinor": 4800000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Longchamps",
+          "description": "France 2019",
+          "priceMinor": 6000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Ch\u00e2teau Grand Renom",
+          "description": "France 2018",
+          "priceMinor": 9000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Domaine de la Garenne Sancerre Blanc",
+          "description": "Sancerre blanc France, 2018",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Villa Antinori Toscana",
+          "description": "Italy",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Chablis Domaine de Colombier",
+          "description": "France, 2015",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Millstream",
+          "description": null,
+          "priceMinor": 6500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "name": "Red Wines",
+      "sortOrder": 30,
+      "isActive": true,
+      "items": [
+        {
+          "name": "House Red Wine",
+          "description": "Bottle: \u20a640,000 | Glass: \u20a67,500",
+          "priceMinor": 4000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Petit Palais Sweet",
+          "description": "France 2019",
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Longchamps",
+          "description": "France 2019",
+          "priceMinor": 6500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Jeantet C\u00f4tes du Rh\u00f4ne",
+          "description": "France 2018",
+          "priceMinor": 6500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Ch\u00e2teau Grand Renom",
+          "description": "France 2018",
+          "priceMinor": 9000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Villa Antinori Toscana",
+          "description": "Italy",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Millstream Pinotage",
+          "description": "South Africa",
+          "priceMinor": 6500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Alma de Vega Tempranillo",
+          "description": "Spain",
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "Footprint Shiraz",
+          "description": "South Africa",
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "name": "Ros\u00e9 Wines",
+      "sortOrder": 31,
+      "isActive": true,
+      "items": [
+        {
+          "name": "House Ros\u00e9 Wine",
+          "description": "Bottle: \u20a640,000 | Glass: \u20a67,500",
+          "priceMinor": 4000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Millstream",
+          "description": "South Africa",
+          "priceMinor": 6500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Alma de Vega Tempranillo",
+          "description": null,
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "name": "Sweet Wines",
+      "sortOrder": 32,
+      "isActive": true,
+      "items": [
+        {
+          "name": "House Sweet Wine",
+          "description": "Bottle: \u20a640,000 | Glass: \u20a67,500",
+          "priceMinor": 4000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Declan Sweet White",
+          "description": null,
+          "priceMinor": 4500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Declan Sweet Red",
+          "description": null,
+          "priceMinor": 4500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Alma de Vega Semi Sweet White",
+          "description": null,
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "name": "Champagne & Sparkling Wine",
+      "sortOrder": 33,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Mo\u00ebt & Chandon",
+          "description": null,
+          "priceMinor": 28000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        },
+        {
+          "name": "Laurent-Perrier",
+          "description": null,
+          "priceMinor": 26000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 1
+        },
+        {
+          "name": "Veuve Clicquot",
+          "description": null,
+          "priceMinor": 32000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 2
+        },
+        {
+          "name": "Dom P\u00e9rignon",
+          "description": null,
+          "priceMinor": 125000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 3
+        },
+        {
+          "name": "Mo\u00ebt & Chandon",
+          "description": null,
+          "priceMinor": 33000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 4
+        },
+        {
+          "name": "Laurent-Perrier",
+          "description": null,
+          "priceMinor": 32000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 5
+        },
+        {
+          "name": "Veuve Clicquot",
+          "description": null,
+          "priceMinor": 36000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 6
+        },
+        {
+          "name": "Dom P\u00e9rignon",
+          "description": null,
+          "priceMinor": 180000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 7
+        },
+        {
+          "name": "House Prosecco",
+          "description": "Bottle: \u20a690,000 | Glass: \u20a69,000",
+          "priceMinor": 9000000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "name": "Shisha Bar",
+      "sortOrder": 34,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Premium Shisha",
+          "description": "Double Apple, Orange, Lemon & Mint, Blueberry, Watermelon & Mint, Bubble Gum & Cinnamon, Grape, Watermelon, Strawberry, Lemon, Mint & Cream.",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "isAvailable": true,
+          "modifierGroupRefs": [],
+          "sortOrder": 0
+        }
+      ]
+    }
+  ]
+}
