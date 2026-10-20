@@ -11,7 +11,7 @@ import { normalizeNigerianPhoneNumber } from "./phone-number";
 import { UserRole } from "./user-role.enum";
 
 const defaultOwner = {
-  name: "RSC Owner",
+  name: "Dineout Owner",
   email: "owner@example.com",
   phone: "08030000000",
   password: "password",
