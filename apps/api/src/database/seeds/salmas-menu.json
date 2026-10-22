@@ -1,0 +1,4259 @@
+{
+  "outletId": "35b9e0d4-9616-42a9-9cd2-7c5cdd7a5741",
+  "outletName": "Salmas",
+  "modifierGroups": [
+    {
+      "name": "Labneh Option",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Garlic",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Spicy",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Hummus Add-ons",
+      "minSelections": 0,
+      "maxSelections": 1,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Add Pine Nuts",
+          "priceDeltaMinor": 300000
+        }
+      ]
+    },
+    {
+      "name": "Salad Add-ons",
+      "minSelections": 0,
+      "maxSelections": 1,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Add Chicken",
+          "priceDeltaMinor": 450000
+        }
+      ]
+    },
+    {
+      "name": "Balila Add-ons",
+      "minSelections": 0,
+      "maxSelections": 1,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Add Tahini",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Kaddouchat Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Halloumi",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Falafel Pops",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Kafta",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Taouk",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Cauliflower",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Flavored Hummus Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Chatta",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Olives",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Walnuts",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Quartet Hummus Choice",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Chatta",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Pesto",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Olives",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Walnuts",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Spicy Sauce",
+      "minSelections": 0,
+      "maxSelections": 1,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Add Spicy Sauce",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Shawarma Portion",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Sandwich",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Sajj",
+          "priceDeltaMinor": 300000
+        },
+        {
+          "name": "Platter",
+          "priceDeltaMinor": 900000
+        }
+      ]
+    },
+    {
+      "name": "Shisha Flavors",
+      "minSelections": 1,
+      "maxSelections": 1,
+      "isRequired": true,
+      "modifiers": [
+        {
+          "name": "Double Apple",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Orange",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Lemon & Mint",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Blueberry",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Watermelon & Mint",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Bubble Gum & Cinnamon",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Grape",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Watermelon",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Strawberry",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Bubble Gum",
+          "priceDeltaMinor": 0
+        },
+        {
+          "name": "Mint & Cream",
+          "priceDeltaMinor": 0
+        }
+      ]
+    },
+    {
+      "name": "Shisha Extras",
+      "minSelections": 0,
+      "maxSelections": 1,
+      "isRequired": false,
+      "modifiers": [
+        {
+          "name": "Pineapple Head",
+          "priceDeltaMinor": 400000
+        }
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "name": "Our Plates",
+      "sortOrder": 0,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Halloumi",
+          "description": null,
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659996/rsc/salmas/hot_mezze/halloumi.jpg",
+          "imageSource": "HOT MEZZE/HALLOUMI.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Feta Balls with Zaatar and Paprika",
+          "description": null,
+          "priceMinor": 1200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659036/rsc/salmas/breakfast/feta_balls.jpg",
+          "imageSource": "BREAKFAST/FETA BALLS.JPG",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Labneh with Makdouss",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659098/rsc/salmas/breakfast/labneh_makdouss.jpg",
+          "imageSource": "BREAKFAST/LABNEH MAKDOUSS.JPG",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Labneh",
+          "description": "Strained yoghurt, choose garlic or spicy.",
+          "priceMinor": 600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659348/rsc/salmas/cold_mezze/labneh.jpg",
+          "imageSource": "COLD MEZZE/LABNEH.jpg",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": ["Labneh Option"]
+        },
+        {
+          "name": "Hommos Bel Foul",
+          "description": "Traditional hummos topped with fava beans seasoned with lemon, garlic, olive oil, parsley, tomato, white onion, green chili and fresh mint",
+          "priceMinor": 1000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659049/rsc/salmas/breakfast/hommos_foul.jpg",
+          "imageSource": "BREAKFAST/HOMMOS FOUL.JPG",
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Balila",
+          "description": "Chickpeas marinated with lemon, garlic and olive oil dressing. Add tahini.",
+          "priceMinor": 950000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": ["Balila Add-ons"]
+        },
+        {
+          "name": "Foul Moudamas",
+          "description": "Fava beans seasoned with lemon, garlic, olive oil and parsley",
+          "priceMinor": 1200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Musabaha",
+          "description": "Creamy chickpeas mixed with tahini, lemon garlic topped with olive oil",
+          "priceMinor": 1100000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "The Oven",
+      "sortOrder": 1,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Zaatar Manouche (Oven)",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659275/rsc/salmas/breakfast/zaatar.jpg",
+          "imageSource": "BREAKFAST/ZAATAR.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cheese Manouche (Oven)",
+          "description": null,
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Labneh Manouche (Oven)",
+          "description": null,
+          "priceMinor": 900000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Lahm Bi Ajin (Oven)",
+          "description": null,
+          "priceMinor": 1100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660276/rsc/salmas/oven/lahm_bi_ajn.jpg",
+          "imageSource": "OVEN/LAHM BI AJN.jpeg",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Sfiha (Oven)",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fatayer Bakli (Oven)",
+          "description": null,
+          "priceMinor": 400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659030/rsc/salmas/breakfast/fatayer.jpg",
+          "imageSource": "BREAKFAST/FATAYER.JPG",
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kaak Halloumi & Mozzarella (Oven)",
+          "description": null,
+          "priceMinor": 2000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659076/rsc/salmas/breakfast/kaak.jpg",
+          "imageSource": "BREAKFAST/KAAK.JPG",
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Soujouk & Cheese Manouche (Oven)",
+          "description": null,
+          "priceMinor": 1900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660258/rsc/salmas/oven/cheese_soujouk.jpg",
+          "imageSource": "OVEN/CHEESE & SOUJOUK.jpeg",
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Double Loaded Manouche (Oven)",
+          "description": null,
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Eggs Explorer",
+      "sortOrder": 2,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Sunny Side Up Eggs with Sumac",
+          "description": null,
+          "priceMinor": 900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792626754/rsc/salmas/breakfast/eggs_sumac.jpg",
+          "imageSource": "BREAKFAST/EGGS SUMAC.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Egg Makanek",
+          "description": "Sauteed makanek baked with sunny side up eggs served with sumac and pomegranate seeds",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659055/rsc/salmas/breakfast/img_2338.jpg",
+          "imageSource": "BREAKFAST/IMG_2338.jpeg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Eggs with Soujouk",
+          "description": null,
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659069/rsc/salmas/breakfast/img_2351.jpg",
+          "imageSource": "BREAKFAST/IMG_2351.jpeg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Shakshouka",
+          "description": "Eggs with spicy tomato sauce",
+          "priceMinor": 900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659105/rsc/salmas/breakfast/shakshouka.jpg",
+          "imageSource": "BREAKFAST/SHAKSHOUKA.JPG",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mfarakeh",
+          "description": "Scrambled eggs & potatoes",
+          "priceMinor": 1000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Qawarma Bel Beid",
+          "description": "Baked minced goat meat with eggs",
+          "priceMinor": 1000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Scrambled Eggs",
+          "description": "The traditional scrambled eggs",
+          "priceMinor": 900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659102/rsc/salmas/breakfast/scrambled_eggs.jpg",
+          "imageSource": "BREAKFAST/SCRAMBLED EGGS.JPG",
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Sweet Tooth",
+      "sortOrder": 3,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Salma's Pie (Breakfast)",
+          "description": "Nutella halawi and banana pie",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Trio Pudding (Breakfast)",
+          "description": "3 cups of mouhalabiyeh, meghli and riz bi halib",
+          "priceMinor": 950000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659707/rsc/salmas/desserts/trio_pudding.jpg",
+          "imageSource": "DESSERTS/TRIO PUDDING.JPG",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Set Salma's",
+      "sortOrder": 4,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Set Salma's Package",
+          "description": "Package for 2: Balila, Foul Moudamas, Sunny Side Up with Sumac, 2 Mini Cheese Manouche, 2 Mini Zaatar Manouche, Vegetable Plate and One Dessert.",
+          "priceMinor": 3500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Hummus Family",
+      "sortOrder": 5,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Traditional Hommos",
+          "description": "Chickpea puree with sesame paste and lemon juice",
+          "priceMinor": 1000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659954/rsc/salmas/hommos_family/traditional_hommos.jpg",
+          "imageSource": "HOMMOS FAMILY/TRADITIONAL HOMMOS.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": ["Hummus Add-ons"]
+        },
+        {
+          "name": "Special Hommos",
+          "description": "Chickpea puree with sesame paste, lemon juice and olive oil dressing, topped with sliced or diced marinated goat meat",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659946/rsc/salmas/hommos_family/special_hommos.jpg",
+          "imageSource": "HOMMOS FAMILY/SPECIAL HOMMOS.jpg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": ["Hummus Add-ons"]
+        },
+        {
+          "name": "Hommos Beyrouti",
+          "description": "Chickpea puree with sesame paste green chili, parsley, mint and lemon juice",
+          "priceMinor": 1000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659893/rsc/salmas/hommos_family/hommos_beyrouti.jpg",
+          "imageSource": "HOMMOS FAMILY/HOMMOS BEYROUTI.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": ["Hummus Add-ons"]
+        },
+        {
+          "name": "Hommos Mohamara",
+          "description": "Traditional hummos topped with mohamara",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659900/rsc/salmas/hommos_family/hommos_mohamara.jpg",
+          "imageSource": "HOMMOS FAMILY/HOMMOS MOHAMARA.jpg",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": ["Hummus Add-ons"]
+        },
+        {
+          "name": "Hommos Avocado with Meat",
+          "description": "A delectable combination of creamy avocado, savory meat, and the classic flavors of traditional hummos",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659875/rsc/salmas/hommos_family/hommos_avocado_meat.jpg",
+          "imageSource": "HOMMOS FAMILY/HOMMOS AVOCADO & MEAT.jpg",
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": ["Hummus Add-ons"]
+        },
+        {
+          "name": "Flavored Hommos",
+          "description": "Choice of chatta, olives or walnuts hummos",
+          "priceMinor": 1200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659858/rsc/salmas/hommos_family/flavored_hommos.jpg",
+          "imageSource": "HOMMOS FAMILY/FLAVORED HOMMOS.jpg",
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": ["Hummus Add-ons", "Flavored Hummus Choice"]
+        },
+        {
+          "name": "Quartet Hommos",
+          "description": "Rainbow of hummos: chatta, pesto, olives and walnuts",
+          "priceMinor": 1525000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659922/rsc/salmas/hommos_family/salmas_hommos.jpg",
+          "imageSource": "HOMMOS FAMILY/SALMAS HOMMOS.jpg",
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": ["Hummus Add-ons", "Quartet Hummus Choice"]
+        }
+      ]
+    },
+    {
+      "name": "Raw Section",
+      "sortOrder": 6,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Kibbeh Nayeh",
+          "description": "The lebanese steak tartare made from a mixture of cracked wheat, very finely minced goat meat and herbs",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Frakeh",
+          "description": "Kibbeh raw with a hint of house spices and extra wheat bulgur",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Habra Garlic",
+          "description": "Ground raw goat meat with homemade mixed herbs, onion and garlic sauce",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kafta Nayeh",
+          "description": "Ground raw goat meat with homemade mixed herbs, onion and parsley",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Tabliyeh Nayeh (Small)",
+          "description": "Plate of mixed raw meat; kafta, frakeh, kibbeh and habra.",
+          "priceMinor": 2500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Tabliyeh Nayeh (Large)",
+          "description": "Plate of mixed raw meat; kafta, frakeh, kibbeh and habra.",
+          "priceMinor": 4200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Soups",
+      "sortOrder": 7,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Vegetable Soup",
+          "description": "A light and savory broth with a combination of chopped fresh vegetables",
+          "priceMinor": 700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660617/rsc/salmas/soup/vegetable_soup.jpg",
+          "imageSource": "SOUP/VEGETABLE SOUP.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Red Lentil Soup",
+          "description": "A creamy fusion of blended red lentils and fresh vegetables",
+          "priceMinor": 700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660589/rsc/salmas/soup/lentil_soup.jpg",
+          "imageSource": "SOUP/LENTIL SOUP.jpg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Salads",
+      "sortOrder": 8,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Fattouch",
+          "description": "Lettuce, parsley, mint, radish, tomato with fried pita bread and debs remen",
+          "priceMinor": 1350000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660453/rsc/salmas/salads/fattouch.jpg",
+          "imageSource": "SALADS/FATTOUCH.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Fattouch",
+          "description": "A refined finely cut fattouch salad topped with zaatar dipped feta balls",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660491/rsc/salmas/salads/salmas_fattouch.jpg",
+          "imageSource": "SALADS/SALMAS FATTOUCH.jpg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Tabbouleh",
+          "description": "Parsley salad with tomato, fresh mint onion, cracked wheat with lemon oil dressing",
+          "priceMinor": 1350000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660554/rsc/salmas/salads/tabbouleh.jpg",
+          "imageSource": "SALADS/TABBOULEH.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Tabbouleh Quinoa",
+          "description": "Our fusioned tabbouleh with quinoa, pomegranate seeds, walnuts and green chili",
+          "priceMinor": 1850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660515/rsc/salmas/salads/tabbouleh_quinoa.jpg",
+          "imageSource": "SALADS/TABBOULEH QUINOA.jpg",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Citrus Rocca Halloumi Salad",
+          "description": "Rocca salad with halloumi, cherry tomato, orange & strawberry topped with vinaigrette sauce and pine nuts",
+          "priceMinor": 3000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660394/rsc/salmas/salads/citrus_salad.jpg",
+          "imageSource": "SALADS/CITRUS SALAD.jpg",
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": ["Salad Add-ons"]
+        },
+        {
+          "name": "Arabian Salad",
+          "description": "A mix of tiny chopped iceberg, cucumber, wild zaatar, spring onion, mint, green chili and cabbage with garlic lemon oil dressing",
+          "priceMinor": 1150000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660380/rsc/salmas/salads/arabian_salad.jpg",
+          "imageSource": "SALADS/ARABIAN SALAD.jpg",
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": ["Salad Add-ons"]
+        },
+        {
+          "name": "Wild Zaatar Salad",
+          "description": "Fresh wild zaatar leaves, fresh tomatoes tossed with debs remen and a sprinkle of sumac topped with sliced white shallots",
+          "priceMinor": 850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660578/rsc/salmas/salads/wild_zaatar.jpg",
+          "imageSource": "SALADS/WILD ZAATAR.jpg",
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Oriental Shrimp Avocado Salad",
+          "description": "A refreshing blend of lettuce, cabbage, tomato, green chili and zaatar leaves topped with shrimp and avocado",
+          "priceMinor": 2000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Rocca Beetroot & Feta Salad",
+          "description": "A vibrant mix of rocca, beetroot, and feta, enhanced with walnuts, pistachios, raisins and a zesty apple cider vinaigrette",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660467/rsc/salmas/salads/rocca_beet.jpg",
+          "imageSource": "SALADS/ROCCA BEET.jpg",
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Cold Mezze",
+      "sortOrder": 9,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Warak Enab (Mezze)",
+          "description": "Vine leave stuffed with rice, tomato, parsley, mint and onion cooked in lemon juice and olive oil drizzled with pomegranate sauce",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659472/rsc/salmas/cold_mezze/wara_enab.jpg",
+          "imageSource": "COLD MEZZE/WARA ENAB.JPG",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Baba Ghanouj (Mezze)",
+          "description": "Grilled eggplant puree mixed with sesame paste (tahini) and lemon juice",
+          "priceMinor": 950000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659303/rsc/salmas/cold_mezze/baba_ghanouj.jpg",
+          "imageSource": "COLD MEZZE/BABA GHANOUJ.JPEG",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Smoked Beetroot Baba Ghanouj (Mezze)",
+          "description": "A smoky baba ghanouj enhanced with vibrant beetroot, tangy feta, and aromatic black seeds",
+          "priceMinor": 1200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659459/rsc/salmas/cold_mezze/smoked_beetroot_bg.jpg",
+          "imageSource": "COLD MEZZE/SMOKED BEETROOT BG.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Hindbeh Bel Zeit (Mezze)",
+          "description": "Sauteed chicory leaves with onion, lemon garlic juice and olive oil",
+          "priceMinor": 1100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659333/rsc/salmas/cold_mezze/hindbeh.jpg",
+          "imageSource": "COLD MEZZE/HINDBEH.jpg",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Olive and Avocado Bliss (Mezze)",
+          "description": "Silky hummus topped with a vibrant mix of crunchy olive salad, slices avocado, and crunchy carrot",
+          "priceMinor": 1200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659365/rsc/salmas/cold_mezze/olive_avo_bliss.jpg",
+          "imageSource": "COLD MEZZE/OLIVE AVO BLISS.jpg",
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mohamara (Mezze)",
+          "description": "Roasted red pepper puree with bread crumbs, walnuts and salma's special seasoning",
+          "priceMinor": 1200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659355/rsc/salmas/cold_mezze/mouhamara.jpg",
+          "imageSource": "COLD MEZZE/MOUHAMARA.jpg",
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cauliflower with Tahini (Mezze)",
+          "description": "Baked cauliflower with cooked tahini sauce, onion topped with pine seeds and pomegranate",
+          "priceMinor": 1400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659337/rsc/salmas/cold_mezze/img_1025.jpg",
+          "imageSource": "COLD MEZZE/IMG_1025.jpg",
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Bezenjan (Mezze)",
+          "description": "Smoked aubergine dip topped with fresh pomegranate, wild zaatar, fried eggplant with our special sauce. Topped with crispy pita bread.",
+          "priceMinor": 800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659393/rsc/salmas/cold_mezze/salmas_bezenjan.jpg",
+          "imageSource": "COLD MEZZE/SALMAS BEZENJAN.JPEG",
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chef's Samke Harra (Mezze)",
+          "description": "Spicy fish. Baked grouper filet layered in 2 layers of sauce: traboulsi and beyruti.",
+          "priceMinor": 1550000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659325/rsc/salmas/cold_mezze/chefs_samke_harra.jpg",
+          "imageSource": "COLD MEZZE/CHEFS SAMKE HARRA.jpg",
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chanklish (Mezze)",
+          "description": "Hard yoghurt, tomato, onion, fresh basil with olive oil dressing",
+          "priceMinor": 1700000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659404/rsc/salmas/cold_mezze/shanklish.jpg",
+          "imageSource": "COLD MEZZE/SHANKLISH.jpg",
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Labneh (Mezze)",
+          "description": "Strained yoghurt, choose garlic or spicy.",
+          "priceMinor": 600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659348/rsc/salmas/cold_mezze/labneh.jpg",
+          "imageSource": "COLD MEZZE/LABNEH.jpg",
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": ["Labneh Option"]
+        },
+        {
+          "name": "Bezenjan Al Raheb (Mezze)",
+          "description": "Grilled eggplant with tomato, onion and lemon",
+          "priceMinor": 850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659315/rsc/salmas/cold_mezze/bezenjan_raheb.jpg",
+          "imageSource": "COLD MEZZE/BEZENJAN RAHEB.jpg",
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Hot Mezze",
+      "sortOrder": 10,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Batata Harra",
+          "description": "Our spicy potato cubes sauteed with garlic coriander, sweet pepper and chili",
+          "priceMinor": 1020000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659961/rsc/salmas/hot_mezze/batata_harra.jpg",
+          "imageSource": "HOT MEZZE/BATATA HARRA.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "French Fries",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Falafel",
+          "description": "Deep-fried beans and fine herb croquettes served with tahini sauce, parsley, tomato and pickles",
+          "priceMinor": 1150000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659990/rsc/salmas/hot_mezze/falafel.jpg",
+          "imageSource": "HOT MEZZE/FALAFEL.JPG",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Makanek",
+          "description": "Homemade lebanese mini sausages flambeed with butter, lemon and pomegranate sauce",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660212/rsc/salmas/hot_mezze/makanek.jpg",
+          "imageSource": "HOT MEZZE/MAKANEK.JPG",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Spicy Falafel Pops",
+          "description": "Mini deep fried beans and fine herbs croquettes served with chili and tahina sauce",
+          "priceMinor": 1150000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660238/rsc/salmas/hot_mezze/sicy_pops_falafel.jpg",
+          "imageSource": "HOT MEZZE/SICY POPS FALAFEL.jpg",
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chili Wings",
+          "description": "Sauteed chicken wings, with house garlic-chili paste a drizzle of lime and fresh cilantro",
+          "priceMinor": 1950000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659974/rsc/salmas/hot_mezze/chili_wings.jpg",
+          "imageSource": "HOT MEZZE/CHILI WINGS.JPG",
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Rass Assfour",
+          "description": "Imported tenderloin beef medallion sauteed in pomegranate molasses paste",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660208/rsc/salmas/hot_mezze/lahmeh_rass_assfour.jpg",
+          "imageSource": "HOT MEZZE/LAHMEH RASS ASSFOUR.jpg",
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chicken Ossmalieh",
+          "description": "Deep fried chicken roll stuffed with salma's special mix, rolled with ossmaliyeh served with aioli cocktail sauce",
+          "priceMinor": 1550000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659965/rsc/salmas/hot_mezze/chicken_ossmalieh.jpg",
+          "imageSource": "HOT MEZZE/CHICKEN OSSMALIEH.jpg",
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Golden Prawns",
+          "description": "Sauteed prawns with coriander and garlic served with chili",
+          "priceMinor": 2900000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kaddouchat",
+          "description": "A selection of 5 mini warps. Your choice: halloumi, falafel pops, kafta, taouk or cauliflower.",
+          "priceMinor": 2000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660166/rsc/salmas/hot_mezze/kadduchat.jpg",
+          "imageSource": "HOT MEZZE/KADDUCHAT.jpg",
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": ["Kaddouchat Choice"]
+        },
+        {
+          "name": "Seafood Combo",
+          "description": "Fried fish filet, shrimp, calamari with a side of sauces: harra, cocktail and tahini sauce",
+          "priceMinor": 4500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Special Baba Ghanouj",
+          "description": "Baba ghanouj with meat layered on bed of pita bread",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660247/rsc/salmas/hot_mezze/special_baba_ghanouj.jpg",
+          "imageSource": "HOT MEZZE/SPECIAL BABA GHANOUJ.jpg",
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Shawarma and Cauliflower Delice",
+          "description": "Succulent shawarma beef and crispy fried cauliflower on a bed of chatta hummos topped with parsley and a drizzle of tahini and debs remen",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660218/rsc/salmas/hot_mezze/shaawarma_delice.jpg",
+          "imageSource": "HOT MEZZE/SHAAWARMA DELICE.JPG",
+          "isAvailable": true,
+          "sortOrder": 12,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "King Prawn Konafa",
+          "description": "3 deep fried breaded jumbo prawns served with spicy sauce aside",
+          "priceMinor": 4300000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 13,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Special Calamari",
+          "description": "Deep fried calamari rings with a sprinkle of chili flakes, coriander and garlic with a side of chili sauce",
+          "priceMinor": 1900000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 14,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Grilled Halloumi",
+          "description": "Halloumi cheese grilled topped with pesto sauce served with grilled tomato",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659996/rsc/salmas/hot_mezze/halloumi.jpg",
+          "imageSource": "HOT MEZZE/HALLOUMI.jpg",
+          "isAvailable": true,
+          "sortOrder": 15,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Eggplant Cauliflower",
+          "description": "Fried eggplant and cauliflower served with tahini sauce",
+          "priceMinor": 1300000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659979/rsc/salmas/hot_mezze/eggplant_cauliflower.jpg",
+          "imageSource": "HOT MEZZE/EGGPLANT CAULIFLOWER.JPEG",
+          "isAvailable": true,
+          "sortOrder": 16,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Grilled Shanklish Bites",
+          "description": "Grilled crumbled cheese, tomato, onion fresh parsley, green chili drizzled with olive oil wrapped in salma's saj and cut in bites",
+          "priceMinor": 1750000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660235/rsc/salmas/hot_mezze/shanklish_wrap.jpg",
+          "imageSource": "HOT MEZZE/SHANKLISH WRAP.jpg",
+          "isAvailable": true,
+          "sortOrder": 17,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Soujouk with Banadora",
+          "description": "Homemade lebanese spicy sausages, sauteed in lemon and tomato",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660154/rsc/salmas/hot_mezze/img_1054.jpg",
+          "imageSource": "HOT MEZZE/IMG_1054.jpg",
+          "isAvailable": true,
+          "sortOrder": 18,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Shrimp Ossmalieh",
+          "description": "Deep fried shrimps wrapped in vermicelli with a special dip on the side",
+          "priceMinor": 2350000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 19,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kafta Rolls",
+          "description": "Signature bites of kafta rolls topped with pomegranate sauce",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660188/rsc/salmas/hot_mezze/kafta_rolls.jpg",
+          "imageSource": "HOT MEZZE/KAFTA ROLLS.jpg",
+          "isAvailable": true,
+          "sortOrder": 20,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chicken Shawarma Platter",
+          "description": "Shawarma marinated chicken with french fries pickles and creamy garlic sauce",
+          "priceMinor": 1750000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660010/rsc/salmas/hot_mezze/hommos_pesto_chicken_shawarma.jpg",
+          "imageSource": "HOT MEZZE/HOMMOS PESTO & CHICKEN SHAWARMA.jpg",
+          "isAvailable": true,
+          "sortOrder": 21,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Pastries",
+      "sortOrder": 11,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Spinach Fatayer with a Twist",
+          "description": "Fried lebanese spinach pastry glazed in debs remen",
+          "priceMinor": 950000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660346/rsc/salmas/pastries/spinach_fatayer_with_a_twist.jpg",
+          "imageSource": "PASTRIES/SPINACH FATAYER WITH A TWIST.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cheese Roll",
+          "description": "Deep fried pastry filled with mixed cheese",
+          "priceMinor": 1120000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660291/rsc/salmas/pastries/cheese_rolls.jpg",
+          "imageSource": "PASTRIES/CHEESE ROLLS.jpg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Grilled Halloumi Pesto Rolls",
+          "description": "Halloumi and pesto grilled in a puff pastry",
+          "priceMinor": 2200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660302/rsc/salmas/pastries/grilled_halloumi_pesto_rolls.jpg",
+          "imageSource": "PASTRIES/GRILLED HALLOUMI PESTO ROLLS.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Meat Samboussek",
+          "description": "Deep-fried lebanese pastry filled with minced goat meat and pine kernels",
+          "priceMinor": 950000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660314/rsc/salmas/pastries/meat_samboussek.jpg",
+          "imageSource": "PASTRIES/MEAT SAMBOUSSEK.jpg",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cheese Samboussek",
+          "description": "Deep-fried pastry filled with akawi and mozzarella cheese",
+          "priceMinor": 1120000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660297/rsc/salmas/pastries/cheese_samboussek.jpg",
+          "imageSource": "PASTRIES/CHEESE SAMBOUSSEK.jpg",
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cheese & Soujouk Rolls",
+          "description": "Deep fried pastry filled with cheese and our lebanese spicy sausages",
+          "priceMinor": 1100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660329/rsc/salmas/pastries/soujouk_cheese_rolls.jpg",
+          "imageSource": "PASTRIES/SOUJOUK CHEESE ROLLS.jpg",
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Stuffed Kibbeh Balls",
+          "description": "Deep fried goat meatballs mixed with cracked wheat and onions, filled with sauteed minced meat and onions",
+          "priceMinor": 1450000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660308/rsc/salmas/pastries/kibbeh_balls.jpg",
+          "imageSource": "PASTRIES/KIBBEH BALLS.jpg",
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Kibbeh",
+          "description": "Mini kibbeh balls stuffed with labneh and a small sieve of labneh chatta",
+          "priceMinor": 1350000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Fatet Family",
+      "sortOrder": 12,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Fatet Shish Barak",
+          "description": "Hand folded dumplings filled with spiced lamb in a yoghurt sauce topped with toasted nuts and a drizzle of tomato sauce",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659790/rsc/salmas/fatet_family/shish_barak.jpg",
+          "imageSource": "FATET FAMILY/SHISH BARAK.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fatet Hommos",
+          "description": "Layers of boiled chickpeas, toasted bread and crushed garlic, topped with yoghurt and grilled pine kernels",
+          "priceMinor": 1400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659771/rsc/salmas/fatet_family/regular.jpg",
+          "imageSource": "FATET FAMILY/REGULAR.jpg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fatet Bezenjan",
+          "description": "The lebanese eggplant crumble. Deep fried aubergine, toasted bread and crushed garlic topped with yoghurt and grilled pine kernels",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659725/rsc/salmas/fatet_family/eggplant.jpg",
+          "imageSource": "FATET FAMILY/EGGPLANT.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fatet Arayess Kafta",
+          "description": "Kafta rolls in a bed of yoghurt and crispy chickpeas",
+          "priceMinor": 1750000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659735/rsc/salmas/fatet_family/kafta.jpg",
+          "imageSource": "FATET FAMILY/KAFTA.jpg",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Tabliyet Salma's",
+      "sortOrder": 13,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Shish Taouk (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chicken (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kafta (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659810/rsc/salmas/grill/kafta.jpg",
+          "imageSource": "GRILL/KAFTA.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Makanek (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660212/rsc/salmas/hot_mezze/makanek.jpg",
+          "imageSource": "HOT MEZZE/MAKANEK.JPG",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kabab (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Soujouk (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Spicy Cashew Kafta (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Lahme (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Burger Wrap (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Beef or Chicken Shawarma (Platter)",
+          "description": "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
+          "priceMinor": 1750000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660010/rsc/salmas/hot_mezze/hommos_pesto_chicken_shawarma.jpg",
+          "imageSource": "HOT MEZZE/HOMMOS PESTO & CHICKEN SHAWARMA.jpg",
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Salma's Baked Tacos",
+      "sortOrder": 14,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Soujouk Tacos",
+          "description": "Grilled soujouk folded into tacos and layered with rocca, cherry tomato and jalapeno",
+          "priceMinor": 2400000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792661012/rsc/salmas/tacos/soujouk.jpg",
+          "imageSource": "TACOS/SOUJOUK.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cheese Tacos",
+          "description": "Warm manouche folded into tacos and stuffed with a cheese filling, lettuce, cherry tomato and cucumber",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660987/rsc/salmas/tacos/cheese.jpg",
+          "imageSource": "TACOS/CHEESE.jpg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Zaatar Tacos",
+          "description": "A modern take on a zaatar manouche but folded into tacos and stuffed with rocca, cherry tomato black olive and spring onion",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792661054/rsc/salmas/tacos/zaatar.jpg",
+          "imageSource": "TACOS/ZAATAR.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Our Specials",
+      "sortOrder": 15,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Grilled Fish Filet",
+          "description": "On a bed of cauliflower with tahini topped with chef special seasoning",
+          "priceMinor": 2000000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660975/rsc/salmas/specials/grilled_fish_filet_2.jpg",
+          "imageSource": "SPECIALS/GRILLED FISH FILET-2.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Beef Paillard",
+          "description": "Beef steak topped with garlic, lemon and rosemary with a side of aromatic baked potatoes",
+          "priceMinor": 3500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660969/rsc/salmas/specials/beef_paillard.jpg",
+          "imageSource": "SPECIALS/BEEF PAILLARD.jpg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Sides",
+      "sortOrder": 16,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Fried Rice",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Grilled Vegetables",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Grilled Potatoes",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Side Vegetables",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Oriental Rice",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Vermicelli Rice",
+          "description": null,
+          "priceMinor": 600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Broccoli",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "From The Grill",
+      "sortOrder": 17,
+      "isActive": true,
+      "items": [
+        {
+          "name": "The Oga Platter",
+          "description": "4 skewers of spicy cashew kafta/4skewers of kafta/4skewers of shish taouk/ 4skewers of goat filet. Served with grilled vegetables, 10 bites of makanek sandwich, 8 slices of kafta arayess and 12 pcs of chicken wings.",
+          "priceMinor": 16500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659821/rsc/salmas/grill/oga_platter.jpg",
+          "imageSource": "GRILL/OGA PLATTER.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Arayess Kafta",
+          "description": "Grilled pita bread filled with seasoned minced goat meat",
+          "priceMinor": 1350000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659810/rsc/salmas/grill/kafta.jpg",
+          "imageSource": "GRILL/KAFTA.jpg",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kafta",
+          "description": "Charcoal-grilled skewers of seasoned lamb with onions and parsley",
+          "priceMinor": 1500000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659810/rsc/salmas/grill/kafta.jpg",
+          "imageSource": "GRILL/KAFTA.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Spicy Cashew Kafta",
+          "description": "Charcoal-grilled skewers of seasoned minced lamb with onions, parsley, green chili and cashew",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659810/rsc/salmas/grill/kafta.jpg",
+          "imageSource": "GRILL/KAFTA.jpg",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ribs",
+          "description": "Based on availability grilled goat ribs",
+          "priceMinor": 2100000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Imported Lahme",
+          "description": "Imported charcoal-grilled tender marinated beef filet cubes add spicy sauce",
+          "priceMinor": 2650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": ["Spicy Sauce"]
+        },
+        {
+          "name": "Chicken Wings",
+          "description": "12pcs grilled chicken wings marinated with house blend herbs served with garlic sauce",
+          "priceMinor": 1950000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Shish Taouk",
+          "description": "Charcoal-grilled skewers of marinated chicken cubes, served with garlic sauce served with french fries add spicy sauce",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659838/rsc/salmas/grill/taouk.jpg",
+          "imageSource": "GRILL/TAOUK.jpg",
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": ["Spicy Sauce"]
+        },
+        {
+          "name": "Shish Kabab",
+          "description": "Grilled kabab balls with assorted grilled vegetables",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659804/rsc/salmas/grill/kabab_khechkhach.jpg",
+          "imageSource": "GRILL/KABAB KHECHKHACH.jpg",
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mixed Grill (2-4 pax)",
+          "description": "Charcoal-grilled skewers of seasoned lamb, goat filet and chicken cubes, served with garlic sauce, grilled vegetables, grilled tomatoes and onions. 2 of each skewer.",
+          "priceMinor": 4350000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mixed Grill (4-8 pax)",
+          "description": "Charcoal-grilled skewers of seasoned lamb, goat filet and chicken cubes, served with garlic sauce, grilled vegetables, grilled tomatoes and onions. 4 of each skewer.",
+          "priceMinor": 8700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fateyel",
+          "description": "4 skewers of goat filet in our special seasoning",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Half Chicken",
+          "description": "Charcoal-grilled half chicken, served with garlic sauce",
+          "priceMinor": 2100000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 12,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Whole Chicken",
+          "description": "Charcoal-grilled whole chicken served with garlic sauce",
+          "priceMinor": 3650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 13,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Grilled Jumbo Prawns",
+          "description": "4 pcs king prawns, grilled, served with chef's special sauce add spicy sauce",
+          "priceMinor": 5600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 14,
+          "modifierGroupRefs": ["Spicy Sauce"]
+        },
+        {
+          "name": "White Fish Sikh",
+          "description": "Marinated and charcoal grilled fish chunks skewers served with lebanese style rice of french fries and chili sauce",
+          "priceMinor": 2500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 15,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Oriental Salmon Filet",
+          "description": "Salmon filet served with our seasoned broccoli and a choice of rice of fries",
+          "priceMinor": 4600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 16,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Grilled Fish (Grouper)",
+          "description": "Up to 1kg of fresh fish grouper served with tahini sauce",
+          "priceMinor": 3600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 17,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "From The Oven",
+      "sortOrder": 18,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Double Loaded Manouche (Baked)",
+          "description": "2 layers of dough, one filled with mix cheese and the second zaatar",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cheese & Kafta Manouche (Baked)",
+          "description": "Delicious ground beef mixed with spices, diced onions and parsley, known as kafta, flavoured with cheese on our new dough",
+          "priceMinor": 2200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Lahm Bi Ajin (Baked)",
+          "description": "Baked lebanese pastry filled with seasoned minced goat meat, tomato and onion",
+          "priceMinor": 1100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660276/rsc/salmas/oven/lahm_bi_ajn.jpg",
+          "imageSource": "OVEN/LAHM BI AJN.jpeg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fatayer Bakli (Baked)",
+          "description": null,
+          "priceMinor": 1100000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Sfiha Bel Forn (Baked)",
+          "description": "6 pcs baked lebanese pastry filled with seasoned minced goat meat, tomato, onion and grenadine paste",
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Soujouk & Cheese Manouche (Baked)",
+          "description": "Lebanese spicy sausages mixed with cheese all baked in our oven",
+          "priceMinor": 1900000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660258/rsc/salmas/oven/cheese_soujouk.jpg",
+          "imageSource": "OVEN/CHEESE & SOUJOUK.jpeg",
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Manouche (Baked)",
+          "description": "Our delicious cheese mixed with chopped grilled vegetables topped on our special salma's dough",
+          "priceMinor": 1700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Desserts",
+      "sortOrder": 19,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Kallaj Layali Lebnen with Vanilla Ice Cream",
+          "description": "Crispy kallaj pastry filled with layali lebnen cream",
+          "priceMinor": 1800000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659526/rsc/salmas/desserts/kellaj_layali_lebnan.jpg",
+          "imageSource": "DESSERTS/KELLAJ LAYALI LEBNAN.jpg",
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fruit Platter",
+          "description": "A selection of freshly cut seasonal fruits",
+          "priceMinor": 850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659510/rsc/salmas/desserts/fruit_platter.jpg",
+          "imageSource": "DESSERTS/FRUIT PLATTER.JPG",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ossmalieh",
+          "description": "Baked vermicelli with oriental cream, topped with rosewater syrup, sprinkled with pistachios",
+          "priceMinor": 1050000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659539/rsc/salmas/desserts/ossmalieh.jpg",
+          "imageSource": "DESSERTS/OSSMALIEH.jpg",
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Pistachio and Ossmalieh Roll",
+          "description": "Experience the fusion of halawa ice cream rolled in crispy osmaliye, crowned with a warm pistachio topping",
+          "priceMinor": 1650000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659666/rsc/salmas/desserts/pistachhio_ossmalieh.jpg",
+          "imageSource": "DESSERTS/PISTACHHIO OSSMALIEH.JPG",
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Strawberry Cheesecake",
+          "description": "Biscuit base crust covered with cream cheese mix, topped with strawberry jam",
+          "priceMinor": 1350000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659504/rsc/salmas/desserts/cheesecake.jpg",
+          "imageSource": "DESSERTS/CHEESECAKE.jpg",
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Tart",
+          "description": "Tart crust filled with caramel sauce, topped with ice cream and lebanese cotton candy",
+          "priceMinor": 1100000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659690/rsc/salmas/desserts/salmas_tart.jpg",
+          "imageSource": "DESSERTS/SALMAS TART.JPG",
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Brownie",
+          "description": "Authentic brownie cake topped with vanilla icecream, chocolate and caramel sauce",
+          "priceMinor": 1250000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659481/rsc/salmas/desserts/brownie.jpg",
+          "imageSource": "DESSERTS/BROWNIE.JPG",
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Qatayef Ashta",
+          "description": "5 pcs thin and lacy arabic pancakes stuffed with clotted cream prepared with rose water and orange blossom",
+          "priceMinor": 850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659677/rsc/salmas/desserts/qatayef_ashta.jpg",
+          "imageSource": "DESSERTS/QATAYEF ASHTA.JPEG",
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Qatayef Nutella",
+          "description": "Thin and lacy lebanese pancakes stuffed with nutella and sprinkled with caramelized nuts",
+          "priceMinor": 1100000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chef's Special",
+          "description": "2qatayef ashta, 2qatayef nutella 2 halawet halawi bel jebn and 1 bouzet salma's",
+          "priceMinor": 2000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Trio Pudding",
+          "description": "3 cups of mouhalabiyeh, meghli and riz bi halib",
+          "priceMinor": 950000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659707/rsc/salmas/desserts/trio_pudding.jpg",
+          "imageSource": "DESSERTS/TRIO PUDDING.JPG",
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Bouzet Salma's",
+          "description": "Salma's signature ice cream",
+          "priceMinor": 950000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Layali Lebnen",
+          "description": "A creamy lebanese dessert featuring a semolina pudding base topped with a layer of whipped cream and garnished with fragrant sugar syrup and crushed pistachios, light and refreshing.",
+          "priceMinor": 1050000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659534/rsc/salmas/desserts/layali_ebnen.jpg",
+          "imageSource": "DESSERTS/LAYALI EBNEN.JPG",
+          "isAvailable": true,
+          "sortOrder": 12,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Trio Ice Cream",
+          "description": "Chocolate, lemon, sorbet & halawi",
+          "priceMinor": 1050000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 13,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fried Qatayef Bel Ashta",
+          "description": "Special deep fried pancakes with ashta filling",
+          "priceMinor": 1200000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792665469/rsc/salmas/desserts/fried_qatayef.jpg",
+          "imageSource": "DESSERTS/FRIED QATAYEF .jpg",
+          "isAvailable": true,
+          "sortOrder": 14,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Halawet Halawi Bel Jebn",
+          "description": "Delicate pastry rolls stuffed with a silky ashta and cheese as well as halawi topped with syrup and a shower of pistachios",
+          "priceMinor": 1600000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659479/rsc/salmas/desserts/halawet_jebneh.jpg",
+          "imageSource": "DESSERTS/ HALAWET JEBNEH.jpg",
+          "isAvailable": true,
+          "sortOrder": 15,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Hot Beverages",
+      "sortOrder": 20,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Oriental Frappuccino",
+          "description": null,
+          "priceMinor": 950000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Hot Chocolate",
+          "description": null,
+          "priceMinor": 750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cappuccino",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Espresso",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Double Espresso",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Lebanese Coffee",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Café Blanc",
+          "description": "Orange blossom digestive",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Tea",
+          "description": null,
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Sandwiches",
+      "sortOrder": 21,
+      "isActive": true,
+      "items": [
+        {
+          "name": "French Fries (Sandwich)",
+          "description": "French fries, coleslaw, garlic, ketchup and pickles",
+          "priceMinor": 750000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Falafel (Sandwich)",
+          "description": "Our homemade falafel wrapped in our saj bread with, turnip pickles, parsley, tomato, chili and mint with a tahini sauce",
+          "priceMinor": 850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659990/rsc/salmas/hot_mezze/falafel.jpg",
+          "imageSource": "HOT MEZZE/FALAFEL.JPG",
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cauliflower (Sandwich)",
+          "description": "Fried cauliflower, pickles, french fries, tomato and fresh mint topped with tahini sauce wrapped in pitta bread",
+          "priceMinor": 950000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Shish Taouk (Sandwich)",
+          "description": "Our famous chicken shish taouk wrapped in saj bread with garlic sauce and french fries",
+          "priceMinor": 850000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chicken (Sandwich)",
+          "description": "2 sandwiches of our marinated grilled chicken wrapped in saj bread with garlic and french fries",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kafta (Sandwich)",
+          "description": "Grilled lamb skewers, hummos, onions, parsley, sweet pepper, tomato and pickles",
+          "priceMinor": 850000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kabab (Sandwich)",
+          "description": "Grilled kabab skewers, hummos, onions, parsley, sweet pepper, tomato and pickles",
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Makanek (Sandwich)",
+          "description": "Mini lebanese sausages flambeed with butter and lemon, hummos, tomatoes and pickles",
+          "priceMinor": 850000,
+          "imageUrl": "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660212/rsc/salmas/hot_mezze/makanek.jpg",
+          "imageSource": "HOT MEZZE/MAKANEK.JPG",
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Soujouk (Sandwich)",
+          "description": "Spicy sausages flambeed with butter and lemon, hummos, garlic sauce, tomato and pickles",
+          "priceMinor": 850000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Spicy Cashew Kafta (Sandwich)",
+          "description": "Spicy cashew kafta with pickles, hummos and biwaz",
+          "priceMinor": 850000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Lahme (Sandwich)",
+          "description": "Grilled tender cubes of imported beef fillet, hummos, onion, parsley, sweet pepper pickles and tomato",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Burger Wrap (Sandwich)",
+          "description": "Lebanese seasoned meat sandwich with coleslaw and french fries",
+          "priceMinor": 1300000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Shawarma Sandwich (Sandwich)",
+          "description": "Sunday special only. Sandwich.",
+          "priceMinor": 900000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 12,
+          "modifierGroupRefs": ["Shawarma Portion"]
+        },
+        {
+          "name": "Shawarma Sajj (Sandwich)",
+          "description": "Sajj.",
+          "priceMinor": 1200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 13,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Shawarma Platter (Sandwich)",
+          "description": "Platter.",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 14,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Signature Cocktails",
+      "sortOrder": 22,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Vi's Elixir",
+          "description": "A refreshing blend vodka, lychee liqueur elderflower syrup, and mint, topped with tonic water",
+          "priceMinor": 1600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Carlito's Secret",
+          "description": "Perfect match of aperol and tequila, exotic coconut milk served with cotton candy",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Red Sensation",
+          "description": "Grapefruit based cocktail with gin and aperol for the amazing bitter/sweet flavor",
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "20/24",
+          "description": "Salma's spicy & peachy signature version of whiskey sour",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "M.D.",
+          "description": "Exquisite taste of rum & amp; grapefruit along with fresh basil, topped with ginger beer",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Green Focus",
+          "description": "If you like long island, this is the rich-in-flavor upgrade",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Wudu",
+          "description": "Vodka, white rum, coconut syrup, lemon juice, strawberry syrup, soda water and fresh strawberries",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "JD's Lust",
+          "description": "Passion fruit, jack daniels, campari, pineapple juice",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Beirut's Port",
+          "description": "Gin, passion fruit puree and fresh rosemary syrup",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Salma's Colada",
+          "description": "White rum, malibu, creme de cocoa, pineapple cordial and pineapple/coconut mix",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ruby's Shell",
+          "description": "Tequila, malibu rum, coconut milk and agave",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Vino Tequila Twilight",
+          "description": "A bold mix of tequila, apple liqueur, mint, and lemon topped with a splash of red wine. Refreshing and unique.",
+          "priceMinor": 1650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Lavender Cucumber Fizz",
+          "description": "A refreshing blend of gin, vodka, lavender syrup, and lemon juice, muddled with cucumber and topped with a hint of blue curacao, perfectly floral and crisp.",
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 12,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Salma's Margaritas",
+      "sortOrder": 23,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Picante Mango Margarita",
+          "description": "A fiery twist on a classic made with tequila, lime mango puree and a spicy kick. It's sweet, spicy, and all-round refreshing",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Carlito's Way",
+          "description": "Experience the irresistible allure of carlito's way: basil-infused strawberries sparkling margarita",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Paloma Nuestra",
+          "description": "A vibrant blending of basil and mint infused grapefruit, lemon margarita. Bold flavors that captivate",
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Spritz & Martini Cocktails",
+      "sortOrder": 24,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Citrus Martini",
+          "description": null,
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Dirty Martini",
+          "description": null,
+          "priceMinor": 1350000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Espresso Martini",
+          "description": null,
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Pornstar Martini",
+          "description": null,
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Prosecco",
+          "description": null,
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Negroni Spagliato",
+          "description": null,
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Lychee Spritz",
+          "description": null,
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Aperol Spritz",
+          "description": null,
+          "priceMinor": 1550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Cocktails",
+      "sortOrder": 25,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Mojito",
+          "description": null,
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Negroni",
+          "description": null,
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Cosmopolitan",
+          "description": null,
+          "priceMinor": 1400000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Long Island",
+          "description": null,
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Whiskey Sour",
+          "description": null,
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Gin Basil",
+          "description": null,
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Moscow Mule",
+          "description": null,
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Old Fashioned",
+          "description": null,
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Amaretto Sour",
+          "description": null,
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Appletini",
+          "description": null,
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Blue Hawaii",
+          "description": null,
+          "priceMinor": 1500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Mocktails",
+      "sortOrder": 26,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Chapman",
+          "description": "Made on the spot the way you like it",
+          "priceMinor": 850000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Bloody Samaritan",
+          "description": "A blend of strawberry, passion fruit puree, fresh rosemary syrup, cranberry and apple juice",
+          "priceMinor": 1150000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Superrex",
+          "description": "Muddled watermelon & pineapple, passion fruit puree lemon and lime soda",
+          "priceMinor": 1150000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chill Out",
+          "description": "Basil leaves, apple, apple juice topped with soda",
+          "priceMinor": 1150000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ginger Passion",
+          "description": "Smashed ginger & apples, apple juice topped with soda",
+          "priceMinor": 1150000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Berry Caiprinha",
+          "description": "Mixed berries, lemon, cranberry & apple juice",
+          "priceMinor": 1150000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mojito Sister",
+          "description": "Passion fruit puree, lemon juice, mint leaves lime wedges topped with soda",
+          "priceMinor": 1150000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Virgin Espresso",
+          "description": "Creamy Espresso Mocktail",
+          "priceMinor": 1250000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Green Lantern",
+          "description": "Kiwi, pineapple, parsley, cranberry and pineapple juice",
+          "priceMinor": 1150000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Lemonade",
+          "description": "Choose between orange blossom or minted",
+          "priceMinor": 850000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Banana Island",
+          "description": "Banana, vanilla ice cream, chocolate syrup all blend to create our signature milkshake",
+          "priceMinor": 1450000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Tequila",
+      "sortOrder": 27,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Vivir Reposado",
+          "description": "Bottle: N260,000 | Single: N20,000",
+          "priceMinor": 26000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Vivir Blanco",
+          "description": "Bottle: N200,000 | Single: N16,500",
+          "priceMinor": 20000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Vivir Coffee",
+          "description": "Bottle: N180,000 | Single: N15,500",
+          "priceMinor": 18000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Clase Azul Reposado",
+          "description": "Bottle: N850,000",
+          "priceMinor": 85000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Clase Azul Añejo",
+          "description": "Bottle: N2,500,000",
+          "priceMinor": 250000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Clase Azul Plata",
+          "description": "Bottle: N420,000 | Single: N33,500",
+          "priceMinor": 42000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Clase Azul Gold",
+          "description": "Bottle: N1,750,000",
+          "priceMinor": 175000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Don Julio 1942",
+          "description": "Bottle: N1,200,000",
+          "priceMinor": 120000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Don Julio Reposado",
+          "description": "Bottle: N340,000 | Single: N24,000",
+          "priceMinor": 34000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Don Julio Blanco",
+          "description": "Bottle: N330,000 | Single: N23,000",
+          "priceMinor": 33000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Patron",
+          "description": "Bottle: N160,000 | Single: N12,000",
+          "priceMinor": 16000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Vodka",
+      "sortOrder": 28,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Grey Goose",
+          "description": "Bottle: N140,000 | Single: N7,500",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Belvedere",
+          "description": "Bottle: N200,000 | Single: N11,000",
+          "priceMinor": 20000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Titos",
+          "description": "Bottle: N130,000 | Single: N9,500",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Gin",
+      "sortOrder": 29,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Bombay Sapphire",
+          "description": "Bottle: N75,000 | Single: N5,600",
+          "priceMinor": 7500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Hendrick's",
+          "description": "Bottle: N160,000 | Single: N14,000",
+          "priceMinor": 16000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Drumshanbo",
+          "description": "Bottle: N130,000 | Single: N11,000",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Drumshanbo Citrus",
+          "description": "Bottle: N140,000 | Single: N12,000",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Drumshanbo Fig",
+          "description": "Bottle: N140,000 | Single: N12,000",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Drumshanbo Pineapple",
+          "description": "Bottle: N140,000 | Single: N12,000",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Capetown Pink Gin",
+          "description": "Bottle: N90,000 | Single: N8,000",
+          "priceMinor": 9000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Gin Mare",
+          "description": "Bottle: N140,000 | Single: N12,000",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Single Malt",
+      "sortOrder": 30,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Monkey Shoulder",
+          "description": "Bottle: N140,000 | Single: N11,500",
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Glenfiddich 12",
+          "description": "Bottle: N180,000 | Single: N14,000",
+          "priceMinor": 18000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Glenfiddich 15",
+          "description": "Bottle: N225,000 | Single: N17,000",
+          "priceMinor": 22500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Glenfiddich 18",
+          "description": "Bottle: N290,000 | Single: N21,000",
+          "priceMinor": 29000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Glenfiddich 21",
+          "description": "Bottle: N730,000 | Single: N53,000",
+          "priceMinor": 73000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "The Macallan 12",
+          "description": "Bottle: N240,000 | Single: N18,000",
+          "priceMinor": 24000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "The Macallan 15",
+          "description": "Bottle: N475,000 | Single: N37,000",
+          "priceMinor": 47500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "The Macallan 18",
+          "description": "Bottle: N800,000 | Single: N60,000",
+          "priceMinor": 80000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "The Macallan Rare Cask",
+          "description": "Bottle: N740,000 | Single: N55,000",
+          "priceMinor": 74000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Whiskey",
+      "sortOrder": 31,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Johnnie Walker Black Label",
+          "description": "Bottle: N145,000 | Single: N11,500",
+          "priceMinor": 14500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Johnnie Walker Green Label",
+          "description": "Bottle: N185,000 | Single: N15,000",
+          "priceMinor": 18500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Johnnie Walker Gold Label",
+          "description": "Bottle: N230,000 | Single: N18,500",
+          "priceMinor": 23000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Johnnie Walker Blue Label",
+          "description": "Bottle: N750,000 | Single: N58,000",
+          "priceMinor": 75000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Jack Daniel's",
+          "description": "Bottle: N95,000 | Single: N8,000",
+          "priceMinor": 9500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chivas 12",
+          "description": "Bottle: N110,000 | Single: N9,000",
+          "priceMinor": 11000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chivas 18",
+          "description": "Bottle: N260,000 | Single: N20,000",
+          "priceMinor": 26000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Jameson",
+          "description": "Bottle: N85,000 | Single: N7,000",
+          "priceMinor": 8500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Singleton",
+          "description": "Bottle: N190,000 | Single: N16,000",
+          "priceMinor": 19000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Cognac",
+      "sortOrder": 32,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Hennessy VS",
+          "description": "Bottle: N162,000 | Single: N13,000",
+          "priceMinor": 16200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Hennessy VSOP",
+          "description": "Bottle: N290,000 | Single: N22,000",
+          "priceMinor": 29000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Hennessy XO",
+          "description": "Bottle: N750,000 | Single: N58,000",
+          "priceMinor": 75000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Rémy Martin XO",
+          "description": "Bottle: N700,000 | Single: N53,000",
+          "priceMinor": 70000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Rémy Martin VSOP",
+          "description": "Bottle: N240,000 | Single: N19,000",
+          "priceMinor": 24000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Martell VS",
+          "description": "Bottle: N145,000 | Single: N12,000",
+          "priceMinor": 14500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Martell VSOP",
+          "description": "Bottle: N210,000 | Single: N17,000",
+          "priceMinor": 21000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Martell XO",
+          "description": "Bottle: N650,000 | Single: N50,000",
+          "priceMinor": 65000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Rum & Other Spirits",
+      "sortOrder": 33,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Captain Morgan",
+          "description": "Bottle: N50,000 | Single: N4,000",
+          "priceMinor": 5000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Bacardi Gol",
+          "description": "Single: N5,500",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Bacardi White",
+          "description": "Bottle: N70,000 | Single: N5,500",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Campari",
+          "description": "Single: N5,500",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Baileys",
+          "description": "Bottle: N80,000 | Single: N6,800",
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Amaretto",
+          "description": "Single: N5,500",
+          "priceMinor": 550000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Jagermeister",
+          "description": "Bottle: N50,000 | Single: N4,000",
+          "priceMinor": 5000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Malibu",
+          "description": "Single: N4,500",
+          "priceMinor": 450000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Martini Bianco",
+          "description": "Bottle: N60,000 | Single: N5,000",
+          "priceMinor": 6000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Martini Rosso",
+          "description": "Bottle: N60,000 | Single: N5,000",
+          "priceMinor": 6000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Martini Extra Dry",
+          "description": "Bottle: N60,000 | Single: N5,000",
+          "priceMinor": 6000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Arak",
+      "sortOrder": 34,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Fakra",
+          "description": "Bottle: N60,000 | 1/2 Bottle: N45,000 | 1/4 Bottle: N33,000",
+          "priceMinor": 6000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ksara",
+          "description": "1/2 Bottle: N50,000 | 1/4 Bottle: N35,000",
+          "priceMinor": 5000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Massaya",
+          "description": "Bottle: N65,000 | 1/2 Bottle: N45,000 | 1/4 Bottle: N33,000",
+          "priceMinor": 6500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Brun",
+          "description": "Bottle: N68,000 | 1/2 Bottle: N52,000 | 1/4 Bottle: N35,000",
+          "priceMinor": 6800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Arak by the Glass",
+          "description": "1/4 Bottle: N8,000",
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Cold Beverages",
+      "sortOrder": 35,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Guinness Stout",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Gulder",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Star",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Heineken",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Draught Heineken",
+          "description": null,
+          "priceMinor": 470000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Boot Beer",
+          "description": null,
+          "priceMinor": 700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Power Horse",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Red Bull",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Perrier",
+          "description": null,
+          "priceMinor": 650000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Packed Juice by Glass",
+          "description": "Apple, Orange, Pineapple, Cranberry Juice, Mango, Watermelon",
+          "priceMinor": 420000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fresh Juice by Glass",
+          "description": "Apple, Orange, Pineapple, Watermelon, Mixed Flavors (blend Up to 4)",
+          "priceMinor": 620000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Pepsi",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Soda",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 12,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Tonic",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 13,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Bitter Lemon",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 14,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mirinda",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 15,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "7Up",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 16,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Pepsi Light",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 17,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "7Up Free",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 18,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Malta Guinness",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 19,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mineral Water (Small)",
+          "description": null,
+          "priceMinor": 270000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 20,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mineral Water (Large)",
+          "description": null,
+          "priceMinor": 320000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 21,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "House Wines",
+      "sortOrder": 36,
+      "isActive": true,
+      "items": [
+        {
+          "name": "House Wine",
+          "description": "House wine served by the glass",
+          "priceMinor": 800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Red Wines",
+      "sortOrder": 37,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Serengeti Red",
+          "description": "South Africa",
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "F. Jeantet Cotes du Rhone 2018",
+          "description": "France",
+          "priceMinor": 6000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Millstream Pinotage, 2022",
+          "description": "South Africa",
+          "priceMinor": 6200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Blabla Cabernet Sauvignon 2020",
+          "description": "France",
+          "priceMinor": 6500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Santa Rita 120 Reserva Especial Sauvignon 2021",
+          "description": "Chile",
+          "priceMinor": 6600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau Saint - Leon Bordeaux 2018",
+          "description": "France",
+          "priceMinor": 6800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Hobnob Merlot",
+          "description": "France",
+          "priceMinor": 6800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ixsir Grande Reserve 2014",
+          "description": "Lebanon",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Thomas Barton Reserve Bordeaux, 2023",
+          "description": "France",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau Haussman - Bordeaux Superieur 2019",
+          "description": "France",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ksara Reserve du Couvent 2018",
+          "description": "Lebanon",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Fiefs d'Illac Bordeaux 2018",
+          "description": "France",
+          "priceMinor": 7800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Dona Paula Estate Malbec 2021",
+          "description": "Argentina",
+          "priceMinor": 9500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 12,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Sand Stone Syrah 2020",
+          "description": "Portugal",
+          "priceMinor": 11000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 13,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau Lieujean Haut - Medoc 2014",
+          "description": "France",
+          "priceMinor": 11000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 14,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau du Grand Soussans Margaux Bordeaux 2017",
+          "description": "France",
+          "priceMinor": 11000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 15,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Kanonkop Kadette, Cape Blend 2019",
+          "description": "South Africa",
+          "priceMinor": 11000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 16,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Valpolicella Superiore 2018",
+          "description": "Italy",
+          "priceMinor": 11500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 17,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau de Rochemorin Pessac Leognan, grands Vins de Bordeaux 2016",
+          "description": "France",
+          "priceMinor": 12200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 18,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau la Vaissinere Queruc 2018",
+          "description": "France",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 19,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau Loudenne Medoc 2012",
+          "description": "France",
+          "priceMinor": 16000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 20,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Villa Antinori Toscana Rosso 2018",
+          "description": "Italy",
+          "priceMinor": 15500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 21,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Torbreck Woodcutter's Shiraz 2020",
+          "description": "New Zealand",
+          "priceMinor": 15500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 22,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau Haut Surget Lalande Pomerole 2019",
+          "description": "France",
+          "priceMinor": 18000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 23,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "White Wines",
+      "sortOrder": 38,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Serengeti White",
+          "description": "South Africa",
+          "priceMinor": 5500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Millstream, Sauvignon Blanc 2022",
+          "description": "South Africa",
+          "priceMinor": 6200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Santa Rita 120 Reserva Chardonnay 2021",
+          "description": "Chile",
+          "priceMinor": 6600000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ixsir Grande Reserve 2019",
+          "description": "Lebanon",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ksara Blanc de Blanc 2019",
+          "description": "Lebanon",
+          "priceMinor": 8000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Santa Cristina Pinot Grigio Delle Venezie",
+          "description": "Italy",
+          "priceMinor": 9000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Chateau Bonnet Entre Deux Mers 2021",
+          "description": "France",
+          "priceMinor": 9800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Gavi - Villa Sparina 2021",
+          "description": "Italy",
+          "priceMinor": 11000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mary J Blige Sun Goddess Sauvignon Blanc",
+          "description": "Italy",
+          "priceMinor": 12000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Haut Poitou Sauvignong Blanc 2020",
+          "description": "France",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 9,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Domaine de Colombier Chablis 2021",
+          "description": "France",
+          "priceMinor": 15000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 10,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Villa Antinori Toscana Blanco 2020",
+          "description": "Italy",
+          "priceMinor": 15500000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 11,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Henri Bourgeois San Cerre 2020",
+          "description": "France",
+          "priceMinor": 18000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 12,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Henri Bourgeois Pouilly Fume 2019",
+          "description": "France",
+          "priceMinor": 18000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 13,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Rose Wines",
+      "sortOrder": 39,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Millstream 2022",
+          "description": "South Africa",
+          "priceMinor": 6200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Musar Korai 2019",
+          "description": "Lebanon",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Couvent Rouge Rose",
+          "description": "Lebanon",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ixsir Altitudes 2019",
+          "description": "Lebanon",
+          "priceMinor": 7000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Ksara Sunset 2019",
+          "description": "Lebanon",
+          "priceMinor": 7700000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mary J Blige Sun Goddess Pinot Grigio Ramato 2020",
+          "description": "Italy",
+          "priceMinor": 13000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Champagne",
+      "sortOrder": 40,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Dom Pérignon Brut",
+          "description": null,
+          "priceMinor": 125000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Dom Pérignon Rosé",
+          "description": null,
+          "priceMinor": 180000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Laurent-Perrier Brut",
+          "description": null,
+          "priceMinor": 24000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 2,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Laurent-Perrier Rosé",
+          "description": null,
+          "priceMinor": 30000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 3,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Moët & Chandon Brut",
+          "description": null,
+          "priceMinor": 28000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 4,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Moët & Chandon Rosé",
+          "description": null,
+          "priceMinor": 33000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 5,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Moët & Chandon Nectar",
+          "description": null,
+          "priceMinor": 20000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 6,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Veuve Clicquot Brut",
+          "description": null,
+          "priceMinor": 32000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 7,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Veuve Clicquot Rosé",
+          "description": null,
+          "priceMinor": 36000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 8,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Prosecco",
+      "sortOrder": 41,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Prosecco by the Glass",
+          "description": null,
+          "priceMinor": 1200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": []
+        },
+        {
+          "name": "Mary J Blige Sun Goddess",
+          "description": null,
+          "priceMinor": 14000000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": []
+        }
+      ]
+    },
+    {
+      "name": "Shisha Bar",
+      "sortOrder": 42,
+      "isActive": true,
+      "items": [
+        {
+          "name": "Regular Shisha",
+          "description": "Choose your flavour.",
+          "priceMinor": 1800000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 0,
+          "modifierGroupRefs": ["Shisha Flavors", "Shisha Extras"]
+        },
+        {
+          "name": "Special Shisha",
+          "description": "Any regular flavour served with a pineapple head.",
+          "priceMinor": 2200000,
+          "imageUrl": null,
+          "imageSource": null,
+          "isAvailable": true,
+          "sortOrder": 1,
+          "modifierGroupRefs": ["Shisha Flavors"]
+        }
+      ]
+    }
+  ]
+}
