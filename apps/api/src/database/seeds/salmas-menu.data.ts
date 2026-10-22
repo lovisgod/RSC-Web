@@ -416,8 +416,9 @@ export const salmasMenuData: SalmasSeedData = {
           name: "Kaak Halloumi & Mozzarella",
           description: null,
           priceMinor: 2000000,
-          imageUrl: null,
-          imageSource: null,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659076/rsc/salmas/breakfast/kaak.jpg",
+          imageSource: "BREAKFAST/KAAK.JPG",
           isAvailable: true,
           sortOrder: 6,
           modifierGroupRefs: [],
@@ -2184,7 +2185,7 @@ export const salmasMenuData: SalmasSeedData = {
         {
           name: "Hot Chocolate",
           description: null,
-          priceMinor: 750000,
+          priceMinor: 75000,
           imageUrl: null,
           imageSource: null,
           isAvailable: true,

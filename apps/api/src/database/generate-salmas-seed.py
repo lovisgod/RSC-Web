@@ -56,20 +56,16 @@ SHISHA_SHEET = "SHISHA BAR"
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".heic", ".webp")
 PREFERRED_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 
-# Worksheet prices that are clearly wrong. The key is (sheet, row).
-PRICE_OVERRIDES: dict[tuple[str, int], tuple[int, str]] = {
-    (
-        FOOD_SHEET,
-        201,
-    ): (750000, "worksheet lists 750 for hot chocolate; every other hot drink is 5500-9500"),
-}
+# Prices are read from the workbook without editorial overrides. In particular,
+# explicit values such as the workbook's 750 for Hot Chocolate stay 750.
+PRICE_OVERRIDES: dict[tuple[str, int], tuple[int, str]] = {}
 
 # Photos the worksheet never references but that clearly belong to an item.
 # The key is the final item name.
 IMAGE_OVERRIDES: dict[str, str | None] = {
     "Citrus Rocca Halloumi Salad": "SALADS/CITRUS SALAD.jpg",
     "Rocca Beetroot & Feta Salad": "SALADS/ROCCA BEET.jpg",
-    "Kaak Halloumi & Mozzarella (Oven)": "BREAKFAST/KAAK.JPG",
+    "Kaak Halloumi & Mozzarella": "BREAKFAST/KAAK.JPG",
     "Fatayer Bakli (Oven)": "BREAKFAST/FATAYER.JPG",
     "Shish Kabab": "GRILL/KABAB KHECHKHACH.jpg",
     "Chicken Shawarma Platter": "HOT MEZZE/HOMMOS PESTO & CHICKEN SHAWARMA.jpg",

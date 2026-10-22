@@ -168,11 +168,23 @@ async function main(): Promise<void> {
       let catImages = 0;
 
       for (const [itemIndex, itemSeed] of catSeed.items.entries()) {
-        let item = await itemRepo.findOneBy({
-          outletId: OUTLET_ID,
-          categoryId: category.id,
-          name: itemSeed.name,
-        });
+        let item = DRY_RUN
+          ? itemRepo.create({
+              outletId: OUTLET_ID,
+              categoryId: category.id,
+              name: itemSeed.name,
+              description: itemSeed.description,
+              priceMinor: itemSeed.priceMinor,
+              currency: "NGN",
+              imageUrl: itemSeed.imageUrl,
+              isAvailable: itemSeed.isAvailable ?? true,
+              sortOrder: itemSeed.sortOrder ?? itemIndex,
+            })
+          : await itemRepo.findOneBy({
+              outletId: OUTLET_ID,
+              categoryId: category.id,
+              name: itemSeed.name,
+            });
 
         if (!item) {
           item = itemRepo.create({
