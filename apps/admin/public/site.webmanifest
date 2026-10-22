@@ -1,0 +1,13 @@
+{
+  "name": "DineOut NG Central Operations",
+  "short_name": "DineOut Admin",
+  "description": "DineOut NG Central Operations — manage outlets, orders, settlements and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0e14",
+  "theme_color": "#0e0e14",
+  "icons": [
+    { "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ]
+}
