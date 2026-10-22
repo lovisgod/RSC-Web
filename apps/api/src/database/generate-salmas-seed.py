@@ -921,7 +921,8 @@ def build_block(block: Block, worksheets: dict[str, Any], images: ImageIndex) ->
 
         category.items.append(
             Item(
-                name=f"{title}{block.suffix}",
+                # The category already supplies this context in the menu UI.
+                name=title,
                 price_minor=price_minor,
                 description=description or None,
                 image_source=image_source,

@@ -3,8 +3,8 @@
  * Salmas Menu Seed Script
  *
  * Upserts the Salmas menu (categories, items, modifier groups, modifier links)
- * for the Salmas outlet. Re-running it is safe: every record is matched on
- * `outletId + name`.
+ * for the Salmas outlet. Re-running it is safe: menu items are matched within
+ * their category using `outletId + categoryId + name`.
  *
  * Usage:
  *   # Locally via ts-node:
@@ -170,6 +170,7 @@ async function main(): Promise<void> {
       for (const [itemIndex, itemSeed] of catSeed.items.entries()) {
         let item = await itemRepo.findOneBy({
           outletId: OUTLET_ID,
+          categoryId: category.id,
           name: itemSeed.name,
         });
 

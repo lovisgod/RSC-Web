@@ -25,6 +25,7 @@
     "seed:menu:farfallino": "ts-node src/database/seed-farfallino-menu.ts",
     "seed:menu:cactus": "ts-node src/database/seed-cactus-menu.ts",
     "seed:menu:salmas": "ts-node src/database/seed-salmas-menu.ts",
+    "undo:menu:salmas": "ts-node src/database/undo-salmas-menu.ts",
     "upload:images:salmas": "ts-node src/database/upload-salmas-images.ts",
     "backup:run": "ts-node src/database-backups/trigger-database-backup.ts",
     "seed:super-admin:prod": "node dist/src/auth/seed-super-admin.js",
@@ -33,6 +34,7 @@
     "seed:menu:farfallino:prod": "node dist/src/database/seed-farfallino-menu.js",
     "seed:menu:cactus:prod": "node dist/src/database/seed-cactus-menu.js",
     "seed:menu:salmas:prod": "node dist/src/database/seed-salmas-menu.js",
+    "undo:menu:salmas:prod": "node dist/src/database/undo-salmas-menu.js",
     "backup:run:prod": "node dist/src/database-backups/trigger-database-backup.js",
     "db:reset": "bash ../../scripts/reset-api-db.sh"
   },

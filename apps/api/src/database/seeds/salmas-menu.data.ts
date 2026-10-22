@@ -351,7 +351,7 @@ export const salmasMenuData: SalmasSeedData = {
       isActive: true,
       items: [
         {
-          name: "Zaatar Manouche (Oven)",
+          name: "Zaatar Manouche",
           description: null,
           priceMinor: 700000,
           imageUrl:
@@ -362,7 +362,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Cheese Manouche (Oven)",
+          name: "Cheese Manouche",
           description: null,
           priceMinor: 1500000,
           imageUrl: null,
@@ -372,7 +372,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Labneh Manouche (Oven)",
+          name: "Labneh Manouche",
           description: null,
           priceMinor: 900000,
           imageUrl: null,
@@ -382,7 +382,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Lahm Bi Ajin (Oven)",
+          name: "Lahm Bi Ajin",
           description: null,
           priceMinor: 1100000,
           imageUrl:
@@ -393,7 +393,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Sfiha (Oven)",
+          name: "Sfiha",
           description: null,
           priceMinor: 700000,
           imageUrl: null,
@@ -403,29 +403,27 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Fatayer Bakli (Oven)",
+          name: "Fatayer Bakli",
           description: null,
           priceMinor: 400000,
-          imageUrl:
-            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659030/rsc/salmas/breakfast/fatayer.jpg",
-          imageSource: "BREAKFAST/FATAYER.JPG",
+          imageUrl: null,
+          imageSource: null,
           isAvailable: true,
           sortOrder: 5,
           modifierGroupRefs: [],
         },
         {
-          name: "Kaak Halloumi & Mozzarella (Oven)",
+          name: "Kaak Halloumi & Mozzarella",
           description: null,
           priceMinor: 2000000,
-          imageUrl:
-            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659076/rsc/salmas/breakfast/kaak.jpg",
-          imageSource: "BREAKFAST/KAAK.JPG",
+          imageUrl: null,
+          imageSource: null,
           isAvailable: true,
           sortOrder: 6,
           modifierGroupRefs: [],
         },
         {
-          name: "Soujouk & Cheese Manouche (Oven)",
+          name: "Soujouk & Cheese Manouche",
           description: null,
           priceMinor: 1900000,
           imageUrl:
@@ -436,7 +434,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Double Loaded Manouche (Oven)",
+          name: "Double Loaded Manouche",
           description: null,
           priceMinor: 1550000,
           imageUrl: null,
@@ -536,7 +534,7 @@ export const salmasMenuData: SalmasSeedData = {
       isActive: true,
       items: [
         {
-          name: "Salma's Pie (Breakfast)",
+          name: "Salma's Pie",
           description: "Nutella halawi and banana pie",
           priceMinor: 1300000,
           imageUrl: null,
@@ -546,7 +544,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Salma's Trio Pudding (Breakfast)",
+          name: "Salma's Trio Pudding",
           description: "3 cups of mouhalabiyeh, meghli and riz bi halib",
           priceMinor: 950000,
           imageUrl:
@@ -879,7 +877,7 @@ export const salmasMenuData: SalmasSeedData = {
       isActive: true,
       items: [
         {
-          name: "Warak Enab (Mezze)",
+          name: "Warak Enab",
           description:
             "Vine leave stuffed with rice, tomato, parsley, mint and onion cooked in lemon juice and olive oil drizzled with pomegranate sauce",
           priceMinor: 1300000,
@@ -891,7 +889,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Baba Ghanouj (Mezze)",
+          name: "Baba Ghanouj",
           description: "Grilled eggplant puree mixed with sesame paste (tahini) and lemon juice",
           priceMinor: 950000,
           imageUrl:
@@ -902,7 +900,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Smoked Beetroot Baba Ghanouj (Mezze)",
+          name: "Smoked Beetroot Baba Ghanouj",
           description:
             "A smoky baba ghanouj enhanced with vibrant beetroot, tangy feta, and aromatic black seeds",
           priceMinor: 1200000,
@@ -914,7 +912,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Hindbeh Bel Zeit (Mezze)",
+          name: "Hindbeh Bel Zeit",
           description: "Sauteed chicory leaves with onion, lemon garlic juice and olive oil",
           priceMinor: 1100000,
           imageUrl:
@@ -925,7 +923,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Olive and Avocado Bliss (Mezze)",
+          name: "Olive and Avocado Bliss",
           description:
             "Silky hummus topped with a vibrant mix of crunchy olive salad, slices avocado, and crunchy carrot",
           priceMinor: 1200000,
@@ -937,7 +935,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Mohamara (Mezze)",
+          name: "Mohamara",
           description:
             "Roasted red pepper puree with bread crumbs, walnuts and salma's special seasoning",
           priceMinor: 1200000,
@@ -949,7 +947,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Cauliflower with Tahini (Mezze)",
+          name: "Cauliflower with Tahini",
           description:
             "Baked cauliflower with cooked tahini sauce, onion topped with pine seeds and pomegranate",
           priceMinor: 1400000,
@@ -961,7 +959,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Salma's Bezenjan (Mezze)",
+          name: "Salma's Bezenjan",
           description:
             "Smoked aubergine dip topped with fresh pomegranate, wild zaatar, fried eggplant with our special sauce. Topped with crispy pita bread.",
           priceMinor: 800000,
@@ -973,7 +971,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Chef's Samke Harra (Mezze)",
+          name: "Chef's Samke Harra",
           description:
             "Spicy fish. Baked grouper filet layered in 2 layers of sauce: traboulsi and beyruti.",
           priceMinor: 1550000,
@@ -985,7 +983,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Chanklish (Mezze)",
+          name: "Chanklish",
           description: "Hard yoghurt, tomato, onion, fresh basil with olive oil dressing",
           priceMinor: 1700000,
           imageUrl:
@@ -996,7 +994,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Labneh (Mezze)",
+          name: "Labneh",
           description: "Strained yoghurt, choose garlic or spicy.",
           priceMinor: 600000,
           imageUrl:
@@ -1007,7 +1005,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: ["Labneh Option"],
         },
         {
-          name: "Bezenjan Al Raheb (Mezze)",
+          name: "Bezenjan Al Raheb",
           description: "Grilled eggplant with tomato, onion and lemon",
           priceMinor: 850000,
           imageUrl:
@@ -1429,7 +1427,7 @@ export const salmasMenuData: SalmasSeedData = {
       isActive: true,
       items: [
         {
-          name: "Shish Taouk (Platter)",
+          name: "Shish Taouk",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
@@ -1440,7 +1438,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Chicken (Platter)",
+          name: "Chicken",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
@@ -1451,19 +1449,19 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Kafta (Platter)",
+          name: "Kafta",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
           imageUrl:
-            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659810/rsc/salmas/grill/kafta.jpg",
-          imageSource: "GRILL/KAFTA.jpg",
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659735/rsc/salmas/fatet_family/kafta.jpg",
+          imageSource: "FATET FAMILY/KAFTA.jpg",
           isAvailable: true,
           sortOrder: 2,
           modifierGroupRefs: [],
         },
         {
-          name: "Makanek (Platter)",
+          name: "Makanek",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
@@ -1475,7 +1473,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Kabab (Platter)",
+          name: "Kabab",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
@@ -1486,18 +1484,19 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Soujouk (Platter)",
+          name: "Soujouk",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
-          imageUrl: null,
-          imageSource: null,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792661012/rsc/salmas/tacos/soujouk.jpg",
+          imageSource: "TACOS/SOUJOUK.jpg",
           isAvailable: true,
           sortOrder: 5,
           modifierGroupRefs: [],
         },
         {
-          name: "Spicy Cashew Kafta (Platter)",
+          name: "Spicy Cashew Kafta",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
@@ -1508,7 +1507,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Lahme (Platter)",
+          name: "Lahme",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
@@ -1519,7 +1518,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Salma's Burger Wrap (Platter)",
+          name: "Salma's Burger Wrap",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
@@ -1530,13 +1529,12 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Beef or Chicken Shawarma (Platter)",
+          name: "Beef or Chicken Shawarma",
           description:
             "Sandwiches and platters served with round cut special french fries, hommos and pickles.",
           priceMinor: 1750000,
-          imageUrl:
-            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792660010/rsc/salmas/hot_mezze/hommos_pesto_chicken_shawarma.jpg",
-          imageSource: "HOT MEZZE/HOMMOS PESTO & CHICKEN SHAWARMA.jpg",
+          imageUrl: null,
+          imageSource: null,
           isAvailable: true,
           sortOrder: 9,
           modifierGroupRefs: [],
@@ -1902,7 +1900,7 @@ export const salmasMenuData: SalmasSeedData = {
       isActive: true,
       items: [
         {
-          name: "Double Loaded Manouche (Baked)",
+          name: "Double Loaded Manouche",
           description: "2 layers of dough, one filled with mix cheese and the second zaatar",
           priceMinor: 1700000,
           imageUrl: null,
@@ -1912,7 +1910,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Cheese & Kafta Manouche (Baked)",
+          name: "Cheese & Kafta Manouche",
           description:
             "Delicious ground beef mixed with spices, diced onions and parsley, known as kafta, flavoured with cheese on our new dough",
           priceMinor: 2200000,
@@ -1923,7 +1921,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Lahm Bi Ajin (Baked)",
+          name: "Lahm Bi Ajin",
           description:
             "Baked lebanese pastry filled with seasoned minced goat meat, tomato and onion",
           priceMinor: 1100000,
@@ -1935,7 +1933,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Fatayer Bakli (Baked)",
+          name: "Fatayer Bakli",
           description: null,
           priceMinor: 1100000,
           imageUrl: null,
@@ -1945,7 +1943,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Sfiha Bel Forn (Baked)",
+          name: "Sfiha Bel Forn",
           description:
             "6 pcs baked lebanese pastry filled with seasoned minced goat meat, tomato, onion and grenadine paste",
           priceMinor: 700000,
@@ -1956,7 +1954,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Soujouk & Cheese Manouche (Baked)",
+          name: "Soujouk & Cheese Manouche",
           description: "Lebanese spicy sausages mixed with cheese all baked in our oven",
           priceMinor: 1900000,
           imageUrl:
@@ -1967,7 +1965,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Salma's Manouche (Baked)",
+          name: "Salma's Manouche",
           description:
             "Our delicious cheese mixed with chopped grilled vegetables topped on our special salma's dough",
           priceMinor: 1700000,
@@ -2261,7 +2259,7 @@ export const salmasMenuData: SalmasSeedData = {
       isActive: true,
       items: [
         {
-          name: "French Fries (Sandwich)",
+          name: "French Fries",
           description: "French fries, coleslaw, garlic, ketchup and pickles",
           priceMinor: 750000,
           imageUrl: null,
@@ -2271,7 +2269,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Falafel (Sandwich)",
+          name: "Falafel",
           description:
             "Our homemade falafel wrapped in our saj bread with, turnip pickles, parsley, tomato, chili and mint with a tahini sauce",
           priceMinor: 850000,
@@ -2283,7 +2281,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Cauliflower (Sandwich)",
+          name: "Cauliflower",
           description:
             "Fried cauliflower, pickles, french fries, tomato and fresh mint topped with tahini sauce wrapped in pitta bread",
           priceMinor: 950000,
@@ -2294,7 +2292,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Shish Taouk (Sandwich)",
+          name: "Shish Taouk",
           description:
             "Our famous chicken shish taouk wrapped in saj bread with garlic sauce and french fries",
           priceMinor: 850000,
@@ -2305,7 +2303,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Chicken (Sandwich)",
+          name: "Chicken",
           description:
             "2 sandwiches of our marinated grilled chicken wrapped in saj bread with garlic and french fries",
           priceMinor: 1600000,
@@ -2316,18 +2314,19 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Kafta (Sandwich)",
+          name: "Kafta",
           description:
             "Grilled lamb skewers, hummos, onions, parsley, sweet pepper, tomato and pickles",
           priceMinor: 850000,
-          imageUrl: null,
-          imageSource: null,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792659735/rsc/salmas/fatet_family/kafta.jpg",
+          imageSource: "FATET FAMILY/KAFTA.jpg",
           isAvailable: true,
           sortOrder: 5,
           modifierGroupRefs: [],
         },
         {
-          name: "Kabab (Sandwich)",
+          name: "Kabab",
           description:
             "Grilled kabab skewers, hummos, onions, parsley, sweet pepper, tomato and pickles",
           priceMinor: 800000,
@@ -2338,7 +2337,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Makanek (Sandwich)",
+          name: "Makanek",
           description:
             "Mini lebanese sausages flambeed with butter and lemon, hummos, tomatoes and pickles",
           priceMinor: 850000,
@@ -2350,18 +2349,19 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Soujouk (Sandwich)",
+          name: "Soujouk",
           description:
             "Spicy sausages flambeed with butter and lemon, hummos, garlic sauce, tomato and pickles",
           priceMinor: 850000,
-          imageUrl: null,
-          imageSource: null,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1792661012/rsc/salmas/tacos/soujouk.jpg",
+          imageSource: "TACOS/SOUJOUK.jpg",
           isAvailable: true,
           sortOrder: 8,
           modifierGroupRefs: [],
         },
         {
-          name: "Spicy Cashew Kafta (Sandwich)",
+          name: "Spicy Cashew Kafta",
           description: "Spicy cashew kafta with pickles, hummos and biwaz",
           priceMinor: 850000,
           imageUrl: null,
@@ -2371,7 +2371,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Lahme (Sandwich)",
+          name: "Lahme",
           description:
             "Grilled tender cubes of imported beef fillet, hummos, onion, parsley, sweet pepper pickles and tomato",
           priceMinor: 1600000,
@@ -2382,7 +2382,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Salma's Burger Wrap (Sandwich)",
+          name: "Salma's Burger Wrap",
           description: "Lebanese seasoned meat sandwich with coleslaw and french fries",
           priceMinor: 1300000,
           imageUrl: null,
@@ -2392,7 +2392,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Shawarma Sandwich (Sandwich)",
+          name: "Shawarma Sandwich",
           description: "Sunday special only. Sandwich.",
           priceMinor: 900000,
           imageUrl: null,
@@ -2402,7 +2402,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: ["Shawarma Portion"],
         },
         {
-          name: "Shawarma Sajj (Sandwich)",
+          name: "Shawarma Sajj",
           description: "Sajj.",
           priceMinor: 1200000,
           imageUrl: null,
@@ -2412,7 +2412,7 @@ export const salmasMenuData: SalmasSeedData = {
           modifierGroupRefs: [],
         },
         {
-          name: "Shawarma Platter (Sandwich)",
+          name: "Shawarma Platter",
           description: "Platter.",
           priceMinor: 1800000,
           imageUrl: null,
