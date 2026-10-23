@@ -9,6 +9,7 @@ import type { MenuItem } from "@/src/lib/data/outlet-menu";
 import { useOutletMenu } from "@/src/hooks/use-outlet-menu";
 import { MenuItemCard } from "@/src/components/outlet-detail/menu-item-card";
 import { ItemDetailModal } from "@/src/components/outlet-detail/item-detail-modal";
+import { CategoryDropdown } from "./category-dropdown";
 import { ArrowLeft, Star } from "lucide-react";
 
 function Skeleton() {
@@ -25,13 +26,8 @@ function Skeleton() {
           <div className="h-4 w-48 bg-gray-100 rounded" />
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-3 overflow-hidden">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-9 w-20 bg-gray-200 rounded-full flex-shrink-0" />
-          ))}
-        </div>
-
+        {/* Category selector */}
+        <div className="h-14 w-full sm:max-w-sm rounded-2xl bg-[var(--rsc-line)]" />
         {/* Items */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
@@ -68,11 +64,11 @@ export function OutletDetailView({ id }: { id: string }) {
     );
   }
 
-  const currentCategory = activeCategory ?? menu.categories[0]?.id ?? "all";
-  const visibleItems =
-    currentCategory === "all"
-      ? menu.items
-      : menu.items.filter((item) => item.categoryId === currentCategory);
+  const currentCategory =
+    menu.categories.find((category) => category.id === activeCategory) ?? menu.categories[0];
+  const visibleItems = currentCategory
+    ? menu.items.filter((item) => item.categoryId === currentCategory.id)
+    : [];
   const isOffline = menu.isOnline === false;
   const activeSelectedItem = isOffline ? null : selectedItem;
   const rating = formatOutletRating(menu.rating);
@@ -143,35 +139,23 @@ export function OutletDetailView({ id }: { id: string }) {
           </div>
         )}
 
-        {/* Category tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-1 border-b border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
-          {menu.categories.map((cat) => {
-            const active = cat.id === currentCategory;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setActiveCategory(cat.id)}
-                className={`flex-shrink-0 pb-2 px-1 text-sm font-semibold transition-colors border-b-2 ${
-                  active ? "border-[var(--rsc-brand)]" : "border-transparent text-gray-400"
-                }`}
-                style={active ? { color: "var(--rsc-brand)" } : {}}
-              >
-                {cat.name}
-              </button>
-            );
-          })}
-        </div>
-
+        {/* All is intentionally disabled: select one real category. */}
+        <CategoryDropdown
+          categories={menu.categories}
+          selectedId={currentCategory?.id}
+          onSelect={setActiveCategory}
+        />
         {/* Category heading + items grid */}
-        <div>
+        <div id="outlet-menu-items">
           <h2 className="text-lg font-bold text-gray-900 mb-3">
-            {menu.categories.find((c) => c.id === currentCategory)?.name}
+            {currentCategory?.name ?? "Menu"}
           </h2>
 
           {visibleItems.length === 0 ? (
             <p className="text-sm text-gray-400 py-8 text-center">
-              No items available in this category.
+              {currentCategory
+                ? "No items available in this category."
+                : "No menu categories available yet."}
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

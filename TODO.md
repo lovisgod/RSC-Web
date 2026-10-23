@@ -75,3 +75,4 @@ so another agent can safely pick the first unchecked task.
 
 - [x] Document the production catalog import structure and example in docs/production-catalog-seed.md.
 - [ ] Implement and test the dedicated catalog importer with validation, dry run, stable IDs, and transactional reruns.
+- [x] Replace outlet menu All/tabs with a themed category dropdown and category-only rendering.
