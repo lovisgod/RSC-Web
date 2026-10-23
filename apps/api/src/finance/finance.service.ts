@@ -40,12 +40,18 @@ export class FinanceService {
         allocation_base AS (
           SELECT
             so.*,
+            mo.subtotal_minor AS mo_subtotal_minor,
+            mo.vat_minor AS mo_vat_minor,
+            mo.delivery_fee_minor AS mo_delivery_fee_minor,
+            mo.service_fee_minor AS mo_service_fee_minor,
+            mo.discount_minor AS mo_discount_minor,
             payment.id AS payment_id,
             payment.amount_minor AS payment_amount_minor,
-            SUM(so.net_minor) OVER (PARTITION BY so.master_order_id)::int AS outlet_total_minor,
             ROW_NUMBER() OVER (PARTITION BY so.master_order_id ORDER BY so.id) AS allocation_rank,
             COUNT(*) OVER (PARTITION BY so.master_order_id) AS allocation_count
           FROM sub_orders so
+          INNER JOIN master_orders mo
+            ON mo.id = so.master_order_id
           INNER JOIN successful_payments payment
             ON payment.master_order_id = so.master_order_id
           WHERE so.deleted_at IS NULL
@@ -54,24 +60,49 @@ export class FinanceService {
           SELECT
             allocation_base.*,
             CASE
-              WHEN outlet_total_minor <= 0 THEN 0
-              ELSE FLOOR(
-                GREATEST(payment_amount_minor - outlet_total_minor, 0)::numeric
-                * net_minor::numeric / outlet_total_minor::numeric
-              )::int
-            END AS base_dineout_minor
+              WHEN mo_subtotal_minor <= 0 THEN 0
+              ELSE FLOOR(mo_vat_minor::numeric * subtotal_minor::numeric / mo_subtotal_minor::numeric)::int
+            END AS base_vat_minor,
+            CASE
+              WHEN allocation_count <= 0 THEN 0
+              ELSE FLOOR(mo_delivery_fee_minor::numeric / allocation_count::numeric)::int
+            END AS base_delivery_minor,
+            CASE
+              WHEN allocation_count <= 0 THEN 0
+              ELSE FLOOR(mo_service_fee_minor::numeric / allocation_count::numeric)::int
+            END AS base_service_minor,
+            CASE
+              WHEN mo_subtotal_minor <= 0 THEN 0
+              ELSE FLOOR(mo_discount_minor::numeric * subtotal_minor::numeric / mo_subtotal_minor::numeric)::int
+            END AS base_discount_minor
           FROM allocation_base
         ),
         paid_sub_orders AS (
           SELECT
             allocated_sub_orders.*,
-            CASE
-              WHEN allocation_rank = allocation_count THEN
-                GREATEST(payment_amount_minor - outlet_total_minor, 0)
-                - SUM(base_dineout_minor) OVER (PARTITION BY master_order_id)
-                + base_dineout_minor
-              ELSE base_dineout_minor
-            END::int AS dineout_gross_minor
+            (
+              commission_minor
+              + CASE
+                  WHEN allocation_rank = allocation_count THEN
+                    mo_vat_minor - SUM(base_vat_minor) OVER (PARTITION BY master_order_id) + base_vat_minor
+                  ELSE base_vat_minor
+                END
+              + CASE
+                  WHEN allocation_rank = allocation_count THEN
+                    mo_delivery_fee_minor - SUM(base_delivery_minor) OVER (PARTITION BY master_order_id) + base_delivery_minor
+                  ELSE base_delivery_minor
+                END
+              + CASE
+                  WHEN allocation_rank = allocation_count THEN
+                    mo_service_fee_minor - SUM(base_service_minor) OVER (PARTITION BY master_order_id) + base_service_minor
+                  ELSE base_service_minor
+                END
+              - CASE
+                  WHEN allocation_rank = allocation_count THEN
+                    mo_discount_minor - SUM(base_discount_minor) OVER (PARTITION BY master_order_id) + base_discount_minor
+                  ELSE base_discount_minor
+                END
+            )::int AS dineout_gross_minor
           FROM allocated_sub_orders
         )
         SELECT
@@ -209,14 +240,20 @@ export class FinanceService {
         allocation_base AS (
           SELECT
             so.*,
+            mo.subtotal_minor AS mo_subtotal_minor,
+            mo.vat_minor AS mo_vat_minor,
+            mo.delivery_fee_minor AS mo_delivery_fee_minor,
+            mo.service_fee_minor AS mo_service_fee_minor,
+            mo.discount_minor AS mo_discount_minor,
             payment.amount_minor AS payment_amount_minor,
             payment.reference AS payment_reference,
             payment.gateway AS payment_gateway,
             payment.succeeded_at AS payment_succeeded_at,
-            SUM(so.net_minor) OVER (PARTITION BY so.master_order_id)::int AS outlet_total_minor,
             ROW_NUMBER() OVER (PARTITION BY so.master_order_id ORDER BY so.id) AS allocation_rank,
             COUNT(*) OVER (PARTITION BY so.master_order_id) AS allocation_count
           FROM sub_orders so
+          INNER JOIN master_orders mo
+            ON mo.id = so.master_order_id
           INNER JOIN successful_payments payment
             ON payment.master_order_id = so.master_order_id
           WHERE so.deleted_at IS NULL
@@ -225,24 +262,49 @@ export class FinanceService {
           SELECT
             allocation_base.*,
             CASE
-              WHEN outlet_total_minor <= 0 THEN 0
-              ELSE FLOOR(
-                GREATEST(payment_amount_minor - outlet_total_minor, 0)::numeric
-                * net_minor::numeric / outlet_total_minor::numeric
-              )::int
-            END AS base_dineout_minor
+              WHEN mo_subtotal_minor <= 0 THEN 0
+              ELSE FLOOR(mo_vat_minor::numeric * subtotal_minor::numeric / mo_subtotal_minor::numeric)::int
+            END AS base_vat_minor,
+            CASE
+              WHEN allocation_count <= 0 THEN 0
+              ELSE FLOOR(mo_delivery_fee_minor::numeric / allocation_count::numeric)::int
+            END AS base_delivery_minor,
+            CASE
+              WHEN allocation_count <= 0 THEN 0
+              ELSE FLOOR(mo_service_fee_minor::numeric / allocation_count::numeric)::int
+            END AS base_service_minor,
+            CASE
+              WHEN mo_subtotal_minor <= 0 THEN 0
+              ELSE FLOOR(mo_discount_minor::numeric * subtotal_minor::numeric / mo_subtotal_minor::numeric)::int
+            END AS base_discount_minor
           FROM allocation_base
         ),
         paid_sub_orders AS (
           SELECT
             allocated_sub_orders.*,
-            CASE
-              WHEN allocation_rank = allocation_count THEN
-                GREATEST(payment_amount_minor - outlet_total_minor, 0)
-                - SUM(base_dineout_minor) OVER (PARTITION BY master_order_id)
-                + base_dineout_minor
-              ELSE base_dineout_minor
-            END::int AS dineout_gross_minor
+            (
+              commission_minor
+              + CASE
+                  WHEN allocation_rank = allocation_count THEN
+                    mo_vat_minor - SUM(base_vat_minor) OVER (PARTITION BY master_order_id) + base_vat_minor
+                  ELSE base_vat_minor
+                END
+              + CASE
+                  WHEN allocation_rank = allocation_count THEN
+                    mo_delivery_fee_minor - SUM(base_delivery_minor) OVER (PARTITION BY master_order_id) + base_delivery_minor
+                  ELSE base_delivery_minor
+                END
+              + CASE
+                  WHEN allocation_rank = allocation_count THEN
+                    mo_service_fee_minor - SUM(base_service_minor) OVER (PARTITION BY master_order_id) + base_service_minor
+                  ELSE base_service_minor
+                END
+              - CASE
+                  WHEN allocation_rank = allocation_count THEN
+                    mo_discount_minor - SUM(base_discount_minor) OVER (PARTITION BY master_order_id) + base_discount_minor
+                  ELSE base_discount_minor
+                END
+            )::int AS dineout_gross_minor
           FROM allocated_sub_orders
         )
         SELECT
