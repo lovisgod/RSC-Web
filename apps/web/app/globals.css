@@ -78,3 +78,87 @@ body {
 [data-theme="dark"] .border-slate-300 {
   border-color: var(--rsc-line) !important;
 }
+
+/* In-page category popup: unlike a native select popup, its width is controllable. */
+.outlet-category {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.outlet-category__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 3.25rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 1rem;
+  background: var(--rsc-panel);
+  color: var(--rsc-ink);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+}
+.outlet-category__trigger > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.outlet-category__trigger[aria-expanded="true"] {
+  border-color: var(--rsc-brand);
+}
+.outlet-category__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.outlet-category__panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  box-sizing: border-box;
+  min-width: 0;
+  max-height: min(18rem, 45dvh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 0.375rem;
+  border: 1px solid var(--rsc-line);
+  border-radius: 1rem;
+  background: var(--rsc-panel);
+  color: var(--rsc-ink);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.16);
+}
+.outlet-category__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.75rem;
+  border-radius: 0.625rem;
+  text-align: left;
+  font-size: 0.9375rem;
+}
+.outlet-category__option > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.outlet-category__option:hover,
+.outlet-category__option[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--rsc-brand) 12%, var(--rsc-panel));
+  color: var(--rsc-brand);
+}
+.outlet-category__trigger:focus-visible,
+.outlet-category__option:focus-visible {
+  outline: 2px solid var(--rsc-brand);
+  outline-offset: 2px;
+}
