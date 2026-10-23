@@ -146,10 +146,9 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((c) => ({ id: c.id, name: c.name }));
 
-  const categories: MenuCategory[] =
-    namedCategories.length > 0
-      ? [{ id: "all", name: "All" }, ...namedCategories]
-      : [{ id: "all", name: "Menu" }];
+  // All is intentionally disabled: browse one real category at a time.
+  // { id: "all", name: "All" }
+  const categories: MenuCategory[] = namedCategories;
 
   return {
     outletId: outlet.id,
