@@ -156,7 +156,7 @@ export function renderOrderReceiptTemplate(input: SendOrderReceiptEmailInput): s
   if (input.totals.serviceFeeMinor && input.totals.serviceFeeMinor > 0) {
     feeRows.push(`
       <tr>
-        <td style="padding: 5px 0; color: #6b7280; font-size: 13px;">Service fee</td>
+        <td style="padding: 5px 0; color: #6b7280; font-size: 13px;">Platform fee</td>
         <td align="right" style="padding: 5px 0; font-size: 13px; color: #6b7280;">${formatNaira(input.totals.serviceFeeMinor)}</td>
       </tr>
     `);

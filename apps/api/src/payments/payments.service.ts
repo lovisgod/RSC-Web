@@ -968,6 +968,16 @@ export class PaymentsService {
 
       // 1. Send detailed email receipt matching checkout summary breakdown
       if (this.emailSender && customerEmail) {
+        // platformCommissionMinor is not persisted on MasterOrder, so derive it from the
+        // accounting identity: total = subtotal + delivery + serviceFee + vat + commission - discount
+        const platformCommissionMinor =
+          order.totalMinor -
+          order.subtotalMinor -
+          order.deliveryFeeMinor -
+          order.serviceFeeMinor -
+          order.vatMinor +
+          (order.discountMinor ?? 0);
+
         await this.emailSender.sendOrderReceipt({
           email: customerEmail,
           customerName,
@@ -983,6 +993,8 @@ export class PaymentsService {
             subtotalMinor: order.subtotalMinor,
             deliveryFeeMinor: order.deliveryFeeMinor,
             vatMinor: order.vatMinor,
+            platformCommissionMinor:
+              platformCommissionMinor > 0 ? platformCommissionMinor : undefined,
             serviceFeeMinor: order.serviceFeeMinor,
             discountMinor: order.discountMinor,
             totalMinor: order.totalMinor,

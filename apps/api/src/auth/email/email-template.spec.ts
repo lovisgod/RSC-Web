@@ -57,9 +57,10 @@ describe(renderOrderReceiptTemplate.name, () => {
         subtotalMinor: 450000,
         deliveryFeeMinor: 150000,
         vatMinor: 33750,
+        platformCommissionMinor: 45000,
         serviceFeeMinor: 20000,
         discountMinor: 50000,
-        totalMinor: 603750,
+        totalMinor: 648750,
         currency: "NGN",
       },
     });
@@ -74,7 +75,8 @@ describe(renderOrderReceiptTemplate.name, () => {
     expect(html).toContain("Subtotal");
     expect(html).toContain("Delivery fee");
     expect(html).toContain("VAT (7.5%)");
-    expect(html).toContain("Service fee");
+    expect(html).toContain("Platform commission");
+    expect(html).toContain("Platform fee");
     expect(html).toContain("Promo discount");
     expect(html).toContain("PAY-REF-12345");
     expect(html).toContain("12 Marina Road, Lagos");

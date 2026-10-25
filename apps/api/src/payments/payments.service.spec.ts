@@ -1247,7 +1247,7 @@ describe(PaymentsService.name, () => {
       vatMinor: 37500,
       serviceFeeMinor: 0,
       discountMinor: 0,
-      totalMinor: 687500,
+      totalMinor: 725000, // 500000 + 150000 + 37500 + 37500 (10% commission)
       deliveryMode: "DELIVERY",
       deliveryAddress: "15 Admiralty Way, Lekki",
       recipientPhone: "08012345678",
@@ -1337,7 +1337,8 @@ describe(PaymentsService.name, () => {
           subtotalMinor: 500000,
           deliveryFeeMinor: 150000,
           vatMinor: 37500,
-          totalMinor: 687500,
+          platformCommissionMinor: 37500, // derived: 725000 - 500000 - 150000 - 0 - 37500 + 0
+          totalMinor: 725000,
         }),
       }),
     );
