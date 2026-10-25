@@ -993,10 +993,9 @@ export class PaymentsService {
             subtotalMinor: order.subtotalMinor,
             deliveryFeeMinor: order.deliveryFeeMinor,
             vatMinor: order.vatMinor,
-            platformCommissionMinor:
-              platformCommissionMinor > 0 ? platformCommissionMinor : undefined,
-            serviceFeeMinor: order.serviceFeeMinor,
-            discountMinor: order.discountMinor,
+            ...(platformCommissionMinor > 0 ? { platformCommissionMinor } : {}),
+            ...(order.serviceFeeMinor > 0 ? { serviceFeeMinor: order.serviceFeeMinor } : {}),
+            ...(order.discountMinor > 0 ? { discountMinor: order.discountMinor } : {}),
             totalMinor: order.totalMinor,
             currency: "NGN",
           },
