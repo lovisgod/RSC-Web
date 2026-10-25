@@ -28,6 +28,7 @@ import type {
 } from "./payment-adapter";
 import { PaymentRefund } from "./payment-refund.entity";
 import { PaymentsService, type InitiatePaymentResponse } from "./payments.service";
+import type { SendOrderReceiptEmailInput } from "../auth/email/email-sender";
 
 describe(PaymentsService.name, () => {
   const customerId = "2abf9577-027c-4936-83a8-e004fd56a46e";
@@ -1233,7 +1234,7 @@ describe(PaymentsService.name, () => {
       realtime as unknown as RealtimeService,
       notifications as unknown as NotificationsService,
       undefined,
-      mockEmailSender as never,
+      mockEmailSender,
     );
 
     const order = Object.assign(new MasterOrder(), {
@@ -1331,7 +1332,8 @@ describe(PaymentsService.name, () => {
             ],
           }),
         ],
-        totals: expect.objectContaining({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        totals: expect.objectContaining<Partial<SendOrderReceiptEmailInput["totals"]>>({
           subtotalMinor: 500000,
           deliveryFeeMinor: 150000,
           vatMinor: 37500,
