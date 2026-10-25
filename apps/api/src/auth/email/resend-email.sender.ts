@@ -7,11 +7,12 @@ import type {
   EmailSender,
   SendDatabaseBackupEmailInput,
   SendMarketingEmailInput,
+  SendOrderReceiptEmailInput,
   SendPasswordResetEmailInput,
   SendTemporaryPasswordEmailInput,
   SendWelcomeVerificationEmailInput,
 } from "./email-sender";
-import { renderEmailTemplate } from "./email-template";
+import { renderEmailTemplate, renderOrderReceiptTemplate } from "./email-template";
 
 interface ResendSendResponse {
   id?: string;
@@ -112,6 +113,16 @@ export class ResendEmailSender implements EmailSender {
           content: (await readFile(input.filePath)).toString("base64"),
         },
       ],
+    });
+  }
+
+  async sendOrderReceipt(input: SendOrderReceiptEmailInput): Promise<void> {
+    const shortOrderId = input.masterOrderId.slice(0, 8).toUpperCase();
+    const subject = `Your DineOutNG order receipt #${shortOrderId}`;
+    await this.sendEmail({
+      to: input.email,
+      subject,
+      html: renderOrderReceiptTemplate(input),
     });
   }
 

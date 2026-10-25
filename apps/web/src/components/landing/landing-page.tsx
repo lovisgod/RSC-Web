@@ -218,9 +218,15 @@ export function LandingPage() {
 
       {/* Clean Full-Width Header Navigation */}
       <header className="landing-header" aria-label="DineOut NG navigation">
-        <div className="landing-header__left">
-          <Link href="/" className="inline-flex items-center" aria-label="DineOut NG home">
-            <BrandLogo className="w-28 sm:w-36" priority />
+        <div className="landing-header__spacer" aria-hidden="true" />
+
+        <div className="landing-header__center">
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center"
+            aria-label="DineOut NG home"
+          >
+            <BrandLogo className="w-44 sm:w-56 md:w-64" priority />
           </Link>
         </div>
 

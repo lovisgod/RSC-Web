@@ -5,6 +5,7 @@ import type {
   SendDatabaseBackupEmailInput,
   SendPasswordResetEmailInput,
   SendMarketingEmailInput,
+  SendOrderReceiptEmailInput,
   SendTemporaryPasswordEmailInput,
   SendWelcomeVerificationEmailInput,
 } from "./email-sender";
@@ -39,6 +40,14 @@ export class NoopEmailSender implements EmailSender {
 
   sendDatabaseBackup(input: SendDatabaseBackupEmailInput): Promise<void> {
     this.logger.debug(`Skipping database backup email for ${input.email}`);
+
+    return Promise.resolve();
+  }
+
+  sendOrderReceipt(input: SendOrderReceiptEmailInput): Promise<void> {
+    this.logger.debug(
+      `Skipping order receipt email for ${input.email} (order ${input.masterOrderId})`,
+    );
 
     return Promise.resolve();
   }

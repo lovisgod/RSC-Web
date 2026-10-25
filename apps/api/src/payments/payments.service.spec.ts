@@ -1148,7 +1148,7 @@ describe(PaymentsService.name, () => {
       providerResponse: {},
     });
 
-    expect(notifications.createAndPush).toHaveBeenCalledTimes(2);
+    expect(notifications.createAndPush).toHaveBeenCalledTimes(3);
     expect(notifications.createAndPush).toHaveBeenCalledWith(
       expect.objectContaining({
         recipientId: outletAdmin.id,
@@ -1160,6 +1160,13 @@ describe(PaymentsService.name, () => {
       expect.objectContaining({
         recipientId: superAdmin.id,
         recipientRole: UserRole.SUPER_ADMIN,
+        type: "PAYMENT_SUCCESS",
+      }),
+    );
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: customerId,
+        recipientRole: UserRole.CUSTOMER,
         type: "PAYMENT_SUCCESS",
       }),
     );
@@ -1187,6 +1194,160 @@ describe(PaymentsService.name, () => {
       }),
     );
     expect(notificationOutletIds).toEqual([outletId]);
+  });
+
+  it("sends summarized receipt email and in-app notification to customer when payment succeeds", async () => {
+    const mockEmailSender = {
+      sendWelcomeVerification: vi.fn(),
+      sendPasswordReset: vi.fn(),
+      sendTemporaryPassword: vi.fn(),
+      sendMarketing: vi.fn(),
+      sendDatabaseBackup: vi.fn(),
+      sendOrderReceipt: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const serviceWithEmail = new PaymentsService(
+      users as unknown as Repository<Customer>,
+      menuItems as unknown as Repository<MenuItem>,
+      modifiers as unknown as Repository<ItemModifier>,
+      outlets as unknown as Repository<Outlet>,
+      masterOrders as unknown as Repository<MasterOrder>,
+      subOrders as unknown as Repository<SubOrder>,
+      lineItems as unknown as Repository<OrderLineItem>,
+      payments as unknown as Repository<Payment>,
+      refunds as unknown as Repository<PaymentRefund>,
+      promos as unknown as Repository<Promo>,
+      dataSource as unknown as DataSource,
+      delivery as unknown as DeliveryService,
+      {
+        decrypt: vi.fn((value: string) => value.replace(/^encrypted:/, "")),
+      } as unknown as PiiCryptoService,
+      {
+        get: vi.fn().mockReturnValue({
+          platformCommissionBps: 1000,
+          vatBps: 750,
+          deliveryFeeMinor: 150000,
+        }),
+      } as unknown as ConfigService<ApplicationConfig, true>,
+      paymentAdapter,
+      realtime as unknown as RealtimeService,
+      notifications as unknown as NotificationsService,
+      undefined,
+      mockEmailSender as never,
+    );
+
+    const order = Object.assign(new MasterOrder(), {
+      id: "ee4a20eb-214c-458b-bfab-d7633d2d44d2",
+      customerId,
+      riderId: null,
+      status: MasterOrderStatus.PENDING_PAYMENT,
+      subtotalMinor: 500000,
+      deliveryFeeMinor: 150000,
+      vatMinor: 37500,
+      serviceFeeMinor: 0,
+      discountMinor: 0,
+      totalMinor: 687500,
+      deliveryMode: "DELIVERY",
+      deliveryAddress: "15 Admiralty Way, Lekki",
+      recipientPhone: "08012345678",
+      updatedAt: new Date("2026-07-15T12:00:00.000Z"),
+    });
+
+    const payment = {
+      id: "f5e8f6ff-e76c-4ef4-8dd2-9ef601bd9705",
+      masterOrderId: order.id,
+      amountMinor: 687500,
+      currency: "NGN" as const,
+      gateway: "paystack",
+      reference: "RSC-receipt-test-ref",
+      status: PaymentStatus.PENDING,
+    };
+
+    const customerUser = {
+      id: customerId,
+      name: "Tunde Ednut",
+      emailEncrypted: "encrypted:tunde@example.com",
+      role: UserRole.CUSTOMER,
+    };
+
+    payments.findOneBy.mockResolvedValue(payment);
+    payments.findOne.mockResolvedValue(payment);
+    masterOrders.findOneBy.mockResolvedValue(order);
+    masterOrders.findOne.mockResolvedValue(order);
+    users.findOneBy.mockResolvedValue(customerUser);
+    users.find.mockResolvedValue([]);
+
+    const subOrder = Object.assign(new SubOrder(), {
+      id: "0b8706a1-b1d9-4c05-860f-8e15f70410f2",
+      masterOrderId: order.id,
+      outletId,
+      subtotalMinor: 500000,
+    });
+    const orderLineItem = {
+      id: "db049a4a-5152-4e94-a34b-f0fcac5b1b2d",
+      masterOrderId: order.id,
+      subOrderId: subOrder.id,
+      outletId,
+      itemNameSnapshot: "Grilled Fish",
+      quantity: 1,
+      unitPriceMinor: 500000,
+      lineTotalMinor: 500000,
+      customerNote: "Very spicy",
+    };
+
+    subOrders.find.mockResolvedValue([subOrder]);
+    lineItems.find.mockResolvedValue([orderLineItem]);
+    outlets.findBy.mockResolvedValue([{ id: outletId, name: "Fisherman Grill" }]);
+
+    await serviceWithEmail.confirmPayment({
+      eventId: "evt-payment-success-receipt",
+      eventType: "charge.success",
+      reference: payment.reference,
+      status: "SUCCESS",
+      amountMinor: payment.amountMinor,
+      providerResponse: {},
+    });
+
+    expect(mockEmailSender.sendOrderReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "tunde@example.com",
+        customerName: "Tunde Ednut",
+        masterOrderId: order.id,
+        paymentReference: payment.reference,
+        paymentGateway: "paystack",
+        deliveryMode: "DELIVERY",
+        deliveryAddress: "15 Admiralty Way, Lekki",
+        recipientPhone: "08012345678",
+        groups: [
+          expect.objectContaining({
+            outletName: "Fisherman Grill",
+            items: [
+              expect.objectContaining({
+                name: "Grilled Fish",
+                quantity: 1,
+                totalPriceMinor: 500000,
+                notes: "Very spicy",
+              }),
+            ],
+          }),
+        ],
+        totals: expect.objectContaining({
+          subtotalMinor: 500000,
+          deliveryFeeMinor: 150000,
+          vatMinor: 37500,
+          totalMinor: 687500,
+        }),
+      }),
+    );
+
+    expect(notifications.createAndPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientId: customerId,
+        recipientRole: UserRole.CUSTOMER,
+        type: "PAYMENT_SUCCESS",
+        title: "Payment confirmed · Receipt",
+      }),
+    );
   });
 
   it("stores recipient phone on the master order and preparation note on every sub-order", async () => {

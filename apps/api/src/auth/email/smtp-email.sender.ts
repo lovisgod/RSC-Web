@@ -9,11 +9,12 @@ import type {
   EmailSender,
   SendDatabaseBackupEmailInput,
   SendMarketingEmailInput,
+  SendOrderReceiptEmailInput,
   SendPasswordResetEmailInput,
   SendTemporaryPasswordEmailInput,
   SendWelcomeVerificationEmailInput,
 } from "./email-sender";
-import { renderEmailTemplate } from "./email-template";
+import { renderEmailTemplate, renderOrderReceiptTemplate } from "./email-template";
 
 @Injectable()
 export class SmtpEmailSender implements EmailSender {
@@ -236,6 +237,41 @@ export class SmtpEmailSender implements EmailSender {
         `SMTP rejected database backup email: ${JSON.stringify({ message: (error as Error).message })}`,
       );
       throw new BadGatewayException("Unable to send database backup email");
+    }
+  }
+
+  async sendOrderReceipt(input: SendOrderReceiptEmailInput): Promise<void> {
+    const shortOrderId = input.masterOrderId.slice(0, 8).toUpperCase();
+    const subject = `Your DineOutNG order receipt #${shortOrderId}`;
+    const html = renderOrderReceiptTemplate(input);
+
+    this.logger.log(
+      `Sending SMTP order receipt email: ${JSON.stringify({
+        host: this.config.host,
+        port: this.config.port,
+        from: this.config.from,
+        to: input.email,
+        subject,
+        masterOrderId: input.masterOrderId,
+      })}`,
+    );
+
+    try {
+      const info: SMTPTransport.SentMessageInfo = await this.transporter.sendMail({
+        from: this.config.from,
+        to: input.email,
+        subject,
+        html,
+      });
+
+      this.logger.log(
+        `SMTP accepted order receipt email: ${JSON.stringify({ messageId: info.messageId })}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `SMTP rejected order receipt email: ${JSON.stringify({ message: (error as Error).message })}`,
+      );
+      throw new BadGatewayException("Unable to send order receipt email");
     }
   }
 }

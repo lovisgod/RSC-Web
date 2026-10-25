@@ -18,6 +18,7 @@ import { DataSource, In, QueryFailedError, Repository } from "typeorm";
 import { Customer } from "../auth/customer.entity";
 import type { AuthenticatedUser } from "../auth/authenticated-user";
 import { normalizeNigerianPhoneNumber } from "../auth/phone-number";
+import { EMAIL_SENDER, type EmailSender } from "../auth/email/email-sender";
 import { PiiCryptoService } from "../common/security/pii-crypto.service";
 import { REDIS_CLIENT } from "../redis/redis.constants";
 import type { ApplicationConfig } from "../config/configuration";
@@ -178,6 +179,7 @@ export class PaymentsService {
     private readonly realtime: RealtimeService,
     private readonly notifications: NotificationsService,
     @Optional() @Inject(REDIS_CLIENT) private readonly redis?: Redis,
+    @Optional() @Inject(EMAIL_SENDER) private readonly emailSender?: EmailSender,
   ) {
     const paymentsConfig = configService.get("payments", { infer: true });
 
@@ -580,6 +582,7 @@ export class PaymentsService {
       if (persisted.payment.status === PaymentStatus.SUCCESS) {
         await this.emitConfirmedSubOrders(persisted.masterOrder);
         await this.notifyAdminsOfSuccessfulPayment(persisted.masterOrder, persisted.payment);
+        await this.sendReceiptToCustomer(persisted.masterOrder, persisted.payment);
       }
 
       const response = {
@@ -722,6 +725,7 @@ export class PaymentsService {
     if (payment.status === PaymentStatus.SUCCESS) {
       await this.emitConfirmedSubOrders(order);
       await this.notifyAdminsOfSuccessfulPayment(order, payment);
+      await this.sendReceiptToCustomer(order, payment);
     }
 
     return {
@@ -845,6 +849,7 @@ export class PaymentsService {
 
       await this.emitConfirmedSubOrders(confirmedOrder);
       await this.notifyAdminsOfSuccessfulPayment(confirmedOrder, confirmedPayment);
+      await this.sendReceiptToCustomer(confirmedOrder, confirmedPayment);
     }
 
     this.logger.log(
@@ -918,6 +923,101 @@ export class PaymentsService {
       },
       outletIds,
     );
+  }
+
+  private async sendReceiptToCustomer(order: MasterOrder, payment: Payment): Promise<void> {
+    if (this.redis) {
+      const lockKey = `receipt_sent:${order.id}`;
+      const acquired = await this.redis.set(lockKey, "1", "EX", 604800, "NX");
+      if (!acquired) {
+        return;
+      }
+    }
+
+    try {
+      const customer = await this.users.findOneBy({ id: order.customerId });
+      if (!customer) {
+        return;
+      }
+
+      const [subOrders, lineItems] = await Promise.all([
+        this.subOrders.find({ where: { masterOrderId: order.id }, order: { createdAt: "ASC" } }),
+        this.lineItems.find({ where: { masterOrderId: order.id }, order: { createdAt: "ASC" } }),
+      ]);
+
+      const outletIds = [...new Set(subOrders.map((so) => so.outletId))];
+      const outlets = outletIds.length > 0 ? await this.outlets.findBy({ id: In(outletIds) }) : [];
+      const outletMap = new Map(outlets.map((o) => [o.id, o.name]));
+
+      const groups = subOrders.map((subOrder) => ({
+        outletName: outletMap.get(subOrder.outletId) ?? "Kitchen",
+        items: lineItems
+          .filter((li) => li.subOrderId === subOrder.id)
+          .map((li) => ({
+            name: li.itemNameSnapshot,
+            quantity: li.quantity,
+            unitPriceMinor: li.unitPriceMinor,
+            totalPriceMinor: li.lineTotalMinor,
+            notes: li.customerNote,
+          })),
+        subtotalMinor: subOrder.subtotalMinor,
+      }));
+
+      const customerEmail = this.piiCrypto.decrypt(customer.emailEncrypted);
+      const customerName = customer.name;
+
+      // 1. Send detailed email receipt matching checkout summary breakdown
+      if (this.emailSender && customerEmail) {
+        await this.emailSender.sendOrderReceipt({
+          email: customerEmail,
+          customerName,
+          masterOrderId: order.id,
+          paymentReference: payment.reference,
+          paymentGateway: payment.gateway,
+          paidAt: payment.succeededAt ?? new Date(),
+          deliveryMode: order.deliveryMode,
+          deliveryAddress: order.deliveryAddress,
+          recipientPhone: order.recipientPhone,
+          groups,
+          totals: {
+            subtotalMinor: order.subtotalMinor,
+            deliveryFeeMinor: order.deliveryFeeMinor,
+            vatMinor: order.vatMinor,
+            serviceFeeMinor: order.serviceFeeMinor,
+            discountMinor: order.discountMinor,
+            totalMinor: order.totalMinor,
+            currency: "NGN",
+          },
+        });
+      }
+
+      // 2. Push in-app payment confirmation notification to customer
+      const shortId = order.id.slice(0, 8).toUpperCase();
+      const formattedTotal = `₦${(order.totalMinor / 100).toLocaleString("en-NG", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+
+      await this.notifications.createAndPush({
+        recipientId: order.customerId,
+        recipientRole: UserRole.CUSTOMER,
+        type: "PAYMENT_SUCCESS",
+        title: "Payment confirmed · Receipt",
+        body: `Payment of ${formattedTotal} for order #${shortId} was successful. Kitchens are preparing your order.`,
+        data: {
+          masterOrderId: order.id,
+          paymentId: payment.id,
+          reference: payment.reference,
+          amountMinor: order.totalMinor,
+          currency: "NGN",
+          deepLink: `/tracking`,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send customer receipt for order ${order.id}: ${error instanceof Error ? error.message : "unknown error"}`,
+      );
+    }
   }
 
   // ---------------------------------------------------------------------------
