@@ -275,7 +275,9 @@ export function AuditLogsPage() {
                 <tr key={log.id}>
                   <td>{formatDateTime(log.createdAt)}</td>
                   <td>
-                    <span className="audit-actor-role">{log.actorRole ?? "SYSTEM"}</span>
+                    <span className="audit-actor-role">
+                      {log.actorRole ?? (log.path.includes("webhook") ? "WEBHOOK" : "SYSTEM")}
+                    </span>
                     <small>{log.actorId ?? "—"}</small>
                   </td>
                   <td>
@@ -287,7 +289,17 @@ export function AuditLogsPage() {
                     <small>{log.resourceId ?? "—"}</small>
                   </td>
                   <td>
-                    <span className="badge badge--paid">{log.statusCode}</span>
+                    <span
+                      className={`badge ${
+                        log.statusCode < 400
+                          ? "badge--paid"
+                          : log.statusCode < 500
+                            ? "badge--pending"
+                            : "badge--failed"
+                      }`}
+                    >
+                      {log.statusCode}
+                    </span>
                   </td>
                   <td>
                     <span>{log.requestId ?? "—"}</span>

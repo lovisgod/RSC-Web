@@ -103,7 +103,7 @@ export class AuditInterceptor implements NestInterceptor {
       path,
       statusCode,
       resourceType: resourceTypeFromPath(path),
-      resourceId: resourceIdFromParams(request.params),
+      resourceId: resourceIdFromParams(request.params, request.body),
       requestId: response.getHeader("x-request-id")?.toString() ?? null,
       ipAddress: request.ip ?? request.socket.remoteAddress ?? null,
       userAgent: request.header("user-agent")?.slice(0, 512) ?? null,
@@ -141,11 +141,30 @@ function resourceTypeFromPath(path: string): string | null {
   return segments[resourceIndex] ?? null;
 }
 
-function resourceIdFromParams(params: Record<string, unknown>): string | null {
+function resourceIdFromParams(params: Record<string, unknown>, body?: unknown): string | null {
   for (const key of ["id", "orderId", "reference", "subOrderId", "outletId", "zoneId"]) {
     const value = params[key];
     if (typeof value === "string" && value.trim()) {
       return value.trim().slice(0, 160);
+    }
+  }
+
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    const bodyObj = body as Record<string, unknown>;
+    const dataObj =
+      bodyObj.data && typeof bodyObj.data === "object"
+        ? (bodyObj.data as Record<string, unknown>)
+        : null;
+
+    const candidate =
+      dataObj?.external_reference ??
+      dataObj?.reference ??
+      bodyObj.reference ??
+      bodyObj.id ??
+      bodyObj.eventId;
+
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim().slice(0, 160);
     }
   }
 

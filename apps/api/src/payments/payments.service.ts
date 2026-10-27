@@ -8,7 +8,6 @@ import {
   Logger,
   NotFoundException,
   Optional,
-  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -766,14 +765,32 @@ export class PaymentsService {
     await this.dataSource.transaction(async (manager) => {
       const paymentRepository = manager.getRepository(Payment);
       const orderRepository = manager.getRepository(MasterOrder);
+      const trimmedRef = event.reference?.trim() ?? "";
       payment = await paymentRepository.findOne({
-        where: { reference: event.reference },
+        where: { reference: trimmedRef },
         lock: { mode: "pessimistic_write" },
       });
 
+      if (!payment && trimmedRef) {
+        payment = await paymentRepository
+          .createQueryBuilder("payment")
+          .where("LOWER(payment.reference) = LOWER(:trimmedRef)", { trimmedRef })
+          .setLock("pessimistic_write")
+          .getOne();
+      }
+
       if (!payment) {
-        this.logger.warn(`Webhook: no payment found for reference ${event.reference}`);
-        throw new ServiceUnavailableException("Payment is not ready for webhook confirmation");
+        this.logger.warn(
+          `Webhook unhandled: no payment found for reference "${event.reference}" (eventId=${event.eventId}, type=${event.eventType})`,
+        );
+        await manager.query(
+          `INSERT INTO payment_webhook_events (gateway, event_id, event_type, payload)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (gateway, event_id) DO NOTHING`,
+          [gateway, event.eventId, event.eventType, JSON.stringify(event.providerResponse)],
+        );
+        already = false;
+        return;
       }
 
       if (

@@ -1,4 +1,4 @@
-import { BadRequestException, ServiceUnavailableException } from "@nestjs/common";
+import { BadRequestException } from "@nestjs/common";
 import type { ConfigService } from "@nestjs/config";
 import type { DataSource, Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -49,6 +49,7 @@ describe(PaymentsService.name, () => {
     find: ReturnType<typeof vi.fn>;
     findOne: ReturnType<typeof vi.fn>;
     findOneBy: ReturnType<typeof vi.fn>;
+    createQueryBuilder: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
@@ -136,6 +137,11 @@ describe(PaymentsService.name, () => {
         gateway: "local",
         reference: "RSC-reference",
         status: PaymentStatus.SUCCESS,
+      }),
+      createQueryBuilder: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnThis(),
+        setLock: vi.fn().mockReturnThis(),
+        getOne: vi.fn().mockResolvedValue(null),
       }),
       update: vi.fn().mockResolvedValue({ affected: 0 }),
       create: vi.fn((value: Partial<Payment>) => value),
@@ -1421,20 +1427,32 @@ describe(PaymentsService.name, () => {
     );
   });
 
-  it("does not consume a webhook that arrives before its payment row", async () => {
+  it("safely handles an unhandled webhook reference without throwing 503", async () => {
     payments.findOne.mockResolvedValue(null);
+    const managerQuery = vi.fn().mockResolvedValue([]);
+    dataSource.transaction = vi.fn().mockImplementation((work: (manager: unknown) => unknown) =>
+      Promise.resolve(
+        work({
+          query: managerQuery,
+          getRepository: (entity: unknown) => (entity === Payment ? payments : masterOrders),
+        }),
+      ),
+    );
 
-    await expect(
-      service.confirmPayment({
-        eventId: "evt-early",
-        eventType: "payment_session.completed",
-        reference: "RSC-not-committed",
-        status: "SUCCESS",
-        amountMinor: 645000,
-        providerResponse: {},
-      }),
-    ).rejects.toBeInstanceOf(ServiceUnavailableException);
-    expect(dataSource.query).not.toHaveBeenCalled();
+    const result = await service.confirmPayment({
+      eventId: "evt-early",
+      eventType: "payment_session.completed",
+      reference: "RSC-not-committed",
+      status: "SUCCESS",
+      amountMinor: 645000,
+      providerResponse: {},
+    });
+
+    expect(result).toEqual({ already: false });
+    expect(managerQuery).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO payment_webhook_events"),
+      expect.arrayContaining(["evt-early"]),
+    );
   });
 
   it("stores a non-terminal Moment session update without failing the payment or cancelling the order", async () => {
