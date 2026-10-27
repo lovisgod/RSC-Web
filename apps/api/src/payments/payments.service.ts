@@ -751,7 +751,9 @@ export class PaymentsService {
   // Webhook confirmation (server-authoritative, idempotent)
   // ---------------------------------------------------------------------------
 
-  async confirmPayment(event: ParsedWebhookEvent): Promise<{ already: boolean }> {
+  async confirmPayment(
+    event: ParsedWebhookEvent,
+  ): Promise<{ already: boolean; unhandled?: boolean }> {
     this.logger.log(
       `Confirming payment from webhook: reference=${event.reference}, eventId=${event.eventId}, status=${event.status}, amountMinor=${event.amountMinor}`,
     );
@@ -852,7 +854,7 @@ export class PaymentsService {
       if (already) {
         this.logger.log(`Webhook event ${event.eventId} already processed — skipping`);
       }
-      return { already };
+      return { already, ...(confirmedPayment ? {} : { unhandled: true }) };
     }
 
     if (confirmedOrder?.status === MasterOrderStatus.CONFIRMED) {

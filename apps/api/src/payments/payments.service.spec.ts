@@ -1448,7 +1448,7 @@ describe(PaymentsService.name, () => {
       providerResponse: {},
     });
 
-    expect(result).toEqual({ already: false });
+    expect(result).toEqual({ already: false, unhandled: true });
     expect(managerQuery).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO payment_webhook_events"),
       expect.arrayContaining(["evt-early"]),

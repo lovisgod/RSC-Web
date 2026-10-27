@@ -33,7 +33,7 @@ import {
 } from "./dto/payment.dto";
 import { UpdatePlatformChargesDto } from "./dto/platform-charges.dto";
 import { PaymentsService } from "./payments.service";
-import { PAYMENT_ADAPTER, type PaymentAdapter } from "./payment-adapter";
+import { PAYMENT_ADAPTER, type ParsedWebhookEvent, type PaymentAdapter } from "./payment-adapter";
 import { Inject, Logger } from "@nestjs/common";
 
 @ApiTags("Payments")
@@ -163,6 +163,10 @@ export class PaymentsController {
       `Webhook payment confirmation finished for reference ${event.reference} (alreadyProcessed=${result.already})`,
     );
 
+    if (result.unhandled) {
+      await this.maybeForwardStagingWebhook(event, rawBody, headersMap);
+    }
+
     return { received: true, already: result.already };
   }
 
@@ -211,6 +215,62 @@ export class PaymentsController {
     this.logger.warn(
       `MOMENT_WEBHOOK_REPLAY_CONSOLE_START\n${lines.join("\n")}\nMOMENT_WEBHOOK_REPLAY_CONSOLE_END`,
     );
+  }
+
+  private async maybeForwardStagingWebhook(
+    event: ParsedWebhookEvent,
+    rawBody: Buffer,
+    headers: Record<string, string>,
+  ): Promise<void> {
+    const deploymentEnvironment = this.configService.get("app.deploymentEnvironment", {
+      infer: true,
+    });
+    const providerResp = event.providerResponse as Record<string, unknown> | undefined;
+    const data = providerResp?.data as Record<string, unknown> | undefined;
+    const returnUrl = typeof data?.return_url === "string" ? data.return_url : "";
+    const isTestMode = data?.mode === "test";
+
+    const isStagingTarget =
+      returnUrl.includes("staging.dineout.com.ng") ||
+      (deploymentEnvironment === "production" && isTestMode);
+
+    if (!isStagingTarget) {
+      return;
+    }
+
+    const stagingUrl =
+      process.env.STAGING_WEBHOOK_URL ||
+      "https://api-staging.dineout.com.ng/api/v1/payments/webhook";
+
+    try {
+      this.logger.log(
+        `Forwarding staging webhook ${event.eventId} (ref: ${event.reference}) to ${stagingUrl}`,
+      );
+
+      const forwardHeaders: Record<string, string> = {
+        "content-type": "application/json",
+      };
+      for (const h of [
+        "webhook-id",
+        "webhook-timestamp",
+        "webhook-signature",
+        "x-paystack-signature",
+      ]) {
+        if (headers[h]) forwardHeaders[h] = headers[h];
+      }
+
+      const res = await fetch(stagingUrl, {
+        method: "POST",
+        headers: forwardHeaders,
+        body: rawBody.toString("utf8"),
+      });
+
+      this.logger.log(`Staging webhook forward completed for ${event.eventId}: HTTP ${res.status}`);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to forward staging webhook ${event.eventId}: ${(error as Error).message}`,
+      );
+    }
   }
 
   /**
