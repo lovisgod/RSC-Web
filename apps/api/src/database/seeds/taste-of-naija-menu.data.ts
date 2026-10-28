@@ -1,0 +1,466 @@
+// Auto-generated Taste of Naija menu seed data — do not edit by hand.
+// Re-generate: python3 apps/api/src/database/generate-taste-of-naija-seed.py
+
+export interface TasteOfNaijaSeedData {
+  outletId: string;
+  outletName: string;
+  modifierGroups: Array<{
+    name: string;
+    minSelections: number;
+    maxSelections: number;
+    isRequired: boolean;
+    modifiers: Array<{ name: string; priceDeltaMinor: number }>;
+  }>;
+  categories: Array<{
+    name: string;
+    sortOrder: number;
+    isActive: boolean;
+    items: Array<{
+      name: string;
+      description: string | null;
+      priceMinor: number;
+      imageUrl: string | null;
+      isAvailable: boolean;
+      sortOrder: number;
+      modifierGroupRefs: string[];
+    }>;
+  }>;
+}
+
+export const tasteOfNaijaMenuData: TasteOfNaijaSeedData = {
+  outletId: "14122d88-0eea-4462-a862-85bc4c293d6b",
+  outletName: "Taste of Naija",
+  modifierGroups: [
+    {
+      name: "Soup Protein Choice",
+      minSelections: 1,
+      maxSelections: 1,
+      isRequired: true,
+      modifiers: [
+        {
+          name: "Beef",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Fish",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Chicken",
+          priceDeltaMinor: 0,
+        },
+      ],
+    },
+    {
+      name: "Soup Accompaniment Choice",
+      minSelections: 1,
+      maxSelections: 1,
+      isRequired: true,
+      modifiers: [
+        {
+          name: "Garri",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Pounded Yam",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Semo",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "White Rice",
+          priceDeltaMinor: 0,
+        },
+      ],
+    },
+    {
+      name: "Soup Protein Add-on",
+      minSelections: 0,
+      maxSelections: 5,
+      isRequired: false,
+      modifiers: [
+        {
+          name: "Extra Fish",
+          priceDeltaMinor: 650000,
+        },
+        {
+          name: "Extra Chicken",
+          priceDeltaMinor: 650000,
+        },
+        {
+          name: "Extra Beef",
+          priceDeltaMinor: 650000,
+        },
+        {
+          name: "Extra Goat Meat",
+          priceDeltaMinor: 650000,
+        },
+        {
+          name: "Extra Shrimp",
+          priceDeltaMinor: 950000,
+        },
+      ],
+    },
+    {
+      name: "Extra Swallow",
+      minSelections: 0,
+      maxSelections: 1,
+      isRequired: false,
+      modifiers: [
+        {
+          name: "Extra Garri",
+          priceDeltaMinor: 900000,
+        },
+        {
+          name: "Extra Pounded Yam",
+          priceDeltaMinor: 900000,
+        },
+        {
+          name: "Extra Semo",
+          priceDeltaMinor: 900000,
+        },
+      ],
+    },
+    {
+      name: "Main Dish Side Choice",
+      minSelections: 1,
+      maxSelections: 1,
+      isRequired: true,
+      modifiers: [
+        {
+          name: "French Fries",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "White Rice",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Fried Rice",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Jollof Rice",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Basmati Rice",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Mashed Potatoes",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Yam Fries",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Fried Plantain",
+          priceDeltaMinor: 0,
+        },
+        {
+          name: "Sauteed Spaghetti",
+          priceDeltaMinor: 0,
+        },
+      ],
+    },
+  ],
+  categories: [
+    {
+      name: "Starters",
+      sortOrder: 0,
+      isActive: true,
+      items: [
+        {
+          sortOrder: 0,
+          name: "Beef Samosa",
+          description: "Six crispy beef samosas served with sweet chili sauce",
+          priceMinor: 1300000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181209/rsc/taste-of-naija/starters/samosa.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 1,
+          name: "Spring Rolls",
+          description: "Six crispy vegetable spring rolls served with sweet chili sauce",
+          priceMinor: 1100000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181212/rsc/taste-of-naija/starters/spring_rolls.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 2,
+          name: "Peppered Snails",
+          description:
+            "Five tender snails saut\u00e9ed in a spicy tomato stew with onions, bell peppers, and served with fried plantain.",
+          priceMinor: 4000000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181205/rsc/taste-of-naija/starters/peppered_snails.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 3,
+          name: "Peppered Goat Meat",
+          description:
+            "Tender goat meat cooked in a spicy pepper sauce with mixed vegetables and served with fried plantain.",
+          priceMinor: 2000000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181200/rsc/taste-of-naija/starters/peppered_goat_meat.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 4,
+          name: "BD Combo",
+          description:
+            "A selection of spring rolls, beef samosas, mini beef and chicken suya, fried yam, fried plantain, and sausage skewers, served with sweet chili sauce and pepper sauce",
+          priceMinor: 2500000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181190/rsc/taste-of-naija/starters/bd_combo.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 5,
+          name: "Fish Pepper Soup",
+          description: "Traditional Nigerian spicy broth prepared with aromatic herbs and spices.",
+          priceMinor: 1900000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181193/rsc/taste-of-naija/starters/fish_soup.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 6,
+          name: "Goat Meat Pepper Soup",
+          description: "Traditional Nigerian spicy broth prepared with aromatic herbs and spices.",
+          priceMinor: 1900000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181197/rsc/taste-of-naija/starters/goat_pepper_soup.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+      ],
+    },
+    {
+      name: "Classic Nigerian Soups",
+      sortOrder: 1,
+      isActive: true,
+      items: [
+        {
+          sortOrder: 0,
+          name: "Edikang Ikong",
+          description:
+            "Served with your choice of beef, fish, or chicken, and one accompaniment: Garri, Pounded Yam, Semo, or White Rice.",
+          priceMinor: 2600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181148/rsc/taste-of-naija/classic_nigerian_soups/edikang_ikong.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Soup Protein Choice", "Soup Accompaniment Choice"],
+        },
+        {
+          sortOrder: 1,
+          name: "Ogbono",
+          description:
+            "Served with your choice of beef, fish, or chicken, and one accompaniment: Garri, Pounded Yam, Semo, or White Rice.",
+          priceMinor: 2600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181158/rsc/taste-of-naija/classic_nigerian_soups/ogbono.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Soup Protein Choice", "Soup Accompaniment Choice"],
+        },
+        {
+          sortOrder: 2,
+          name: "Afang",
+          description:
+            "Served with your choice of beef, fish, or chicken, and one accompaniment: Garri, Pounded Yam, Semo, or White Rice.",
+          priceMinor: 2600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181144/rsc/taste-of-naija/classic_nigerian_soups/afang.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Soup Protein Choice", "Soup Accompaniment Choice"],
+        },
+        {
+          sortOrder: 3,
+          name: "Bitter Leaf",
+          description:
+            "Served with your choice of beef, fish, or chicken, and one accompaniment: Garri, Pounded Yam, Semo, or White Rice.",
+          priceMinor: 2600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181145/rsc/taste-of-naija/classic_nigerian_soups/bitter_leaf.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Soup Protein Choice", "Soup Accompaniment Choice"],
+        },
+        {
+          sortOrder: 4,
+          name: "Egusi",
+          description:
+            "Served with your choice of beef, fish, or chicken, and one accompaniment: Garri, Pounded Yam, Semo, or White Rice.",
+          priceMinor: 2600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181155/rsc/taste-of-naija/classic_nigerian_soups/egussi.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Soup Protein Choice", "Soup Accompaniment Choice"],
+        },
+        {
+          sortOrder: 5,
+          name: "Okro",
+          description:
+            "Served with your choice of beef, fish, or chicken, and one accompaniment: Garri, Pounded Yam, Semo, or White Rice.",
+          priceMinor: 2600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181163/rsc/taste-of-naija/classic_nigerian_soups/okro.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Soup Protein Choice", "Soup Accompaniment Choice"],
+        },
+        {
+          sortOrder: 6,
+          name: "Efo Riro",
+          description:
+            "Served with your choice of beef, fish, or chicken, and one accompaniment: Garri, Pounded Yam, Semo, or White Rice.",
+          priceMinor: 2600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181152/rsc/taste-of-naija/classic_nigerian_soups/eforiro.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Soup Protein Choice", "Soup Accompaniment Choice"],
+        },
+        {
+          sortOrder: 7,
+          name: "Oha",
+          description:
+            "Served with your choice of beef, fish, or chicken, and one accompaniment: Garri, Pounded Yam, Semo, or White Rice.",
+          priceMinor: 2600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181161/rsc/taste-of-naija/classic_nigerian_soups/oha.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Soup Protein Choice", "Soup Accompaniment Choice"],
+        },
+      ],
+    },
+    {
+      name: "Signature Touch",
+      sortOrder: 2,
+      isActive: true,
+      items: [
+        {
+          sortOrder: 0,
+          name: "Chicken Jollof Spaghetti",
+          description:
+            "Spaghetti tossed in our signature spicy Jollof sauce with tender chicken pieces, finished with fresh herbs and seasonings.",
+          priceMinor: 2100000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181167/rsc/taste-of-naija/signature_touch/chicken_jollof_spaghetti.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 1,
+          name: "Seafood Okro",
+          description: "Fresh seafood cooked in rich Nigerian okro soup",
+          priceMinor: 3700000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181185/rsc/taste-of-naija/signature_touch/seafood_okro.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 2,
+          name: "Seafood Egusi",
+          description: "Traditional melon seed soup prepared with an assortment of fresh seafood",
+          priceMinor: 3600000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181181/rsc/taste-of-naija/signature_touch/seafood_egussi.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 3,
+          name: "Prawns Efo Riro",
+          description:
+            "Succulent prawns cooked in rich Yoruba spinach stew with traditional spices",
+          priceMinor: 5700000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181177/rsc/taste-of-naija/signature_touch/prawns_efo_riro.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+        {
+          sortOrder: 4,
+          name: "Ofada Stew with White Rice",
+          description:
+            "Authentic Nigerian Ofada pepper stew prepared with assorted meats and a boiled egg, served with steamed white rice.",
+          priceMinor: 2300000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181171/rsc/taste-of-naija/signature_touch/ofada_stew_with_white_rice.jpg",
+          isAvailable: true,
+          modifierGroupRefs: [],
+        },
+      ],
+    },
+    {
+      name: "Traditional Nigerian Dishes",
+      sortOrder: 3,
+      isActive: true,
+      items: [
+        {
+          sortOrder: 0,
+          name: "Fish Stew",
+          description: "Boneless fish cooked in a rich and spicy tomato stew",
+          priceMinor: 2300000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181235/rsc/taste-of-naija/traditional_nigerian_dishes/fish_stew.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Main Dish Side Choice"],
+        },
+        {
+          sortOrder: 1,
+          name: "Beef Stew",
+          description: "Tender fried beef simmered in a flavorful spicy tomato stew.",
+          priceMinor: 2300000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181220/rsc/taste-of-naija/traditional_nigerian_dishes/beef_stew.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Main Dish Side Choice"],
+        },
+        {
+          sortOrder: 2,
+          name: "Goat Meat Stew",
+          description: "Boneless goat meat cooked in a rich spicy tomato stew",
+          priceMinor: 2400000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181240/rsc/taste-of-naija/traditional_nigerian_dishes/goat_meat_stew.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Main Dish Side Choice"],
+        },
+        {
+          sortOrder: 3,
+          name: "Chicken Stew",
+          description: "Tender chicken pieces simmered in our signature spicy tomato stew",
+          priceMinor: 2300000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181226/rsc/taste-of-naija/traditional_nigerian_dishes/chicken_stew.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Main Dish Side Choice"],
+        },
+        {
+          sortOrder: 4,
+          name: "Diamond Chicken",
+          description:
+            "Grilled chicken with plantain, onions, bell peppers, and mushrooms in our signature spicy tomato sauce.",
+          priceMinor: 2650000,
+          imageUrl:
+            "https://res.cloudinary.com/ekpbgyll/image/upload/v1793181230/rsc/taste-of-naija/traditional_nigerian_dishes/diamond_chicken.jpg",
+          isAvailable: true,
+          modifierGroupRefs: ["Main Dish Side Choice"],
+        },
+      ],
+    },
+  ],
+};
