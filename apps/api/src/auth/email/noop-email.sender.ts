@@ -39,7 +39,7 @@ export class NoopEmailSender implements EmailSender {
   }
 
   sendDatabaseBackup(input: SendDatabaseBackupEmailInput): Promise<void> {
-    this.logger.debug(`Skipping database backup email for ${input.email}`);
+    this.logger.debug(`Skipping database backup email for ${input.emails.join(", ")}`);
 
     return Promise.resolve();
   }

@@ -27,6 +27,9 @@ export class DatabaseBackupSettings {
   @Column({ name: "recipient_email", type: "varchar", length: 254, nullable: true })
   recipientEmail!: string | null;
 
+  @Column({ name: "recipient_emails", type: "text", array: true, nullable: true })
+  recipientEmails!: string[] | null;
+
   @Column({ name: "last_run_at", type: "timestamptz", nullable: true })
   lastRunAt!: Date | null;
 

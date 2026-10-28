@@ -1,7 +1,7 @@
 import { Button } from "@rsc/ui";
 import type { DatabaseBackupSettings } from "@rsc/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DatabaseBackup, Play, ShieldAlert } from "lucide-react";
+import { DatabaseBackup, Play, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { useAuth } from "../hooks/use-auth";
@@ -89,14 +89,20 @@ export function OwnerBackupsPage() {
 
 function OwnerBackupSettingsForm({ settings }: { settings: DatabaseBackupSettings }) {
   const queryClient = useQueryClient();
-  const [recipientEmail, setRecipientEmail] = useState(settings.recipientEmail ?? "");
+  const [recipientEmails, setRecipientEmails] = useState<string[]>(
+    settings.recipientEmails.length > 0
+      ? settings.recipientEmails
+      : settings.recipientEmail
+        ? [settings.recipientEmail]
+        : [""],
+  );
   const [intervalMinutes, setIntervalMinutes] = useState(String(settings.intervalMinutes));
   const [isEnabled, setIsEnabled] = useState(settings.isEnabled);
 
   const saveSettings = useMutation({
     mutationFn: () =>
       updateDatabaseBackupSettings({
-        recipientEmail: recipientEmail.trim(),
+        recipientEmails: recipientEmails.map((email) => email.trim()).filter(Boolean),
         intervalMinutes: Number(intervalMinutes),
         isEnabled,
       }),
@@ -111,7 +117,7 @@ function OwnerBackupSettingsForm({ settings }: { settings: DatabaseBackupSetting
     mutationFn: runDatabaseBackupNow,
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ["owner", "database-backups", "settings"] });
-      toastBus.emit(`Backup sent to ${result.recipientEmail}`, "success");
+      toastBus.emit(`Backup sent to ${result.recipientEmails.join(", ")}`, "success");
     },
     onError: (error: Error) => toastBus.emit(error.message, "error"),
   });
@@ -125,16 +131,55 @@ function OwnerBackupSettingsForm({ settings }: { settings: DatabaseBackupSetting
       }}
       noValidate
     >
-      <label className="admin-settlement-field">
-        <span>Recipient email</span>
-        <input
-          type="email"
-          value={recipientEmail}
-          placeholder="owner@example.com"
-          onChange={(event) => setRecipientEmail(event.target.value)}
-        />
-        <small>The backup dump is sent to this address as an attachment.</small>
-      </label>
+      <div className="admin-settlement-field owner-backups-recipients">
+        <div className="owner-backups-recipients__head">
+          <div>
+            <span>Recipient emails</span>
+            <small>Each address receives the backup dump as an attachment.</small>
+          </div>
+          <button
+            className="owner-backups-icon-button"
+            type="button"
+            aria-label="Add recipient email"
+            title="Add recipient email"
+            onClick={() => setRecipientEmails((current) => [...current, ""])}
+          >
+            <Plus size={16} aria-hidden="true" />
+          </button>
+        </div>
+        <div className="owner-backups-recipients__list">
+          {recipientEmails.map((email, index) => (
+            <div className="owner-backups-recipient-row" key={`${index}-${email}`}>
+              <input
+                type="email"
+                value={email}
+                placeholder="owner@example.com"
+                aria-label={`Recipient email ${index + 1}`}
+                onChange={(event) =>
+                  setRecipientEmails((current) =>
+                    current.map((recipient, recipientIndex) =>
+                      recipientIndex === index ? event.target.value : recipient,
+                    ),
+                  )
+                }
+              />
+              <button
+                className="owner-backups-icon-button owner-backups-icon-button--danger"
+                type="button"
+                aria-label={`Remove recipient email ${index + 1}`}
+                title="Remove recipient email"
+                onClick={() =>
+                  setRecipientEmails((current) =>
+                    current.filter((_, recipientIndex) => recipientIndex !== index),
+                  )
+                }
+              >
+                <Trash2 size={16} aria-hidden="true" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <label className="admin-settlement-field">
         <span>Backup interval</span>
@@ -142,10 +187,10 @@ function OwnerBackupSettingsForm({ settings }: { settings: DatabaseBackupSetting
           value={intervalMinutes}
           onChange={(event) => setIntervalMinutes(event.target.value)}
         >
-          <option value="60">Every hour</option>
           <option value="360">Every 6 hours</option>
           <option value="720">Every 12 hours</option>
           <option value="1440">Daily</option>
+          <option value="2880">Every 2 days</option>
           <option value="10080">Weekly</option>
         </select>
       </label>

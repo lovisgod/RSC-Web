@@ -96,7 +96,7 @@ export class ResendEmailSender implements EmailSender {
   async sendDatabaseBackup(input: SendDatabaseBackupEmailInput): Promise<void> {
     const subject = `DineOutNG database backup - ${input.createdAt.toISOString()}`;
     await this.sendEmail({
-      to: input.email,
+      to: input.emails,
       subject,
       html: renderEmailTemplate({
         preheader: "Your requested DineOutNG database backup is attached.",
@@ -127,7 +127,7 @@ export class ResendEmailSender implements EmailSender {
   }
 
   private async sendEmail(input: {
-    to: string;
+    to: string | string[];
     subject: string;
     html: string;
     attachments?: Array<{ filename: string; content: string }>;

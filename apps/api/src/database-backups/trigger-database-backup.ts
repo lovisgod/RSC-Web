@@ -17,7 +17,7 @@ interface BackupRunResult {
   sent: true;
   fileName: string;
   fileSizeBytes: number;
-  recipientEmail: string;
+  recipientEmails: string[];
   completedAt: string;
 }
 
@@ -105,7 +105,7 @@ async function main(): Promise<void> {
   console.table([
     {
       sent: backupPayload.data.sent,
-      recipientEmail: backupPayload.data.recipientEmail,
+      recipientEmails: backupPayload.data.recipientEmails.join(", "),
       fileName: backupPayload.data.fileName,
       fileSizeBytes: backupPayload.data.fileSizeBytes,
       completedAt: backupPayload.data.completedAt,

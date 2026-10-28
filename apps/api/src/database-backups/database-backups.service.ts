@@ -82,18 +82,18 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
   ): Promise<DatabaseBackupSettingsDto> {
     const settings = await this.ensureSettings();
     const nextInterval = input.intervalMinutes ?? settings.intervalMinutes;
-    const nextRecipient =
-      input.recipientEmail !== undefined
-        ? input.recipientEmail.trim().toLowerCase()
-        : settings.recipientEmail;
+    const nextRecipients = getRecipientsFromInput(input, settings);
     const nextEnabled = input.isEnabled ?? settings.isEnabled;
 
-    if (nextEnabled && !nextRecipient) {
-      throw new BadRequestException("Backup recipient email is required before enabling backups");
+    if (nextEnabled && nextRecipients.length === 0) {
+      throw new BadRequestException(
+        "At least one backup recipient email is required before enabling backups",
+      );
     }
 
     settings.intervalMinutes = nextInterval;
-    settings.recipientEmail = nextRecipient || null;
+    settings.recipientEmails = nextRecipients.length > 0 ? nextRecipients : null;
+    settings.recipientEmail = nextRecipients[0] ?? null;
     settings.isEnabled = nextEnabled;
     settings.updatedById = actor.id;
     settings.nextRunAt = nextEnabled ? addMinutes(new Date(), nextInterval) : null;
@@ -133,8 +133,9 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
     if (this.isRunning) {
       throw new BadRequestException("A database backup is already running");
     }
-    if (!settings.recipientEmail) {
-      throw new BadRequestException("Backup recipient email is not configured");
+    const recipients = getStoredRecipients(settings);
+    if (recipients.length === 0) {
+      throw new BadRequestException("At least one backup recipient email is not configured");
     }
 
     const lockConnection = this.dataSource.createQueryRunner();
@@ -167,7 +168,7 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
       }
 
       await this.emailSender.sendDatabaseBackup({
-        email: settings.recipientEmail,
+        emails: recipients,
         fileName: dump.fileName,
         filePath: dump.filePath,
         fileSizeBytes: dump.fileSizeBytes,
@@ -189,7 +190,8 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
         sent: true,
         fileName: dump.fileName,
         fileSizeBytes: dump.fileSizeBytes,
-        recipientEmail: settings.recipientEmail,
+        recipientEmails: recipients,
+        recipientEmail: recipients[0]!,
         completedAt: completedAt.toISOString(),
       };
     } catch (error) {
@@ -287,6 +289,7 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
         isEnabled: false,
         intervalMinutes: DEFAULT_INTERVAL_MINUTES,
         recipientEmail: null,
+        recipientEmails: null,
         lastRunAt: null,
         nextRunAt: null,
         lastStatus: "NEVER_RUN",
@@ -303,7 +306,8 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
       id: settings.id,
       isEnabled: settings.isEnabled,
       intervalMinutes: settings.intervalMinutes,
-      recipientEmail: settings.recipientEmail,
+      recipientEmails: getStoredRecipients(settings),
+      recipientEmail: getStoredRecipients(settings)[0] ?? null,
       lastRunAt: settings.lastRunAt?.toISOString() ?? null,
       nextRunAt: settings.nextRunAt?.toISOString() ?? null,
       lastStatus: settings.lastStatus,
@@ -323,6 +327,29 @@ export class DatabaseBackupsService implements OnModuleInit, OnModuleDestroy {
       1024
     );
   }
+}
+
+function getRecipientsFromInput(
+  input: UpdateDatabaseBackupSettingsDto,
+  settings: DatabaseBackupSettings,
+): string[] {
+  if (input.recipientEmails !== undefined) {
+    return normalizeRecipients(input.recipientEmails);
+  }
+  if (input.recipientEmail !== undefined) {
+    return normalizeRecipients([input.recipientEmail]);
+  }
+  return getStoredRecipients(settings);
+}
+
+function getStoredRecipients(settings: DatabaseBackupSettings): string[] {
+  return normalizeRecipients(
+    settings.recipientEmails ?? (settings.recipientEmail ? [settings.recipientEmail] : []),
+  );
+}
+
+function normalizeRecipients(recipients: string[]): string[] {
+  return [...new Set(recipients.map((email) => email.trim().toLowerCase()).filter(Boolean))];
 }
 
 function addMinutes(date: Date, minutes: number): Date {

@@ -214,7 +214,7 @@ export class SmtpEmailSender implements EmailSender {
         host: this.config.host,
         port: this.config.port,
         from: this.config.from,
-        to: input.email,
+        to: input.emails,
         subject,
         fileName: input.fileName,
       })}`,
@@ -223,7 +223,7 @@ export class SmtpEmailSender implements EmailSender {
     try {
       const info: SMTPTransport.SentMessageInfo = await this.transporter.sendMail({
         from: this.config.from,
-        to: input.email,
+        to: input.emails,
         subject,
         html,
         attachments: [{ filename: input.fileName, path: input.filePath }],

@@ -196,6 +196,7 @@ export const databaseBackupSettingsSchema = z.object({
   id: z.uuid(),
   isEnabled: z.boolean(),
   intervalMinutes: z.int().min(15).max(10080),
+  recipientEmails: z.array(z.email()),
   recipientEmail: z.email().nullable(),
   lastRunAt: z.iso.datetime().nullable(),
   nextRunAt: z.iso.datetime().nullable(),
@@ -212,6 +213,10 @@ export const updateDatabaseBackupSettingsInputSchema = z
   .object({
     isEnabled: z.boolean().optional(),
     intervalMinutes: z.int().min(15).max(10080).optional(),
+    recipientEmails: z
+      .array(z.string().trim().toLowerCase().pipe(z.email().max(254)))
+      .max(20)
+      .optional(),
     recipientEmail: z.string().trim().toLowerCase().pipe(z.email().max(254)).optional(),
   })
   .strict();
@@ -220,6 +225,7 @@ export const databaseBackupRunResultSchema = z.object({
   sent: z.literal(true),
   fileName: z.string().min(1),
   fileSizeBytes: z.int().nonnegative(),
+  recipientEmails: z.array(z.email()),
   recipientEmail: z.email(),
   completedAt: z.iso.datetime(),
 });

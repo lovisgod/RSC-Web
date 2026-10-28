@@ -29,7 +29,7 @@ export interface SendMarketingEmailInput {
 }
 
 export interface SendDatabaseBackupEmailInput {
-  email: string;
+  emails: string[];
   fileName: string;
   filePath: string;
   fileSizeBytes: number;

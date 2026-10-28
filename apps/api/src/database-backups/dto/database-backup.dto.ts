@@ -1,11 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform, Type } from "class-transformer";
-import { IsBoolean, IsEmail, IsInt, IsOptional, Max, Min } from "class-validator";
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+} from "class-validator";
 
 import type { DatabaseBackupStatus } from "../database-backup-settings.entity";
 
 const trimLower = ({ value }: { value: unknown }): unknown =>
   typeof value === "string" ? value.trim().toLowerCase() : value;
+
+const trimLowerEmails = ({ value }: { value: unknown }): unknown =>
+  Array.isArray(value)
+    ? (value as unknown[]).map((email: unknown) =>
+        typeof email === "string" ? email.trim().toLowerCase() : email,
+      )
+    : value;
 
 export class UpdateDatabaseBackupSettingsDto {
   @ApiPropertyOptional({ example: true })
@@ -31,12 +47,25 @@ export class UpdateDatabaseBackupSettingsDto {
   @Transform(trimLower)
   @IsEmail()
   recipientEmail?: string;
+
+  @ApiPropertyOptional({
+    example: ["owner@dineout.com.ng", "finance@dineout.com.ng"],
+    maxItems: 20,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @Transform(trimLowerEmails)
+  @IsEmail({}, { each: true })
+  recipientEmails?: string[];
 }
 
 export interface DatabaseBackupSettingsDto {
   id: string;
   isEnabled: boolean;
   intervalMinutes: number;
+  recipientEmails: string[];
   recipientEmail: string | null;
   lastRunAt: string | null;
   nextRunAt: string | null;
@@ -61,6 +90,9 @@ export class DatabaseBackupRunResultDto {
 
   @ApiProperty({ example: "owner@dineout.com.ng" })
   recipientEmail!: string;
+
+  @ApiProperty({ example: ["owner@dineout.com.ng", "finance@dineout.com.ng"], type: [String] })
+  recipientEmails!: string[];
 
   @ApiProperty({ example: "2026-07-22T12:00:00.000Z" })
   completedAt!: string;
