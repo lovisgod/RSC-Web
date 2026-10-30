@@ -152,8 +152,6 @@ export class PaymentsController {
       return { received: false };
     }
 
-    this.logMomentWebhookReplaySnippet(rawBody, headersMap);
-
     this.logger.log(
       `Webhook parsed successfully: eventId=${event.eventId}, type=${event.eventType}, reference=${event.reference}, status=${event.status}, amountMinor=${event.amountMinor}`,
     );
@@ -168,53 +166,6 @@ export class PaymentsController {
     }
 
     return { received: true, already: result.already };
-  }
-
-  private logMomentWebhookReplaySnippet(rawBody: Buffer, headers: Record<string, string>): void {
-    const deploymentEnvironment = this.configService.get("app.deploymentEnvironment", {
-      infer: true,
-    });
-    const enabled = this.configService.get("payments.moment.webhookReplayLog", { infer: true });
-    const webhookId = headers["webhook-id"];
-    const webhookTimestamp = headers["webhook-timestamp"];
-    const webhookSignature = headers["webhook-signature"];
-
-    if (
-      !enabled ||
-      deploymentEnvironment === "production" ||
-      !webhookId ||
-      !webhookTimestamp ||
-      !webhookSignature
-    ) {
-      return;
-    }
-
-    const lines = [
-      `const webhookId = ${JSON.stringify(webhookId)};`,
-      `const webhookTimestamp = ${JSON.stringify(webhookTimestamp)};`,
-      `const webhookSignature = ${JSON.stringify(webhookSignature)};`,
-      `const rawBody = ${JSON.stringify(rawBody.toString("utf8"))};`,
-      "const replayWebhook = async () => {",
-      '  const response = await fetch("/api/v1/payments/webhook", {',
-      '    method: "POST",',
-      "    headers: {",
-      '      "content-type": "application/json",',
-      '      "webhook-id": webhookId,',
-      '      "webhook-timestamp": webhookTimestamp,',
-      '      "webhook-signature": webhookSignature,',
-      "    },",
-      "    body: rawBody,",
-      "  });",
-      "  return { httpStatus: response.status, responseBody: await response.json() };",
-      "};",
-      "const firstReplay = await replayWebhook();",
-      "const secondReplay = await replayWebhook();",
-      "console.log({ firstReplay, secondReplay });",
-    ];
-
-    this.logger.warn(
-      `MOMENT_WEBHOOK_REPLAY_CONSOLE_START\n${lines.join("\n")}\nMOMENT_WEBHOOK_REPLAY_CONSOLE_END`,
-    );
   }
 
   private async maybeForwardStagingWebhook(

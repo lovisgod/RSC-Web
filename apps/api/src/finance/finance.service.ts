@@ -349,7 +349,7 @@ export class FinanceService {
     );
 
     return {
-      filename: `rsc-outlet-settlements-${window.dateFrom}-to-${window.dateTo}.csv`,
+      filename: `dineoutng-outlet-settlements-${window.dateFrom}-to-${window.dateTo}.csv`,
       contentType: "text/csv; charset=utf-8",
       content: settlementRowsToCsv(rows),
     };
