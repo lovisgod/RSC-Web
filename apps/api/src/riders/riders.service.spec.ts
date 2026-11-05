@@ -93,6 +93,9 @@ describe(RidersService.name, () => {
       latitude: 6.6137385,
       longitude: 3.3552573,
       recordedAt,
+      etaMinutes: null,
+      distanceKm: null,
+      etaProvider: null,
     });
   });
 
@@ -123,6 +126,9 @@ describe(RidersService.name, () => {
       latitude: 6.6137385,
       longitude: 3.3552573,
       recordedAt,
+      etaMinutes: null,
+      distanceKm: null,
+      etaProvider: null,
     });
   });
 
