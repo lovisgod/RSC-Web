@@ -8,6 +8,9 @@ const location = {
   latitude: 6.5244,
   longitude: 3.3792,
   recordedAt: "2026-07-04T10:00:00.000Z",
+  etaMinutes: null,
+  distanceKm: null,
+  etaProvider: null,
 };
 
 describe("parseRiderLocationEvent", () => {
