@@ -68,6 +68,15 @@ export interface Environment {
   GOOGLE_MAPS_API_KEY?: string;
   OPENCAGE_API_KEY?: string;
   OPENCAGE_BASE_URL: string;
+  RIDER_TRACKING_PROVIDER: "app" | "nav_naija";
+  NAV_NAIJA_BASE_URL: string;
+  NAV_NAIJA_API_KEY?: string;
+  NAV_NAIJA_SECRET_KEY?: string;
+  NAV_NAIJA_CLIENT_ID?: string;
+  NAV_NAIJA_POLL_INTERVAL_MS: number;
+  ROUTING_PROVIDER: "google" | "osrm";
+  OSRM_BASE_URL: string;
+  ROUTING_TIMEOUT_MS: number;
   PREPARATION_SUGGESTIONS_AI_PROVIDER: "noop" | "pollinations" | "openrouter";
   POLLINATIONS_BASE_URL: string;
   POLLINATIONS_TEXT_MODEL: string;
@@ -251,6 +260,19 @@ const environmentSchema = Joi.object<Environment>({
   OPENCAGE_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
     .default("https://api.opencagedata.com/geocode/v1/json"),
+  RIDER_TRACKING_PROVIDER: Joi.string().valid("app", "nav_naija").default("app"),
+  NAV_NAIJA_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://api.gpsiot.net"),
+  NAV_NAIJA_API_KEY: Joi.string().optional().allow(""),
+  NAV_NAIJA_SECRET_KEY: Joi.string().optional().allow(""),
+  NAV_NAIJA_CLIENT_ID: Joi.string().optional().allow(""),
+  NAV_NAIJA_POLL_INTERVAL_MS: Joi.number().integer().min(5_000).max(300_000).default(15_000),
+  ROUTING_PROVIDER: Joi.string().valid("google", "osrm").default("osrm"),
+  OSRM_BASE_URL: Joi.string()
+    .uri({ scheme: ["https"] })
+    .default("https://router.project-osrm.org"),
+  ROUTING_TIMEOUT_MS: Joi.number().integer().min(500).max(15_000).default(5_000),
   PREPARATION_SUGGESTIONS_AI_PROVIDER: Joi.string()
     .valid("noop", "pollinations", "openrouter")
     .default("pollinations"),

@@ -55,7 +55,8 @@ export class RidersService {
       `
         INSERT INTO rider_locations (rider_id, master_order_id, geom)
         VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326))
-        RETURNING id, rider_id AS "riderId", master_order_id AS "masterOrderId", ST_AsText(geom) AS geom, recorded_at AS "recordedAt"
+        RETURNING id, rider_id AS "riderId", master_order_id AS "masterOrderId", ST_AsText(geom) AS geom,
+          recorded_at AS "recordedAt", eta_minutes AS "etaMinutes", distance_km AS "distanceKm", eta_provider AS "etaProvider"
       `,
       [user.id, masterOrderId, input.longitude, input.latitude],
     );
@@ -68,6 +69,9 @@ export class RidersService {
       latitude: input.latitude,
       longitude: input.longitude,
       recordedAt: location.recordedAt,
+      etaMinutes: location.etaMinutes ?? null,
+      distanceKm: location.distanceKm ?? null,
+      etaProvider: location.etaProvider ?? null,
     });
 
     return location;

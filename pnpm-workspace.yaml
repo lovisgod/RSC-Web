@@ -4,7 +4,6 @@ packages:
 
 allowBuilds:
   "@scarf/scarf": false
-  bcrypt: set this to true or false
   cpu-features: false
   msgpackr-extract: false
   sharp: true

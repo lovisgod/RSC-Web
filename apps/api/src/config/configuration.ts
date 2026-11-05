@@ -105,6 +105,22 @@ export interface ApplicationConfig {
       baseUrl: string;
     };
   };
+  riderTracking: {
+    provider: "app" | "nav_naija";
+    pollIntervalMs: number;
+    navNaija: {
+      baseUrl: string;
+      apiKey: string;
+      secretKey: string;
+      clientId: string;
+    };
+  };
+  routing: {
+    provider: "google" | "osrm";
+    googleApiKey: string;
+    osrmBaseUrl: string;
+    timeoutMs: number;
+  };
   preparationSuggestionsAi: {
     provider: "noop" | "pollinations" | "openrouter";
     baseUrl: string;
@@ -266,6 +282,25 @@ export default function configuration(): ApplicationConfig {
           process.env.OPENCAGE_BASE_URL ?? "https://api.opencagedata.com/geocode/v1/json"
         ).replace(/\/$/, ""),
       },
+    },
+    riderTracking: {
+      provider: process.env.RIDER_TRACKING_PROVIDER === "nav_naija" ? "nav_naija" : "app",
+      pollIntervalMs: Number(process.env.NAV_NAIJA_POLL_INTERVAL_MS ?? 15_000),
+      navNaija: {
+        baseUrl: (process.env.NAV_NAIJA_BASE_URL ?? "https://api.gpsiot.net").replace(/\/$/, ""),
+        apiKey: process.env.NAV_NAIJA_API_KEY ?? "",
+        secretKey: process.env.NAV_NAIJA_SECRET_KEY ?? "",
+        clientId: process.env.NAV_NAIJA_CLIENT_ID ?? "",
+      },
+    },
+    routing: {
+      provider: process.env.ROUTING_PROVIDER === "google" ? "google" : "osrm",
+      googleApiKey: process.env.GOOGLE_MAPS_API_KEY ?? "",
+      osrmBaseUrl: (process.env.OSRM_BASE_URL ?? "https://router.project-osrm.org").replace(
+        /\/$/,
+        "",
+      ),
+      timeoutMs: Number(process.env.ROUTING_TIMEOUT_MS ?? 5_000),
     },
     preparationSuggestionsAi: preparationSuggestionsAiConfig(),
   };

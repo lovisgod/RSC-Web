@@ -40,6 +40,9 @@ export interface LatestLocation {
   latitude: number;
   longitude: number;
   recordedAt: Date;
+  etaMinutes: number | null;
+  distanceKm: number | null;
+  etaProvider: "google" | "osrm" | null;
 }
 
 export interface AdminOrderListResult {
@@ -1613,7 +1616,10 @@ export class OrdersService {
           master_order_id AS "masterOrderId",
           ST_Y(geom) AS "latitude",
           ST_X(geom) AS "longitude",
-          recorded_at AS "recordedAt"
+          recorded_at AS "recordedAt",
+          eta_minutes AS "etaMinutes",
+          distance_km AS "distanceKm",
+          eta_provider AS "etaProvider"
         FROM rider_locations
         WHERE master_order_id = $1
         ORDER BY recorded_at DESC

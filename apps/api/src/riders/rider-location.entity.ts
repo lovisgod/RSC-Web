@@ -17,4 +17,13 @@ export class RiderLocation {
 
   @CreateDateColumn({ name: "recorded_at", type: "timestamptz" })
   recordedAt!: Date;
+
+  @Column({ name: "eta_minutes", type: "integer", nullable: true })
+  etaMinutes!: number | null;
+
+  @Column({ name: "distance_km", type: "double precision", nullable: true })
+  distanceKm!: number | null;
+
+  @Column({ name: "eta_provider", type: "varchar", length: 20, nullable: true })
+  etaProvider!: "google" | "osrm" | null;
 }

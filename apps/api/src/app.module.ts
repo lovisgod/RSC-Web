@@ -27,6 +27,7 @@ import { FinanceModule } from "./finance/finance.module";
 import { RidersModule } from "./riders/riders.module";
 import { StatsModule } from "./stats/stats.module";
 import { UsersModule } from "./users/users.module";
+import { TrackingModule } from "./tracking/tracking.module";
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { UsersModule } from "./users/users.module";
     DatabaseBackupsModule,
     AuthModule,
     UsersModule,
+    TrackingModule,
     CatalogModule,
     DeliveryModule,
     FinanceModule,

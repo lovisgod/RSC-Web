@@ -337,6 +337,11 @@ function RiderMapState({
             Your location
           </span>
         )}
+        {location.etaMinutes !== null && location.etaMinutes !== undefined && (
+          <span className="font-semibold text-[var(--rsc-ink)]">
+            ETA {location.etaMinutes < 1 ? "less than a minute" : `${location.etaMinutes} min`}
+          </span>
+        )}
         <span className="ml-auto flex items-center gap-1 text-xs text-[var(--rsc-muted)]">
           {connection === "live" ? (
             <>

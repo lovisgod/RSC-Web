@@ -1160,6 +1160,9 @@ export const riderLocationSchema = z
     latitude: z.coerce.number().min(-90).max(90),
     longitude: z.coerce.number().min(-180).max(180),
     recordedAt: z.string().min(1),
+    etaMinutes: z.coerce.number().int().nonnegative().nullable().optional().default(null),
+    distanceKm: z.coerce.number().nonnegative().nullable().optional().default(null),
+    etaProvider: z.enum(["google", "osrm"]).nullable().optional().default(null),
   })
   .passthrough();
 

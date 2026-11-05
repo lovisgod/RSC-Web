@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import "leaflet/dist/leaflet.css";
 
 import type { RiderLocation } from "@rsc/contracts";
+import type { CircleMarker, Map as LeafletMap } from "leaflet";
 
 type LatLngLiteral = { lat: number; lng: number };
 
@@ -88,6 +90,7 @@ declare global {
 
 const GOOGLE_MAPS_SCRIPT_ID = "rsc-google-maps-script";
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+const MAP_PROVIDER = process.env.NEXT_PUBLIC_MAP_PROVIDER === "osm" ? "osm" : "google";
 const RIDER_MARKER_COLOR = "#ff8200";
 const CUSTOMER_MARKER_COLOR = "#14883a";
 const DEFAULT_MAP_ZOOM = 15;
@@ -234,7 +237,106 @@ interface TrackingMapProps {
   customerLatLng: [number, number] | null;
 }
 
-export default function TrackingMap({ riderLocation, customerLatLng }: TrackingMapProps) {
+export default function TrackingMap(props: TrackingMapProps) {
+  return MAP_PROVIDER === "osm" ? (
+    <OpenStreetMapTrackingMap {...props} />
+  ) : (
+    <GoogleTrackingMap {...props} />
+  );
+}
+
+function OpenStreetMapTrackingMap({ riderLocation, customerLatLng }: TrackingMapProps) {
+  const mapElementRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const riderMarkerRef = useRef<CircleMarker | null>(null);
+  const customerMarkerRef = useRef<CircleMarker | null>(null);
+  const riderPosition = { lat: riderLocation.latitude, lng: riderLocation.longitude };
+  const customerLatitude = customerLatLng?.[0] ?? null;
+  const customerLongitude = customerLatLng?.[1] ?? null;
+  const customerPosition = useMemo(
+    () =>
+      customerLatitude !== null && customerLongitude !== null
+        ? { lat: customerLatitude, lng: customerLongitude }
+        : null,
+    [customerLatitude, customerLongitude],
+  );
+
+  useEffect(() => {
+    let disposed = false;
+
+    void import("leaflet").then((leaflet) => {
+      if (disposed || !mapElementRef.current) return;
+      const L = leaflet.default;
+
+      if (!mapRef.current) {
+        mapRef.current = L.map(mapElementRef.current, {
+          attributionControl: true,
+          dragging: false,
+          doubleClickZoom: false,
+          scrollWheelZoom: false,
+          zoomControl: false,
+        });
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+          maxZoom: 19,
+        }).addTo(mapRef.current);
+      }
+
+      const map = mapRef.current;
+      const riderLatLng: [number, number] = [riderPosition.lat, riderPosition.lng];
+      if (!riderMarkerRef.current) {
+        riderMarkerRef.current = L.circleMarker(riderLatLng, {
+          color: "#ffffff",
+          fillColor: RIDER_MARKER_COLOR,
+          fillOpacity: 1,
+          radius: 9,
+          weight: 3,
+        }).addTo(map);
+      } else {
+        riderMarkerRef.current.setLatLng(riderLatLng);
+      }
+
+      if (customerPosition && isValidPosition(customerPosition)) {
+        const customerLatLngValue: [number, number] = [customerPosition.lat, customerPosition.lng];
+        if (!customerMarkerRef.current) {
+          customerMarkerRef.current = L.circleMarker(customerLatLngValue, {
+            color: "#ffffff",
+            fillColor: CUSTOMER_MARKER_COLOR,
+            fillOpacity: 1,
+            radius: 9,
+            weight: 3,
+          }).addTo(map);
+        } else {
+          customerMarkerRef.current.setLatLng(customerLatLngValue);
+        }
+        map.fitBounds([riderLatLng, customerLatLngValue], { padding: [28, 28], maxZoom: 16 });
+      } else {
+        customerMarkerRef.current?.remove();
+        customerMarkerRef.current = null;
+        map.setView(riderLatLng, DEFAULT_MAP_ZOOM);
+      }
+      map.invalidateSize();
+    });
+
+    return () => {
+      disposed = true;
+    };
+  }, [customerPosition, riderPosition.lat, riderPosition.lng]);
+
+  useEffect(() => {
+    return () => {
+      mapRef.current?.remove();
+    };
+  }, []);
+
+  return (
+    <div className="relative h-[280px] w-full overflow-hidden rounded-3xl bg-slate-100">
+      <div ref={mapElementRef} className="h-full w-full" aria-label="Live rider tracking map" />
+    </div>
+  );
+}
+
+function GoogleTrackingMap({ riderLocation, customerLatLng }: TrackingMapProps) {
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMap | null>(null);
   const riderMarkerRef = useRef<GoogleMarker | null>(null);
