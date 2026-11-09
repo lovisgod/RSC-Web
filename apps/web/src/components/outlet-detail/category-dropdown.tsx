@@ -72,7 +72,10 @@ export function CategoryDropdown({
       className="outlet-category"
       onKeyDown={handleKeys}
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+        // Mobile Safari can report null relatedTarget while moving from the trigger to an option.
+        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
+          setOpen(false);
+        }
       }}
     >
       <span id={labelId} className={labelClass}>
