@@ -169,18 +169,24 @@ export class RiderTrackingService implements OnModuleInit, OnModuleDestroy {
 
   private async fetchCurrentData(): Promise<NavDevice[]> {
     const tracking = this.config.get("riderTracking", { infer: true }).navNaija;
-    if (!tracking.apiKey || !tracking.secretKey || !tracking.clientId) {
-      this.logger.warn(
-        "NavNija tracking is enabled but credentials or NAV_NAIJA_CLIENT_ID is missing",
-      );
+    if (!tracking.apiKey || !tracking.secretKey) {
+      this.logger.warn("NavNija tracking is enabled but API credentials are missing");
+      return [];
+    }
+    if (!tracking.clientId && tracking.imeiNos.length === 0) {
+      this.logger.warn("NavNija tracking requires NAV_NAIJA_CLIENT_ID or NAV_NAIJA_IMEI_NOS");
       return [];
     }
 
     const token = await this.getToken();
+    const body: { ClientID?: string; imei_nos?: number[] } = {};
+    if (tracking.clientId) body.ClientID = tracking.clientId;
+    if (tracking.imeiNos.length > 0) body.imei_nos = tracking.imeiNos;
+
     const response = await fetch(`${tracking.baseUrl}/api/Asset/GetDevicesCurrentData`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ ClientID: tracking.clientId }),
+      body: JSON.stringify(body),
     });
     if (!response.ok) throw new Error(`current-data request returned ${response.status}`);
     return ((await response.json()) as NavCurrentDataResponse).Data ?? [];

@@ -107,4 +107,21 @@ describe("environment configuration", () => {
       },
     });
   });
+
+  it("supports NavNija device filtering without requiring a client ID", () => {
+    process.env = {
+      ...originalEnvironment,
+      ...baseConfig,
+      RIDER_TRACKING_PROVIDER: "nav_naija",
+      NAV_NAIJA_API_KEY: "nav-api-key",
+      NAV_NAIJA_SECRET_KEY: "nav-secret-key",
+      NAV_NAIJA_CLIENT_ID: "",
+      NAV_NAIJA_IMEI_NOS: "123456789012345, 987654321098765",
+    };
+
+    expect(() => validateEnvironment(process.env)).not.toThrow();
+    expect(configuration().riderTracking.navNaija.imeiNos).toEqual([
+      123456789012345, 987654321098765,
+    ]);
+  });
 });

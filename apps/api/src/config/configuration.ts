@@ -113,6 +113,7 @@ export interface ApplicationConfig {
       apiKey: string;
       secretKey: string;
       clientId: string;
+      imeiNos: number[];
     };
   };
   routing: {
@@ -291,6 +292,10 @@ export default function configuration(): ApplicationConfig {
         apiKey: process.env.NAV_NAIJA_API_KEY ?? "",
         secretKey: process.env.NAV_NAIJA_SECRET_KEY ?? "",
         clientId: process.env.NAV_NAIJA_CLIENT_ID ?? "",
+        imeiNos: (process.env.NAV_NAIJA_IMEI_NOS ?? "")
+          .split(",")
+          .map((value) => Number(value.trim()))
+          .filter((value) => Number.isSafeInteger(value) && value > 0),
       },
     },
     routing: {

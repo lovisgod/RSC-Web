@@ -73,6 +73,7 @@ export interface Environment {
   NAV_NAIJA_API_KEY?: string;
   NAV_NAIJA_SECRET_KEY?: string;
   NAV_NAIJA_CLIENT_ID?: string;
+  NAV_NAIJA_IMEI_NOS?: string;
   NAV_NAIJA_POLL_INTERVAL_MS: number;
   ROUTING_PROVIDER: "google" | "osrm";
   OSRM_BASE_URL: string;
@@ -267,6 +268,10 @@ const environmentSchema = Joi.object<Environment>({
   NAV_NAIJA_API_KEY: Joi.string().optional().allow(""),
   NAV_NAIJA_SECRET_KEY: Joi.string().optional().allow(""),
   NAV_NAIJA_CLIENT_ID: Joi.string().optional().allow(""),
+  NAV_NAIJA_IMEI_NOS: Joi.string()
+    .pattern(/^\s*\d+(?:\s*,\s*\d+)*\s*$/)
+    .optional()
+    .allow(""),
   NAV_NAIJA_POLL_INTERVAL_MS: Joi.number().integer().min(5_000).max(300_000).default(15_000),
   ROUTING_PROVIDER: Joi.string().valid("google", "osrm").default("osrm"),
   OSRM_BASE_URL: Joi.string()
