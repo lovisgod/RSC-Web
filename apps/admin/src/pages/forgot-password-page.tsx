@@ -70,7 +70,7 @@ export function ForgotPasswordPage() {
             id="identifier"
             label="Email or phone"
             type="text"
-            placeholder="admin@rsc.com or 08012345678"
+            placeholder="admin@dineout.ng or 08012345678"
             autoComplete="username"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}

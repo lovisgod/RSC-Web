@@ -94,7 +94,7 @@ export function LoginPage() {
             id="identifier"
             label="Email or phone"
             type="text"
-            placeholder="admin@rsc.com"
+            placeholder="admin@dineout.ng"
             autoComplete="username"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
