@@ -58,6 +58,7 @@ export interface OutletMenu {
 }
 
 const FOOD_EMOJIS = ["🍲", "🥗", "🍛", "🍜", "🥘", "🍱", "🍖", "🍗", "🥩", "🍝"];
+const GENERIC_DRINK_IMAGE = "/images/menu/generic-drink.svg";
 const BG_COLORS = [
   "#FFF3E0",
   "#F3E5F5",
@@ -71,13 +72,22 @@ const BG_COLORS = [
   "#EFEBE9",
 ];
 
+const DRINK_CATEGORY_PATTERN =
+  /\b(?:beverages?|drinks?|wines?|beers?|cocktails?|mocktails?|juices?|smoothies?|water|coffee|teas?|sodas?|soft drinks?|spirits?|liquor|champagne|bar)\b/i;
+
+function isDrinkCategory(categoryName: string): boolean {
+  return DRINK_CATEGORY_PATTERN.test(categoryName);
+}
+
 export function toDisplayMenuItem(
   item: MenuItemSummary,
   index: number,
   modifierGroups: DisplayModifierGroup[] = [],
+  categoryName?: string,
 ): MenuItem {
   const currentPrice = getMenuItemCurrentPriceMinor(item);
   const isDiscountActive = isMenuItemDiscountActive(item);
+  const image = categoryName && isDrinkCategory(categoryName) ? GENERIC_DRINK_IMAGE : item.imageUrl;
 
   return {
     id: item.id,
@@ -90,7 +100,7 @@ export function toDisplayMenuItem(
     originalPriceMinor: item.priceMinor,
     isDiscountActive,
     isAvailable: item.isAvailable,
-    image: item.imageUrl ?? FOOD_EMOJIS[index % FOOD_EMOJIS.length]!,
+    image: image ?? FOOD_EMOJIS[index % FOOD_EMOJIS.length]!,
     bgColor: BG_COLORS[index % BG_COLORS.length]!,
     modifierGroups,
   };
@@ -119,6 +129,16 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
     linksByItem.set(link.menuItemId, arr);
   }
 
+  const namedCategories = summary.menuCategories
+    .filter((c) => c.isActive)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((c) => ({ id: c.id, name: c.name }));
+
+  // All is intentionally disabled: browse one real category at a time.
+  // { id: "all", name: "All" }
+  const categories: MenuCategory[] = namedCategories;
+  const categoryNamesById = new Map(categories.map((category) => [category.id, category.name]));
+
   const items = summary.menuItems
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((item, i) => {
@@ -138,17 +158,8 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
         })
         .filter((g): g is DisplayModifierGroup => g !== null);
 
-      return toDisplayMenuItem(item, i, modifierGroups);
+      return toDisplayMenuItem(item, i, modifierGroups, categoryNamesById.get(item.categoryId));
     });
-
-  const namedCategories = summary.menuCategories
-    .filter((c) => c.isActive)
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((c) => ({ id: c.id, name: c.name }));
-
-  // All is intentionally disabled: browse one real category at a time.
-  // { id: "all", name: "All" }
-  const categories: MenuCategory[] = namedCategories;
 
   return {
     outletId: outlet.id,

@@ -286,7 +286,7 @@ export function LandingPage() {
                       : {}),
                   }}
                 >
-                  {/* Card Header: Badges & Left-Aligned Outlet Name & Cuisine */}
+                  {/* Card Header: badges and outlet identity */}
                   <div className="grab-portrait-card__header">
                     <div className="grab-portrait-card__top-meta">
                       <span
@@ -304,14 +304,20 @@ export function LandingPage() {
                       </span>
                     </div>
 
-                    <div className="grab-portrait-card__title-group">
-                      <h3 className="grab-portrait-card__title">{outlet.name}</h3>
-                      <p className="grab-portrait-card__cuisine">
-                        {outlet.cuisines?.length > 0
-                          ? outlet.cuisines.join(" · ")
-                          : "Wholesome Flavors"}
-                      </p>
-                    </div>
+                    {outlet.logoUrl ? (
+                      <div className="grab-portrait-card__logo" aria-label={`${outlet.name} logo`}>
+                        <img src={outlet.logoUrl} alt={`${outlet.name} logo`} loading="lazy" />
+                      </div>
+                    ) : (
+                      <div className="grab-portrait-card__title-group">
+                        <h3 className="grab-portrait-card__title">{outlet.name}</h3>
+                        <p className="grab-portrait-card__cuisine">
+                          {outlet.cuisines?.length > 0
+                            ? outlet.cuisines.join(" · ")
+                            : "Wholesome Flavors"}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Spacer to push CTA cleanly to the bottom */}

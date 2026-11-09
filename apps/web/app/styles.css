@@ -687,6 +687,29 @@ body {
   width: 100%;
 }
 
+.grab-portrait-card__logo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  max-width: 78%;
+  min-height: 3.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.85rem;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.grab-portrait-card__logo img {
+  display: block;
+  width: auto;
+  max-width: 11rem;
+  height: 2.65rem;
+  object-fit: contain;
+  object-position: left center;
+}
+
 .grab-portrait-card__status {
   display: inline-flex;
   align-items: center;
@@ -2686,6 +2709,17 @@ body {
 
   .grab-portrait-card__spacer {
     min-height: 54px;
+  }
+
+  .grab-portrait-card__logo {
+    min-height: 2.1rem;
+    padding: 0.25rem 0.35rem;
+    border-radius: 0.5rem;
+  }
+
+  .grab-portrait-card__logo img {
+    max-width: 5.2rem;
+    height: 1.45rem;
   }
 
   .grab-portrait-card__title {

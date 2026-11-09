@@ -49,10 +49,23 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-3 sm:p-4 gap-1">
-        <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight">
-          {outlet.name}
-        </h3>
-        <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
+        {outlet.logoUrl ? (
+          <div className="flex min-h-12 items-center" aria-label={`${outlet.name} logo`}>
+            <img
+              src={outlet.logoUrl}
+              alt={`${outlet.name} logo`}
+              className="h-12 max-w-[9rem] object-contain object-left"
+              loading="lazy"
+            />
+          </div>
+        ) : (
+          <>
+            <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight">
+              {outlet.name}
+            </h3>
+            <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
+          </>
+        )}
 
         <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
           <span
@@ -122,10 +135,23 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
 
         {/* Content */}
         <div className="flex flex-col flex-1 p-3 sm:p-4 gap-1">
-          <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight">
-            {outlet.name}
-          </h3>
-          <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
+          {outlet.logoUrl ? (
+            <div className="flex min-h-12 items-center" aria-label={`${outlet.name} logo`}>
+              <img
+                src={outlet.logoUrl}
+                alt={`${outlet.name} logo`}
+                className="h-12 max-w-[9rem] object-contain object-left"
+                loading="lazy"
+              />
+            </div>
+          ) : (
+            <>
+              <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight">
+                {outlet.name}
+              </h3>
+              <p className="text-xs text-gray-400">{outlet.cuisines.join(" · ")}</p>
+            </>
+          )}
 
           <div className="mt-auto grid grid-cols-[1fr_auto_1fr] items-center pt-2 text-xs">
             <span
