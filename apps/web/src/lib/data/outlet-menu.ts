@@ -46,6 +46,7 @@ export interface MenuCategory {
 export interface OutletMenu {
   outletId: string;
   outletName: string;
+  logoUrl?: string | null;
   cuisines: string[];
   isOnline: boolean;
   headerColor: string;
@@ -164,6 +165,7 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
   return {
     outletId: outlet.id,
     outletName: outlet.name,
+    logoUrl: outlet.logoUrl ?? null,
     cuisines: outlet.cuisines,
     isOnline: outlet.isOnline ?? true,
     headerColor: outlet.headerColor,

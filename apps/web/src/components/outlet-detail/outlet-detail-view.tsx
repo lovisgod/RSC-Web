@@ -114,6 +114,16 @@ export function OutletDetailView({ id }: { id: string }) {
       <div className="p-4 sm:p-6 space-y-5">
         {/* Outlet info */}
         <div>
+          {menu.logoUrl && (
+            <div className="mb-3 flex min-h-12 items-center" aria-label={`${menu.outletName} logo`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={menu.logoUrl}
+                alt={`${menu.outletName} logo`}
+                className="max-h-16 max-w-[13rem] object-contain object-left"
+              />
+            </div>
+          )}
           <h1 className="text-2xl font-bold text-gray-900">{menu.outletName}</h1>
           <p className="text-sm text-gray-400 mt-0.5">{menu.cuisines.join(" · ")}</p>
           {(rating || menu.deliveryTime || menu.deliveryFeeMinor !== undefined) && (
