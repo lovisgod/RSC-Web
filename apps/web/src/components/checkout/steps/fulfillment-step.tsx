@@ -502,6 +502,7 @@ export function FulfillmentStep({
             {showDropdown &&
               (filteredAddresses.length > 0 || addressSuggestions.suggestions.length > 0) && (
                 <div
+                  onPointerDown={handleDropdownMouseDown}
                   onMouseDown={handleDropdownMouseDown}
                   className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-[var(--rsc-line)] bg-[var(--rsc-panel)] shadow-lg"
                 >

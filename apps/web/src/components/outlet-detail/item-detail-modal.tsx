@@ -284,6 +284,7 @@ export function ItemDetailModal({ item, outletName, onClose }: ItemDetailModalPr
                     <button
                       key={suggestion.id}
                       type="button"
+                      onPointerDown={(event) => event.preventDefault()}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => applyPreparationSuggestion(suggestion.text)}
                       className="block w-full border-t border-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700 first:border-t-0 hover:bg-[color-mix(in_srgb,var(--rsc-brand)_10%,white)] hover:text-[var(--rsc-brand-strong)]"
