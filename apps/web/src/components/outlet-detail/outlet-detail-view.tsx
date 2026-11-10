@@ -80,13 +80,13 @@ export function OutletDetailView({ id }: { id: string }) {
     <>
       {/* Header */}
       <div
-        className="relative h-52"
+        className={`relative ${hasLogoBanner ? "outlet-detail-hero outlet-detail-hero--logo" : "h-52"}`}
         style={{
           backgroundColor: menu.headerColor,
           ...(hasLogoBanner
             ? {
                 backgroundImage: `url(${menu.logoUrl})`,
-                backgroundSize: "100% auto",
+                backgroundSize: "contain",
                 backgroundRepeat: "no-repeat",
                 backgroundPosition: "center",
               }
@@ -110,6 +110,15 @@ export function OutletDetailView({ id }: { id: string }) {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
+
+        {hasLogoBanner && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={menu.logoUrl!}
+            alt={`${menu.outletName} logo`}
+            className="outlet-detail-hero__mobile-logo"
+          />
+        )}
 
         {/* Emoji fallback — only shown when no photo */}
         {!hasLogoBanner && !hasPhotoBanner && (

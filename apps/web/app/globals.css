@@ -162,3 +162,25 @@ body {
   outline: 2px solid var(--rsc-brand);
   outline-offset: 2px;
 }
+
+.outlet-detail-hero--logo {
+  height: 13rem;
+}
+
+.outlet-detail-hero__mobile-logo {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .outlet-detail-hero--logo {
+    height: auto;
+    min-height: 13rem;
+    background-image: none !important;
+  }
+
+  .outlet-detail-hero__mobile-logo {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
