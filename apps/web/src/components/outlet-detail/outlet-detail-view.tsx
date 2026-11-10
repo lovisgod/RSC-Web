@@ -86,7 +86,7 @@ export function OutletDetailView({ id }: { id: string }) {
           ...(hasLogoBanner
             ? {
                 backgroundImage: `url(${menu.logoUrl})`,
-                backgroundSize: "contain",
+                backgroundSize: "100% auto",
                 backgroundRepeat: "no-repeat",
                 backgroundPosition: "center",
               }
