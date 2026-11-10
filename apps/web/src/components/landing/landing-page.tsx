@@ -304,11 +304,7 @@ export function LandingPage() {
                       </span>
                     </div>
 
-                    {outlet.logoUrl ? (
-                      <div className="grab-portrait-card__logo" aria-label={`${outlet.name} logo`}>
-                        <img src={outlet.logoUrl} alt={`${outlet.name} logo`} loading="lazy" />
-                      </div>
-                    ) : (
+                    {!outlet.image.includes("-outlet-card.") && (
                       <div className="grab-portrait-card__title-group">
                         <h3 className="grab-portrait-card__title">{outlet.name}</h3>
                         <p className="grab-portrait-card__cuisine">

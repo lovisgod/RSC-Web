@@ -43,10 +43,10 @@ export interface Outlet {
 
 // High resolution outlet card clean backdrops matching the reference design
 const OUTLET_GRAPHICS = [
-  { headerColor: "#071a10", image: "/outlets/cactus-card-clean.png" },
-  { headerColor: "#071a0f", image: "/outlets/salmas-card-clean.png" },
-  { headerColor: "#f5ece0", image: "/outlets/farfallino-card-clean.png" },
-  { headerColor: "#071a10", image: "/outlets/cactus-card-clean.png" },
+  { headerColor: "#071a10", image: "/outlets/cactus-outlet-card.png" },
+  { headerColor: "#071a0f", image: "/outlets/salmas-outlet-card.png" },
+  { headerColor: "#f5ece0", image: "/outlets/farfallino-outlet-card.png" },
+  { headerColor: "#071a10", image: "/outlets/taste-of-naija-outlet-card.png" },
 ];
 
 function resolveOutletGraphic(name: string, index: number) {
