@@ -72,6 +72,9 @@ export function OutletDetailView({ id }: { id: string }) {
   const isOffline = menu.isOnline === false;
   const activeSelectedItem = isOffline ? null : selectedItem;
   const rating = formatOutletRating(menu.rating);
+  const hasLogoBanner = Boolean(menu.logoUrl);
+  const hasPhotoBanner =
+    !hasLogoBanner && (menu.image.startsWith("/") || menu.image.startsWith("http"));
 
   return (
     <>
@@ -80,19 +83,24 @@ export function OutletDetailView({ id }: { id: string }) {
         className="relative h-52"
         style={{
           backgroundColor: menu.headerColor,
-          ...(menu.image.startsWith("/") || menu.image.startsWith("http")
+          ...(hasLogoBanner
             ? {
-                backgroundImage: `url(${menu.image})`,
-                backgroundSize: "cover",
+                backgroundImage: `url(${menu.logoUrl})`,
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
                 backgroundPosition: "center",
               }
-            : {}),
+            : hasPhotoBanner
+              ? {
+                  backgroundImage: `url(${menu.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : {}),
         }}
       >
         {/* Darken overlay so the back button stays readable over photos */}
-        {(menu.image.startsWith("/") || menu.image.startsWith("http")) && (
-          <div className="absolute inset-0 bg-black/30" />
-        )}
+        {hasPhotoBanner && <div className="absolute inset-0 bg-black/30" />}
 
         <button
           type="button"
@@ -103,22 +111,8 @@ export function OutletDetailView({ id }: { id: string }) {
           <ArrowLeft className="h-5 w-5" />
         </button>
 
-        {menu.logoUrl && (
-          <div
-            className="absolute inset-x-0 top-4 z-10 flex justify-center px-16"
-            aria-label={`${menu.outletName} logo`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={menu.logoUrl}
-              alt={`${menu.outletName} logo`}
-              className="max-h-20 max-w-[12rem] object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]"
-            />
-          </div>
-        )}
-
         {/* Emoji fallback — only shown when no photo */}
-        {!menu.image.startsWith("/") && !menu.image.startsWith("http") && (
+        {!hasLogoBanner && !hasPhotoBanner && (
           <span className="absolute inset-0 flex items-center justify-center text-8xl">
             {menu.image}
           </span>
