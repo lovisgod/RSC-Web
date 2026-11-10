@@ -103,6 +103,20 @@ export function OutletDetailView({ id }: { id: string }) {
           <ArrowLeft className="h-5 w-5" />
         </button>
 
+        {menu.logoUrl && (
+          <div
+            className="absolute inset-x-0 top-4 z-10 flex justify-center px-16"
+            aria-label={`${menu.outletName} logo`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={menu.logoUrl}
+              alt={`${menu.outletName} logo`}
+              className="max-h-20 max-w-[12rem] object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]"
+            />
+          </div>
+        )}
+
         {/* Emoji fallback — only shown when no photo */}
         {!menu.image.startsWith("/") && !menu.image.startsWith("http") && (
           <span className="absolute inset-0 flex items-center justify-center text-8xl">
@@ -114,16 +128,6 @@ export function OutletDetailView({ id }: { id: string }) {
       <div className="p-4 sm:p-6 space-y-5">
         {/* Outlet info */}
         <div>
-          {menu.logoUrl && (
-            <div className="mb-3 flex min-h-12 items-center" aria-label={`${menu.outletName} logo`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={menu.logoUrl}
-                alt={`${menu.outletName} logo`}
-                className="max-h-16 max-w-[13rem] object-contain object-left"
-              />
-            </div>
-          )}
           <h1 className="text-2xl font-bold text-gray-900">{menu.outletName}</h1>
           <p className="text-sm text-gray-400 mt-0.5">{menu.cuisines.join(" · ")}</p>
           {(rating || menu.deliveryTime || menu.deliveryFeeMinor !== undefined) && (
