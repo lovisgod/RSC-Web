@@ -1064,6 +1064,8 @@ function CategoryEditor({
   const [name, setName] = useState(category?.name ?? "");
   const [sortOrder, setSortOrder] = useState(String(category?.sortOrder ?? 0));
   const [isActive, setIsActive] = useState(category?.isActive ?? true);
+  const [availableFrom, setAvailableFrom] = useState(category?.availableFrom?.slice(0, 5) ?? "");
+  const [availableUntil, setAvailableUntil] = useState(category?.availableUntil?.slice(0, 5) ?? "");
   const save = useMutation({
     mutationFn: () => {
       const body: SaveMenuCategoryBody = {
@@ -1071,6 +1073,8 @@ function CategoryEditor({
         name: name.trim(),
         sortOrder: Number.parseInt(sortOrder, 10) || 0,
         isActive,
+        availableFrom: availableFrom || null,
+        availableUntil: availableUntil || null,
       };
       if (!body.name) throw new Error("Enter a category name.");
       return category ? updateMenuCategory(category.id, body) : createMenuCategory(body);
@@ -1112,6 +1116,25 @@ function CategoryEditor({
             <span />
           </button>
         </label>
+      </div>
+      <div className="admin-menu-form-grid">
+        <FormField label="Available from" tooltip="Uses Africa/Lagos local time.">
+          <input
+            type="time"
+            value={availableFrom}
+            onChange={(event) => setAvailableFrom(event.target.value)}
+          />
+        </FormField>
+        <FormField
+          label="Available until"
+          tooltip="Use 00:00 for midnight; overnight windows are supported."
+        >
+          <input
+            type="time"
+            value={availableUntil}
+            onChange={(event) => setAvailableUntil(event.target.value)}
+          />
+        </FormField>
       </div>
       <Button tone="navy" type="button" disabled={save.isPending} onClick={() => save.mutate()}>
         {save.isPending ? "Saving…" : "Save category"}

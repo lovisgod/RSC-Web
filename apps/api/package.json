@@ -27,6 +27,7 @@
     "seed:menu:salmas": "ts-node src/database/seed-salmas-menu.ts",
     "seed:menu:taste-of-naija": "ts-node src/database/seed-taste-of-naija-menu.ts",
     "undo:menu:salmas": "ts-node src/database/undo-salmas-menu.ts",
+    "undo:menu:outlet": "ts-node src/database/undo-outlet-menu.ts",
     "undo:menu:taste-of-naija": "ts-node src/database/undo-taste-of-naija-menu.ts",
     "upload:images:salmas": "ts-node src/database/upload-salmas-images.ts",
     "upload:images:taste-of-naija": "ts-node src/database/upload-taste-of-naija-images.ts",
@@ -39,6 +40,7 @@
     "seed:menu:salmas:prod": "node dist/src/database/seed-salmas-menu.js",
     "seed:menu:taste-of-naija:prod": "node dist/src/database/seed-taste-of-naija-menu.js",
     "undo:menu:salmas:prod": "node dist/src/database/undo-salmas-menu.js",
+    "undo:menu:outlet:prod": "node dist/src/database/undo-outlet-menu.js",
     "undo:menu:taste-of-naija:prod": "node dist/src/database/undo-taste-of-naija-menu.js",
     "backup:run:prod": "node dist/src/database-backups/trigger-database-backup.js",
     "db:reset": "bash ../../scripts/reset-api-db.sh"

@@ -218,10 +218,11 @@ export class CatalogService {
   }
 
   async listPublicCategories(outletId?: string): Promise<MenuCategory[]> {
-    return this.categories.find({
+    const categories = await this.categories.find({
       ...(outletId ? { where: { outletId } } : {}),
       order: { sortOrder: "ASC", name: "ASC" },
     });
+    return categories.filter(isCategoryAvailableNow);
   }
 
   async createCategory(
@@ -236,6 +237,8 @@ export class CatalogService {
         name: input.name,
         sortOrder: input.sortOrder ?? 0,
         isActive: input.isActive ?? true,
+        availableFrom: input.availableFrom ?? null,
+        availableUntil: input.availableUntil ?? null,
       }),
     );
   }
@@ -899,7 +902,9 @@ export class CatalogService {
 
     return outlets.map((outlet) => ({
       ...outlet,
-      menuCategories: menuCategories.filter((category) => category.outletId === outlet.id),
+      menuCategories: menuCategories
+        .filter((category) => category.outletId === outlet.id)
+        .filter(isCategoryAvailableNow),
       menuItems: menuItems.filter((item) => item.outletId === outlet.id),
       itemModifierGroups: itemModifierGroups.filter((group) => group.outletId === outlet.id),
       itemModifiers: itemModifiers.filter((modifier) => modifier.outletId === outlet.id),
@@ -1304,4 +1309,26 @@ function normalizeSettlementSubaccountCode(value: string | null | undefined): st
   }
 
   return trimmed ? trimmed : null;
+}
+
+function isCategoryAvailableNow(category: MenuCategory): boolean {
+  if (!category.isActive || !category.availableFrom || !category.availableUntil)
+    return category.isActive;
+
+  const now = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Lagos",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date());
+  const current = toMinutes(now);
+  const start = toMinutes(category.availableFrom);
+  const end = toMinutes(category.availableUntil);
+
+  return start <= end ? current >= start && current <= end : current >= start || current <= end;
+}
+
+function toMinutes(value: string): number {
+  const [hours = 0, minutes = 0] = value.slice(0, 5).split(":").map(Number);
+  return hours * 60 + minutes;
 }

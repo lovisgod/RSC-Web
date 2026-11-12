@@ -218,6 +218,16 @@ export class CreateMenuCategoryDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ example: "09:00", description: "Local outlet opening time (HH:mm)." })
+  @IsOptional()
+  @Matches(/^([01]\\d|2[0-3]):[0-5]\\d$/)
+  availableFrom?: string | null;
+
+  @ApiPropertyOptional({ example: "21:00", description: "Local outlet closing time (HH:mm)." })
+  @IsOptional()
+  @Matches(/^([01]\\d|2[0-3]):[0-5]\\d$/)
+  availableUntil?: string | null;
 }
 
 export class UpdateMenuCategoryDto extends PartialType(CreateMenuCategoryDto) {}

@@ -8,7 +8,7 @@ import type {
 
 import { computeOutletMetrics } from "@/src/lib/data/outlet-menu";
 
-export const DEFAULT_OUTLET_RATING = 4.0;
+export const DEFAULT_OUTLET_RATING = 5.0;
 
 export function formatOutletRating(rating: number | null | undefined): string {
   const value = typeof rating === "number" && rating > 0 ? rating : DEFAULT_OUTLET_RATING;
@@ -41,7 +41,7 @@ export interface Outlet {
   tag?: string;
 }
 
-// High resolution outlet card clean backdrops matching the reference design
+// Keep a stable branded fallback color; outlet cards use the backend logo, not food photography.
 const OUTLET_GRAPHICS = [
   { headerColor: "#071a10", image: "/outlets/cactus-outlet-card.png" },
   { headerColor: "#071a0f", image: "/outlets/salmas-outlet-card.png" },
@@ -67,8 +67,7 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     name: summary.name,
     cuisines: [summary.cuisineType],
     headerColor: graphic.headerColor,
-    image:
-      summary.imageUrl && !summary.imageUrl.includes("unsplash") ? summary.imageUrl : graphic.image,
+    image: summary.logoUrl ?? graphic.image,
     logoUrl: summary.logoUrl ?? null,
     ...(summary.bannerUrl ? { bannerImage: summary.bannerUrl } : {}),
     isOnline: summary.isOnline,

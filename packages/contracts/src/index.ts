@@ -633,6 +633,8 @@ export const menuCategorySchema = z.object({
   name: z.string().min(1),
   sortOrder: z.int().nonnegative(),
   isActive: z.boolean(),
+  availableFrom: z.string().nullable().default(null),
+  availableUntil: z.string().nullable().default(null),
 });
 
 export interface MenuItemPricingFields {

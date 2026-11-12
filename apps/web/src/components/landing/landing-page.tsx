@@ -267,23 +267,15 @@ export function LandingPage() {
           <div className="grab-outlets-portrait-grid">
             {outlets.map((outlet) => {
               const isOffline = outlet.isOnline === false;
-              const hasImageUrl =
-                outlet.image && (outlet.image.startsWith("/") || outlet.image.startsWith("http"));
-
-              return (
+              const card = (
                 <article
                   key={outlet.id}
                   className="grab-portrait-card"
                   data-disabled={isOffline}
                   style={{
                     backgroundColor: outlet.headerColor || "#0d1a12",
-                    ...(hasImageUrl
-                      ? {
-                          backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.15) 38%, rgba(0, 0, 0, 0.88) 100%), url(${outlet.image})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }
-                      : {}),
+                    backgroundImage:
+                      "linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.12) 45%, rgba(0, 0, 0, 0.86))",
                   }}
                 >
                   {/* Card Header: badges and outlet identity */}
@@ -304,16 +296,15 @@ export function LandingPage() {
                       </span>
                     </div>
 
-                    {!outlet.image.includes("-outlet-card.") && (
-                      <div className="grab-portrait-card__title-group">
-                        <h3 className="grab-portrait-card__title">{outlet.name}</h3>
-                        <p className="grab-portrait-card__cuisine">
-                          {outlet.cuisines?.length > 0
-                            ? outlet.cuisines.join(" · ")
-                            : "Wholesome Flavors"}
-                        </p>
-                      </div>
-                    )}
+                    <div className="grab-portrait-card__logo-wrap">
+                      {outlet.logoUrl ? (
+                        <img
+                          src={outlet.logoUrl}
+                          alt={`${outlet.name} logo`}
+                          className="grab-portrait-card__logo"
+                        />
+                      ) : null}
+                    </div>
                   </div>
 
                   {/* Spacer to push CTA cleanly to the bottom */}
@@ -321,11 +312,7 @@ export function LandingPage() {
 
                   {/* ORDER NOW CTA Pill Button */}
                   <div className="grab-portrait-card__footer">
-                    <Link
-                      href={isOffline ? "#" : `/outlets/${outlet.id}`}
-                      className="grab-order-now-btn"
-                      aria-label={`Order now from ${outlet.name}`}
-                    >
+                    <span className="grab-order-now-btn" aria-hidden="true">
                       <span className="grab-order-now-btn__text">
                         {isOffline ? (
                           "Closed"
@@ -339,9 +326,16 @@ export function LandingPage() {
                       <span className="grab-order-now-btn__circle">
                         <ChevronRightIcon className="w-4 h-4" />
                       </span>
-                    </Link>
+                    </span>
                   </div>
                 </article>
+              );
+              return isOffline ? (
+                card
+              ) : (
+                <Link key={outlet.id} href={`/outlets/${outlet.id}`} className="block">
+                  {card}
+                </Link>
               );
             })}
           </div>

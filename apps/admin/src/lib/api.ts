@@ -455,6 +455,8 @@ export interface SaveMenuCategoryBody {
   name: string;
   sortOrder: number;
   isActive: boolean;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
 }
 
 export const createMenuCategory = (body: SaveMenuCategoryBody): Promise<MenuCategorySummary> =>

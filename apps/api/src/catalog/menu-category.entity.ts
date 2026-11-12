@@ -26,6 +26,12 @@ export class MenuCategory {
   @Column({ name: "is_active", type: "boolean", default: true })
   isActive!: boolean;
 
+  @Column({ name: "available_from", type: "time", nullable: true })
+  availableFrom!: string | null;
+
+  @Column({ name: "available_until", type: "time", nullable: true })
+  availableUntil!: string | null;
+
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 
