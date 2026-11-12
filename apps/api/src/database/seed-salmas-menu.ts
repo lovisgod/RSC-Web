@@ -152,10 +152,14 @@ async function main(): Promise<void> {
           name: catSeed.name,
           sortOrder: catSeed.sortOrder ?? catIndex,
           isActive: catSeed.isActive ?? true,
+          availableFrom: "10:00",
+          availableUntil: "22:00",
         });
       } else {
         category.sortOrder = catSeed.sortOrder ?? catIndex;
         category.isActive = catSeed.isActive ?? true;
+        category.availableFrom = "10:00";
+        category.availableUntil = "22:00";
       }
 
       if (!DRY_RUN) {

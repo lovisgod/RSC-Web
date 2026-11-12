@@ -4,9 +4,17 @@ import os
 import re
 import openpyxl
 
-EXCEL_PATH = "/Users/justin/Desktop/DO/CACTUS NEW QR/CACTUS MENU 2026.xlsx"
-CLOUDINARY_MAP_PATH = "/Users/justin/Projects/rsc/rsc-web-monorepo/apps/api/src/database/seeds/cactus-cloudinary-urls.json"
-OUTPUT_JSON_PATH = "/Users/justin/Projects/rsc/rsc-web-monorepo/apps/api/src/database/seeds/cactus-menu.json"
+EXCEL_PATH = os.environ.get(
+    "CACTUS_EXCEL_PATH", "/Users/justin/Desktop/DO/CACTUS NEW QR/CACTUS MENU 2026.xlsx"
+)
+CLOUDINARY_MAP_PATH = os.environ.get(
+    "CACTUS_CLOUDINARY_MAP_PATH",
+    "/Users/justin/Projects/rsc/rsc-web-monorepo/apps/api/src/database/seeds/cactus-cloudinary-urls.json",
+)
+OUTPUT_JSON_PATH = os.environ.get(
+    "CACTUS_OUTPUT_JSON_PATH",
+    "/Users/justin/Projects/rsc/rsc-web-monorepo/apps/api/src/database/seeds/cactus-menu.json",
+)
 
 TYPO_REPLACEMENTS = {
     "PHILLY STEAK OMELETTE": "Philly Steak Omelette",
@@ -97,6 +105,15 @@ TYPO_REPLACEMENTS = {
     "NOJITO": "Classic Nojito",
     "VIRGIN COLADA": "Virgin Colada",
     "SWEET SUNRISE": "Sweet Sunrise",
+}
+
+REMOVED_CATEGORIES = {
+    "Classic Cocktails",
+    "White Wines",
+    "Red Wines",
+    "Rosé Wines",
+    "Sweet Wines",
+    "Champagne & Sparkling Wine",
 }
 
 DESC_TYPO_REPLACEMENTS = {
@@ -600,20 +617,19 @@ def main():
     # =========================================================================
     # 4. SHISHA BAR
     # =========================================================================
-    ws_shisha = wb["SHISHA BAR"]
-    current_cat = "Shisha Bar"
-    categories_list.append(current_cat)
-
-    cat_items[current_cat] = [
-        {
-            "name": "Premium Shisha",
-            "description": "Double Apple, Orange, Lemon & Mint, Blueberry, Watermelon & Mint, Bubble Gum & Cinnamon, Grape, Watermelon, Strawberry, Lemon, Mint & Cream.",
-            "priceMinor": 1600000,
-            "imageUrl": None,
-            "isAvailable": True,
-            "modifierGroupRefs": []
-        }
-    ]
+    if "SHISHA BAR" in wb.sheetnames:
+        current_cat = "Shisha Bar"
+        categories_list.append(current_cat)
+        cat_items[current_cat] = [
+            {
+                "name": "Premium Shisha",
+                "description": "Double Apple, Orange, Lemon & Mint, Blueberry, Watermelon & Mint, Bubble Gum & Cinnamon, Grape, Watermelon, Strawberry, Lemon, Mint & Cream.",
+                "priceMinor": 1600000,
+                "imageUrl": None,
+                "isAvailable": True,
+                "modifierGroupRefs": []
+            }
+        ]
 
     # =========================================================================
     # MODIFIER GROUPS
@@ -771,7 +787,9 @@ def main():
                 ]
             }
             for idx, cat_name in enumerate(categories_list)
-            if cat_name in cat_items and len(cat_items[cat_name]) > 0
+            if cat_name in cat_items
+            and len(cat_items[cat_name]) > 0
+            and cat_name not in REMOVED_CATEGORIES
         ]
     }
 

@@ -53,6 +53,8 @@ FOOD_SHEET = "BREAKFAST & A LA CARTE"
 DRINKS_SHEET = "BEVERAGES"
 SHISHA_SHEET = "SHISHA BAR"
 
+REMOVED_CATEGORY_START = "Signature Cocktails"
+
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".heic", ".webp")
 PREFERRED_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 
@@ -801,18 +803,18 @@ def food_blocks() -> list[Block]:
             sheet=FOOD_SHEET,
             rows=list(range(153, 173)),
             image_folder="grill",
-            skip={164},
+            skip={162},
             titles={
-                163: "Mixed Grill (2-4 pax)",
-                165: "Mixed Grill (4-8 pax)",
+                161: "Mixed Grill (2-4 pax)",
+                163: "Mixed Grill (4-8 pax)",
             },
             descriptions={
-                163: (
+                161: (
                     "Charcoal-grilled skewers of seasoned lamb, goat filet and chicken cubes, "
                     "served with garlic sauce, grilled vegetables, grilled tomatoes and onions. "
                     "2 of each skewer."
                 ),
-                165: (
+                163: (
                     "Charcoal-grilled skewers of seasoned lamb, goat filet and chicken cubes, "
                     "served with garlic sauce, grilled vegetables, grilled tomatoes and onions. "
                     "4 of each skewer."
@@ -1210,9 +1212,11 @@ def main() -> None:
                 worksheets,
                 images,
             ),
-            build_shisha(worksheets),
         ]
     )
+
+    if SHISHA_SHEET in worksheets:
+        categories.append(build_shisha(worksheets))
 
     # House wine sits with the red wines in the worksheet but is its own entry.
     house_wine = build_wine(
@@ -1233,6 +1237,20 @@ def main() -> None:
     lavender.description = (
         f"{lavender.description} topped with a hint of blue curacao, perfectly floral and crisp."
     ).strip()
+
+    # Keep the food menu and cold beverages only. The source workbook may still
+    # contain historical drinks tabs, but these categories are intentionally not
+    # part of the Salmas customer menu.
+    signature_index = next(
+        (index for index, category in enumerate(categories) if category.name == REMOVED_CATEGORY_START),
+        None,
+    )
+    if signature_index is not None:
+        categories = [
+            category
+            for index, category in enumerate(categories)
+            if index < signature_index or category.name == "Cold Beverages"
+        ]
 
     # Photos the worksheet never links are attached by hand.
     for category in categories:

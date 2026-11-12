@@ -140,6 +140,7 @@ async function main(): Promise<void> {
     let modifierLinksCreated = 0;
 
     for (const [catIndex, catSeed] of cactusMenuData.categories.entries()) {
+      const isBreakfastCategory = catSeed.name.startsWith("Breakfast");
       let category = await categoryRepo.findOneBy({
         outletId: OUTLET_ID,
         name: catSeed.name,
@@ -151,10 +152,14 @@ async function main(): Promise<void> {
           name: catSeed.name,
           sortOrder: catSeed.sortOrder ?? catIndex,
           isActive: catSeed.isActive ?? true,
+          availableFrom: isBreakfastCategory ? "08:00" : "09:00",
+          availableUntil: isBreakfastCategory ? "00:00" : "21:00",
         });
       } else {
         category.sortOrder = catSeed.sortOrder ?? catIndex;
         category.isActive = catSeed.isActive ?? true;
+        category.availableFrom = isBreakfastCategory ? "08:00" : "09:00";
+        category.availableUntil = isBreakfastCategory ? "00:00" : "21:00";
       }
 
       if (!DRY_RUN) {
