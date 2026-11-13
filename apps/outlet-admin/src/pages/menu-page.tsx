@@ -212,10 +212,6 @@ function AddItemModal({
       triggerShake();
       return;
     }
-    if (!imageFile) {
-      triggerShake();
-      return;
-    }
     if (
       discountPriceMinor !== null &&
       (!Number.isFinite(discountPriceMinor) ||
@@ -303,12 +299,11 @@ function AddItemModal({
             />
           </FormField>
 
-          <FormField label="Item Image *">
+          <FormField label="Item Image (Optional)">
             <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm transition hover:border-emerald-400 hover:bg-emerald-50/30">
               <input
                 type="file"
                 accept="image/*"
-                required
                 className="sr-only"
                 onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
               />
@@ -334,7 +329,7 @@ function AddItemModal({
               ) : (
                 <>
                   <span className="text-2xl">🖼️</span>
-                  <span className="text-slate-500">Click to upload image</span>
+                  <span className="text-slate-500">Click to upload image (optional)</span>
                   <span className="text-xs text-slate-400">PNG, JPG, WEBP</span>
                 </>
               )}
@@ -732,7 +727,7 @@ function EditItemModal({
             />
           </FormField>
 
-          <FormField label="Item Image">
+          <FormField label="Item Image (Optional)">
             <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm transition hover:border-emerald-400 hover:bg-emerald-50/30">
               <input
                 type="file"
@@ -773,7 +768,7 @@ function EditItemModal({
               ) : (
                 <>
                   <span className="text-2xl">🖼️</span>
-                  <span className="text-slate-500">Click to upload image</span>
+                  <span className="text-slate-500">Click to upload image (optional)</span>
                   <span className="text-xs text-slate-400">PNG, JPG, WEBP</span>
                 </>
               )}

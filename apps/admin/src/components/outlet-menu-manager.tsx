@@ -526,9 +526,6 @@ function MenuItemModal({
       if (!name.trim() || !categoryId || !Number.isFinite(priceMinor) || priceMinor <= 0) {
         throw new Error("Enter an item name, category, and valid price.");
       }
-      if (!item && !imageFile) {
-        throw new Error("Attach a menu item image before creating this item.");
-      }
       if (
         discountPriceMinor !== null &&
         (!Number.isFinite(discountPriceMinor) ||
@@ -626,15 +623,14 @@ function MenuItemModal({
               placeholder="Short item description"
             />
           </FormField>
-          <FormField label={item ? "Item Image" : "Item Image *"}>
+          <FormField label="Item Image (Optional)">
             <input
               type="file"
               accept="image/*"
-              required={!item}
               onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
             />
             {item?.imageUrl && !imageFile && <small>Current image will be kept.</small>}
-            {!item && !imageFile && <small>Required for customer-facing menu cards.</small>}
+            {!item && !imageFile && <small>You can add an image later.</small>}
             {imageFile && <small>{imageFile.name}</small>}
           </FormField>
           <div className="admin-menu-form-grid admin-menu-form-grid--single">
