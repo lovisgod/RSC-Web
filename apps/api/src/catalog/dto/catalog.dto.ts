@@ -220,14 +220,31 @@ export class CreateMenuCategoryDto {
   isActive?: boolean;
 
   @ApiPropertyOptional({ example: "09:00", description: "Local outlet opening time (HH:mm)." })
+  @Transform(({ value }) => normalizeMenuTime(value))
   @IsOptional()
-  @Matches(/^([01]\\d|2[0-3]):[0-5]\\d$/)
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
   availableFrom?: string | null;
 
   @ApiPropertyOptional({ example: "21:00", description: "Local outlet closing time (HH:mm)." })
+  @Transform(({ value }) => normalizeMenuTime(value))
   @IsOptional()
-  @Matches(/^([01]\\d|2[0-3]):[0-5]\\d$/)
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
   availableUntil?: string | null;
+}
+
+function normalizeMenuTime(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+
+  const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(value.trim());
+  if (!match) return value;
+
+  const hour = Number(match[1]);
+  const minutes = match[2];
+  const meridiem = match[3]!.toUpperCase();
+  if (hour < 1 || hour > 12) return value;
+
+  const normalizedHour = meridiem === "AM" ? hour % 12 : (hour % 12) + 12;
+  return `${String(normalizedHour).padStart(2, "0")}:${minutes}`;
 }
 
 export class UpdateMenuCategoryDto extends PartialType(CreateMenuCategoryDto) {}
