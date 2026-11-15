@@ -108,6 +108,8 @@ export interface ApplicationConfig {
   riderTracking: {
     provider: "app" | "nav_naija";
     pollIntervalMs: number;
+    staleAfterMs: number;
+    offlineAfterMs: number;
     navNaija: {
       baseUrl: string;
       apiKey: string;
@@ -287,6 +289,8 @@ export default function configuration(): ApplicationConfig {
     riderTracking: {
       provider: process.env.RIDER_TRACKING_PROVIDER === "nav_naija" ? "nav_naija" : "app",
       pollIntervalMs: Number(process.env.NAV_NAIJA_POLL_INTERVAL_MS ?? 15_000),
+      staleAfterMs: Number(process.env.RIDER_TRACKING_STALE_AFTER_MS ?? 60_000),
+      offlineAfterMs: Number(process.env.RIDER_TRACKING_OFFLINE_AFTER_MS ?? 180_000),
       navNaija: {
         baseUrl: (process.env.NAV_NAIJA_BASE_URL ?? "https://api.gpsiot.net").replace(/\/$/, ""),
         apiKey: process.env.NAV_NAIJA_API_KEY ?? "",

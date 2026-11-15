@@ -1,6 +1,6 @@
 import { Button } from "@rsc/ui";
 import { createRiderInputSchema, type RiderResult } from "@rsc/contracts";
-import { Copy, X } from "lucide-react";
+import { Copy, Info, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -73,7 +73,7 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
       email: form.email.trim(),
       phone: form.phone.trim(),
       ...(form.vehicleType.trim() ? { vehicleType: form.vehicleType.trim() } : {}),
-      ...(form.plateNumber.trim() ? { plateNumber: form.plateNumber.trim() } : {}),
+      plateNumber: form.plateNumber.trim(),
     };
     const parsed = createRiderInputSchema.safeParse(payload);
 
@@ -96,7 +96,7 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
         email: parsed.data.email,
         phone: parsed.data.phone,
         ...(parsed.data.vehicleType ? { vehicleType: parsed.data.vehicleType } : {}),
-        ...(parsed.data.plateNumber ? { plateNumber: parsed.data.plateNumber } : {}),
+        plateNumber: parsed.data.plateNumber,
       },
       { onSuccess: (data) => setResult(data) },
     );
@@ -246,13 +246,25 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
               </label>
 
               <label className="field-label">
-                Plate Number
+                <span className="field-label__row">
+                  Plate Number *
+                  <span
+                    className="field-info-icon"
+                    title="Enter the same name configured as DeviceName on the GPS IoT platform."
+                    aria-label="The plate number must match the GPS IoT DeviceName."
+                  >
+                    <Info size={14} aria-hidden="true" />
+                  </span>
+                </span>
                 <input
                   className="field-input"
                   type="text"
                   placeholder="ABC-123XY"
+                  required
                   {...field("plateNumber")}
                 />
+                <small className="field-hint">Must match the GPS IoT platform DeviceName.</small>
+                {errors.plateNumber && <small className="field-error">{errors.plateNumber}</small>}
               </label>
             </div>
 
@@ -264,7 +276,11 @@ function RiderOnboardModalContent({ onClose }: Pick<Props, "onClose">) {
                 tone="navy"
                 type="submit"
                 disabled={
-                  isPending || !form.name.trim() || !form.email.trim() || !form.phone.trim()
+                  isPending ||
+                  !form.name.trim() ||
+                  !form.email.trim() ||
+                  !form.phone.trim() ||
+                  !form.plateNumber.trim()
                 }
               >
                 {isPending ? "Creating…" : "Create Rider"}

@@ -36,12 +36,11 @@ export class CreateRiderDto {
   @Length(2, 40)
   vehicleType?: string;
 
-  @ApiPropertyOptional({ example: "ABC-123XY" })
+  @ApiProperty({ example: "ABC-123XY", description: "Must match the GPS IoT platform DeviceName." })
   @Transform(trim)
-  @IsOptional()
   @IsString()
   @Length(2, 40)
-  plateNumber?: string;
+  plateNumber!: string;
 }
 
 export class UpdateRiderDto {

@@ -236,7 +236,7 @@ export const createRiderInputSchema = z
     email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
     phone: nigerianPhoneNumberSchema,
     vehicleType: z.string().trim().min(2).max(40).optional(),
-    plateNumber: z.string().trim().min(2).max(40).optional(),
+    plateNumber: z.string().trim().min(2).max(40),
   })
   .strict();
 

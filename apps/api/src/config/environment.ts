@@ -75,6 +75,8 @@ export interface Environment {
   NAV_NAIJA_CLIENT_ID?: string;
   NAV_NAIJA_IMEI_NOS?: string;
   NAV_NAIJA_POLL_INTERVAL_MS: number;
+  RIDER_TRACKING_STALE_AFTER_MS: number;
+  RIDER_TRACKING_OFFLINE_AFTER_MS: number;
   ROUTING_PROVIDER: "google" | "osrm";
   OSRM_BASE_URL: string;
   ROUTING_TIMEOUT_MS: number;
@@ -273,6 +275,12 @@ const environmentSchema = Joi.object<Environment>({
     .optional()
     .allow(""),
   NAV_NAIJA_POLL_INTERVAL_MS: Joi.number().integer().min(5_000).max(300_000).default(15_000),
+  RIDER_TRACKING_STALE_AFTER_MS: Joi.number().integer().min(30_000).max(900_000).default(60_000),
+  RIDER_TRACKING_OFFLINE_AFTER_MS: Joi.number()
+    .integer()
+    .min(60_000)
+    .max(1_800_000)
+    .default(180_000),
   ROUTING_PROVIDER: Joi.string().valid("google", "osrm").default("osrm"),
   OSRM_BASE_URL: Joi.string()
     .uri({ scheme: ["https"] })
