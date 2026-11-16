@@ -3,20 +3,12 @@ import "./globals.css";
 import "./styles.css";
 
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@rsc/ui";
 
 import { QueryProvider } from "@/src/components/providers/query-provider";
-
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-  variable: "--font-sans",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -76,7 +68,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" className={roboto.variable} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#0e0e14" />
         <link rel="manifest" href="/site.webmanifest" />
