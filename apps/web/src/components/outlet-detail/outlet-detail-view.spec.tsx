@@ -6,7 +6,19 @@ const mocks = vi.hoisted(() => ({ useOutletMenu: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/src/hooks/use-outlet-menu", () => ({ useOutletMenu: mocks.useOutletMenu }));
 vi.mock("./menu-item-card", () => ({
-  MenuItemCard: ({ item }: { item: { name: string } }) => <div>{item.name}</div>,
+  MenuItemCard: ({
+    item,
+    disabled,
+    disabledLabel,
+  }: {
+    item: { name: string };
+    disabled?: boolean;
+    disabledLabel?: string;
+  }) => (
+    <div data-disabled={disabled} data-disabled-label={disabledLabel}>
+      {item.name}
+    </div>
+  ),
 }));
 vi.mock("./item-detail-modal", () => ({ ItemDetailModal: () => null }));
 
@@ -57,5 +69,14 @@ describe("outlet category selection", () => {
     expect(screen.getByText("No menu categories available yet.")).toBeInTheDocument();
     expect(screen.queryByText("Spring Rolls")).not.toBeInTheDocument();
     expect(screen.queryByText("Jollof Rice")).not.toBeInTheDocument();
+  });
+
+  it("keeps an offline outlet menu visible while disabling item ordering", () => {
+    mocks.useOutletMenu.mockReturnValue({ data: { ...menu, isOnline: false } });
+    render(<OutletDetailView id="outlet" />);
+
+    expect(screen.getByText(/currently offline/i)).toBeInTheDocument();
+    expect(screen.getByText("Spring Rolls")).toHaveAttribute("data-disabled", "true");
+    expect(screen.getByText("Spring Rolls")).toHaveAttribute("data-disabled-label", "Offline");
   });
 });

@@ -31,9 +31,9 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
           onAdd();
         }
       }}
-      className={`bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 p-3 transition-opacity ${
+      className={`relative bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 p-3 transition-opacity ${
         unavailable
-          ? "opacity-60"
+          ? "cursor-not-allowed opacity-70"
           : "cursor-pointer hover:border-[var(--rsc-main)]/25 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rsc-main)]/35"
       }`}
     >
@@ -72,11 +72,6 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="font-bold text-gray-900 text-sm leading-tight">{item.name}</h3>
-          {statusLabel && (
-            <span className="text-[10px] font-bold uppercase tracking-wide text-red-500">
-              {statusLabel}
-            </span>
-          )}
         </div>
         <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{item.description}</p>
         <DiscountPrice
@@ -103,6 +98,18 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
       >
         +
       </button>
+
+      {unavailable && (
+        <div
+          className="pointer-events-none absolute inset-0 z-[5] rounded-2xl bg-white/10 backdrop-blur-[1px]"
+          aria-hidden="true"
+        />
+      )}
+      {statusLabel && (
+        <span className="pointer-events-none absolute right-3 top-2 z-10 rounded-full border border-red-100 bg-red-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-red-600 shadow-sm">
+          {statusLabel}
+        </span>
+      )}
     </article>
   );
 }
