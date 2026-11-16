@@ -274,11 +274,12 @@ export function LandingPage() {
                   data-disabled={isOffline}
                   style={{
                     backgroundColor: outlet.headerColor || "#0d1a12",
-                    backgroundImage:
-                      "linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.12) 45%, rgba(0, 0, 0, 0.86))",
+                    backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.08) 40%, rgba(0, 0, 0, 0.82) 100%), url(${outlet.image})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
                   }}
                 >
-                  {/* Card Header: badges and outlet identity */}
+                  {/* Card Header: status + rating always on top of image */}
                   <div className="grab-portrait-card__header">
                     <div className="grab-portrait-card__top-meta">
                       <span
@@ -294,16 +295,6 @@ export function LandingPage() {
                         <StarIcon className="w-3 h-3 fill-amber-400 text-amber-400" />
                         {formatOutletRating(outlet.rating)}
                       </span>
-                    </div>
-
-                    <div className="grab-portrait-card__logo-wrap">
-                      {outlet.logoUrl ? (
-                        <img
-                          src={outlet.logoUrl}
-                          alt={`${outlet.name} logo`}
-                          className="grab-portrait-card__logo"
-                        />
-                      ) : null}
                     </div>
                   </div>
 

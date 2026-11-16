@@ -67,7 +67,7 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     name: summary.name,
     cuisines: [summary.cuisineType],
     headerColor: graphic.headerColor,
-    image: summary.logoUrl ?? graphic.image,
+    image: graphic.image,
     logoUrl: summary.logoUrl ?? null,
     ...(summary.bannerUrl ? { bannerImage: summary.bannerUrl } : {}),
     isOnline: summary.isOnline,
