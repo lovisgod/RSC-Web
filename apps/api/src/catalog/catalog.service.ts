@@ -103,9 +103,9 @@ export class CatalogService {
     return this.attachPublicCatalog(outlets);
   }
 
-  async getPublicOutlet(id: string): Promise<PublicOutletCatalog> {
+  async getPublicOutlet(id: string, includeUnavailable = false): Promise<PublicOutletCatalog> {
     const outlet = await this.requireOutlet(id);
-    const [catalog] = await this.attachPublicCatalog([outlet]);
+    const [catalog] = await this.attachPublicCatalog([outlet], includeUnavailable);
 
     return catalog!;
   }
@@ -868,7 +868,10 @@ export class CatalogService {
     );
   }
 
-  private async attachPublicCatalog(outlets: Outlet[]): Promise<PublicOutletCatalog[]> {
+  private async attachPublicCatalog(
+    outlets: Outlet[],
+    includeUnavailable = false,
+  ): Promise<PublicOutletCatalog[]> {
     if (!outlets.length) {
       return [];
     }
@@ -904,7 +907,7 @@ export class CatalogService {
       ...outlet,
       menuCategories: menuCategories
         .filter((category) => category.outletId === outlet.id)
-        .filter(isCategoryAvailableNow),
+        .filter((category) => includeUnavailable || isCategoryAvailableNow(category)),
       menuItems: menuItems.filter((item) => item.outletId === outlet.id),
       itemModifierGroups: itemModifierGroups.filter((group) => group.outletId === outlet.id),
       itemModifiers: itemModifiers.filter((modifier) => modifier.outletId === outlet.id),

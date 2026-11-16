@@ -141,7 +141,9 @@ export const getProfile = async (): Promise<UserProfile> =>
 // ─── Outlet ───────────────────────────────────────────────────────────────────
 
 export const getOutletById = (outletId: string): Promise<OutletSummary> =>
-  get<unknown>(`/api/v1/outlets/${outletId}`).then((data) => outletSummarySchema.parse(data));
+  get<unknown>(`/api/v1/outlets/${outletId}?includeUnavailable=true`).then((data) =>
+    outletSummarySchema.parse(data),
+  );
 
 export const uploadOutletBanner = (outletId: string, file: File): Promise<OutletSummary> => {
   const form = new FormData();

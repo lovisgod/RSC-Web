@@ -325,7 +325,9 @@ export const listOutlets = (): Promise<OutletSummary[]> =>
   get<unknown>("/api/v1/outlets").then((data) => parseResponse(outletSummarySchema.array(), data));
 
 export const getOutlet = (id: string): Promise<OutletSummary> =>
-  get<unknown>(`/api/v1/outlets/${id}`).then((data) => parseResponse(outletSummarySchema, data));
+  get<unknown>(`/api/v1/outlets/${id}?includeUnavailable=true`).then((data) =>
+    parseResponse(outletSummarySchema, data),
+  );
 
 export const createOutlet = (body: OutletBody): Promise<OutletSummary> =>
   post<unknown>("/api/v1/outlets", body).then((data) => parseResponse(outletSummarySchema, data));

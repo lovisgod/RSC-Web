@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -42,8 +43,8 @@ export class OutletsController {
 
   @Get(":id")
   @ApiMessage("Outlet retrieved")
-  get(@Param("id") id: string) {
-    return this.catalog.getPublicOutlet(id);
+  get(@Param("id") id: string, @Query("includeUnavailable") includeUnavailable?: string) {
+    return this.catalog.getPublicOutlet(id, includeUnavailable === "true");
   }
 
   @Post()
