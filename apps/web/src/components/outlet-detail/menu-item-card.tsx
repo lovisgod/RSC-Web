@@ -33,20 +33,26 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
       }}
       className={`relative bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 p-3 transition-opacity ${
         unavailable
-          ? "cursor-not-allowed opacity-70"
+          ? "cursor-not-allowed opacity-90"
           : "cursor-pointer hover:border-[var(--rsc-main)]/25 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rsc-main)]/35"
       }`}
     >
       {/* Thumbnail */}
       <div
-        className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden flex items-center justify-center text-4xl ${unavailable ? "grayscale" : ""}`}
+        className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden flex items-center justify-center text-4xl"
         style={{ backgroundColor: item.bgColor }}
       >
         {item.image.startsWith("/") || item.image.startsWith("http") ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+          <img
+            src={item.image}
+            alt={item.name}
+            className={`h-full w-full object-cover ${unavailable ? "blur-[0.5px] grayscale opacity-70" : ""}`}
+          />
         ) : (
-          <span className="text-4xl">{item.image}</span>
+          <span className={`text-4xl ${unavailable ? "blur-[0.5px] grayscale opacity-70" : ""}`}>
+            {item.image}
+          </span>
         )}
         <button
           type="button"
@@ -99,12 +105,6 @@ export function MenuItemCard({ item, onAdd, disabled = false, disabledLabel }: M
         +
       </button>
 
-      {unavailable && (
-        <div
-          className="pointer-events-none absolute inset-0 z-[5] rounded-2xl bg-white/10 backdrop-blur-[1px]"
-          aria-hidden="true"
-        />
-      )}
       {statusLabel && (
         <span className="pointer-events-none absolute right-3 top-2 z-10 rounded-full border border-red-100 bg-red-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-red-600 shadow-sm">
           {statusLabel}
