@@ -39,6 +39,7 @@
     "seed:menu:cactus:prod": "node dist/src/database/seed-cactus-menu.js",
     "seed:menu:salmas:prod": "node dist/src/database/seed-salmas-menu.js",
     "seed:menu:taste-of-naija:prod": "node dist/src/database/seed-taste-of-naija-menu.js",
+    "restore:menu:categories:prod": "node dist/src/database/restore-outlet-categories.js",
     "undo:menu:salmas:prod": "node dist/src/database/undo-salmas-menu.js",
     "undo:menu:outlet:prod": "node dist/src/database/undo-outlet-menu.js",
     "undo:menu:taste-of-naija:prod": "node dist/src/database/undo-taste-of-naija-menu.js",
