@@ -321,10 +321,17 @@ export function LandingPage() {
                   </div>
                 </article>
               );
-              return isOffline ? (
-                card
-              ) : (
-                <Link key={outlet.id} href={`/outlets/${outlet.id}`} className="block">
+              return (
+                <Link
+                  key={outlet.id}
+                  href={`/outlets/${outlet.id}`}
+                  className="block"
+                  aria-label={
+                    isOffline
+                      ? `View ${outlet.name} menu - currently offline`
+                      : `Order from ${outlet.name}`
+                  }
+                >
                   {card}
                 </Link>
               );
