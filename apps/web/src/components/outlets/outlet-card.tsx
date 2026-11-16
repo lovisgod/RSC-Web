@@ -48,10 +48,14 @@ export function OutletCard({ outlet }: { outlet: Outlet }) {
       </div>
     </article>
   );
-  return isOffline ? (
-    <div className="block cursor-not-allowed">{card}</div>
-  ) : (
-    <Link href={`/outlets/${outlet.id}`} className="group block">
+  return (
+    <Link
+      href={`/outlets/${outlet.id}`}
+      className="group block"
+      aria-label={
+        isOffline ? `View ${outlet.name} menu - currently offline` : `Order from ${outlet.name}`
+      }
+    >
       {card}
     </Link>
   );
