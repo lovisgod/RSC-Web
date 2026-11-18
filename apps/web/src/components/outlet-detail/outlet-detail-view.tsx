@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 
 import { formatNaira } from "@/src/lib/data/cart";
 import { formatOutletRating } from "@/src/lib/data/outlets";
-import type { MenuItem } from "@/src/lib/data/outlet-menu";
+import {
+  formatMenuCategoryTime,
+  isMenuCategoryAvailable,
+  type MenuItem,
+} from "@/src/lib/data/outlet-menu";
 import { useOutletMenu } from "@/src/hooks/use-outlet-menu";
 import { MenuItemCard } from "@/src/components/outlet-detail/menu-item-card";
 import { ItemDetailModal } from "@/src/components/outlet-detail/item-detail-modal";
@@ -66,9 +70,13 @@ export function OutletDetailView({ id }: { id: string }) {
 
   const currentCategory =
     menu.categories.find((category) => category.id === activeCategory) ?? menu.categories[0];
-  const visibleItems = currentCategory
-    ? menu.items.filter((item) => item.categoryId === currentCategory.id)
-    : [];
+  const currentCategoryAvailable = currentCategory
+    ? isMenuCategoryAvailable(currentCategory)
+    : false;
+  const visibleItems =
+    currentCategory && currentCategoryAvailable
+      ? menu.items.filter((item) => item.categoryId === currentCategory.id)
+      : [];
   const isOffline = menu.isOnline === false;
   const activeSelectedItem = isOffline ? null : selectedItem;
   const rating = formatOutletRating(menu.rating);
@@ -167,7 +175,15 @@ export function OutletDetailView({ id }: { id: string }) {
             {currentCategory?.name ?? "Menu"}
           </h2>
 
-          {visibleItems.length === 0 ? (
+          {currentCategory && !currentCategoryAvailable ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-8 text-center text-amber-900">
+              <p className="font-semibold">This category is currently unavailable.</p>
+              <p className="mt-1 text-sm">
+                Available from {formatMenuCategoryTime(currentCategory.availableFrom)} to{" "}
+                {formatMenuCategoryTime(currentCategory.availableUntil)}.
+              </p>
+            </div>
+          ) : visibleItems.length === 0 ? (
             <p className="text-sm text-gray-400 py-8 text-center">
               {currentCategory
                 ? "No items available in this category."

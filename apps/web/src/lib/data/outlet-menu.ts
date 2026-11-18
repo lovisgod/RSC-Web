@@ -41,6 +41,8 @@ export interface MenuItem {
 export interface MenuCategory {
   id: string;
   name: string;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
 }
 
 export interface OutletMenu {
@@ -134,7 +136,12 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
   const namedCategories = summary.menuCategories
     .filter((c) => c.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((c) => ({ id: c.id, name: c.name }));
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      availableFrom: c.availableFrom,
+      availableUntil: c.availableUntil,
+    }));
 
   // All is intentionally disabled: browse one real category at a time.
   // { id: "all", name: "All" }
@@ -176,6 +183,35 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
     items,
     ...computeOutletMetrics(summary.menuItems),
   };
+}
+
+export function isMenuCategoryAvailable(category: MenuCategory, at = new Date()): boolean {
+  if (!category.availableFrom || !category.availableUntil) return true;
+
+  const now = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Lagos",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(at);
+  const toMinutes = (value: string) => {
+    const [hours = 0, minutes = 0] = value.slice(0, 5).split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+  const current = toMinutes(now);
+  const start = toMinutes(category.availableFrom);
+  const end = toMinutes(category.availableUntil);
+
+  return start <= end ? current >= start && current <= end : current >= start || current <= end;
+}
+
+export function formatMenuCategoryTime(value: string | null | undefined): string {
+  if (!value) return "";
+  const [hours = 0, minutes = "00"] = value.slice(0, 5).split(":");
+  const hour = Number(hours);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minutes} ${suffix}`;
 }
 
 /** Derive outlet-level rating and delivery time from menu items. */

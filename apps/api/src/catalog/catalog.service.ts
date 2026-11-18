@@ -222,7 +222,7 @@ export class CatalogService {
       ...(outletId ? { where: { outletId } } : {}),
       order: { sortOrder: "ASC", name: "ASC" },
     });
-    return categories.filter(isCategoryAvailableNow);
+    return categories.filter((category) => category.isActive);
   }
 
   async createCategory(
@@ -907,7 +907,7 @@ export class CatalogService {
       ...outlet,
       menuCategories: menuCategories
         .filter((category) => category.outletId === outlet.id)
-        .filter((category) => includeUnavailable || isCategoryAvailableNow(category)),
+        .filter((category) => includeUnavailable || category.isActive),
       menuItems: menuItems.filter((item) => item.outletId === outlet.id),
       itemModifierGroups: itemModifierGroups.filter((group) => group.outletId === outlet.id),
       itemModifiers: itemModifiers.filter((modifier) => modifier.outletId === outlet.id),
@@ -1312,26 +1312,4 @@ function normalizeSettlementSubaccountCode(value: string | null | undefined): st
   }
 
   return trimmed ? trimmed : null;
-}
-
-function isCategoryAvailableNow(category: MenuCategory): boolean {
-  if (!category.isActive || !category.availableFrom || !category.availableUntil)
-    return category.isActive;
-
-  const now = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Africa/Lagos",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).format(new Date());
-  const current = toMinutes(now);
-  const start = toMinutes(category.availableFrom);
-  const end = toMinutes(category.availableUntil);
-
-  return start <= end ? current >= start && current <= end : current >= start || current <= end;
-}
-
-function toMinutes(value: string): number {
-  const [hours = 0, minutes = 0] = value.slice(0, 5).split(":").map(Number);
-  return hours * 60 + minutes;
 }

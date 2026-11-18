@@ -79,4 +79,21 @@ describe("outlet category selection", () => {
     expect(screen.getByText("Spring Rolls")).toHaveAttribute("data-disabled", "true");
     expect(screen.getByText("Spring Rolls")).toHaveAttribute("data-disabled-label", "Offline");
   });
+
+  it("shows the configured availability window for a closed category", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-18T12:00:00+01:00"));
+    mocks.useOutletMenu.mockReturnValue({
+      data: {
+        ...menu,
+        categories: [{ ...menu.categories[0], availableFrom: "18:00", availableUntil: "22:00" }],
+      },
+    });
+
+    render(<OutletDetailView id="outlet" />);
+
+    expect(screen.getByText("This category is currently unavailable.")).toBeInTheDocument();
+    expect(screen.getByText("Available from 6:00 PM to 10:00 PM.")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
 });
