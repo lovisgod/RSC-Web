@@ -167,11 +167,27 @@ body {
   height: 13rem;
 }
 
+.outlet-detail-hero--banner {
+  aspect-ratio: 8 / 3;
+  height: auto;
+  min-height: 9rem;
+  max-height: 18rem;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
 .outlet-detail-hero__mobile-logo {
   display: none;
 }
 
 @media (max-width: 639px) {
+  .outlet-detail-hero--banner {
+    aspect-ratio: 8 / 3;
+    min-height: 0;
+    max-height: none;
+  }
+
   .outlet-detail-hero--logo {
     height: auto;
     min-height: 13rem;

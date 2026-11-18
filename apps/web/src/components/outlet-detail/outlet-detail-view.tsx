@@ -72,15 +72,14 @@ export function OutletDetailView({ id }: { id: string }) {
   const isOffline = menu.isOnline === false;
   const activeSelectedItem = isOffline ? null : selectedItem;
   const rating = formatOutletRating(menu.rating);
-  const hasLogoBanner = Boolean(menu.logoUrl);
-  const hasPhotoBanner =
-    !hasLogoBanner && (menu.image.startsWith("/") || menu.image.startsWith("http"));
+  const hasPhotoBanner = Boolean(menu.bannerUrl);
+  const hasLogoBanner = Boolean(menu.logoUrl) && !hasPhotoBanner;
 
   return (
     <>
       {/* Header */}
       <div
-        className={`relative ${hasLogoBanner ? "outlet-detail-hero outlet-detail-hero--logo" : "h-52"}`}
+        className={`relative ${hasPhotoBanner ? "outlet-detail-hero outlet-detail-hero--banner" : hasLogoBanner ? "outlet-detail-hero outlet-detail-hero--logo" : "h-52"}`}
         style={{
           backgroundColor: menu.headerColor,
           ...(hasLogoBanner
@@ -92,7 +91,7 @@ export function OutletDetailView({ id }: { id: string }) {
               }
             : hasPhotoBanner
               ? {
-                  backgroundImage: `url(${menu.image})`,
+                  backgroundImage: `url(${menu.bannerUrl})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }

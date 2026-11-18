@@ -47,6 +47,7 @@ export interface OutletMenu {
   outletId: string;
   outletName: string;
   logoUrl?: string | null;
+  bannerUrl?: string | null;
   cuisines: string[];
   isOnline: boolean;
   headerColor: string;
@@ -166,6 +167,7 @@ export function buildOutletMenu(outlet: Outlet, summary: OutletSummary): OutletM
     outletId: outlet.id,
     outletName: outlet.name,
     logoUrl: outlet.logoUrl ?? null,
+    bannerUrl: summary.bannerUrl ?? outlet.bannerImage ?? null,
     cuisines: outlet.cuisines,
     isOnline: outlet.isOnline ?? true,
     headerColor: outlet.headerColor,

@@ -43,10 +43,26 @@ export interface Outlet {
 
 // Keep a stable branded fallback color; outlet cards use the backend logo, not food photography.
 const OUTLET_GRAPHICS = [
-  { headerColor: "#071a10", image: "/outlets/cactus-outlet-card.png" },
-  { headerColor: "#071a0f", image: "/outlets/salmas-outlet-card.png" },
-  { headerColor: "#f5ece0", image: "/outlets/farfallino-outlet-card.png" },
-  { headerColor: "#071a10", image: "/outlets/taste-of-naija-outlet-card.png" },
+  {
+    headerColor: "#071a10",
+    image: "/outlets/cactus-outlet-card.png",
+    bannerImage: "/outlets/cactus-outlet-banner.png",
+  },
+  {
+    headerColor: "#071a0f",
+    image: "/outlets/salmas-outlet-card.png",
+    bannerImage: "/outlets/salmas-outlet-banner.png",
+  },
+  {
+    headerColor: "#f5ece0",
+    image: "/outlets/farfallino-outlet-card.png",
+    bannerImage: "/outlets/farfallino-outlet-banner.png",
+  },
+  {
+    headerColor: "#071a10",
+    image: "/outlets/taste-of-naija-outlet-card.png",
+    bannerImage: "/outlets/taste-of-naija-outlet-banner.png",
+  },
 ];
 
 function resolveOutletGraphic(name: string, index: number) {
@@ -69,7 +85,7 @@ export function toDisplayOutlet(summary: OutletSummary, index: number): Outlet {
     headerColor: graphic.headerColor,
     image: summary.logoUrl ?? graphic.image,
     logoUrl: summary.logoUrl ?? null,
-    ...(summary.bannerUrl ? { bannerImage: summary.bannerUrl } : {}),
+    bannerImage: summary.bannerUrl ?? graphic.bannerImage,
     isOnline: summary.isOnline,
     vatBps: summary.vatBps,
     latitude: (summary as unknown as { latitude?: number | null }).latitude ?? null,
