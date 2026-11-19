@@ -14,6 +14,7 @@ const COMPLETED_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
 interface RiderReportRow {
   riderId: string;
   riderName: string;
+  isRegistered: boolean;
   riderStatus: string | null;
   activeOrders: number;
   completedDeliveries: number;
@@ -87,6 +88,7 @@ function aggregateRiderReports(orders: AdminOrderItem[]): RiderReportRow[] {
       ({
         riderId: order.riderId,
         riderName: riderLabel(order.riderId),
+        isRegistered: false,
         riderStatus: null,
         activeOrders: 0,
         completedDeliveries: 0,
@@ -142,6 +144,7 @@ function mergeRidersWithReports(
     return {
       riderId: rider.id,
       riderName: rider.name,
+      isRegistered: true,
       riderStatus: rider.riderStatus ?? row?.riderStatus ?? null,
       activeOrders: row?.activeOrders ?? 0,
       completedDeliveries: row?.completedDeliveries ?? 0,
@@ -414,21 +417,27 @@ export function RiderReportsPage() {
                           </span>
                         </td>
                         <td>
-                          <button
-                            type="button"
-                            className="rider-delete-btn"
-                            onClick={() =>
-                              setRiderToDelete({
-                                riderId: row.riderId,
-                                riderName: row.riderName,
-                              })
-                            }
-                            disabled={isDeletePending}
-                            title={`Delete ${row.riderName}`}
-                            aria-label={`Delete ${row.riderName}`}
-                          >
-                            <Trash2 aria-hidden="true" size={15} />
-                          </button>
+                          {row.isRegistered ? (
+                            <button
+                              type="button"
+                              className="rider-delete-btn"
+                              onClick={() =>
+                                setRiderToDelete({
+                                  riderId: row.riderId,
+                                  riderName: row.riderName,
+                                })
+                              }
+                              disabled={isDeletePending}
+                              title={`Delete ${row.riderName}`}
+                              aria-label={`Delete ${row.riderName}`}
+                            >
+                              <Trash2 aria-hidden="true" size={15} />
+                            </button>
+                          ) : (
+                            <span className="text-gray-400" title="Historical rider record">
+                              —
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );
