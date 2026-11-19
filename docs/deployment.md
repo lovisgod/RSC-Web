@@ -65,6 +65,10 @@ Paste the contents of `deploy/dokploy/staging.env.example` into the staging
 service's **Environment** tab, replacing every placeholder. Generate new values
 for staging rather than copying development secrets:
 
+The database names are environment-specific: development uses
+`dineout_development`, while staging uses `dineout_staging`. Keep the database
+name and `POSTGRES_PASSWORD` isolated between environments.
+
 ```bash
 openssl rand -hex 32
 openssl rand -hex 32

@@ -1,11 +1,13 @@
 import Skeleton from "@mui/material/Skeleton";
 import { Button, EmptyState, MetricCard } from "@rsc/ui";
-import { Bike, CalendarDays, Clock3, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Bike, CalendarDays, Clock3, Info, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
+import { updateRiderInputSchema } from "@rsc/contracts";
 
 import { RiderOnboardModal } from "../components/rider-onboard-modal";
 import { useOrdersFeed } from "../hooks/use-orders-feed";
-import { useDeleteRider, useRiders } from "../hooks/use-riders";
+import { useDeleteRider, useRiders, useUpdateRider } from "../hooks/use-riders";
 import type { AdminOrderItem } from "../lib/api";
 
 const REPORT_LIMIT = 100;
@@ -15,6 +17,7 @@ interface RiderReportRow {
   riderId: string;
   riderName: string;
   isRegistered: boolean;
+  plateNumber: string | null;
   riderStatus: string | null;
   activeOrders: number;
   completedDeliveries: number;
@@ -89,6 +92,7 @@ function aggregateRiderReports(orders: AdminOrderItem[]): RiderReportRow[] {
         riderId: order.riderId,
         riderName: riderLabel(order.riderId),
         isRegistered: false,
+        plateNumber: null,
         riderStatus: null,
         activeOrders: 0,
         completedDeliveries: 0,
@@ -145,6 +149,7 @@ function mergeRidersWithReports(
       riderId: rider.id,
       riderName: rider.name,
       isRegistered: true,
+      plateNumber: rider.plateNumber ?? row?.plateNumber ?? null,
       riderStatus: rider.riderStatus ?? row?.riderStatus ?? null,
       activeOrders: row?.activeOrders ?? 0,
       completedDeliveries: row?.completedDeliveries ?? 0,
@@ -167,6 +172,97 @@ function mergeRidersWithReports(
 
     return left.riderName.localeCompare(right.riderName);
   });
+}
+
+function EditRiderPlateModal({
+  rider,
+  onClose,
+}: {
+  rider: Pick<RiderReportRow, "riderId" | "riderName" | "plateNumber">;
+  onClose: () => void;
+}) {
+  const [plateNumber, setPlateNumber] = useState(rider.plateNumber ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const { mutate, isPending } = useUpdateRider();
+
+  function close() {
+    if (!isPending) onClose();
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const parsed = updateRiderInputSchema.safeParse({ plateNumber: plateNumber.trim() });
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Enter a valid plate number.");
+      return;
+    }
+
+    setError(null);
+    mutate(
+      { id: rider.riderId, input: { plateNumber: parsed.data.plateNumber } },
+      { onSuccess: onClose },
+    );
+  }
+
+  return createPortal(
+    <div className="modal-overlay" aria-hidden="true" onClick={close}>
+      <div
+        className="modal modal--edit-rider"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-rider-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="modal__head">
+          <div>
+            <span className="modal-kicker">Rider operations</span>
+            <h2 id="edit-rider-title">Edit plate number</h2>
+          </div>
+          <button type="button" className="modal__close" aria-label="Close" onClick={close}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <form className="modal__body" onSubmit={submit} noValidate>
+          <p className="text-sm text-gray-500">
+            Update the plate number for <strong>{rider.riderName}</strong>.
+          </p>
+          <label className="field-label">
+            <span className="field-label__row">
+              Plate Number *
+              <span
+                className="field-info-icon"
+                title="This must match the GPS IoT platform DeviceName."
+                aria-label="The plate number must match the GPS IoT DeviceName."
+              >
+                <Info size={14} aria-hidden="true" />
+              </span>
+            </span>
+            <input
+              className="field-input"
+              value={plateNumber}
+              onChange={(event) => setPlateNumber(event.target.value)}
+              placeholder="ABC-123XY"
+              autoFocus
+              required
+            />
+            <small className="field-hint">Must match the GPS IoT platform DeviceName.</small>
+            {error && <small className="field-error">{error}</small>}
+          </label>
+          <div className="modal__actions">
+            <Button tone="quiet" type="button" onClick={close} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button tone="navy" type="submit" disabled={isPending || !plateNumber.trim()}>
+              {isPending ? "Saving..." : "Save plate number"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 function DeleteRiderModal({
@@ -227,6 +323,10 @@ function DeleteRiderModal({
 export function RiderReportsPage() {
   const [reportDate, setReportDate] = useState(getTodayInputDate);
   const [onboardOpen, setOnboardOpen] = useState(false);
+  const [riderToEdit, setRiderToEdit] = useState<Pick<
+    RiderReportRow,
+    "riderId" | "riderName" | "plateNumber"
+  > | null>(null);
   const [riderToDelete, setRiderToDelete] = useState<Pick<
     RiderReportRow,
     "riderId" | "riderName"
@@ -257,6 +357,9 @@ export function RiderReportsPage() {
   return (
     <>
       <RiderOnboardModal open={onboardOpen} onClose={() => setOnboardOpen(false)} />
+      {riderToEdit && (
+        <EditRiderPlateModal rider={riderToEdit} onClose={() => setRiderToEdit(null)} />
+      )}
       {riderToDelete && (
         <DeleteRiderModal
           rider={riderToDelete}
@@ -396,6 +499,7 @@ export function RiderReportsPage() {
                             />
                             <span>
                               <strong>{row.riderName}</strong>
+                              <small>{row.plateNumber ?? "No plate number"}</small>
                             </span>
                           </span>
                         </td>
@@ -418,21 +522,38 @@ export function RiderReportsPage() {
                         </td>
                         <td>
                           {row.isRegistered ? (
-                            <button
-                              type="button"
-                              className="rider-delete-btn"
-                              onClick={() =>
-                                setRiderToDelete({
-                                  riderId: row.riderId,
-                                  riderName: row.riderName,
-                                })
-                              }
-                              disabled={isDeletePending}
-                              title={`Delete ${row.riderName}`}
-                              aria-label={`Delete ${row.riderName}`}
-                            >
-                              <Trash2 aria-hidden="true" size={15} />
-                            </button>
+                            <span className="outlet-detail-page__actions">
+                              <button
+                                type="button"
+                                className="outlet-icon-btn outlet-icon-btn--edit"
+                                onClick={() =>
+                                  setRiderToEdit({
+                                    riderId: row.riderId,
+                                    riderName: row.riderName,
+                                    plateNumber: row.plateNumber,
+                                  })
+                                }
+                                title={`Edit ${row.riderName} plate number`}
+                                aria-label={`Edit ${row.riderName} plate number`}
+                              >
+                                <Pencil aria-hidden="true" size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                className="rider-delete-btn"
+                                onClick={() =>
+                                  setRiderToDelete({
+                                    riderId: row.riderId,
+                                    riderName: row.riderName,
+                                  })
+                                }
+                                disabled={isDeletePending}
+                                title={`Delete ${row.riderName}`}
+                                aria-label={`Delete ${row.riderName}`}
+                              >
+                                <Trash2 aria-hidden="true" size={15} />
+                              </button>
+                            </span>
                           ) : (
                             <span className="text-gray-400" title="Historical rider record">
                               —
